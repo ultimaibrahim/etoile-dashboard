@@ -5,232 +5,646 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Reseñas · La Crêpe Parisienne GDL</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root {
-  --verde:      #3D5A47;
-  --verde-deep: #2C4234;
-  --sage:       #7A9E8A;
-  --sage-light: #B5CFC3;
-  --crema:      #F5EFE6;
-  --crema-dark: #EDE4D6;
-  --negro:      #1A1A1A;
-  --blanco:     #FFFFFF;
-  --alerta:     #C0392B;
-  --alerta-bg:  #FCF0EE;
-  --oro:        #C9A84C;
-  --sombra:     rgba(61,90,71,0.12);
-  --sombra-lg:  rgba(61,90,71,0.2);
-  --radius:     14px;
-  --radius-sm:  8px;
-  --bg:         #F5EFE6;
-  --surface:    #FFFFFF;
-  --text:       #1A1A1A;
-  --text-muted: #777;
-  --border:     rgba(0,0,0,0.08);
-  --input-bg:   #EDE4D6;
+  --verde:        #2F4A3A;
+  --verde-deep:   #1F3327;
+  --verde-soft:   #3D5A47;
+  --sage:         #6B907D;
+  --sage-light:   #B5CFC3;
+  --crema:        #F4ECDF;
+  --crema-soft:   #FAF5EB;
+  --crema-dark:   #E8DCC7;
+  --negro:        #161614;
+  --blanco:       #FFFFFF;
+  --alerta:       #B23A2B;
+  --alerta-soft:  #E8B4A8;
+  --alerta-bg:    #FBEFEB;
+  --ok:           #3D8A5F;
+  --ok-bg:        #E8F2EC;
+  --oro:          #B8902F;
+
+  --sombra:       0 1px 2px rgba(31,51,39,.04), 0 2px 8px rgba(31,51,39,.06);
+  --sombra-lg:    0 8px 28px rgba(31,51,39,.14);
+  --sombra-card:  0 1px 0 rgba(31,51,39,.04), 0 1px 3px rgba(31,51,39,.06);
+
+  --radius:       14px;
+  --radius-sm:    10px;
+  --radius-xs:    6px;
+
+  --bg:           #F4ECDF;
+  --surface:      #FFFFFF;
+  --surface-2:    #FAF5EB;
+  --text:         #161614;
+  --text-muted:   #6B6960;
+  --text-dim:     #8A877C;
+  --border:       rgba(22,22,20,.08);
+  --border-strong:rgba(22,22,20,.16);
+  --input-bg:     #F4ECDF;
+
+  --serif: "Instrument Serif", "Iowan Old Style", "Apple Garamond", Garamond, "Times New Roman", serif;
+  --sans:  "Helvetica Neue", Helvetica, "Arial Nova", Arial, system-ui, sans-serif;
+  --mono:  ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 [data-theme="dark"] {
-  --bg:         #141A17;
-  --surface:    #1E2922;
-  --text:       #EEE8DF;
-  --text-muted: #8A9E94;
-  --border:     rgba(255,255,255,0.08);
-  --input-bg:   #232E28;
-  --sombra:     rgba(0,0,0,0.35);
-  --sombra-lg:  rgba(0,0,0,0.5);
+  --bg:           #14181A;
+  --surface:      #1C2220;
+  --surface-2:    #232A27;
+  --text:         #EDE6D8;
+  --text-muted:   #9DA89F;
+  --text-dim:     #6F7972;
+  --border:       rgba(237,230,216,.08);
+  --border-strong:rgba(237,230,216,.18);
+  --input-bg:     #232A27;
+  --crema:        #1C2220;
+  --crema-soft:   #232A27;
+  --crema-dark:   #2A322F;
+  --sombra:       0 1px 2px rgba(0,0,0,.3), 0 2px 8px rgba(0,0,0,.35);
+  --sombra-lg:    0 12px 32px rgba(0,0,0,.55);
+  --sombra-card:  0 1px 0 rgba(0,0,0,.2), 0 1px 3px rgba(0,0,0,.3);
+  --alerta-bg:    rgba(178,58,43,.16);
+  --ok-bg:        rgba(61,138,95,.14);
 }
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Calibri,system-ui,sans-serif;min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s;}
-#app{opacity:1;transition:opacity .22s ease;}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--sans);
+  min-height:100vh;overflow-x:hidden;
+  font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  transition:background .3s ease, color .3s ease;
+}
+button{font-family:inherit;}
+a{color:inherit;text-decoration:none;}
+:focus-visible{outline:2px solid var(--sage);outline-offset:2px;border-radius:4px;}
+
+#app{opacity:1;transition:opacity .22s ease;max-width:1240px;margin:0 auto;}
 #app.fade-out{opacity:0;}
 
-/* TOPBAR */
-.topbar{background:var(--verde);color:#F5EFE6;padding:0 18px;display:flex;align-items:center;justify-content:space-between;height:50px;position:sticky;top:0;z-index:200;box-shadow:0 2px 14px rgba(0,0,0,.22);}
-.topbar-left{display:flex;align-items:center;gap:10px;}
-.topbar-back{background:rgba(255,255,255,.12);border:none;color:#F5EFE6;border-radius:7px;padding:5px 10px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:background .15s;}
-.topbar-back:hover{background:rgba(255,255,255,.22);}
-.topbar-brand{font-family:'Arial Black',Arial,sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;}
+/* ─── TYPOGRAPHY HELPERS ────────────────────────────────── */
+.eyebrow{
+  font-family:var(--sans);
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  font-weight:700;color:var(--sage);
+}
+.display{
+  font-family:var(--sans);
+  font-weight:900;letter-spacing:-.02em;line-height:1;
+  font-stretch:condensed;
+}
+.serif-accent{
+  font-family:var(--serif);font-weight:400;font-style:italic;letter-spacing:0;
+}
+.num{font-variant-numeric:tabular-nums;}
+.mono{font-family:var(--mono);}
+
+/* ─── TOPBAR ────────────────────────────────────────────── */
+.topbar{
+  background:var(--verde);color:var(--crema);
+  padding:0 20px;display:flex;align-items:center;justify-content:space-between;
+  height:56px;position:sticky;top:0;z-index:200;
+  box-shadow:0 1px 0 rgba(0,0,0,.1), 0 4px 18px rgba(0,0,0,.18);
+}
+.topbar-left{display:flex;align-items:center;gap:12px;min-width:0;}
+.topbar-back{
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.06);
+  color:var(--crema);border-radius:8px;padding:6px 12px;
+  font-size:13px;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+  transition:background .15s, border-color .15s;
+}
+.topbar-back:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.18);}
+.topbar-brand{
+  display:flex;align-items:baseline;gap:8px;min-width:0;
+  font-family:var(--sans);font-weight:900;font-stretch:condensed;
+  font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.topbar-brand .accent{font-family:var(--serif);font-style:italic;font-weight:400;
+  text-transform:none;letter-spacing:0;font-size:17px;color:var(--sage-light);}
 .topbar-right{display:flex;align-items:center;gap:10px;}
-.topbar-region{font-size:10px;opacity:.55;letter-spacing:.12em;text-transform:uppercase;}
-.dark-toggle{background:rgba(255,255,255,.12);border:none;color:#F5EFE6;border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:background .15s;white-space:nowrap;}
-.dark-toggle:hover{background:rgba(255,255,255,.22);}
+.topbar-month{
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  opacity:.6;text-transform:uppercase;
+}
+.dark-toggle{
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.06);
+  color:var(--crema);border-radius:20px;
+  width:32px;height:32px;display:grid;place-items:center;
+  cursor:pointer;transition:background .15s, transform .15s;
+}
+.dark-toggle:hover{background:rgba(255,255,255,.2);}
+.dark-toggle svg{width:14px;height:14px;}
 
-/* HERO HOME */
-.hero{position:relative;background:var(--verde);color:#F5EFE6;padding:44px 22px 52px;overflow:hidden;}
-.hero-arc1{position:absolute;right:-50px;bottom:-70px;width:280px;height:280px;border-radius:50%;border:36px solid rgba(122,158,138,.2);pointer-events:none;}
-.hero-arc2{position:absolute;left:-30px;top:-50px;width:190px;height:190px;border-radius:50%;border:24px solid rgba(245,239,230,.07);pointer-events:none;}
-.hero-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.55;margin-bottom:8px;}
-.hero-score-row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
-.hero-score-num{font-family:'Arial Black',Arial,sans-serif;font-size:clamp(68px,20vw,110px);line-height:1;color:#F5EFE6;opacity:0;transform:translateY(16px);transition:opacity .65s ease,transform .65s ease;}
+/* ─── HERO ─────────────────────────────────────────────── */
+.hero{
+  position:relative;background:var(--verde);color:var(--crema);
+  padding:40px 22px 44px;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 85% 110%, rgba(122,158,138,.22) 0%, transparent 55%);
+  pointer-events:none;
+}
+.hero-inner{position:relative;z-index:1;display:grid;gap:22px;}
+@media(min-width:760px){
+  .hero{padding:56px 36px 56px;}
+  .hero-inner{grid-template-columns:1.2fr .8fr;align-items:center;gap:48px;}
+}
+.hero-label-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.hero-label-row .eyebrow{color:rgba(245,239,230,.55);}
+.hero-live{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  color:rgba(245,239,230,.6);
+}
+.pulse-dot{width:6px;height:6px;border-radius:50%;background:#7AD89A;
+  box-shadow:0 0 0 0 rgba(122,216,154,.5);animation:pulse 2.2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(122,216,154,.55);}50%{box-shadow:0 0 0 6px rgba(122,216,154,0);}}
+
+.hero-score{display:flex;align-items:flex-start;gap:18px;}
+.hero-score-num{
+  font-family:var(--sans);font-weight:900;font-stretch:condensed;
+  font-size:clamp(96px,18vw,156px);line-height:.85;letter-spacing:-.04em;
+  color:var(--crema);
+  opacity:0;transform:translateY(14px);transition:opacity .65s ease, transform .65s ease;
+}
 .hero-score-num.in{opacity:1;transform:translateY(0);}
-.hero-score-stars{font-size:clamp(20px,6vw,32px);color:#C9A84C;margin-bottom:8px;letter-spacing:2px;}
-.hero-pills{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;}
-.hero-pill{background:rgba(245,239,230,.1);border:1px solid rgba(245,239,230,.18);border-radius:20px;padding:5px 13px;font-size:12px;backdrop-filter:blur(4px);}
-.hero-pill strong{color:#B5CFC3;}
-.hero-live{display:flex;align-items:center;gap:6px;font-size:11px;opacity:.65;margin-top:14px;}
-.pulse-dot{width:7px;height:7px;border-radius:50%;background:#5AC987;animation:pulse 2.2s infinite;}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(90,201,135,.5);}50%{box-shadow:0 0 0 5px rgba(90,201,135,0);}}
+.hero-score-side{display:flex;flex-direction:column;gap:8px;padding-top:6px;}
+.hero-stars{font-family:var(--mono);color:var(--oro);font-size:18px;letter-spacing:3px;}
+.hero-of{font-size:11px;letter-spacing:.1em;opacity:.55;text-transform:uppercase;}
+.hero-trend{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--sage-light);font-weight:500;
+  background:rgba(181,207,195,.1);border:1px solid rgba(181,207,195,.2);
+  border-radius:20px;padding:4px 10px;margin-top:6px;width:fit-content;
+}
 
-/* ALERT */
-.alert-banner{background:var(--alerta-bg);border-left:4px solid var(--alerta);margin:14px 14px 0;border-radius:10px;padding:11px 15px;display:flex;gap:10px;align-items:flex-start;animation:slideDown .45s ease .3s both;}
-[data-theme="dark"] .alert-banner{background:rgba(192,57,43,.15);}
-@keyframes slideDown{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
-.alert-icon{font-size:17px;flex-shrink:0;}
-.alert-text{font-size:12px;line-height:1.55;color:#8B1A1A;}
-[data-theme="dark"] .alert-text{color:#F08080;}
-.alert-text strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;}
+.hero-right{display:grid;gap:14px;}
+.hero-stat{
+  display:flex;align-items:baseline;gap:10px;
+  padding:14px 16px;background:rgba(245,239,230,.06);
+  border:1px solid rgba(245,239,230,.1);border-radius:12px;
+  backdrop-filter:blur(4px);
+}
+.hero-stat-val{
+  font-family:var(--sans);font-weight:900;font-stretch:condensed;
+  font-size:34px;letter-spacing:-.02em;line-height:1;color:var(--crema);
+}
+.hero-stat-info{display:flex;flex-direction:column;gap:2px;}
+.hero-stat-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6;}
+.hero-stat-sub{font-size:11px;color:var(--sage-light);}
+.hero-stat.warn{border-color:rgba(232,180,168,.4);background:rgba(232,180,168,.08);}
+.hero-stat.warn .hero-stat-val{color:#F4C0B0;}
 
-/* SECTION */
-.section{padding:26px 14px 10px;}
-.section-title{font-family:'Arial Black',Arial,sans-serif;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--sage);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-.section-title::after{content:'';flex:1;height:1px;background:rgba(122,158,138,.25);}
+/* ─── ALERT BANNER ─────────────────────────────────────── */
+.alert-strip{
+  margin:18px 14px 0;
+  background:var(--alerta-bg);
+  border:1px solid rgba(178,58,43,.22);border-left:3px solid var(--alerta);
+  border-radius:var(--radius-sm);
+  padding:14px 16px;
+  display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;
+  animation:slideDown .45s ease .3s both;
+}
+@media(min-width:760px){.alert-strip{margin:22px 22px 0;}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+.alert-icon-box{
+  width:32px;height:32px;border-radius:8px;
+  background:var(--alerta);color:#FFF;
+  display:grid;place-items:center;font-weight:900;font-size:18px;
+  font-family:var(--serif);font-style:italic;
+}
+.alert-content{display:flex;flex-direction:column;gap:6px;}
+.alert-title{
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;
+  color:var(--alerta);
+}
+[data-theme="dark"] .alert-title{color:#F4A090;}
+.alert-text{font-size:13px;line-height:1.5;color:var(--text);}
+.alert-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.alert-pill{
+  font-family:var(--mono);font-size:10px;letter-spacing:.05em;
+  background:rgba(178,58,43,.12);color:var(--alerta);
+  padding:3px 8px;border-radius:6px;font-weight:600;
+}
+[data-theme="dark"] .alert-pill{color:#F4A090;background:rgba(178,58,43,.25);}
 
-/* BRANCH GRID */
-.branch-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
-@media(min-width:480px){.branch-grid{grid-template-columns:repeat(4,1fr);}}
-.branch-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 10px 14px;cursor:pointer;text-align:center;transition:border-color .2s,box-shadow .2s,transform .15s;box-shadow:0 1px 4px var(--sombra);position:relative;overflow:hidden;text-decoration:none;display:block;}
-.branch-card:hover{border-color:var(--sage);transform:translateY(-3px);box-shadow:0 8px 22px var(--sombra-lg);}
-.branch-card.has-alert::after{content:'!';position:absolute;top:7px;right:8px;background:var(--alerta);color:#fff;font-size:9px;font-weight:900;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:15px;}
-.bc-name{font-family:'Arial Black',Arial,sans-serif;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--text);line-height:1.35;margin-bottom:8px;}
-.bc-score{font-family:'Arial Black',Arial,sans-serif;font-size:26px;color:var(--verde);line-height:1;}
-[data-theme="dark"] .bc-score{color:#B5CFC3;}
-.bc-stars{color:#C9A84C;font-size:10px;margin-top:3px;letter-spacing:1px;}
-.bc-count{font-size:10px;color:var(--text-muted);margin-top:4px;}
-.bc-arrow{margin-top:8px;font-size:10px;color:var(--sage);opacity:0;transition:opacity .15s;}
-.branch-card:hover .bc-arrow{opacity:1;}
+/* ─── SECTIONS ─────────────────────────────────────────── */
+.section{padding:30px 14px 12px;}
+@media(min-width:760px){.section{padding:36px 22px 14px;}}
+.section-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:14px;margin-bottom:18px;flex-wrap:wrap;
+}
+.section-title{
+  font-family:var(--sans);font-weight:900;font-stretch:condensed;
+  font-size:22px;letter-spacing:-.01em;color:var(--text);
+  display:flex;align-items:baseline;gap:10px;
+}
+.section-title .accent{font-family:var(--serif);font-style:italic;font-weight:400;
+  font-size:24px;color:var(--sage);letter-spacing:0;}
+.section-sub{font-size:12px;color:var(--text-muted);}
 
-/* CHART CARD */
-.chart-card{background:var(--surface);border-radius:var(--radius);box-shadow:0 1px 8px var(--sombra);padding:18px 16px 14px;}
-.chart-wrap{position:relative;height:200px;}
+/* ─── FILTER CHIPS ─────────────────────────────────────── */
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{
+  background:transparent;border:1px solid var(--border-strong);
+  color:var(--text);border-radius:20px;
+  padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+  transition:background .15s, border-color .15s, color .15s;
+}
+.chip:hover{background:var(--surface-2);border-color:var(--text);}
+.chip.active{background:var(--verde);color:var(--crema);border-color:var(--verde);}
+.chip-count{
+  font-family:var(--mono);font-size:10px;opacity:.7;
+  background:rgba(0,0,0,.06);padding:1px 6px;border-radius:10px;
+}
+.chip.active .chip-count{background:rgba(255,255,255,.18);opacity:.85;}
+[data-theme="dark"] .chip-count{background:rgba(255,255,255,.08);}
 
-/* TREND BARS */
-.trend-row{margin-bottom:10px;}
-.trend-row-header{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;color:var(--text);}
-.trend-row-header span{color:var(--text-muted);font-size:10px;}
-.trend-dual{display:flex;gap:3px;flex-direction:column;}
-.bar-wrap{height:6px;background:var(--input-bg);border-radius:4px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:4px;width:0;transition:width 1s cubic-bezier(.4,0,.2,1);}
-.bar-hist{background:#B5CFC3;}
-.bar-abr{background:var(--verde);}
-[data-theme="dark"] .bar-abr{background:var(--sage);}
+/* ─── BRANCH GRID ──────────────────────────────────────── */
+.branch-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  gap:12px;
+}
+.branch-card{
+  position:relative;overflow:hidden;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px 16px 16px;
+  cursor:pointer;text-decoration:none;color:var(--text);display:flex;flex-direction:column;
+  box-shadow:var(--sombra-card);
+  transition:border-color .2s, box-shadow .2s, transform .15s;
+}
+.branch-card:hover{
+  border-color:var(--sage);transform:translateY(-3px);
+  box-shadow:var(--sombra-lg);
+}
+.bc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.bc-name{
+  font-family:var(--sans);font-weight:900;font-stretch:condensed;
+  font-size:15px;line-height:1.15;letter-spacing:-.01em;
+  text-transform:uppercase;color:var(--text);
+}
+.bc-status{
+  width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;
+}
+.bc-status.ok{background:var(--ok);box-shadow:0 0 0 3px rgba(61,138,95,.12);}
+.bc-status.warn{background:var(--alerta);box-shadow:0 0 0 3px rgba(178,58,43,.16);animation:pulse-warn 1.8s infinite;}
+@keyframes pulse-warn{0%,100%{box-shadow:0 0 0 3px rgba(178,58,43,.16);}50%{box-shadow:0 0 0 6px rgba(178,58,43,0);}}
 
-/* BRANCH HERO */
-.branch-hero{background:var(--verde);color:#F5EFE6;padding:32px 22px 36px;position:relative;overflow:hidden;}
-.branch-hero::after{content:'';position:absolute;right:-40px;bottom:-40px;width:180px;height:180px;border-radius:50%;border:30px solid rgba(122,158,138,.2);pointer-events:none;}
-.bh-month{font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-bottom:6px;}
-.bh-name{font-family:'Arial Black',Arial,sans-serif;font-size:clamp(22px,6vw,32px);line-height:1.1;margin-bottom:16px;}
+.bc-score-row{display:flex;align-items:flex-end;gap:8px;margin-bottom:4px;}
+.bc-score{
+  font-family:var(--sans);font-weight:900;font-stretch:condensed;
+  font-size:42px;line-height:.9;letter-spacing:-.03em;color:var(--text);
+}
+.bc-stars-line{
+  font-family:var(--mono);color:var(--oro);font-size:11px;letter-spacing:1.5px;
+  margin-bottom:6px;
+}
+.bc-meta{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-size:11px;color:var(--text-muted);margin-top:auto;padding-top:12px;
+  border-top:1px dashed var(--border);
+}
+.bc-meta strong{color:var(--text);font-weight:600;}
+.bc-delta{font-family:var(--mono);font-size:11px;}
+.bc-delta.up{color:var(--ok);}
+.bc-delta.flat{color:var(--text-dim);}
+.bc-delta.down{color:var(--alerta);}
+
+.bc-mayo{
+  margin-top:12px;padding:8px 10px;border-radius:8px;
+  font-size:11px;display:flex;align-items:center;gap:6px;
+  background:var(--ok-bg);color:var(--ok);
+}
+[data-theme="dark"] .bc-mayo{color:#7AD89A;}
+.bc-mayo.warn{background:var(--alerta-bg);color:var(--alerta);}
+[data-theme="dark"] .bc-mayo.warn{color:#F4A090;}
+.bc-mayo .mono{font-weight:600;}
+
+/* ─── TREND BARS ───────────────────────────────────────── */
+.chart-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:22px 22px 20px;box-shadow:var(--sombra-card);
+}
+.chart-wrap{position:relative;height:240px;}
+
+.legend{display:flex;gap:18px;margin-bottom:18px;font-size:12px;color:var(--text-muted);}
+.legend-item{display:flex;align-items:center;gap:8px;}
+.legend-swatch{width:14px;height:8px;border-radius:3px;}
+.legend-swatch.hist{background:var(--sage-light);}
+.legend-swatch.curr{background:var(--verde);}
+[data-theme="dark"] .legend-swatch.curr{background:var(--sage);}
+
+.trend-row{margin-bottom:14px;}
+.trend-row:last-child{margin-bottom:0;}
+.trend-row-header{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-size:12px;margin-bottom:6px;
+}
+.trend-row-header .name{font-weight:600;color:var(--text);}
+.trend-row-header .vals{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+.trend-row-header .vals .now{color:var(--verde);font-weight:700;}
+[data-theme="dark"] .trend-row-header .vals .now{color:var(--sage-light);}
+.trend-row-header .delta{
+  display:inline-block;margin-left:6px;padding:1px 6px;border-radius:4px;
+  font-size:10px;font-family:var(--mono);font-weight:700;
+}
+.trend-row-header .delta.up{background:rgba(61,138,95,.12);color:var(--ok);}
+.trend-row-header .delta.flat{background:rgba(0,0,0,.06);color:var(--text-dim);}
+[data-theme="dark"] .trend-row-header .delta.flat{background:rgba(255,255,255,.06);}
+
+.trend-track{position:relative;height:8px;background:var(--input-bg);border-radius:5px;overflow:hidden;}
+.bar-fill{position:absolute;top:0;left:0;height:100%;border-radius:5px;width:0;
+  transition:width 1s cubic-bezier(.4,0,.2,1);}
+.bar-hist{background:var(--sage-light);}
+.bar-curr{background:linear-gradient(90deg, var(--verde) 0%, var(--verde-soft) 100%);height:100%;}
+[data-theme="dark"] .bar-curr{background:linear-gradient(90deg, var(--sage) 0%, var(--sage-light) 100%);}
+.trend-stack{display:flex;flex-direction:column;gap:4px;}
+
+/* ─── BRANCH HERO ──────────────────────────────────────── */
+.branch-hero{
+  background:var(--verde);color:var(--crema);
+  padding:32px 22px 36px;position:relative;overflow:hidden;
+}
+.branch-hero::after{
+  content:'';position:absolute;right:-50px;bottom:-60px;
+  width:220px;height:220px;border-radius:50%;
+  border:32px solid rgba(122,158,138,.16);pointer-events:none;
+}
+@media(min-width:760px){.branch-hero{padding:44px 36px 48px;}}
+.bh-eyebrow{
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:rgba(245,239,230,.6);margin-bottom:10px;
+}
+.bh-name{
+  font-family:var(--sans);font-weight:900;font-stretch:condensed;
+  font-size:clamp(36px,8vw,56px);line-height:.95;letter-spacing:-.02em;
+  margin-bottom:24px;
+}
+.bh-name .accent{
+  font-family:var(--serif);font-style:italic;font-weight:400;
+  font-size:.7em;color:var(--sage-light);letter-spacing:0;display:block;
+  margin-bottom:-4px;
+}
 .bh-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.bh-metric{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 8px;text-align:center;}
-.bh-metric-val{font-family:'Arial Black',Arial,sans-serif;font-size:22px;color:#F5EFE6;line-height:1;}
-.bh-metric-val.gold{color:#C9A84C;}
-.bh-metric-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;opacity:.6;margin-top:4px;}
+@media(min-width:600px){.bh-metrics{gap:14px;}}
+.bh-metric{
+  background:rgba(245,239,230,.06);border:1px solid rgba(245,239,230,.1);
+  border-radius:12px;padding:14px 12px;
+}
+.bh-metric-val{
+  font-family:var(--sans);font-weight:900;font-stretch:condensed;
+  font-size:28px;line-height:1;letter-spacing:-.02em;color:var(--crema);
+}
+.bh-metric-val.gold{color:var(--oro);}
+.bh-metric-val.up{color:#A7DBB9;}
+.bh-metric-val.flat{color:rgba(245,239,230,.7);}
+.bh-metric-val.down{color:#F4A090;}
+.bh-metric-label{
+  font-size:10px;text-transform:uppercase;letter-spacing:.1em;
+  opacity:.6;margin-top:6px;
+}
+.bh-metric-sub{font-family:var(--mono);font-size:10px;opacity:.5;margin-top:2px;}
 
-/* INSIGHT CARDS */
-.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
-.insight-card{background:var(--surface);border-radius:var(--radius-sm);padding:14px 12px;box-shadow:0 1px 5px var(--sombra);display:flex;gap:10px;align-items:flex-start;}
-.insight-icon{font-size:20px;flex-shrink:0;}
-.insight-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--sage);font-weight:700;margin-bottom:3px;}
-.insight-val{font-size:12px;color:var(--text);line-height:1.45;}
-.insight-card.full{grid-column:1 / -1;}
+/* ─── INSIGHT CARDS ────────────────────────────────────── */
+.insight-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:10px;
+}
+.insight-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:14px 14px;
+  box-shadow:var(--sombra-card);
+  display:flex;gap:12px;align-items:flex-start;
+}
+.insight-marker{
+  font-family:var(--mono);font-size:10px;font-weight:700;
+  width:24px;height:24px;border-radius:6px;display:grid;place-items:center;
+  background:var(--surface-2);color:var(--sage);flex-shrink:0;
+  letter-spacing:0;
+}
+.insight-marker.gold{background:rgba(184,144,47,.12);color:var(--oro);}
+.insight-marker.warn{background:var(--alerta-bg);color:var(--alerta);}
+[data-theme="dark"] .insight-marker.warn{color:#F4A090;}
+.insight-label{
+  font-size:10px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--text-muted);font-weight:600;margin-bottom:4px;
+}
+.insight-val{font-size:13px;color:var(--text);line-height:1.45;}
 
-/* STATUS */
-.status-section{background:var(--surface);border-radius:var(--radius);box-shadow:0 1px 8px var(--sombra);overflow:hidden;margin-bottom:4px;}
-.status-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
-.status-header-left{display:flex;align-items:center;gap:10px;}
-.status-badge{display:flex;align-items:center;gap:5px;font-family:'Arial Black',Arial,sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;}
-.status-badge.ok{color:#3D9E6A;}
-.status-badge.warn{color:var(--alerta);}
-.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.status-dot.ok{background:#3D9E6A;animation:pulse 2.2s infinite;}
-.status-dot.warn{background:var(--alerta);}
-.status-chevron{font-size:14px;color:var(--text-muted);transition:transform .25s;display:inline-block;}
+/* ─── SEGMENTED CONTROL ────────────────────────────────── */
+.segmented{
+  display:inline-flex;background:var(--surface-2);border:1px solid var(--border);
+  border-radius:10px;padding:3px;gap:2px;
+}
+.seg-btn{
+  background:transparent;border:none;color:var(--text-muted);
+  padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;
+  border-radius:7px;transition:background .15s, color .15s;
+  display:flex;align-items:center;gap:6px;
+}
+.seg-btn:hover{color:var(--text);}
+.seg-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--sombra-card);font-weight:600;}
+.seg-btn .count{
+  font-family:var(--mono);font-size:10px;
+  background:var(--input-bg);padding:1px 6px;border-radius:8px;
+}
+.seg-btn.active .count{background:var(--bg);}
+.seg-btn .dot{width:6px;height:6px;border-radius:50%;}
+.seg-btn .dot.ok{background:var(--ok);}
+.seg-btn .dot.warn{background:var(--alerta);}
+
+/* ─── STATUS PANEL ─────────────────────────────────────── */
+.status-panel{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--sombra-card);overflow:hidden;
+}
+.status-panel.alert{border-color:rgba(178,58,43,.3);}
+.status-header{
+  padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;user-select:none;gap:14px;
+}
+.status-header:hover{background:var(--surface-2);}
+.status-header-left{display:flex;align-items:center;gap:12px;}
+.status-icon-box{
+  width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
+  font-family:var(--serif);font-style:italic;font-size:20px;font-weight:400;
+}
+.status-icon-box.ok{background:var(--ok-bg);color:var(--ok);}
+[data-theme="dark"] .status-icon-box.ok{color:#7AD89A;}
+.status-icon-box.warn{background:var(--alerta-bg);color:var(--alerta);}
+[data-theme="dark"] .status-icon-box.warn{color:#F4A090;}
+.status-title{font-weight:700;font-size:14px;color:var(--text);}
+.status-subtitle{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.status-chevron{
+  font-size:12px;color:var(--text-muted);
+  transition:transform .25s;display:inline-block;width:14px;text-align:center;
+}
 .status-chevron.open{transform:rotate(180deg);}
-.status-body{padding:0 18px 16px;display:none;}
+.status-body{padding:0 20px 20px;display:none;}
 .status-body.open{display:block;}
-.status-warn-box{background:var(--alerta-bg);border:1px solid rgba(192,57,43,.18);border-radius:var(--radius-sm);padding:11px 13px;font-size:12px;color:#8B1A1A;margin-bottom:12px;}
-[data-theme="dark"] .status-warn-box{background:rgba(192,57,43,.15);color:#F08080;}
-.status-ok-box{background:rgba(61,158,106,.1);border:1px solid rgba(61,158,106,.2);border-radius:var(--radius-sm);padding:11px 13px;font-size:12px;color:#1A5A35;margin-bottom:12px;}
-[data-theme="dark"] .status-ok-box{background:rgba(61,158,106,.15);color:#5CE89A;}
+.status-warn-box{
+  background:var(--alerta-bg);border:1px solid rgba(178,58,43,.18);
+  border-radius:var(--radius-sm);padding:14px 16px;
+  font-size:13px;color:var(--text);margin-bottom:14px;
+  line-height:1.5;
+}
+.status-warn-box .topic{
+  font-size:11px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--alerta);font-weight:700;margin-bottom:4px;
+}
+[data-theme="dark"] .status-warn-box .topic{color:#F4A090;}
+.status-ok-box{
+  background:var(--ok-bg);border:1px solid rgba(61,138,95,.2);
+  border-radius:var(--radius-sm);padding:14px 16px;
+  font-size:13px;color:var(--text);margin-bottom:6px;line-height:1.5;
+  display:flex;gap:10px;align-items:flex-start;
+}
+.status-ok-box .check{
+  width:22px;height:22px;border-radius:50%;background:var(--ok);
+  color:white;display:grid;place-items:center;font-size:13px;font-weight:900;
+  flex-shrink:0;
+}
+.status-ok-box .ok-text strong{display:block;margin-bottom:2px;color:var(--ok);font-size:12px;text-transform:uppercase;letter-spacing:.08em;}
+[data-theme="dark"] .status-ok-box .ok-text strong{color:#7AD89A;}
 
-/* REVIEWS */
-.reviews-panel{background:var(--surface);border-radius:var(--radius);box-shadow:0 1px 8px var(--sombra);overflow:hidden;}
-.reviews-panel-header{padding:14px 18px 0;display:flex;align-items:center;justify-content:space-between;}
-.rph-title{font-family:'Arial Black',Arial,sans-serif;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);}
-.rph-count{font-size:11px;color:var(--text-muted);}
-.reviews-list{padding:6px 18px 4px;}
-.review-item{border-top:1px solid var(--border);padding:12px 0;}
-.review-item:first-child{border-top:none;}
-.rev-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
-.rev-author{font-weight:600;font-size:12px;color:var(--text);}
-.rev-stars{color:#C9A84C;font-size:11px;letter-spacing:1px;}
-.rev-date{font-size:10px;color:var(--text-muted);margin-bottom:5px;}
-.rev-text{font-size:13px;color:var(--text);line-height:1.55;}
-.rev-guide{display:inline-block;background:rgba(122,158,138,.15);color:var(--sage);font-size:9px;text-transform:uppercase;letter-spacing:.1em;padding:1px 6px;border-radius:4px;margin-left:5px;vertical-align:middle;}
-.show-all-btn{display:block;width:calc(100% - 36px);margin:4px 18px 16px;background:var(--input-bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-size:12px;font-weight:600;color:var(--verde);cursor:pointer;text-align:center;letter-spacing:.06em;transition:background .15s,border-color .15s;}
-[data-theme="dark"] .show-all-btn{color:#B5CFC3;}
-.show-all-btn:hover{background:#B5CFC3;border-color:var(--sage);color:var(--verde-deep);}
+/* ─── REVIEWS ──────────────────────────────────────────── */
+.reviews-panel{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);box-shadow:var(--sombra-card);overflow:hidden;
+}
+.reviews-panel-header{
+  padding:16px 20px 12px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  border-bottom:1px solid var(--border);
+}
+.rph-title{font-weight:700;font-size:13px;color:var(--text);}
+.rph-count{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+.reviews-list{padding:0 20px;}
+.review-item{
+  border-bottom:1px solid var(--border);padding:16px 0;
+  display:grid;grid-template-columns:1fr auto;gap:8px 14px;align-items:start;
+}
+.review-item:last-child{border-bottom:none;}
+.review-item.negative{
+  border-left:3px solid var(--alerta);
+  margin:0 -20px;padding:16px 20px;background:rgba(178,58,43,.03);
+}
+[data-theme="dark"] .review-item.negative{background:rgba(178,58,43,.08);}
+.rev-author{font-weight:600;font-size:13px;color:var(--text);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rev-stars{
+  font-family:var(--mono);color:var(--oro);font-size:13px;letter-spacing:2px;
+  white-space:nowrap;
+}
+.rev-stars.low{color:var(--alerta);}
+.rev-meta{
+  font-family:var(--mono);font-size:10px;color:var(--text-dim);
+  letter-spacing:.04em;grid-column:1;
+}
+.rev-text{
+  font-size:14px;color:var(--text);line-height:1.55;grid-column:1 / -1;
+  text-wrap:pretty;
+}
+.rev-guide{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(122,158,138,.14);color:var(--sage);
+  font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+  font-weight:700;padding:2px 7px;border-radius:4px;
+}
+.show-all-btn{
+  display:block;width:calc(100% - 40px);margin:0 20px 16px;
+  background:transparent;border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);padding:11px;
+  font-size:12px;font-weight:600;color:var(--text);cursor:pointer;
+  text-align:center;letter-spacing:.04em;
+  transition:background .15s, border-color .15s;
+}
+.show-all-btn:hover{background:var(--surface-2);border-color:var(--text);}
 
-/* FOOTER */
-.footer{padding:24px 18px;text-align:center;font-size:10px;color:var(--text-muted);letter-spacing:.06em;}
-.footer strong{color:var(--sage);}
+.empty-state{
+  padding:32px 20px;text-align:center;color:var(--text-muted);
+  font-size:13px;
+}
+.empty-state .glyph{
+  font-family:var(--serif);font-style:italic;font-size:40px;
+  color:var(--sage);margin-bottom:8px;display:block;
+}
 
-/* REVEAL */
-.r{opacity:0;transform:translateY(12px);transition:opacity .5s ease,transform .5s ease;}
+/* ─── FOOTER ───────────────────────────────────────────── */
+.footer{
+  padding:34px 22px 28px;text-align:center;
+  font-size:11px;color:var(--text-muted);letter-spacing:.04em;line-height:1.7;
+}
+.footer .brand{
+  font-family:var(--sans);font-weight:900;font-stretch:condensed;
+  text-transform:uppercase;letter-spacing:.05em;color:var(--text);
+}
+.footer .accent{font-family:var(--serif);font-style:italic;
+  font-weight:400;color:var(--sage);font-size:14px;letter-spacing:0;text-transform:none;}
+
+/* ─── REVEAL ───────────────────────────────────────────── */
+.r{opacity:0;transform:translateY(12px);transition:opacity .5s ease, transform .5s ease;}
 .r.in{opacity:1;transform:translateY(0);}
+
+/* ─── DESKTOP LAYOUT ───────────────────────────────────── */
+@media(min-width:960px){
+  .home-grid-2{
+    display:grid;grid-template-columns:1.4fr 1fr;gap:22px;
+    padding:30px 22px 14px;
+  }
+  .home-grid-2 .section{padding:0;}
+}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>
-/* ── DATA ─────────────────────────────────────────────────── */
+/* ── DATA ─────────────────────────────────────────────── */
 const SUCURSALES = [
-  {
-    id:'andares', nombre:'Andares', abr:'Andares',
-    abril:{score:5.00,count:1}, historico:4.3,
-    alerta:true,
-    statusMayo:{negativas:1,tema:'Ingredientes con apariencia no fresca.'},
-    reseñasAbril:[
-      {stars:5,text:'Muy ricas',fecha:'07 Abr 2026',guide:false}
-    ],
-    reseñasMayo:[
-      {stars:2,text:'Los ingredientes no se veían frescos. Quedé con duda si volver.',fecha:'08 May 2026',guide:false}
-    ]
+  { id:'andares', nombre:'Andares', abr:'Andares',
+    abril:{score:5.00,count:1}, historico:4.3, alerta:true,
+    statusMayo:{negativas:1, tema:'Calidad de ingredientes',
+      detalle:'Cliente reportó apariencia no fresca de ingredientes en visita reciente.'},
+    reseñasAbril:[{stars:5,text:'Muy ricas',fecha:'07 Abr 2026',guide:false}],
+    reseñasMayo:[{stars:2,text:'Los ingredientes no se veían frescos. Quedé con duda si volver.',fecha:'08 May 2026',guide:false}]
   },
-  {
-    id:'patria', nombre:'Plaza Patria', abr:'Patria',
-    abril:{score:5.00,count:1}, historico:4.5,
-    alerta:true,
-    statusMayo:{negativas:2,tema:'Errores en pedidos y cobros adicionales no solicitados.'},
-    reseñasAbril:[
-      {stars:5,text:'Muy buenos la verdad los pedidos en tiempo y forma muchas gracias por su gran desempeño a esos muchachos tan trabajadores',fecha:'07 Abr 2026',guide:false}
-    ],
+  { id:'patria', nombre:'Plaza Patria', abr:'Patria',
+    abril:{score:5.00,count:1}, historico:4.5, alerta:true,
+    statusMayo:{negativas:2, tema:'Errores en pedidos y cobros',
+      detalle:'Errores recurrentes en preparación + cargos no solicitados al cobrar.'},
+    reseñasAbril:[{stars:5,text:'Muy buenos la verdad los pedidos en tiempo y forma muchas gracias por su gran desempeño a esos muchachos tan trabajadores',fecha:'07 Abr 2026',guide:false}],
     reseñasMayo:[
       {stars:1,text:'Pedí sin champiñones y vinieron con champiñones. Segundo error en dos visitas.',fecha:'09 May 2026',guide:false},
       {stars:2,text:'Me cobraron un extra que no pedí. El cajero fue poco amable al aclarar.',fecha:'05 May 2026',guide:false}
     ]
   },
-  {
-    id:'gal-gdl', nombre:'Galerías GDL', abr:'Gal. GDL',
-    abril:{score:5.00,count:2}, historico:4.4,
-    alerta:false, statusMayo:null,
+  { id:'gal-gdl', nombre:'Galerías GDL', abr:'Gal. GDL',
+    abril:{score:5.00,count:2}, historico:4.4, alerta:false, statusMayo:null,
     reseñasAbril:[
       {stars:5,text:'Me encantan. Mi favorita la caprese. Son muy amables y pese a la cantidad de gente son atentos y rápidos.',fecha:'26 Abr 2026',guide:true},
       {stars:5,text:'Nos encantan sus crepas y bebidas cada vez que vamos a Plaza Galerías! Los chicos que atienden muy amables.',fecha:'26 Abr 2026',guide:true}
     ],
     reseñasMayo:[]
   },
-  {
-    id:'midtown', nombre:'Midtown', abr:'Midtown',
-    abril:{score:5.00,count:7}, historico:4.5,
-    alerta:true,
-    statusMayo:{negativas:3,tema:'Ingredientes faltantes en pedidos y calidad de frescura cuestionada.'},
+  { id:'midtown', nombre:'Midtown', abr:'Midtown',
+    abril:{score:5.00,count:7}, historico:4.5, alerta:true,
+    statusMayo:{negativas:3, tema:'Ingredientes faltantes y frescura',
+      detalle:'Tres reseñas en 6 días: ingrediente principal faltante en pedidos + dudas de frescura.'},
     reseñasAbril:[
       {stars:5,text:'Una experiencia inolvidable, hacen crepas y bebidas muy buenas, el personal es muy amable',fecha:'28 Abr 2026',guide:false},
       {stars:5,text:'Muy bueno y muy amables',fecha:'28 Abr 2026',guide:false},
       {stars:5,text:'Es un local en medio de la plaza donde venden unas crepas y bebidas muy ricas. Y la atención al cliente es muy buena.',fecha:'25 Abr 2026',guide:true},
       {stars:5,text:'Muy amables los chicos',fecha:'07 Abr 2026',guide:false},
-      {stars:5,text:'Muy buen servicio de parte de los chicos y muy rápida la atención 👍🏼',fecha:'06 Abr 2026',guide:false},
+      {stars:5,text:'Muy buen servicio de parte de los chicos y muy rápida la atención',fecha:'06 Abr 2026',guide:false},
       {stars:5,text:'Excelente servicio!!!',fecha:'02 Abr 2026',guide:false},
       {stars:5,text:'Delicioso, excelente servicio, empleados atentos, muy cómodo para relajarte un rato',fecha:'01 Abr 2026',guide:false}
     ],
@@ -240,19 +654,17 @@ const SUCURSALES = [
       {stars:2,text:'Ingrediente principal faltante en mi orden. Personal amable pero el error no se resolvió bien.',fecha:'03 May 2026',guide:false}
     ]
   },
-  {
-    id:'via-viva', nombre:'Via Viva', abr:'Via Viva',
-    abril:{score:5.00,count:15}, historico:4.8,
-    alerta:false, statusMayo:null,
+  { id:'via-viva', nombre:'Via Viva', abr:'Via Viva',
+    abril:{score:5.00,count:15}, historico:4.8, alerta:false, statusMayo:null,
     reseñasAbril:[
       {stars:5,text:'El trato amable de la cajera, el sabor de la rica crepa y esa mesita con sillas para relajarte mientras disfrutas tu limonada mineral. ¡Me encantó!',fecha:'27 Abr 2026',guide:false},
-      {stars:5,text:'Gran servicio y crepas ricas. El chai también es bueno. Osvaldo y Arely muy atentos 🤗',fecha:'26 Abr 2026',guide:false},
+      {stars:5,text:'Gran servicio y crepas ricas. El chai también es bueno. Osvaldo y Arely muy atentos',fecha:'26 Abr 2026',guide:false},
       {stars:5,text:'Muy buen servicio por parte de Osvaldo y Areli, la masa madre es deliciosa',fecha:'26 Abr 2026',guide:true},
       {stars:5,text:'Súper recomendado, el café es buenísimo y los chicos de barra son súper atentos, Arely y Oswaldo son súper amables y súper eficientes.',fecha:'24 Abr 2026',guide:false},
       {stars:5,text:'Las crepas deliciosas y bien hechas, la atención muy buena y amigable, el servicio es rápido, esperas mucho menos que en otras sucursales.',fecha:'20 Abr 2026',guide:false},
       {stars:5,text:'Me encantó el servicio, Oswaldo me atendió muy bien, me llevó mi pedido hasta la mesa.',fecha:'18 Abr 2026',guide:false},
       {stars:5,text:'Están buenísimas las crepas, Oswaldo me recomendó la capresse con jamón, y solo puedo decir que quedé fascinada!!',fecha:'18 Abr 2026',guide:false},
-      {stars:5,text:'Servicio 10 de 10, excelente para una tarde de calor. Recomiendo la Limonade Rosé 🍓💚🩷',fecha:'18 Abr 2026',guide:true},
+      {stars:5,text:'Servicio 10 de 10, excelente para una tarde de calor. Recomiendo la Limonade Rosé',fecha:'18 Abr 2026',guide:true},
       {stars:5,text:'Muy buenas crepas y el servicio es muy amable.',fecha:'18 Abr 2026',guide:false},
       {stars:5,text:'Nos encantó el café y el chocolate. También comimos unas crepas de manzana muy ricas. Gracias Arely por tu servicio y atención.',fecha:'13 Abr 2026',guide:false},
       {stars:5,text:'Osvaldo nos recomendó la crepa Folie de frutos rojos... está buenísima... muy amigables en la atención',fecha:'11 Abr 2026',guide:true},
@@ -263,19 +675,17 @@ const SUCURSALES = [
     ],
     reseñasMayo:[]
   },
-  {
-    id:'sta-anita', nombre:'Galerías Santa Anita', abr:'Sta. Anita',
-    abril:{score:5.00,count:38}, historico:4.7,
-    alerta:false, statusMayo:null,
+  { id:'sta-anita', nombre:'Galerías Santa Anita', abr:'Sta. Anita',
+    abril:{score:5.00,count:38}, historico:4.7, alerta:false, statusMayo:null,
     reseñasAbril:[
-      {stars:5,text:'Esta muy rico, y excelente servicio muy amables, recomendado 👌',fecha:'19 Abr 2026',guide:false},
+      {stars:5,text:'Esta muy rico, y excelente servicio muy amables, recomendado',fecha:'19 Abr 2026',guide:false},
       {stars:5,text:'Muy rico',fecha:'19 Abr 2026',guide:false},
       {stars:5,text:'Siempre son muy amables. Los chicos atienden maravillosamente bien. Muchas gracias por todo',fecha:'15 Abr 2026',guide:true},
       {stars:5,text:'Muy buenas crepas que hace la Vale :)',fecha:'06 Abr 2026',guide:false},
       {stars:5,text:'Súbanle el sueldo a Vale, gran servicio.',fecha:'06 Abr 2026',guide:false},
       {stars:5,text:'Las crepas súper recomendadas, nos atendieron muy rápido y los chicos muy amables, 100% recomendable',fecha:'06 Abr 2026',guide:false},
       {stars:5,text:'Las crepas riquísimas, el servicio de los chicos que atienden siempre es eficiente y muy amable',fecha:'06 Abr 2026',guide:false},
-      {stars:5,text:'Excelente sabor y servicio 👍',fecha:'06 Abr 2026',guide:false},
+      {stars:5,text:'Excelente sabor y servicio',fecha:'06 Abr 2026',guide:false},
       {stars:5,text:'Súper ricas, las mejores crepas que he probado. La mejor atención de Valentina siempre',fecha:'06 Abr 2026',guide:false},
       {stars:5,text:'Excelente servicio nos atendieron super bien, muchacha muy amable',fecha:'06 Abr 2026',guide:false},
       {stars:5,text:'Las crepas están deliciosas, el lugar es agradable, pero lo mejor es la atención de Vale, sin duda, un sitio ideal para disfrutar algo dulce',fecha:'06 Abr 2026',guide:false},
@@ -284,49 +694,45 @@ const SUCURSALES = [
       {stars:5,text:'Súper buen servicio, excelente las crepas súper ricas, nos atendió Valentina',fecha:'06 Abr 2026',guide:false},
       {stars:5,text:'Siempre que voy tengo un excelente servicio del personal y una buena calidad y los cajeros muy amables',fecha:'05 Abr 2026',guide:false},
       {stars:5,text:'Excelente lugar, excelente servicio de los chavos',fecha:'05 Abr 2026',guide:false},
-      {stars:5,text:'Siempre es agradable el servicio que brindan los chicos, súper recomendable ✨✨🫶🏼',fecha:'05 Abr 2026',guide:false},
+      {stars:5,text:'Siempre es agradable el servicio que brindan los chicos, súper recomendable',fecha:'05 Abr 2026',guide:false},
       {stars:5,text:'El sabor es bueno, y el servicio es mejor. ¡Agradezco la paciencia de la srta Valentina, sin duda volveré!',fecha:'05 Abr 2026',guide:false},
       {stars:5,text:'Muy amable la señorita Valentina',fecha:'05 Abr 2026',guide:false},
-      {stars:5,text:'Maravillosa atención, creando magia con sus crepas y postres. Muy recomendable 👍',fecha:'05 Abr 2026',guide:true},
-      {stars:5,text:'Excelente servicio! Muy rápidos y muy bien sabor, las MEJORES CREPAS QUE HE COMIDO EN MI VIDA 👏',fecha:'05 Abr 2026',guide:false},
+      {stars:5,text:'Maravillosa atención, creando magia con sus crepas y postres. Muy recomendable',fecha:'05 Abr 2026',guide:true},
+      {stars:5,text:'Excelente servicio! Muy rápidos y muy bien sabor, las MEJORES CREPAS QUE HE COMIDO EN MI VIDA',fecha:'05 Abr 2026',guide:false},
       {stars:5,text:'Excelente servicio de parte de la señorita',fecha:'05 Abr 2026',guide:true},
       {stars:5,text:'Rifado, denles su día de domingo en fin de semana',fecha:'05 Abr 2026',guide:true},
-      {stars:5,text:'Excelente servicio ❤️',fecha:'05 Abr 2026',guide:false},
-      {stars:5,text:'La chica de los lentes es muy amable y todo está muy rico, se los recomiendo 😛',fecha:'05 Abr 2026',guide:false},
-      {stars:5,text:'La chica de lentes es muy amable y todo está muy rico 🙏',fecha:'05 Abr 2026',guide:false},
+      {stars:5,text:'Excelente servicio',fecha:'05 Abr 2026',guide:false},
+      {stars:5,text:'La chica de los lentes es muy amable y todo está muy rico, se los recomiendo',fecha:'05 Abr 2026',guide:false},
+      {stars:5,text:'La chica de lentes es muy amable y todo está muy rico',fecha:'05 Abr 2026',guide:false},
       {stars:5,text:'Muy ricas y buena atención! Las recomiendo!',fecha:'05 Abr 2026',guide:false},
       {stars:5,text:'Excelente servicio y delicioso.',fecha:'05 Abr 2026',guide:false},
       {stars:5,text:'Excelente servicio y está súper rico, muy recomendado!!!',fecha:'05 Abr 2026',guide:false},
       {stars:5,text:'Ricas crepas, muy buen servicio de Daniela!',fecha:'05 Abr 2026',guide:false},
       {stars:5,text:'Mucha suerte!!!!',fecha:'05 Abr 2026',guide:false},
-      {stars:5,text:'Delicioso 😋',fecha:'05 Abr 2026',guide:false},
+      {stars:5,text:'Delicioso',fecha:'05 Abr 2026',guide:false},
       {stars:5,text:'Los trabajadores juegan mucho, las crepas están buenas',fecha:'05 Abr 2026',guide:false},
       {stars:5,text:'Esta muy rico, super Recomendado',fecha:'06 Abr 2026',guide:false},
       {stars:5,text:'Excelente, me encanta!',fecha:'06 Abr 2026',guide:false},
       {stars:5,text:'Recomendable ampliamente, buen servicio y delicioso!',fecha:'06 Abr 2026',guide:false},
       {stars:5,text:'Me gusta mucho el servicio, la limpieza y la variedad de sabores, me encanta!',fecha:'06 Abr 2026',guide:false},
-      {stars:5,text:'Muy recomendado, súper padre el lugar y muy buena atención 😸',fecha:'06 Abr 2026',guide:false}
+      {stars:5,text:'Muy recomendado, súper padre el lugar y muy buena atención',fecha:'06 Abr 2026',guide:false}
     ],
     reseñasMayo:[]
   },
-  {
-    id:'la-perla', nombre:'La Perla', abr:'La Perla',
-    abril:{score:5.00,count:6}, historico:4.4,
-    alerta:false, statusMayo:null,
+  { id:'la-perla', nombre:'La Perla', abr:'La Perla',
+    abril:{score:5.00,count:6}, historico:4.4, alerta:false, statusMayo:null,
     reseñasAbril:[
-      {stars:5,text:'Deliciosas crepas y las bebidas muy ricas 😋 Atención muy amena.',fecha:'25 Abr 2026',guide:false},
+      {stars:5,text:'Deliciosas crepas y las bebidas muy ricas. Atención muy amena.',fecha:'25 Abr 2026',guide:false},
       {stars:5,text:'Muy ricas las cremas. Las bebidas también. El servicio de los chicos excelente!!',fecha:'24 Abr 2026',guide:true},
-      {stars:5,text:'Excelente servicio! Las bebidas muy ricas y aparte me tocó promoción 😋😸 20/10 100',fecha:'23 Abr 2026',guide:false},
+      {stars:5,text:'Excelente servicio! Las bebidas muy ricas y aparte me tocó promoción. 20/10 100',fecha:'23 Abr 2026',guide:false},
       {stars:5,text:'Las crepas son bastante ricas y bien servidas, las bebidas sobre todo las limadas son super frescas, tienen fruta natural, sin duda nuestro lugar favorito de crepas!',fecha:'18 Abr 2026',guide:true},
       {stars:5,text:'Muy buen servicio, buena atención y muy ricas',fecha:'18 Abr 2026',guide:true},
       {stars:5,text:'Súper ricas las bebidas',fecha:'14 Abr 2026',guide:false}
     ],
     reseñasMayo:[]
   },
-  {
-    id:'forum', nombre:'Forum Tlaquepaque', abr:'Forum',
-    abril:{score:5.00,count:4}, historico:4.4,
-    alerta:false, statusMayo:null,
+  { id:'forum', nombre:'Forum Tlaquepaque', abr:'Forum',
+    abril:{score:5.00,count:4}, historico:4.4, alerta:false, statusMayo:null,
     reseñasAbril:[
       {stars:5,text:'Excelente servicio y gran ambiente! Además de todo muy rico',fecha:'30 Abr 2026',guide:true},
       {stars:5,text:'Super rico y muy buena atención. Recomendado si van a Forum!',fecha:'30 Abr 2026',guide:false},
@@ -337,13 +743,17 @@ const SUCURSALES = [
   }
 ];
 
-/* ── THEME ─────────────────────────────────────────────────── */
+/* ── THEME ─────────────────────────────────────────────── */
 let darkMode = localStorage.getItem('lcpDark') === '1';
 function applyTheme(){document.documentElement.setAttribute('data-theme',darkMode?'dark':'light');}
 applyTheme();
 function toggleDark(){darkMode=!darkMode;localStorage.setItem('lcpDark',darkMode?'1':'0');applyTheme();route();}
 
-/* ── ROUTER ────────────────────────────────────────────────── */
+/* ── STATE ─────────────────────────────────────────────── */
+let homeFilter = 'todas'; // todas | alerta | estables
+let branchView = 'abril'; // abril | mayo
+
+/* ── ROUTER ────────────────────────────────────────────── */
 function destroyCharts(){
   const ids = Object.keys(Chart.instances);
   ids.forEach(id=>{try{Chart.instances[id].destroy();}catch(e){}});
@@ -357,6 +767,7 @@ function route(){
     if(hash.startsWith('#/sucursal/')){
       const id=hash.replace('#/sucursal/','');
       const s=SUCURSALES.find(x=>x.id===id);
+      branchView = s && s.alerta ? 'mayo' : 'abril';
       s?renderBranch(s):renderHome();
     } else {renderHome();}
     app.classList.remove('fade-out');
@@ -367,221 +778,403 @@ function route(){
 window.addEventListener('hashchange',route);
 window.addEventListener('load',route);
 
-/* ── TOPBAR ────────────────────────────────────────────────── */
+/* ── HELPERS ───────────────────────────────────────────── */
+function starStr(n){return '★'.repeat(n)+'☆'.repeat(5-n);}
+function svgIcon(name){
+  const i = {
+    sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
+    moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+    arrow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>'
+  };
+  return i[name]||'';
+}
+
+/* ── TOPBAR ────────────────────────────────────────────── */
 function buildTopbar(showBack=false,branchName=''){
-  const back=showBack?`<button class="topbar-back" onclick="window.location.hash='#/'">&#8592; Inicio</button>`:'';
+  const back=showBack?`<button class="topbar-back" onclick="window.location.hash='#/'">${svgIcon('arrow')}<span>Inicio</span></button>`:'';
   const brand=showBack
-    ?`<span class="topbar-brand" style="font-size:11px;">${branchName}</span>`
-    :`<span class="topbar-brand">La Crêpe Parisienne</span>`;
-  const dark=darkMode?'&#9728; Claro':'&#9790; Oscuro';
+    ? `<span class="topbar-brand"><span class="accent">${branchName}</span></span>`
+    : `<span class="topbar-brand">La <span class="accent">Crêpe</span> Parisienne</span>`;
   return `<header class="topbar">
     <div class="topbar-left">${back}${brand}</div>
     <div class="topbar-right">
-      ${!showBack?'<span class="topbar-region">GDL · 2026</span>':''}
-      <button class="dark-toggle" onclick="toggleDark()">${dark}</button>
+      ${!showBack?'<span class="topbar-month">GDL · Abr 2026</span>':''}
+      <button class="dark-toggle" onclick="toggleDark()" aria-label="Cambiar tema">${darkMode?svgIcon('sun'):svgIcon('moon')}</button>
     </div>
   </header>`;
 }
 
-/* ── STARS ─────────────────────────────────────────────────── */
-function starStr(n){return '★'.repeat(n)+'☆'.repeat(5-n);}
-
-/* ── HOME ──────────────────────────────────────────────────── */
+/* ── HOME ──────────────────────────────────────────────── */
 function renderHome(){
-  const sorted=[...SUCURSALES].sort((a,b)=>b.abril.count-a.abril.count);
-  const cards=sorted.map(s=>`
-    <a class="branch-card${s.alerta?' has-alert':''}" href="#/sucursal/${s.id}">
-      <div class="bc-name">${s.abr}</div>
-      <div class="bc-score">${s.abril.score.toFixed(2)}</div>
-      <div class="bc-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-      <div class="bc-count">${s.abril.count} reseña${s.abril.count!==1?'s':''}</div>
-      <div class="bc-arrow">Ver detalle &#8594;</div>
-    </a>`).join('');
+  const totalReseñas = SUCURSALES.reduce((a,s)=>a+s.abril.count,0);
+  const conAlerta = SUCURSALES.filter(s=>s.alerta);
+  const sinAlerta = SUCURSALES.filter(s=>!s.alerta);
+  const negativasMayo = conAlerta.reduce((a,s)=>a+(s.statusMayo?.negativas||0),0);
+  const promHistorico = (SUCURSALES.reduce((a,s)=>a+s.historico,0)/SUCURSALES.length).toFixed(2);
 
-  const trends=sorted.map(s=>{
-    const pH=((s.historico-3.5)/1.5*100).toFixed(1);
+  // Filter
+  let visible = SUCURSALES;
+  if(homeFilter==='alerta') visible = conAlerta;
+  else if(homeFilter==='estables') visible = sinAlerta;
+  const sorted=[...visible].sort((a,b)=>{
+    if(a.alerta!==b.alerta) return a.alerta?-1:1;
+    return b.abril.count-a.abril.count;
+  });
+
+  const cards=sorted.map(s=>{
+    const delta=(s.abril.score-s.historico);
+    const dClass=delta>0.05?'up':delta<-0.05?'down':'flat';
+    const dStr=delta>0?`+${delta.toFixed(2)}`:delta.toFixed(2);
+    const mayoBlock = s.alerta
+      ? `<div class="bc-mayo warn"><span class="mono">MAY</span> <span>${s.statusMayo.negativas} reseña${s.statusMayo.negativas!==1?'s':''} negativa${s.statusMayo.negativas!==1?'s':''}</span></div>`
+      : `<div class="bc-mayo"><span class="mono">MAY</span> <span>Sin incidencias</span></div>`;
+    return `
+    <a class="branch-card" href="#/sucursal/${s.id}">
+      <div class="bc-top">
+        <div class="bc-name">${s.abr}</div>
+        <span class="bc-status ${s.alerta?'warn':'ok'}" title="${s.alerta?'Atención requerida':'Estable'}"></span>
+      </div>
+      <div class="bc-score-row">
+        <span class="bc-score num">${s.abril.score.toFixed(2)}</span>
+      </div>
+      <div class="bc-stars-line">★★★★★</div>
+      <div class="bc-meta">
+        <span><strong>${s.abril.count}</strong> reseña${s.abril.count!==1?'s':''} abr</span>
+        <span class="bc-delta ${dClass} num">${dStr} vs hist</span>
+      </div>
+      ${mayoBlock}
+    </a>`;
+  }).join('');
+
+  const trends=[...SUCURSALES].sort((a,b)=>b.abril.count-a.abril.count).map(s=>{
+    const pH=Math.max(0,((s.historico-3.5)/1.5*100));
+    const pC=Math.max(0,((s.abril.score-3.5)/1.5*100));
+    const delta=(s.abril.score-s.historico).toFixed(2);
+    const dClass=delta>0?'up':'flat';
+    const dStr=delta>0?`+${delta}`:delta;
     return `<div class="trend-row">
       <div class="trend-row-header">
-        <strong>${s.abr}</strong>
-        <span>Hist: ${s.historico} &rarr; <strong style="color:var(--verde)">5.00</strong></span>
+        <span class="name">${s.abr}</span>
+        <span class="vals num">
+          ${s.historico.toFixed(1)} → <span class="now">${s.abril.score.toFixed(2)}</span>
+          <span class="delta ${dClass}">${dStr}</span>
+        </span>
       </div>
-      <div class="trend-dual">
-        <div class="bar-wrap"><div class="bar-fill bar-hist" data-w="${pH}"></div></div>
-        <div class="bar-wrap"><div class="bar-fill bar-abr"  data-w="100"></div></div>
+      <div class="trend-stack">
+        <div class="trend-track"><div class="bar-fill bar-hist" data-w="${pH.toFixed(1)}"></div></div>
+        <div class="trend-track"><div class="bar-fill bar-curr" data-w="${pC.toFixed(1)}"></div></div>
       </div>
-    </div>`;}).join('');
+    </div>`;
+  }).join('');
 
   document.getElementById('app').innerHTML=`
     ${buildTopbar()}
     <section class="hero">
-      <div class="hero-arc1"></div><div class="hero-arc2"></div>
-      <div class="hero-label">Promedio Regional · Abril 2026</div>
-      <div class="hero-score-row">
-        <span class="hero-score-num" id="heroNum">5.00</span>
-        <span class="hero-score-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+      <div class="hero-inner">
+        <div class="hero-left">
+          <div class="hero-label-row">
+            <span class="eyebrow" style="color:rgba(245,239,230,.55);">Promedio Regional · Abril 2026</span>
+          </div>
+          <div class="hero-score">
+            <span class="hero-score-num num" id="heroNum">5.00</span>
+            <div class="hero-score-side">
+              <span class="hero-stars">★★★★★</span>
+              <span class="hero-of">de 5.00</span>
+              <span class="hero-trend">↑ ${(5-Number(promHistorico)).toFixed(2)} vs promedio histórico (${promHistorico})</span>
+            </div>
+          </div>
+          <div class="hero-live"><span class="pulse-dot"></span> Primer mes 100% limpio desde inicio de monitoreo</div>
+        </div>
+        <div class="hero-right">
+          <div class="hero-stat">
+            <span class="hero-stat-val num">${totalReseñas}</span>
+            <div class="hero-stat-info">
+              <span class="hero-stat-label">Reseñas Abril</span>
+              <span class="hero-stat-sub">100% cinco estrellas</span>
+            </div>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-val num">${SUCURSALES.length}</span>
+            <div class="hero-stat-info">
+              <span class="hero-stat-label">Sucursales activas</span>
+              <span class="hero-stat-sub">Región Guadalajara</span>
+            </div>
+          </div>
+          <div class="hero-stat warn">
+            <span class="hero-stat-val num">${negativasMayo}</span>
+            <div class="hero-stat-info">
+              <span class="hero-stat-label">Negativas en Mayo</span>
+              <span class="hero-stat-sub">${conAlerta.length} sucursal${conAlerta.length!==1?'es':''} con alerta</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="hero-pills">
-        <span class="hero-pill"><strong>74</strong> reseñas</span>
-        <span class="hero-pill"><strong>8</strong> sucursales</span>
-        <span class="hero-pill"><strong>100%</strong> cinco estrellas</span>
-      </div>
-      <div class="hero-live"><span class="pulse-dot"></span>&nbsp;Primer mes limpio desde inicio de monitoreo</div>
     </section>
-    <div class="alert-banner">
-      <span class="alert-icon">&#9888;&#65039;</span>
-      <div class="alert-text">
-        <strong>Alerta &middot; Mayo 2026 (primeros 10 días)</strong>
-        Andares (&times;1), Plaza Patria (&times;2) y Midtown (&times;3) con reseñas negativas. Patrón: calidad de ingredientes y errores en pedidos.
+
+    ${negativasMayo>0?`<div class="alert-strip">
+      <div class="alert-icon-box">!</div>
+      <div class="alert-content">
+        <div class="alert-title">Alerta · Mayo 2026 · primeros 10 días</div>
+        <div class="alert-text">${conAlerta.length} sucursales acumulan ${negativasMayo} reseñas negativas. Patrón común: <strong>calidad de ingredientes</strong> y <strong>errores en pedidos</strong>.</div>
+        <div class="alert-pills">
+          ${conAlerta.map(s=>`<span class="alert-pill">${s.abr} · ${s.statusMayo.negativas}</span>`).join('')}
+        </div>
       </div>
+    </div>`:''}
+
+    <section class="section r">
+      <div class="section-head">
+        <div class="section-title">Sucursales <span class="accent">por desempeño</span></div>
+        <div class="filter-row">
+          <button class="chip ${homeFilter==='todas'?'active':''}" onclick="setFilter('todas')">Todas <span class="chip-count">${SUCURSALES.length}</span></button>
+          <button class="chip ${homeFilter==='alerta'?'active':''}" onclick="setFilter('alerta')">Con alerta <span class="chip-count">${conAlerta.length}</span></button>
+          <button class="chip ${homeFilter==='estables'?'active':''}" onclick="setFilter('estables')">Estables <span class="chip-count">${sinAlerta.length}</span></button>
+        </div>
+      </div>
+      <div class="branch-grid">${cards||'<div class="empty-state"><span class="glyph">—</span>Sin sucursales para este filtro</div>'}</div>
+    </section>
+
+    <div class="home-grid-2">
+      <section class="section r">
+        <div class="section-head">
+          <div class="section-title">Histórico <span class="accent">vs</span> Abril 2026</div>
+        </div>
+        <div class="chart-card">
+          <div class="legend">
+            <div class="legend-item"><span class="legend-swatch hist"></span> Histórico (anual)</div>
+            <div class="legend-item"><span class="legend-swatch curr"></span> Abril 2026</div>
+          </div>
+          ${trends}
+        </div>
+      </section>
+
+      <section class="section r">
+        <div class="section-head">
+          <div class="section-title">Volumen <span class="accent">Abril</span></div>
+          <span class="section-sub">${totalReseñas} reseñas · 8 sucursales</span>
+        </div>
+        <div class="chart-card"><div class="chart-wrap"><canvas id="volChart"></canvas></div></div>
+      </section>
     </div>
-    <section class="section r">
-      <div class="section-title">Sucursales</div>
-      <div class="branch-grid">${cards}</div>
-    </section>
-    <section class="section r">
-      <div class="section-title">Histórico vs Abril 2026</div>
-      <div class="chart-card">${trends}</div>
-    </section>
-    <section class="section r">
-      <div class="section-title">Volumen de reseñas · Abril 2026</div>
-      <div class="chart-card"><div class="chart-wrap"><canvas id="volChart"></canvas></div></div>
-    </section>
-    <footer class="footer"><strong>La Crêpe Parisienne</strong> · Grupo MYT / Grupo Corporativo Alancar<br>Dashboard de Reseñas · Región Guadalajara · Datos: Google Reviews</footer>`;
+
+    <footer class="footer">
+      <span class="brand">La <span class="accent">Crêpe</span> Parisienne</span> · Grupo MYT / Grupo Corporativo Alancar<br>
+      Dashboard de Reseñas · Región Guadalajara · Fuente: Google Reviews
+    </footer>`;
 
   requestAnimationFrame(()=>document.getElementById('heroNum')?.classList.add('in'));
   setTimeout(()=>document.querySelectorAll('.bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),350);
 
   const ctx=document.getElementById('volChart')?.getContext('2d');
   if(ctx){
+    const sortedVol=[...SUCURSALES].sort((a,b)=>b.abril.count-a.abril.count);
     new Chart(ctx,{
       type:'bar',
       data:{
-        labels:sorted.map(s=>s.abr),
+        labels:sortedVol.map(s=>s.abr),
         datasets:[{
           label:'Reseñas',
-          data:sorted.map(s=>s.abril.count),
-          backgroundColor:sorted.map((_,i)=>i===0?'rgba(61,90,71,0.85)':darkMode?'rgba(122,158,138,0.5)':'rgba(122,158,138,0.6)'),
-          borderRadius:7,borderSkipped:false
+          data:sortedVol.map(s=>s.abril.count),
+          backgroundColor:sortedVol.map((s,i)=>{
+            if(s.alerta) return darkMode?'rgba(244,160,144,0.75)':'rgba(178,58,43,0.7)';
+            return i===0?(darkMode?'rgba(181,207,195,0.9)':'rgba(47,74,58,0.88)')
+                       :(darkMode?'rgba(122,158,138,0.55)':'rgba(107,144,125,0.55)');
+          }),
+          borderRadius:6,borderSkipped:false,
+          maxBarThickness:46
         }]
       },
       options:{
         responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false}},
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:darkMode?'#1C2220':'#161614',
+            titleFont:{family:'Helvetica Neue, Helvetica, Arial',size:12,weight:'700'},
+            bodyFont:{family:'Helvetica Neue, Helvetica, Arial',size:11},
+            padding:10, displayColors:false,
+            callbacks:{label:c=>`${c.raw} reseña${c.raw!==1?'s':''}`}
+          }
+        },
         scales:{
-          y:{beginAtZero:true,grid:{color:darkMode?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.05)'},ticks:{font:{size:10},color:darkMode?'#8A9E94':'#888',precision:0}},
-          x:{grid:{display:false},ticks:{font:{size:10},color:darkMode?'#8A9E94':'#666',maxRotation:30}}
+          y:{beginAtZero:true,grid:{color:darkMode?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.04)'},
+             ticks:{font:{size:10,family:'ui-monospace, SF Mono, Menlo'},color:darkMode?'#8A9E94':'#8A877C',precision:0}},
+          x:{grid:{display:false},
+             ticks:{font:{size:10,family:'Helvetica Neue, Helvetica'},color:darkMode?'#9DA89F':'#6B6960',maxRotation:30}}
         }
       }
     });
   }
 }
 
-/* ── BRANCH ────────────────────────────────────────────────── */
+function setFilter(f){homeFilter=f;renderHome();initReveal();}
+
+/* ── BRANCH ────────────────────────────────────────────── */
 function buildInsights(s){
   const all=s.reseñasAbril.map(r=>r.text.toLowerCase()).join(' ');
   const items=[];
   const delta=(s.abril.score-s.historico).toFixed(2);
-  const dStr=Number(delta)>0?`+${delta} vs histórico`:Number(delta)<0?`${delta} vs histórico`:'Sin cambio vs histórico';
-  items.push({icon:'📈',label:'Tendencia',val:dStr});
-  if(/(amable|atentos?|servicio|atenci[oó]n)/.test(all)) items.push({icon:'💬',label:'Tema dominante',val:'Atención y servicio al cliente destacados'});
-  if(/(rique?[aá]|delici|bueno|sabor|rico)/.test(all)) items.push({icon:'🥐',label:'Producto',val:'Sabor y calidad de producto bien valorados'});
-  const names=[...new Set((all.match(/\b(valentina|osvaldo|arely|vale|areli|daniela)\b/g)||[]))].map(n=>n[0].toUpperCase()+n.slice(1));
-  if(names.length) items.push({icon:'⭐',label:'Colaboradores mencionados',val:names.join(', ')});
-  if(/(r[aá]pido|tiempo|eficiente)/.test(all)) items.push({icon:'⚡',label:'Velocidad',val:'Rapidez en atención comentada positivamente'});
-  return items.slice(0,4).map((t,i)=>`
-    <div class="insight-card${i===3?' full':''}">
-      <span class="insight-icon">${t.icon}</span>
+  const dStr=Number(delta)>0?`+${delta}`:Number(delta)<0?`${delta}`:'0.00';
+  const trendTxt = Number(delta)>0?`${dStr} sobre histórico (${s.historico})`:Number(delta)<0?`${dStr} bajo histórico`:`Sin cambio vs ${s.historico}`;
+  items.push({m:'Δ',label:'Tendencia',val:trendTxt,cls:'gold'});
+
+  if(/(amable|atentos?|servicio|atenci[oó]n|amabilidad)/.test(all)) items.push({m:'01',label:'Tema dominante',val:'Atención y servicio al cliente'});
+  if(/(rique?[aá]|delici|bueno|sabor|rico|exquisit)/.test(all)) items.push({m:'02',label:'Producto',val:'Sabor y calidad mencionados positivamente'});
+  const names=[...new Set((all.match(/\b(valentina|osvaldo|oswaldo|arely|vale|areli|daniela)\b/g)||[]))]
+    .map(n=>n[0].toUpperCase()+n.slice(1));
+  if(names.length) items.push({m:'03',label:'Personal destacado',val:names.join(' · ')});
+  if(/(r[aá]pido|tiempo|eficiente|rapidez)/.test(all)) items.push({m:'04',label:'Operación',val:'Rapidez y eficiencia comentadas'});
+
+  const guides=s.reseñasAbril.filter(r=>r.guide).length;
+  if(guides) items.push({m:'LG',label:'Local Guides',val:`${guides} de ${s.abril.count} reseñas son de Local Guides`});
+
+  return items.slice(0,5).map(t=>`
+    <div class="insight-card">
+      <span class="insight-marker ${t.cls||''}">${t.m}</span>
       <div><div class="insight-label">${t.label}</div><div class="insight-val">${t.val}</div></div>
     </div>`).join('');
 }
 
-function buildRevList(reviews){
-  return reviews.map(r=>`
-    <div class="review-item">
-      <div class="rev-top">
-        <span class="rev-author">Reseñante de Google${r.guide?'<span class="rev-guide">Local Guide</span>':''}</span>
-        <span class="rev-stars">${starStr(r.stars)}</span>
-      </div>
-      <div class="rev-date">${r.fecha}</div>
+function buildRevList(reviews,negative=false){
+  if(!reviews.length){
+    return `<div class="empty-state"><span class="glyph">—</span>Sin reseñas para mostrar</div>`;
+  }
+  return reviews.map(r=>{
+    const low = r.stars<=2;
+    return `<div class="review-item${low?' negative':''}">
+      <div class="rev-author">Reseñante de Google${r.guide?`<span class="rev-guide">Local Guide</span>`:''}</div>
+      <span class="rev-stars${low?' low':''}">${starStr(r.stars)}</span>
+      <div class="rev-meta">${r.fecha}</div>
       <div class="rev-text">${r.text.replace(/\n/g,'<br>')}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderBranch(s){
-  const delta=(s.abril.score-s.historico).toFixed(2);
-  const dStr=Number(delta)>=0?`+${delta}`:delta;
+  const delta=(s.abril.score-s.historico);
+  const dStr=delta>0?`+${delta.toFixed(2)}`:delta.toFixed(2);
+  const dClass=delta>0.05?'up':delta<-0.05?'down':'flat';
   const statusDot=s.alerta?'warn':'ok';
-  const statusLabel=s.alerta?'Atención requerida':'Sin alertas activas';
 
   let statusContent='';
   if(!s.alerta){
-    statusContent=`<div class="status-ok-box">&#9989; Sin incidencias registradas en los primeros 10 días de mayo. La sucursal se mantiene estable.</div>`;
+    statusContent=`<div class="status-ok-box">
+      <div class="check">✓</div>
+      <div class="ok-text">
+        <strong>Estable</strong>
+        Sin incidencias registradas en los primeros 10 días de mayo. La sucursal se mantiene en su línea de rating histórico.
+      </div>
+    </div>`;
   } else {
-    const mayoItems=s.reseñasMayo.map(r=>`
-      <div class="review-item">
-        <div class="rev-top">
-          <span class="rev-author" style="color:var(--alerta);">Reseñante de Google</span>
-          <span class="rev-stars" style="color:var(--alerta);">${starStr(r.stars)}</span>
-        </div>
-        <div class="rev-date">${r.fecha}</div>
-        <div class="rev-text" style="color:#8B1A1A;">${r.text}</div>
-      </div>`).join('');
     statusContent=`
       <div class="status-warn-box">
-        &#9888;&#65039; <strong>${s.statusMayo.negativas} reseña${s.statusMayo.negativas!==1?'s':''} negativa${s.statusMayo.negativas!==1?'s':''}</strong><br>${s.statusMayo.tema}
-      </div>${mayoItems}`;
+        <div class="topic">${s.statusMayo.tema}</div>
+        ${s.statusMayo.detalle}
+      </div>
+      ${buildRevList(s.reseñasMayo)}`;
   }
+
+  const negM = s.statusMayo?.negativas || 0;
+  const showingReviews = branchView==='abril' ? s.reseñasAbril : s.reseñasMayo;
 
   document.getElementById('app').innerHTML=`
     ${buildTopbar(true,s.nombre)}
     <section class="branch-hero">
-      <div class="bh-month">Abril 2026 · Guadalajara</div>
-      <div class="bh-name">${s.nombre}</div>
+      <div class="bh-eyebrow">
+        <span>Guadalajara</span> · <span>Abril 2026</span>
+        ${s.alerta?'<span style="color:#F4A090;">· Alerta activa</span>':''}
+      </div>
+      <h1 class="bh-name">${s.nombre}</h1>
       <div class="bh-metrics">
-        <div class="bh-metric"><div class="bh-metric-val gold">${s.abril.score.toFixed(2)}</div><div class="bh-metric-label">Promedio Abr</div></div>
-        <div class="bh-metric"><div class="bh-metric-val">${s.abril.count}</div><div class="bh-metric-label">Reseñas</div></div>
-        <div class="bh-metric"><div class="bh-metric-val">${dStr}</div><div class="bh-metric-label">&Delta; vs Hist.</div></div>
+        <div class="bh-metric">
+          <div class="bh-metric-val gold num">${s.abril.score.toFixed(2)}</div>
+          <div class="bh-metric-label">Promedio Abr</div>
+          <div class="bh-metric-sub">★★★★★</div>
+        </div>
+        <div class="bh-metric">
+          <div class="bh-metric-val num">${s.abril.count}</div>
+          <div class="bh-metric-label">Reseñas Abr</div>
+          <div class="bh-metric-sub">${s.reseñasAbril.filter(r=>r.guide).length} Local Guides</div>
+        </div>
+        <div class="bh-metric">
+          <div class="bh-metric-val ${dClass} num">${dStr}</div>
+          <div class="bh-metric-label">Δ vs Histórico</div>
+          <div class="bh-metric-sub">Hist: ${s.historico.toFixed(1)}</div>
+        </div>
       </div>
     </section>
+
     <section class="section r">
-      <div class="section-title">Insights · Abril 2026</div>
+      <div class="section-head">
+        <div class="section-title">Insights <span class="accent">Abril</span></div>
+      </div>
       <div class="insight-grid">${buildInsights(s)}</div>
     </section>
+
     <section class="section r">
-      <div class="section-title">Comparativo de rating</div>
-      <div class="chart-card"><div class="chart-wrap"><canvas id="branchChart"></canvas></div></div>
-    </section>
-    <section class="section r">
-      <div class="section-title">Status actual · Mayo 2026</div>
-      <div class="status-section">
+      <div class="section-head">
+        <div class="section-title">Status <span class="accent">Mayo 2026</span></div>
+        <span class="section-sub">Primeros 10 días</span>
+      </div>
+      <div class="status-panel ${s.alerta?'alert':''}">
         <div class="status-header" id="sHdr">
           <div class="status-header-left">
-            <span class="status-dot ${statusDot}"></span>
-            <span class="status-badge ${statusDot}">${statusLabel}</span>
+            <div class="status-icon-box ${statusDot}">${s.alerta?'!':'✓'}</div>
+            <div>
+              <div class="status-title">${s.alerta?'Atención requerida':'Sin alertas activas'}</div>
+              <div class="status-subtitle">${s.alerta?`${negM} reseña${negM!==1?'s':''} negativa${negM!==1?'s':''} · ${s.statusMayo.tema}`:'Sin reseñas negativas en mayo'}</div>
+            </div>
           </div>
-          <span class="status-chevron" id="sChev">&#9660;</span>
+          <span class="status-chevron ${s.alerta?'open':''}" id="sChev">▾</span>
         </div>
-        <div class="status-body" id="sBody">${statusContent}</div>
+        <div class="status-body ${s.alerta?'open':''}" id="sBody">${statusContent}</div>
       </div>
     </section>
+
     <section class="section r">
-      <div class="section-title">Reseñas · Abril 2026</div>
+      <div class="section-head">
+        <div class="section-title">Reseñas</div>
+        <div class="segmented" role="tablist">
+          <button class="seg-btn ${branchView==='abril'?'active':''}" data-view="abril">
+            Abril
+            <span class="count">${s.reseñasAbril.length}</span>
+          </button>
+          <button class="seg-btn ${branchView==='mayo'?'active':''}" data-view="mayo">
+            <span class="dot ${s.alerta?'warn':'ok'}"></span>
+            Mayo
+            <span class="count">${s.reseñasMayo.length}</span>
+          </button>
+        </div>
+      </div>
       <div class="reviews-panel">
         <div class="reviews-panel-header">
-          <span class="rph-title">Reseñas verificadas</span>
-          <span class="rph-count">${s.reseñasAbril.length} total</span>
+          <span class="rph-title">${branchView==='abril'?'Reseñas verificadas · Abril':'Actividad · Mayo (primeros 10 días)'}</span>
+          <span class="rph-count">${showingReviews.length} ${showingReviews.length===1?'reseña':'reseñas'}</span>
         </div>
-        <div class="reviews-list" id="revList">${buildRevList(s.reseñasAbril.slice(0,3))}</div>
-        ${s.reseñasAbril.length>3?`<button class="show-all-btn" id="showAllBtn">Mostrar todas las ${s.reseñasAbril.length} reseñas &#8595;</button>`:''}
+        <div class="reviews-list" id="revList">${buildRevList(branchView==='abril'?showingReviews.slice(0,3):showingReviews)}</div>
+        ${branchView==='abril' && showingReviews.length>3?`<button class="show-all-btn" id="showAllBtn">Mostrar todas las ${showingReviews.length} reseñas ↓</button>`:''}
       </div>
     </section>
-    <footer class="footer"><strong>La Crêpe Parisienne</strong> · ${s.nombre}<br>Dashboard de Reseñas · Región Guadalajara</footer>`;
+
+    <footer class="footer">
+      <span class="brand">La <span class="accent">Crêpe</span> Parisienne</span> · ${s.nombre}<br>
+      Dashboard de Reseñas · Región Guadalajara
+    </footer>`;
 
   // Status toggle
   document.getElementById('sHdr').onclick=()=>{
     document.getElementById('sBody').classList.toggle('open');
     document.getElementById('sChev').classList.toggle('open');
   };
+
+  // Segmented toggle
+  document.querySelectorAll('.seg-btn').forEach(b=>{
+    b.onclick=()=>{
+      branchView=b.dataset.view;
+      renderBranch(s);
+      initReveal();
+    };
+  });
 
   // Show all
   const btn=document.getElementById('showAllBtn');
@@ -590,38 +1183,16 @@ function renderBranch(s){
     btn.onclick=()=>{
       exp=!exp;
       document.getElementById('revList').innerHTML=buildRevList(exp?s.reseñasAbril:s.reseñasAbril.slice(0,3));
-      btn.textContent=exp?'\u2191 Mostrar menos':`Mostrar todas las ${s.reseñasAbril.length} reseñas \u2193`;
+      btn.textContent=exp?'↑ Mostrar menos':`Mostrar todas las ${s.reseñasAbril.length} reseñas ↓`;
     };
-  }
-
-  // Chart
-  const ctx=document.getElementById('branchChart')?.getContext('2d');
-  if(ctx){
-    new Chart(ctx,{
-      type:'bar',
-      data:{
-        labels:['Rating histórico','Abril 2026'],
-        datasets:[{
-          data:[s.historico,s.abril.score],
-          backgroundColor:darkMode?['rgba(122,158,138,0.4)','rgba(122,158,138,0.85)']:['rgba(122,158,138,0.5)','rgba(61,90,71,0.85)'],
-          borderRadius:8,borderSkipped:false
-        }]
-      },
-      options:{
-        responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false}},
-        scales:{
-          y:{min:3.5,max:5.2,grid:{color:darkMode?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.06)'},ticks:{font:{size:10},color:darkMode?'#8A9E94':'#888'}},
-          x:{grid:{display:false},ticks:{font:{size:11},color:darkMode?'#8A9E94':'#555'}}
-        }
-      }
-    });
   }
 }
 
-/* ── REVEAL ────────────────────────────────────────────────── */
+/* ── REVEAL ────────────────────────────────────────────── */
 function initReveal(){
-  const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target);}});},{threshold:0.08});
+  const obs=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target);}});
+  },{threshold:0.08});
   document.querySelectorAll('.r').forEach(el=>obs.observe(el));
 }
 </script>
