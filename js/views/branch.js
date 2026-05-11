@@ -212,9 +212,9 @@ const BranchView = {
     };
 
     document.querySelectorAll('.seg-btn').forEach(b => {
-      b.onclick = () => {
+      b.onclick = async () => {
         this.activeTab = b.dataset.view;
-        this.render(params);
+        await this.render(params);
         initReveal();
       };
     });

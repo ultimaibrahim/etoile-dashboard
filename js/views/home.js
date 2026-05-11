@@ -6,6 +6,7 @@ const HomeView = {
   filter: 'todas',
 
   async render() {
+    Charts.destroyAll();
     // Cargar todos los meses disponibles
     for (const m of DataLoader.manifest['2026']) {
       await DataLoader.loadMonth(2026, m);
@@ -264,8 +265,9 @@ const HomeView = {
       </section>`;
   },
 
-  setFilter(f) {
+  async setFilter(f) {
     this.filter = f;
-    this.render();
+    await this.render();
+    initReveal();
   }
 };
