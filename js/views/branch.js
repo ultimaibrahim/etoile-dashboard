@@ -78,7 +78,7 @@ const BranchView = {
           <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);font-weight:700;margin-bottom:8px;">Mejor reseña · Mayo</div>
           <div class="quote-block">
             <div class="quote-meta">★ ${bestReview.stars} · ${formatDate(bestReview.publishedAtDate)}${bestReview.isLocalGuide ? ' · Local Guide' : ''}</div>
-            "${bestReview.text.substring(0, 220)}${bestReview.text.length > 220 ? '...' : ''}"
+            "${(bestReview.text || '').substring(0, 220)}${(bestReview.text || '').length > 220 ? '...' : ''}"
           </div>
         </div>
         ${worstReview && worstReview.stars <= 2 ? `
@@ -86,7 +86,7 @@ const BranchView = {
           <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--alerta);font-weight:700;margin-bottom:8px;">Peor reseña · Mayo</div>
           <div class="quote-block warn">
             <div class="quote-meta">★ ${worstReview.stars} · ${formatDate(worstReview.publishedAtDate)}${worstReview.isLocalGuide ? ' · Local Guide' : ''}</div>
-            "${worstReview.text.substring(0, 220)}${worstReview.text.length > 220 ? '...' : ''}"
+            "${(worstReview.text || '').substring(0, 220)}${(worstReview.text || '').length > 220 ? '...' : ''}"
           </div>
         </div>` : ''}
       </div>` : '';
@@ -273,7 +273,7 @@ const BranchView = {
         <div class="rev-author">Reseñante de Google${r.isLocalGuide ? `<span class="rev-guide">Local Guide</span>` : ''}</div>
         <span class="rev-stars${low ? ' low' : ''}">${starStr(r.stars)}</span>
         <div class="rev-meta">${formatDate(r.publishedAtDate)} · ${r.sucursal}</div>
-        <div class="rev-text">${r.text.replace(/\n/g, '<br>')}</div>
+        <div class="rev-text">${(r.text || '').replace(/\n/g, '<br>')}</div>
       </div>`;
     }).join('');
   }

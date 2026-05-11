@@ -104,12 +104,12 @@ const QuarterView = {
       const bestBlock = s.best ? `
         <div class="quote-block">
           <div class="quote-meta">★ ${s.best.stars} · ${s.best.sucursal} · ${formatDate(s.best.publishedAtDate)}</div>
-          "${s.best.text.substring(0, 200)}${s.best.text.length > 200 ? '...' : ''}"
+          "${(s.best.text || '').substring(0, 200)}${(s.best.text || '').length > 200 ? '...' : ''}"
         </div>` : '<p style="color:var(--text-muted);font-size:13px;">Sin reseñas destacadas</p>';
       const worstBlock = s.worst && s.worst.stars <= 2 ? `
         <div class="quote-block warn">
           <div class="quote-meta">★ ${s.worst.stars} · ${s.worst.sucursal} · ${formatDate(s.worst.publishedAtDate)}</div>
-          "${s.worst.text.substring(0, 200)}${s.worst.text.length > 200 ? '...' : ''}"
+          "${(s.worst.text || '').substring(0, 200)}${(s.worst.text || '').length > 200 ? '...' : ''}"
         </div>` : '';
       return `
         <div class="accordion-item">

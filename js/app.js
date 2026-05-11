@@ -29,6 +29,7 @@ async function initApp() {
   Router.register('about', () => AboutView.render());
 
   Router.init();
+  Router.resolve();
 }
 
 initApp();
