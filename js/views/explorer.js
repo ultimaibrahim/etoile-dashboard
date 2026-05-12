@@ -14,6 +14,36 @@ const ExplorerView = {
     Charts.destroyAll();
     const app = document.getElementById('app');
     
+    app.innerHTML = `
+      ${buildTopbar(true, 'Explorador de Reseñas')}
+      <section class="section r" style="margin-top: 24px;">
+        <div class="section-head">
+          <div class="section-title">Minero de <span class="accent">Datos</span></div>
+          <span class="section-sub">Busca patrones, filtra por sucursal y analiza el sentimiento general.</span>
+        </div>
+        
+        <div class="explorer-controls" style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+          <input type="text" id="exp-search" placeholder="Buscar palabras clave (ej. actitud, rápido, guantes)..." value="${this.state.query}" style="flex: 1; min-width: 250px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); font-family: inherit;" disabled>
+          
+          <select id="exp-branch" style="padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg);" disabled>
+            <option value="todas">Todas las Sucursales</option>
+            ${SUCURSALES_META.map(s => `<option value="${s.id}" ${this.state.sucursal === s.id ? 'selected' : ''}>${s.nombre}</option>`).join('')}
+          </select>
+          
+          <select id="exp-stars" style="padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg);" disabled>
+            <option value="todas">Todas las estrellas</option>
+            <option value="positivas" ${this.state.estrellas === 'positivas' ? 'selected' : ''}>Positivas (4-5)</option>
+            <option value="neutrales" ${this.state.estrellas === 'neutrales' ? 'selected' : ''}>Neutrales (3)</option>
+            <option value="negativas" ${this.state.estrellas === 'negativas' ? 'selected' : ''}>Negativas (1-2)</option>
+          </select>
+        </div>
+
+        <div id="exp-results">
+          <div style="padding: 40px; text-align: center; color: var(--fg-muted);">Cargando base de datos de reseñas...</div>
+        </div>
+      </section>
+    `;
+
     // Lazy load all available data for the explorer
     for (const year of Object.keys(DataLoader.manifest)) {
       for (const m of DataLoader.manifest[year]) {
@@ -34,35 +64,10 @@ const ExplorerView = {
     allReviews.sort((a, b) => new Date(b.publishedAtDate) - new Date(a.publishedAtDate));
     this.state.reviews = allReviews;
 
-    app.innerHTML = `
-      ${buildTopbar(true, 'Explorador de Reseñas')}
-      <section class="section r" style="margin-top: 24px;">
-        <div class="section-head">
-          <div class="section-title">Minero de <span class="accent">Datos</span></div>
-          <span class="section-sub">Busca patrones, filtra por sucursal y analiza el sentimiento general.</span>
-        </div>
-        
-        <div class="explorer-controls" style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
-          <input type="text" id="exp-search" placeholder="Buscar palabras clave (ej. actitud, rápido, guantes)..." value="${this.state.query}" style="flex: 1; min-width: 250px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg); font-family: inherit;">
-          
-          <select id="exp-branch" style="padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg);">
-            <option value="todas">Todas las Sucursales</option>
-            ${SUCURSALES_META.map(s => `<option value="${s.id}" ${this.state.sucursal === s.id ? 'selected' : ''}>${s.nombre}</option>`).join('')}
-          </select>
-          
-          <select id="exp-stars" style="padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--fg);">
-            <option value="todas">Todas las estrellas</option>
-            <option value="positivas" ${this.state.estrellas === 'positivas' ? 'selected' : ''}>Positivas (4-5)</option>
-            <option value="neutrales" ${this.state.estrellas === 'neutrales' ? 'selected' : ''}>Neutrales (3)</option>
-            <option value="negativas" ${this.state.estrellas === 'negativas' ? 'selected' : ''}>Negativas (1-2)</option>
-          </select>
-        </div>
-
-        <div id="exp-results">
-          <!-- Results will be injected here -->
-        </div>
-      </section>
-    `;
+    // Re-enable controls
+    document.getElementById('exp-search').disabled = false;
+    document.getElementById('exp-branch').disabled = false;
+    document.getElementById('exp-stars').disabled = false;
 
     // Bind events
     document.getElementById('exp-search').addEventListener('input', (e) => {
@@ -105,7 +110,7 @@ const ExplorerView = {
     }
 
     if (filtered.length === 0) {
-      container.innerHTML = `<div class="empty-state"><span class="glyph">—</span>No se encontraron reseñas con esos filtros</div>`;
+      container.innerHTML = `<div class="empty-state">No se encontraron reseñas con esos filtros</div>`;
       return;
     }
 

@@ -43,6 +43,9 @@ const DataLoader = {
     try {
       const res = await fetch(`data/${year}/${String(month).padStart(2, '0')}.json`);
       const data = await res.json();
+      if (data && data.reviews) {
+        data.reviews = data.reviews.filter(r => r.text && r.text.trim().length > 0);
+      }
       this.cache[key] = data;
       return data;
     } catch (e) {

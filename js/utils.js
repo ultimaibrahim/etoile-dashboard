@@ -10,7 +10,8 @@ function svgIcon(name) {
   const i = {
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
     moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
-    arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>'
+    arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>'
   };
   return i[name] || '';
 }
@@ -90,7 +91,7 @@ function buildTopbar(showBack = false, branchName = '') {
   const brand = showBack
     ? `<span class="topbar-brand"><span class="accent">${branchName}</span></span>`
     : `<span class="topbar-brand">La <span class="accent">Crêpe</span> Parisienne</span>`;
-  const explorerLink = `<a href="#/explorador" class="topbar-link" style="margin-right: 12px; font-size: 14px; text-decoration: none; color: var(--fg-muted);">🔍 Explorador</a>`;
+  const explorerLink = `<a href="#/explorador" class="topbar-link" style="margin-right: 12px; font-size: 14px; text-decoration: none; color: var(--fg-muted); display: inline-flex; align-items: center; gap: 6px; width: 16px; height: 16px; overflow: visible; white-space: nowrap;">${svgIcon('search')} <span style="transform: translateY(-1px);">Explorador</span></a>`;
   const currMonthLabel = DataLoader.currentMonth ? new Date(DataLoader.currentYear, DataLoader.currentMonth - 1).toLocaleString('es-ES', {month: 'long'}).replace(/^./, c=>c.toUpperCase()) : '';
 
   return `<header class="topbar">
