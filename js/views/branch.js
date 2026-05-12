@@ -40,7 +40,7 @@ const BranchView = {
     // Calidad de reseña: Mide cuántas reseñas positivas (4 o 5 estrellas) tuvieron texto.
     // Ignora por completo las reseñas negativas para no penalizar el score de calidad.
     const positivas = reviews.filter(r => r.stars >= 4);
-    const positivasConTexto = positivas.filter(r => r.text && r.text.length > 5).length;
+    const positivasConTexto = positivas.filter(r => r.text && r.text.trim().length > 5).length;
     
     const hasTextRatio = positivas.length > 0 ? (positivasConTexto / positivas.length) : 0;
     const kpiCalClass = hasTextRatio >= KpiMeta.calidadTextoMeta ? 'optimal' : 'attention';

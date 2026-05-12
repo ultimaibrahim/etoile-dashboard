@@ -84,6 +84,11 @@ const DashboardsView = {
             <h1 class="display" style="font-size:clamp(36px,8vw,64px);color:var(--crema);line-height:1.05;">
               Dashboards Analíticos
             </h1>
+            <div style="margin-top: 24px;">
+              <a href="#/trimestre/2026-Q1" class="chip active" style="font-size:15px; padding: 14px 24px; border-radius:16px; box-shadow: var(--sombra-lg); display: inline-flex; width: fit-content; border: 2px solid rgba(245,239,230,0.2);">
+                ${svgIcon('calendar')} Reporte Trimestral (Q1 2026)
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -95,7 +100,6 @@ const DashboardsView = {
               <div class="section-title">Volumen <span class="accent">${capitalizedCurrMonth}</span></div>
               <span class="section-sub">${currGlobal.totalReviews} reseñas · Negativas vs Positivas/Neutrales</span>
             </div>
-            <a href="#/trimestre/q1" class="topbar-back" style="text-decoration:none;">Ver Reporte Q1</a>
           </div>
           <div class="chart-card"><div class="chart-wrap"><canvas id="volChart"></canvas></div></div>
         </section>

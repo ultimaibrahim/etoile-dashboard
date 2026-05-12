@@ -66,9 +66,12 @@ body{
   font-size:15px;line-height:1.5;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
   transition:background .3s ease, color .3s ease;
+button{
+  font-family:inherit; outline:none; cursor:pointer;
+  -webkit-appearance: none; appearance: none;
 }
-button{font-family:inherit; outline:none; cursor:pointer;}
 button:focus{outline:none;}
+button:active{transform:scale(0.92) !important; opacity:0.8;}
 a{color:inherit;text-decoration:none;}
 :focus-visible{outline:none;}
 
@@ -313,11 +316,13 @@ a{color:inherit;text-decoration:none;}
   outline:none; cursor:pointer;
   padding:6px 12px;
   display:flex;align-items:center;gap:6px;
+  -webkit-appearance: none; appearance: none;
 }
 .chip:hover {
   background: var(--surface);
   border-color: var(--sage);
 }
+.chip:active { transform: scale(0.92); }
 .chip.active{background:var(--verde);color:var(--crema);border-color:var(--verde);}
 .chip-count{
   font-family:var(--mono);font-size:10px;opacity:.7;
@@ -448,6 +453,19 @@ a{color:inherit;text-decoration:none;}
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
+}
+.alert-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(198,40,40,.08); color: var(--alerta);
+  border: 1px solid rgba(198,40,40,.3) !important;
+  border-radius: 12px !important;
+  padding: 4px 10px; font-size: 12px; font-weight: 600; font-family: var(--mono);
+  outline: none; cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-appearance: none; appearance: none;
+}
+.alert-pill:hover {
+  background: rgba(198,40,40,.15);
 }
 
 /* ─── BRANCH HERO ──────────────────────────────────────── */
@@ -961,12 +979,14 @@ a{color:inherit;text-decoration:none;}
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0,0,0,0.04);
   transition: all 0.2s ease;
+  -webkit-appearance: none;
 }
 .month-selector:hover {
   border-color: var(--sage);
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   transform: translateY(-1px);
 }
+.month-selector:active { transform: scale(0.95); }
 [data-theme="dark"] .month-selector {
   background-image: url('data:image/svg+xml;utf8,<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%239DA89F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><polyline points="6 9 12 15 18 9"></polyline></svg>');
 }
