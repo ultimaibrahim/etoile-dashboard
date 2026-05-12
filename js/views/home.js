@@ -157,6 +157,43 @@ const HomeView = {
         </div>
         <div class="branch-grid">${cards || '<div class="empty-state"><span class="glyph">—</span>Sin sucursales para este filtro</div>'}</div>
       </section>
+<<<<<<< HEAD
+=======
+
+      ${(() => {
+        const topBranches = sorted.filter(s => s.curr.score >= 4.90 && s.curr.negativeCount === 0);
+        if (topBranches.length > 0) {
+          const currentData = DataLoader.getMonth(currYear, currMonth);
+          return `
+          <section class="section r" style="margin-bottom: var(--s-8);">
+            <div class="section-head">
+              <div class="section-title">El estándar <span class="accent">ya existe</span></div>
+              <span class="section-sub">Sucursales con 0% de reseñas negativas y rating óptimo. El estándar es alcanzable.</span>
+            </div>
+            <div class="branch-grid">
+              ${topBranches.map(s => {
+                const branchReviews = currentData.reviews.filter(r => [s.nombre, s.abr, s.id === 'gal-gdl' ? 'Galerías GDL' : '', s.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].includes(r.sucursal) && r.text && r.text.length > 10 && r.stars === 5);
+                const quote = branchReviews.length > 0 ? branchReviews[0].text : 'Excelente servicio y calidad.';
+                return `
+                <div class="branch-card" style="border-top: 3px solid var(--optima); flex-direction: column;">
+                  <div class="bc-top">
+                    <div class="bc-name">${s.abr}</div>
+                    <span class="bc-status ok" title="Estándar óptimo"></span>
+                  </div>
+                  <div style="margin-top: 8px; font-size: 14px; font-style: italic; color: var(--text-muted);">"${quote}"</div>
+                  <div style="margin-top: auto; display: flex; align-items: baseline; gap: 6px; padding-top: 12px;">
+                    <span class="bc-score num" style="font-size: 20px;">${s.curr.score.toFixed(2)}</span>
+                    <span class="bc-stars-line" style="font-size: 12px;">${starStr(5)}</span>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>
+          </section>`;
+        }
+        return '';
+      })()}
+
+>>>>>>> 3c331c34ad746860b5f6f7c1fa58a7d8ac547282
 
 
 

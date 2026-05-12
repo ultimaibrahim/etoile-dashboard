@@ -93,7 +93,9 @@ function buildTopbar(showBack = false, branchName = '') {
   const back = showBack
     ? `<button class="topbar-back" onclick="window.history.back()">${svgIcon('arrow')}<span>Atrás</span></button>`
     : '';
-  const brand = `<a href="#/" class="topbar-brand">La <span class="accent">Crêpe</span> Parisienne</a>`;
+  const brand = showBack
+    ? `<span class="topbar-brand"><span class="accent">${branchName}</span></span>`
+    : `<a href="#/" class="topbar-brand">La <span class="accent">Crêpe</span> Parisienne</a>`;
   
   const currentHash = window.location.hash;
   const navLinks = `
