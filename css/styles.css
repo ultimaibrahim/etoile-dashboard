@@ -66,6 +66,7 @@ body{
   font-size:15px;line-height:1.5;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
   transition:background .3s ease, color .3s ease;
+}
 button{
   font-family:inherit; outline:none; cursor:pointer;
   -webkit-appearance: none; appearance: none;
