@@ -165,11 +165,11 @@ const QuarterView = {
                   ${mRanking.map((s, idx) => {
                     if (s.count === 0) return '';
                     const badgeClass = idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : '';
-                    return \`<div style="background: var(--bg-card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 13px;">
-                      \${badgeClass ? \`<span class="rank-badge \${badgeClass}" style="width: 16px; height: 16px; font-size: 9px;">\${idx + 1}</span>\` : \`<span style="color: var(--text-dim); font-weight: 600; width: 16px; text-align: center;">\${idx + 1}</span>\`}
-                      <span>\${s.abr}</span>
-                      <strong class="num">\${s.avg.toFixed(2)}</strong>
-                    </div>\`;
+                    return `<div style="background: var(--bg-card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                      ${badgeClass ? `<span class="rank-badge ${badgeClass}" style="width: 16px; height: 16px; font-size: 9px;">${idx + 1}</span>` : `<span style="color: var(--text-dim); font-weight: 600; width: 16px; text-align: center;">${idx + 1}</span>`}
+                      <span>${s.abr}</span>
+                      <strong class="num">${s.avg.toFixed(2)}</strong>
+                    </div>`;
                   }).join('')}
                 </div>
               </div>
