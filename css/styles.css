@@ -67,9 +67,10 @@ body{
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
   transition:background .3s ease, color .3s ease;
 }
-button{font-family:inherit;}
+button{font-family:inherit; outline:none; cursor:pointer;}
+button:focus{outline:none;}
 a{color:inherit;text-decoration:none;}
-:focus-visible{outline:2px solid var(--sage);outline-offset:2px;border-radius:4px;}
+:focus-visible{outline:none;}
 
 #app{opacity:1;transition:opacity .22s ease;max-width:1240px;margin:0 auto;}
 #app.fade-out{opacity:0;}
@@ -441,6 +442,13 @@ a{color:inherit;text-decoration:none;}
 .bar-curr{background:linear-gradient(90deg, var(--verde) 0%, var(--verde-soft) 100%);height:100%;}
 [data-theme="dark"] .bar-curr{background:linear-gradient(90deg, var(--sage) 0%, var(--sage-light) 100%);}
 .trend-stack{display:flex;flex-direction:column;gap:4px;}
+
+.alert-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
 
 /* ─── BRANCH HERO ──────────────────────────────────────── */
 .branch-hero{
@@ -872,11 +880,11 @@ a{color:inherit;text-decoration:none;}
   max-height: 85vh;
   display: flex; flex-direction: column;
   box-shadow: var(--sombra-lg);
-  transform: translateY(20px);
-  transition: transform 0.2s ease;
+  transform: translateY(20px) scale(0.95);
+  transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .modal-overlay.active .modal-box {
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 .modal-header {
   padding: 20px 24px;
@@ -915,11 +923,11 @@ a{color:inherit;text-decoration:none;}
 .watermark-stars {
   position: absolute;
   top: 50%;
-  right: -10px;
-  transform: translateY(-50%);
+  right: -20px;
+  transform: translateY(-50%) scale(1.4);
   display: flex;
   gap: 4px;
-  opacity: 0.12;
+  opacity: 0.35;
   pointer-events: none;
 }
 .watermark-stars svg {

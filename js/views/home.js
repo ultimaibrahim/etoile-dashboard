@@ -92,7 +92,6 @@ const HomeView = {
     document.getElementById('app').innerHTML = `
       ${buildTopbar()}
       <section class="hero">
-        <img src="favicon.png" alt="" class="hero-watermark">
         <div class="hero-inner">
           <div class="hero-left">
             <div class="hero-label-row">
@@ -134,7 +133,7 @@ const HomeView = {
         </div>
       </section>
 
-      ${negativasMayo > 0 ? `<div class="home-grid-2" style="margin-bottom: 24px; align-items: start;">
+      ${negativasMayo > 0 ? `<div class="home-grid-2" style="display: grid; gap: 16px; margin-bottom: 24px; align-items: start;">
         <div class="alert-strip alert-box-sunken" style="margin-bottom: 0;">
           <div class="watermark-stars">
             ${svgIcon('starFilled')}
