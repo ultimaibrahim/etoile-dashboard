@@ -23,6 +23,9 @@ const Router = {
     if (hash === '#/acerca') {
       return { handler: this.routes['about'], params: {} };
     }
+    if (hash === '#/explorador') {
+      return { handler: this.routes['explorer'], params: {} };
+    }
     return { handler: this.routes['home'], params: {} };
   },
 

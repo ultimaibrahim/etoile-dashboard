@@ -27,7 +27,15 @@ const KpiStore = {
   },
 
   shouldCompute(year, month) {
-    if (!isMonthComplete(year, month)) return true; // Mes en curso: siempre recalcular
+    if (!isMonthComplete(year, month)) {
+      const cached = this.get(year, month);
+      if (cached && cached.computedAt) {
+        const cachedDate = new Date(cached.computedAt).toISOString().split('T')[0];
+        const todayDate = new Date().toISOString().split('T')[0];
+        if (cachedDate === todayDate) return false;
+      }
+      return true; // Mes en curso: recalcular si no es del mismo día
+    }
     if (!this.get(year, month)) return true; // Mes cerrado sin cache: calcular
     return false; // Mes cerrado con cache: usar cache
   }
@@ -59,7 +67,12 @@ const Kpis = {
     const belowMin = ratings.filter(r => r.avg > 0 && r.avg < KpiMeta.ratingMinimo);
 
     // Negativas
-    const totalNegativas = reviews.filter(r => r.stars <= 2).length;
+    const negativasReviews = reviews.filter(r => r.stars <= 2);
+    const totalNegativas = negativasReviews.length;
+
+    // Tasa de respuesta
+    const negativasConRespuesta = negativasReviews.filter(r => r.responseFromOwnerText !== null && r.responseFromOwnerText !== undefined);
+    const tasaRespuesta = totalNegativas ? negativasConRespuesta.length / totalNegativas : 1;
 
     const result = {
       year, month,
@@ -68,6 +81,7 @@ const Kpis = {
       calidadTexto: { withText, total: reviews.length, ratio: calidadRatio, meta: KpiMeta.calidadTextoMeta },
       ratingMinimo: { belowMin: belowMin.map(r => r.id), meta: KpiMeta.ratingMinimo },
       negativas: totalNegativas,
+      tasaRespuesta: { value: tasaRespuesta, totalNegativas, conRespuesta: negativasConRespuesta.length },
       global: { totalReviews: global.totalReviews, avgRating: global.avgRating }
     };
 

@@ -5,11 +5,32 @@
 const DataLoader = {
   manifest: null,
   cache: {},
+  currentYear: null,
+  currentMonth: null,
+  previousYear: null,
+  previousMonth: null,
 
   async init() {
     try {
       const res = await fetch('data/manifest.json');
       this.manifest = await res.json();
+      
+      const years = Object.keys(this.manifest).map(Number).sort((a,b) => b - a);
+      if (years.length > 0) {
+        this.currentYear = years[0];
+        const months = this.manifest[this.currentYear].sort((a,b) => b - a);
+        if (months.length > 0) {
+          this.currentMonth = months[0];
+          // Determine previous month and year
+          if (months.length > 1) {
+            this.previousMonth = months[1];
+            this.previousYear = this.currentYear;
+          } else {
+            this.previousMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
+            this.previousYear = this.currentMonth === 1 ? this.currentYear - 1 : this.currentYear;
+          }
+        }
+      }
     } catch (e) {
       console.error('Error loading manifest:', e);
       this.manifest = {};

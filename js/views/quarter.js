@@ -98,28 +98,47 @@ const QuarterView = {
     const prevHeaders = prevMonths.map(m => `<th class="num">${MONTH_NAMES[m - 1]}</th>`).join('');
     const currHeaders = months.map(m => `<th class="num">${MONTH_NAMES[m - 1]}</th>`).join('');
 
-    // Accordion content for each branch
-    const accordionItems = branchQStats.map((s, i) => {
-      const rankCls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-      const bestBlock = s.best ? `
+    // Accordion content for each month
+    const accordionItems = months.map((m, i) => {
+      let mTotalCount = 0;
+      let mTotalNeg = 0;
+      let mTotalStars = 0;
+      
+      const mRanking = SUCURSALES_META.map(meta => {
+        const stats = DataLoader.computeBranchStats(year, m, meta.id);
+        mTotalCount += stats.count;
+        mTotalNeg += stats.negativeCount;
+        mTotalStars += stats.avg * stats.count;
+        return { ...meta, avg: stats.avg, count: stats.count, neg: stats.negativeCount };
+      }).sort((a, b) => b.avg - a.avg);
+
+      const mAvg = mTotalCount > 0 ? mTotalStars / mTotalCount : 0;
+      
+      const monthData = DataLoader.getMonth(year, m);
+      const mReviews = monthData ? monthData.reviews : [];
+      const mBest = mReviews.length ? mReviews.reduce((a, b) => a.stars >= b.stars ? a : b) : null;
+      const mWorst = mReviews.length ? mReviews.reduce((a, b) => a.stars <= b.stars ? a : b) : null;
+
+      const bestBlock = mBest ? `
         <div class="quote-block">
-          <div class="quote-meta">★ ${s.best.stars} · ${s.best.sucursal} · ${formatDate(s.best.publishedAtDate)}</div>
-          "${(s.best.text || '').substring(0, 200)}${(s.best.text || '').length > 200 ? '...' : ''}"
+          <div class="quote-meta">★ ${mBest.stars} · ${mBest.sucursal} · ${formatDate(mBest.publishedAtDate)}</div>
+          "${(mBest.text || '').substring(0, 200)}${(mBest.text || '').length > 200 ? '...' : ''}"
         </div>` : '<p style="color:var(--text-muted);font-size:13px;">Sin reseñas destacadas</p>';
-      const worstBlock = s.worst && s.worst.stars <= 2 ? `
+      
+      const worstBlock = mWorst && mWorst.stars <= 2 ? `
         <div class="quote-block warn">
-          <div class="quote-meta">★ ${s.worst.stars} · ${s.worst.sucursal} · ${formatDate(s.worst.publishedAtDate)}</div>
-          "${(s.worst.text || '').substring(0, 200)}${(s.worst.text || '').length > 200 ? '...' : ''}"
+          <div class="quote-meta">★ ${mWorst.stars} · ${mWorst.sucursal} · ${formatDate(mWorst.publishedAtDate)}</div>
+          "${(mWorst.text || '').substring(0, 200)}${(mWorst.text || '').length > 200 ? '...' : ''}"
         </div>` : '';
+
       return `
         <div class="accordion-item">
           <div class="accordion-header" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.accordion-chevron').classList.toggle('open')">
             <div>
               <div style="display:flex;align-items:center;gap:10px;">
-                <span class="rank-badge ${rankCls}">${i + 1}</span>
-                <span class="accordion-title">${s.nombre}</span>
+                <span class="accordion-title">${MONTH_NAMES[m - 1]} ${year}</span>
               </div>
-              <div class="accordion-sub">${s.totalCount} reseñas · Promedio ${s.qAvg.toFixed(2)} · ${s.totalNeg} negativas</div>
+              <div class="accordion-sub">${mTotalCount} reseñas · Promedio ${mAvg.toFixed(2)} · ${mTotalNeg} negativas</div>
             </div>
             <span class="accordion-chevron">▾</span>
           </div>
@@ -127,24 +146,40 @@ const QuarterView = {
             <div style="display:grid;gap:12px;margin-bottom:16px;">
               <div class="scorecard-grid" style="grid-template-columns:repeat(3,1fr);gap:10px;">
                 <div class="scorecard" style="padding:14px;">
-                  <div class="sc-label">Promedio Q${quarter}</div>
-                  <div class="sc-value num ${s.qAvg >= 4.8 ? 'gold' : s.qAvg >= 4.5 ? '' : 'down'}">${s.qAvg.toFixed(2)}</div>
+                  <div class="sc-label">Promedio Regional</div>
+                  <div class="sc-value num ${mAvg >= 4.8 ? 'gold' : mAvg >= 4.5 ? '' : 'down'}">${mAvg.toFixed(2)}</div>
                 </div>
                 <div class="scorecard" style="padding:14px;">
-                  <div class="sc-label">Reseñas</div>
-                  <div class="sc-value num">${s.totalCount}</div>
+                  <div class="sc-label">Reseñas Totales</div>
+                  <div class="sc-value num">${mTotalCount}</div>
                 </div>
                 <div class="scorecard" style="padding:14px;">
-                  <div class="sc-label">Δ vs Histórico</div>
-                  <div class="sc-value num ${(s.qAvg - s.historico) > 0 ? 'up' : 'down'}">${(s.qAvg - s.historico) > 0 ? '+' : ''}${(s.qAvg - s.historico).toFixed(2)}</div>
+                  <div class="sc-label">Reseñas Negativas</div>
+                  <div class="sc-value num ${mTotalNeg > 0 ? 'down' : 'up'}">${mTotalNeg}</div>
                 </div>
               </div>
+              
               <div>
-                <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);font-weight:700;margin-bottom:8px;">Mejor reseña del trimestre</div>
+                <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);font-weight:700;margin-bottom:8px;">Ranking del mes</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  ${mRanking.map((s, idx) => {
+                    if (s.count === 0) return '';
+                    const badgeClass = idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : '';
+                    return \`<div style="background: var(--bg-card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                      \${badgeClass ? \`<span class="rank-badge \${badgeClass}" style="width: 16px; height: 16px; font-size: 9px;">\${idx + 1}</span>\` : \`<span style="color: var(--text-dim); font-weight: 600; width: 16px; text-align: center;">\${idx + 1}</span>\`}
+                      <span>\${s.abr}</span>
+                      <strong class="num">\${s.avg.toFixed(2)}</strong>
+                    </div>\`;
+                  }).join('')}
+                </div>
+              </div>
+
+              <div style="margin-top: 8px;">
+                <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);font-weight:700;margin-bottom:8px;">Mejor reseña de ${MONTH_NAMES[m - 1]}</div>
                 ${bestBlock}
               </div>
               ${worstBlock ? `<div>
-                <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--alerta);font-weight:700;margin-bottom:8px;">Peor reseña del trimestre</div>
+                <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--alerta);font-weight:700;margin-bottom:8px;">Peor reseña de ${MONTH_NAMES[m - 1]}</div>
                 ${worstBlock}
               </div>` : ''}
             </div>
@@ -234,7 +269,7 @@ const QuarterView = {
 
       <section class="section r">
         <div class="section-head">
-          <div class="section-title">Detalle <span class="accent">por sucursal</span></div>
+          <div class="section-title">Detalle <span class="accent">por mes</span></div>
         </div>
         ${accordionItems}
       </section>

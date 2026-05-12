@@ -7,18 +7,24 @@ const HomeView = {
 
   async render() {
     Charts.destroyAll();
-    // Cargar todos los meses disponibles
-    for (const m of DataLoader.manifest['2026']) {
-      await DataLoader.loadMonth(2026, m);
-    }
+    const currYear = DataLoader.currentYear;
+    const prevYear = DataLoader.previousYear;
+    const currMonth = DataLoader.currentMonth;
+    const prevMonth = DataLoader.previousMonth;
 
-    const prevMonth = 4; // Abril
-    const currMonth = 5; // Mayo
+    await DataLoader.loadMonth(prevYear, prevMonth);
+    await DataLoader.loadMonth(currYear, currMonth);
 
-    const prevStats = DataLoader.getAllBranchStats(2026, prevMonth);
-    const currStats = DataLoader.getAllBranchStats(2026, currMonth);
-    const prevGlobal = DataLoader.getGlobalStats(2026, prevMonth);
-    const currGlobal = DataLoader.getGlobalStats(2026, currMonth);
+    const prevStats = DataLoader.getAllBranchStats(prevYear, prevMonth);
+    const currStats = DataLoader.getAllBranchStats(currYear, currMonth);
+    const prevGlobal = DataLoader.getGlobalStats(prevYear, prevMonth);
+    const currGlobal = DataLoader.getGlobalStats(currYear, currMonth);
+
+    const currMonthName = new Date(currYear, currMonth - 1).toLocaleString('es-ES', { month: 'long' });
+    const prevMonthName = new Date(prevYear, prevMonth - 1).toLocaleString('es-ES', { month: 'long' });
+    const capitalizedCurrMonth = currMonthName.charAt(0).toUpperCase() + currMonthName.slice(1);
+    const capitalizedPrevMonth = prevMonthName.charAt(0).toUpperCase() + prevMonthName.slice(1);
+    const currMonthShort = capitalizedCurrMonth.substring(0, 3).toUpperCase();
 
     const branches = SUCURSALES_META.map(meta => {
       const p = prevStats[meta.id];
@@ -32,7 +38,7 @@ const HomeView = {
         statusMayo: alerta ? {
           negativas: c.negativeCount,
           tema: meta.alertTheme || 'Problemas operativos',
-          detalle: `${c.negativeCount} reseña${c.negativeCount !== 1 ? 's' : ''} negativa${c.negativeCount !== 1 ? 's' : ''} en mayo.`
+          detalle: `${c.negativeCount} reseña${c.negativeCount !== 1 ? 's' : ''} negativa${c.negativeCount !== 1 ? 's' : ''} en ${capitalizedCurrMonth.toLowerCase()}.`
         } : null
       };
     });
@@ -52,8 +58,8 @@ const HomeView = {
     });
 
     // KPIs
-    const kpiData = await Kpis.computeMonth(2026, currMonth);
-    const kpiSection = this._buildKpiSection(kpiData, currGlobal, prevGlobal);
+    const kpiData = await Kpis.computeMonth(currYear, currMonth);
+    const kpiSection = this._buildKpiSection(kpiData, currGlobal, prevGlobal, capitalizedCurrMonth, currYear);
 
     const cards = sorted.map(s => {
       const delta = (s.curr.score - s.historico);
@@ -61,8 +67,8 @@ const HomeView = {
       const dStr = delta > 0 ? `+${delta.toFixed(2)}` : delta.toFixed(2);
       const currScoreStr = s.curr.score > 0 ? s.curr.score.toFixed(2) : '—';
       const mayoBlock = s.alerta
-        ? `<div class="bc-mayo warn"><span class="mono">MAY</span> <span>${s.statusMayo.negativas} negativa${s.statusMayo.negativas !== 1 ? 's' : ''}</span></div>`
-        : `<div class="bc-mayo"><span class="mono">MAY</span> <span>Sin incidencias</span></div>`;
+        ? `<div class="bc-mayo warn"><span class="mono">${currMonthShort}</span> <span>${s.statusMayo.negativas} negativa${s.statusMayo.negativas !== 1 ? 's' : ''}</span></div>`
+        : `<div class="bc-mayo"><span class="mono">${currMonthShort}</span> <span>Sin incidencias</span></div>`;
       return `
       <a class="branch-card" href="#/sucursal/${s.id}">
         <div class="bc-top">
@@ -74,7 +80,7 @@ const HomeView = {
         </div>
         <div class="bc-stars-line">${s.curr.score > 0 ? starStr(Math.round(s.curr.score)) : '—'}</div>
         <div class="bc-meta">
-          <span><strong>${s.curr.count}</strong> reseña${s.curr.count !== 1 ? 's' : ''} may</span>
+          <span><strong>${s.curr.count}</strong> reseña${s.curr.count !== 1 ? 's' : ''} ${capitalizedCurrMonth.substring(0,3).toLowerCase()}</span>
           <span class="bc-delta ${dClass} num">${dStr} vs hist</span>
         </div>
         ${mayoBlock}
@@ -109,14 +115,14 @@ const HomeView = {
         <div class="hero-inner">
           <div class="hero-left">
             <div class="hero-label-row">
-              <span class="eyebrow" style="color:rgba(245,239,230,.55);">Promedio Regional · Mayo 2026</span>
+              <span class="eyebrow" style="color:rgba(245,239,230,.55);">Promedio Regional · ${capitalizedCurrMonth} ${currYear}</span>
             </div>
             <div class="hero-score">
               <span class="hero-score-num num" id="heroNum">${currGlobal.avgRating.toFixed(2)}</span>
               <div class="hero-score-side">
                 <span class="hero-stars">${starStr(Math.round(currGlobal.avgRating))}</span>
                 <span class="hero-of">de 5.00</span>
-                <span class="hero-trend">${currGlobal.avgRating >= prevGlobal.avgRating ? '↑' : '↓'} ${Math.abs(currGlobal.avgRating - prevGlobal.avgRating).toFixed(2)} vs Abril (${prevGlobal.avgRating.toFixed(2)})</span>
+                <span class="hero-trend">${currGlobal.avgRating >= prevGlobal.avgRating ? '↑' : '↓'} ${Math.abs(currGlobal.avgRating - prevGlobal.avgRating).toFixed(2)} vs ${capitalizedPrevMonth} (${prevGlobal.avgRating.toFixed(2)})</span>
               </div>
             </div>
             <div class="hero-live"><span class="pulse-dot"></span> Datos en tiempo real · ${currGlobal.totalReviews} reseñas</div>
@@ -125,8 +131,8 @@ const HomeView = {
             <div class="hero-stat">
               <span class="hero-stat-val num">${currGlobal.totalReviews}</span>
               <div class="hero-stat-info">
-                <span class="hero-stat-label">Reseñas Mayo</span>
-                <span class="hero-stat-sub">${prevGlobal.totalReviews} en abril</span>
+                <span class="hero-stat-label">Reseñas ${capitalizedCurrMonth}</span>
+                <span class="hero-stat-sub">${prevGlobal.totalReviews} en ${capitalizedPrevMonth.toLowerCase()}</span>
               </div>
             </div>
             <div class="hero-stat">
@@ -139,7 +145,7 @@ const HomeView = {
             <div class="hero-stat warn">
               <span class="hero-stat-val num">${negativasMayo}</span>
               <div class="hero-stat-info">
-                <span class="hero-stat-label">Negativas en Mayo</span>
+                <span class="hero-stat-label">Negativas en ${capitalizedCurrMonth}</span>
                 <span class="hero-stat-sub">${conAlerta.length} sucursal${conAlerta.length !== 1 ? 'es' : ''} con alerta</span>
               </div>
             </div>
@@ -149,11 +155,44 @@ const HomeView = {
 
       ${kpiSection}
 
+      ${(() => {
+        const topBranches = sorted.filter(s => s.curr.score >= 4.90 && s.curr.negativeCount === 0);
+        if (topBranches.length > 0) {
+          const currentData = DataLoader.getMonth(currYear, currMonth);
+          return `
+          <section class="section r" style="margin-bottom: var(--s-8);">
+            <div class="section-head">
+              <div class="section-title">El estándar <span class="accent">ya existe</span></div>
+              <span class="section-sub">Sucursales con 0% de reseñas negativas y rating óptimo. El estándar es alcanzable.</span>
+            </div>
+            <div class="branch-grid">
+              ${topBranches.map(s => {
+                const branchReviews = currentData.reviews.filter(r => [s.nombre, s.abr, s.id === 'gal-gdl' ? 'Galerías GDL' : '', s.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].includes(r.sucursal) && r.text && r.text.length > 10 && r.stars === 5);
+                const quote = branchReviews.length > 0 ? branchReviews[0].text : 'Excelente servicio y calidad.';
+                return `
+                <div class="branch-card" style="border-top: 3px solid var(--optima); flex-direction: column;">
+                  <div class="bc-top">
+                    <div class="bc-name">${s.abr}</div>
+                    <span class="bc-status ok" title="Estándar óptimo"></span>
+                  </div>
+                  <div style="margin-top: 8px; font-size: 14px; font-style: italic; color: var(--fg-muted);">"${quote}"</div>
+                  <div style="margin-top: auto; display: flex; align-items: baseline; gap: 6px; padding-top: 12px;">
+                    <span class="bc-score num" style="font-size: 20px;">${s.curr.score.toFixed(2)}</span>
+                    <span class="bc-stars-line" style="font-size: 12px;">${starStr(5)}</span>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>
+          </section>`;
+        }
+        return '';
+      })()}
+
       ${negativasMayo > 0 ? `<div class="alert-strip">
         <div class="alert-icon-box">!</div>
         <div class="alert-content">
-          <div class="alert-title">Alerta · Mayo 2026 · primeros 11 días</div>
-          <div class="alert-text">${conAlerta.length} sucursales acumulan ${negativasMayo} reseñas negativas. Patrón común: <strong>calidad de ingredientes</strong> y <strong>errores en pedidos</strong>.</div>
+          <div class="alert-title">Alerta · ${capitalizedCurrMonth} ${currYear}</div>
+          <div class="alert-text">${conAlerta.length} sucursales acumulan ${negativasMayo} reseñas negativas.</div>
           <div class="alert-pills">
             ${conAlerta.map(s => `<span class="alert-pill">${s.abr} · ${s.statusMayo.negativas}</span>`).join('')}
           </div>
@@ -175,12 +214,12 @@ const HomeView = {
       <div class="home-grid-2">
         <section class="section r">
           <div class="section-head">
-            <div class="section-title">Histórico <span class="accent">vs</span> Mayo 2026</div>
+            <div class="section-title">Histórico <span class="accent">vs</span> ${capitalizedCurrMonth} ${currYear}</div>
           </div>
           <div class="chart-card">
             <div class="legend">
               <div class="legend-item"><span class="legend-swatch hist"></span> Histórico (anual)</div>
-              <div class="legend-item"><span class="legend-swatch curr"></span> Mayo 2026</div>
+              <div class="legend-item"><span class="legend-swatch curr"></span> ${capitalizedCurrMonth} ${currYear}</div>
             </div>
             ${trends}
           </div>
@@ -188,7 +227,7 @@ const HomeView = {
 
         <section class="section r">
           <div class="section-head">
-            <div class="section-title">Volumen <span class="accent">Mayo</span></div>
+            <div class="section-title">Volumen <span class="accent">${capitalizedCurrMonth}</span></div>
             <span class="section-sub">${currGlobal.totalReviews} reseñas · ${branches.length} sucursales</span>
           </div>
           <div class="chart-card"><div class="chart-wrap"><canvas id="volChart"></canvas></div></div>
@@ -220,7 +259,7 @@ const HomeView = {
     }
   },
 
-  _buildKpiSection(kpi, curr, prev) {
+  _buildKpiSection(kpi, curr, prev, monthName, year) {
     const volClass = kpi.volumen.ok >= kpi.volumen.total ? 'optimal' : 'attention';
     const calClass = kpi.calidadTexto.ratio >= KpiMeta.calidadTextoMeta ? 'optimal' : 'attention';
     const ratClass = kpi.ratingMinimo.belowMin.length === 0 ? 'optimal' : 'critical';
@@ -232,7 +271,7 @@ const HomeView = {
     return `
       <section class="section r">
         <div class="section-head">
-          <div class="section-title">KPIs <span class="accent">Mayo 2026</span></div>
+          <div class="section-title">KPIs <span class="accent">${monthName} ${year}</span></div>
           <span class="section-sub">Seguimiento vs metas definidas</span>
         </div>
         <div class="scorecard-grid">

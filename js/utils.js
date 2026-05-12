@@ -90,10 +90,14 @@ function buildTopbar(showBack = false, branchName = '') {
   const brand = showBack
     ? `<span class="topbar-brand"><span class="accent">${branchName}</span></span>`
     : `<span class="topbar-brand">La <span class="accent">Crêpe</span> Parisienne</span>`;
+  const explorerLink = `<a href="#/explorador" class="topbar-link" style="margin-right: 12px; font-size: 14px; text-decoration: none; color: var(--fg-muted);">🔍 Explorador</a>`;
+  const currMonthLabel = DataLoader.currentMonth ? new Date(DataLoader.currentYear, DataLoader.currentMonth - 1).toLocaleString('es-ES', {month: 'long'}).replace(/^./, c=>c.toUpperCase()) : '';
+
   return `<header class="topbar">
     <div class="topbar-left">${back}${brand}</div>
     <div class="topbar-right">
-      ${!showBack ? '<span class="topbar-month">GDL · Mayo 2026</span>' : ''}
+      ${explorerLink}
+      ${!showBack && DataLoader.currentMonth ? `<span class="topbar-month">GDL · ${currMonthLabel} ${DataLoader.currentYear}</span>` : ''}
       <button class="dark-toggle" onclick="toggleDark()" aria-label="Cambiar tema">${darkMode ? svgIcon('sun') : svgIcon('moon')}</button>
     </div>
   </header>`;

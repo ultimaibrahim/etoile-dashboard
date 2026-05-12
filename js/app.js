@@ -27,6 +27,7 @@ async function initApp() {
   Router.register('branch', params => BranchView.render(params));
   Router.register('quarter', params => QuarterView.render(params));
   Router.register('about', () => AboutView.render());
+  Router.register('explorer', () => ExplorerView.render());
 
   Router.init();
   Router.resolve();
