@@ -90,7 +90,7 @@ function buildTopbar(showBack = false, branchName = '') {
     : '';
   const brand = showBack
     ? `<span class="topbar-brand"><span class="accent">${branchName}</span></span>`
-    : `<span class="topbar-brand">La <span class="accent">Crêpe</span> Parisienne</span>`;
+    : `<a href="#/" class="topbar-brand">La <span class="accent">Crêpe</span> Parisienne</a>`;
   const explorerLink = `<a href="#/explorador" class="topbar-link" style="margin-right: 12px; font-size: 14px; text-decoration: none; color: var(--fg-muted); display: inline-flex; align-items: center; gap: 6px; width: 16px; height: 16px; overflow: visible; white-space: nowrap;">${svgIcon('search')} <span style="transform: translateY(-1px);">Explorador</span></a>`;
   const currMonthLabel = DataLoader.currentMonth ? new Date(DataLoader.currentYear, DataLoader.currentMonth - 1).toLocaleString('es-ES', {month: 'long'}).replace(/^./, c=>c.toUpperCase()) : '';
 

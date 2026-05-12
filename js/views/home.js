@@ -153,7 +153,30 @@ const HomeView = {
         </div>
       </section>
 
+      ${negativasMayo > 0 ? `<div class="alert-strip">
+        <div class="alert-icon-box">!</div>
+        <div class="alert-content">
+          <div class="alert-title">Alerta · ${capitalizedCurrMonth} ${currYear}</div>
+          <div class="alert-text">${conAlerta.length} sucursales acumulan ${negativasMayo} reseñas negativas.</div>
+          <div class="alert-pills">
+            ${conAlerta.map(s => `<span class="alert-pill">${s.abr} · ${s.statusMayo.negativas}</span>`).join('')}
+          </div>
+        </div>
+      </div>` : ''}
+
       ${kpiSection}
+
+      <section class="section r">
+        <div class="section-head">
+          <div class="section-title">Sucursales <span class="accent">por desempeño</span></div>
+          <div class="filter-row">
+            <button class="chip ${this.filter === 'todas' ? 'active' : ''}" onclick="HomeView.setFilter('todas')">Todas <span class="chip-count">${branches.length}</span></button>
+            <button class="chip ${this.filter === 'alerta' ? 'active' : ''}" onclick="HomeView.setFilter('alerta')">Con alerta <span class="chip-count">${conAlerta.length}</span></button>
+            <button class="chip ${this.filter === 'estables' ? 'active' : ''}" onclick="HomeView.setFilter('estables')">Estables <span class="chip-count">${sinAlerta.length}</span></button>
+          </div>
+        </div>
+        <div class="branch-grid">${cards || '<div class="empty-state"><span class="glyph">—</span>Sin sucursales para este filtro</div>'}</div>
+      </section>
 
       ${(() => {
         const topBranches = sorted.filter(s => s.curr.score >= 4.90 && s.curr.negativeCount === 0);
@@ -175,7 +198,7 @@ const HomeView = {
                     <div class="bc-name">${s.abr}</div>
                     <span class="bc-status ok" title="Estándar óptimo"></span>
                   </div>
-                  <div style="margin-top: 8px; font-size: 14px; font-style: italic; color: var(--fg-muted);">"${quote}"</div>
+                  <div style="margin-top: 8px; font-size: 14px; font-style: italic; color: var(--text-muted);">"${quote}"</div>
                   <div style="margin-top: auto; display: flex; align-items: baseline; gap: 6px; padding-top: 12px;">
                     <span class="bc-score num" style="font-size: 20px;">${s.curr.score.toFixed(2)}</span>
                     <span class="bc-stars-line" style="font-size: 12px;">${starStr(5)}</span>
@@ -188,28 +211,6 @@ const HomeView = {
         return '';
       })()}
 
-      ${negativasMayo > 0 ? `<div class="alert-strip">
-        <div class="alert-icon-box">!</div>
-        <div class="alert-content">
-          <div class="alert-title">Alerta · ${capitalizedCurrMonth} ${currYear}</div>
-          <div class="alert-text">${conAlerta.length} sucursales acumulan ${negativasMayo} reseñas negativas.</div>
-          <div class="alert-pills">
-            ${conAlerta.map(s => `<span class="alert-pill">${s.abr} · ${s.statusMayo.negativas}</span>`).join('')}
-          </div>
-        </div>
-      </div>` : ''}
-
-      <section class="section r">
-        <div class="section-head">
-          <div class="section-title">Sucursales <span class="accent">por desempeño</span></div>
-          <div class="filter-row">
-            <button class="chip ${this.filter === 'todas' ? 'active' : ''}" onclick="HomeView.setFilter('todas')">Todas <span class="chip-count">${branches.length}</span></button>
-            <button class="chip ${this.filter === 'alerta' ? 'active' : ''}" onclick="HomeView.setFilter('alerta')">Con alerta <span class="chip-count">${conAlerta.length}</span></button>
-            <button class="chip ${this.filter === 'estables' ? 'active' : ''}" onclick="HomeView.setFilter('estables')">Estables <span class="chip-count">${sinAlerta.length}</span></button>
-          </div>
-        </div>
-        <div class="branch-grid">${cards || '<div class="empty-state"><span class="glyph">—</span>Sin sucursales para este filtro</div>'}</div>
-      </section>
 
       <div class="home-grid-2">
         <section class="section r">

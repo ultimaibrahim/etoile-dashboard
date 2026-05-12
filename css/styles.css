@@ -270,9 +270,26 @@ a{color:inherit;text-decoration:none;}
   box-shadow:var(--sombra-card);
   transition:border-color .2s, box-shadow .2s, transform .15s;
 }
+.branch-card::after {
+  content: '→';
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--sage);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity .2s, transform .2s;
+}
 .branch-card:hover{
-  border-color:var(--sage);transform:translateY(-3px);
+  border-color:var(--sage);transform:translateY(-4px);
   box-shadow:var(--sombra-lg);
+}
+.branch-card:hover::after {
+  opacity: 1;
+  transform: translateX(0);
 }
 .bc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
 .bc-name{
@@ -736,4 +753,33 @@ a{color:inherit;text-decoration:none;}
 /* Responsive tweaks for scorecards */
 @media(min-width:760px){
   .scorecard-grid{grid-template-columns:repeat(4,1fr);}
+}
+
+/* ─── PROBLEM LIST ─────────────────────────────────────── */
+.problem-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.problem-list li {
+  position: relative;
+  padding-left: 24px;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.4;
+}
+.problem-list li::before {
+  content: '⚠';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--alerta);
+  font-size: 12px;
+  line-height: 1.4;
+}
+[data-theme="dark"] .problem-list li::before {
+  color: #F4A090;
 }
