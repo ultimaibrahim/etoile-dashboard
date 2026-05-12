@@ -87,27 +87,7 @@ const HomeView = {
       </a>`;
     }).join('');
 
-    const trends = [...branches].sort((a, b) => b.curr.count - a.curr.count).map(s => {
-      const pH = Math.max(0, ((s.historico - 3.5) / 1.5 * 100));
-      const pC = Math.max(0, ((s.curr.score - 3.5) / 1.5 * 100));
-      const delta = s.curr.score > 0 ? (s.curr.score - s.historico).toFixed(2) : '0.00';
-      const dClass = Number(delta) > 0 ? 'up' : 'flat';
-      const dStr = Number(delta) > 0 ? `+${delta}` : delta;
-      const currVal = s.curr.score > 0 ? s.curr.score.toFixed(2) : '—';
-      return `<div class="trend-row">
-        <div class="trend-row-header">
-          <span class="name">${s.abr}</span>
-          <span class="vals num">
-            ${s.historico.toFixed(1)} → <span class="now">${currVal}</span>
-            <span class="delta ${dClass}">${dStr}</span>
-          </span>
-        </div>
-        <div class="trend-stack">
-          <div class="trend-track"><div class="bar-fill bar-hist" data-w="${pH.toFixed(1)}"></div></div>
-          <div class="trend-track"><div class="bar-fill bar-curr" data-w="${pC.toFixed(1)}"></div></div>
-        </div>
-      </div>`;
-    }).join('');
+
 
     document.getElementById('app').innerHTML = `
       ${buildTopbar()}
@@ -153,41 +133,6 @@ const HomeView = {
         </div>
       </section>
 
-      ${kpiSection}
-
-      ${(() => {
-        const topBranches = sorted.filter(s => s.curr.score >= 4.90 && s.curr.negativeCount === 0);
-        if (topBranches.length > 0) {
-          const currentData = DataLoader.getMonth(currYear, currMonth);
-          return `
-          <section class="section r" style="margin-bottom: var(--s-8);">
-            <div class="section-head">
-              <div class="section-title">El estándar <span class="accent">ya existe</span></div>
-              <span class="section-sub">Sucursales con 0% de reseñas negativas y rating óptimo. El estándar es alcanzable.</span>
-            </div>
-            <div class="branch-grid">
-              ${topBranches.map(s => {
-                const branchReviews = currentData.reviews.filter(r => [s.nombre, s.abr, s.id === 'gal-gdl' ? 'Galerías GDL' : '', s.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].includes(r.sucursal) && r.text && r.text.length > 10 && r.stars === 5);
-                const quote = branchReviews.length > 0 ? branchReviews[0].text : 'Excelente servicio y calidad.';
-                return `
-                <div class="branch-card" style="border-top: 3px solid var(--optima); flex-direction: column;">
-                  <div class="bc-top">
-                    <div class="bc-name">${s.abr}</div>
-                    <span class="bc-status ok" title="Estándar óptimo"></span>
-                  </div>
-                  <div style="margin-top: 8px; font-size: 14px; font-style: italic; color: var(--fg-muted);">"${quote}"</div>
-                  <div style="margin-top: auto; display: flex; align-items: baseline; gap: 6px; padding-top: 12px;">
-                    <span class="bc-score num" style="font-size: 20px;">${s.curr.score.toFixed(2)}</span>
-                    <span class="bc-stars-line" style="font-size: 12px;">${starStr(5)}</span>
-                  </div>
-                </div>`;
-              }).join('')}
-            </div>
-          </section>`;
-        }
-        return '';
-      })()}
-
       ${negativasMayo > 0 ? `<div class="alert-strip">
         <div class="alert-icon-box">!</div>
         <div class="alert-content">
@@ -198,6 +143,8 @@ const HomeView = {
           </div>
         </div>
       </div>` : ''}
+
+      ${kpiSection}
 
       <section class="section r">
         <div class="section-head">
@@ -211,28 +158,7 @@ const HomeView = {
         <div class="branch-grid">${cards || '<div class="empty-state"><span class="glyph">—</span>Sin sucursales para este filtro</div>'}</div>
       </section>
 
-      <div class="home-grid-2">
-        <section class="section r">
-          <div class="section-head">
-            <div class="section-title">Histórico <span class="accent">vs</span> ${capitalizedCurrMonth} ${currYear}</div>
-          </div>
-          <div class="chart-card">
-            <div class="legend">
-              <div class="legend-item"><span class="legend-swatch hist"></span> Histórico (anual)</div>
-              <div class="legend-item"><span class="legend-swatch curr"></span> ${capitalizedCurrMonth} ${currYear}</div>
-            </div>
-            ${trends}
-          </div>
-        </section>
 
-        <section class="section r">
-          <div class="section-head">
-            <div class="section-title">Volumen <span class="accent">${capitalizedCurrMonth}</span></div>
-            <span class="section-sub">${currGlobal.totalReviews} reseñas · ${branches.length} sucursales</span>
-          </div>
-          <div class="chart-card"><div class="chart-wrap"><canvas id="volChart"></canvas></div></div>
-        </section>
-      </div>
 
       <footer class="footer">
         <span class="brand">La <span class="accent">Crêpe</span> Parisienne</span> · Grupo MYT / Grupo Corporativo Alancar<br>
@@ -240,23 +166,6 @@ const HomeView = {
       </footer>`;
 
     requestAnimationFrame(() => document.getElementById('heroNum')?.classList.add('in'));
-    setTimeout(() => document.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.w + '%'), 350);
-
-    const ctx = document.getElementById('volChart')?.getContext('2d');
-    if (ctx) {
-      const sortedVol = [...branches].sort((a, b) => b.curr.count - a.curr.count);
-      Charts.barVolume(
-        ctx,
-        sortedVol.map(s => s.abr),
-        sortedVol.map(s => s.curr.count),
-        sortedVol.map((s, i) => {
-          if (s.alerta) return darkMode ? 'rgba(244,160,144,0.75)' : 'rgba(178,58,43,0.7)';
-          return i === 0
-            ? (darkMode ? 'rgba(181,207,195,0.9)' : 'rgba(47,74,58,0.88)')
-            : (darkMode ? 'rgba(122,158,138,0.55)' : 'rgba(107,144,125,0.55)');
-        })
-      );
-    }
   },
 
   _buildKpiSection(kpi, curr, prev, monthName, year) {

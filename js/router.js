@@ -26,6 +26,9 @@ const Router = {
     if (hash === '#/explorador') {
       return { handler: this.routes['explorer'], params: {} };
     }
+    if (hash === '#/dashboards') {
+      return { handler: this.routes['dashboards'], params: {} };
+    }
     return { handler: this.routes['home'], params: {} };
   },
 

@@ -3,7 +3,9 @@
  */
 
 function starStr(n) {
-  return '★'.repeat(n) + '☆'.repeat(5 - n);
+  const num = Math.round(Number(n) || 0);
+  const safeN = Math.max(0, Math.min(5, num));
+  return '★'.repeat(safeN) + '☆'.repeat(5 - safeN);
 }
 
 function svgIcon(name) {
@@ -11,7 +13,10 @@ function svgIcon(name) {
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
     moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
     arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>',
-    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>'
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+    barChart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>'
   };
   return i[name] || '';
 }
@@ -86,19 +91,24 @@ function parseQuarterParam(param) {
 /* ── TOPBAR ────────────────────────────────────────────── */
 function buildTopbar(showBack = false, branchName = '') {
   const back = showBack
-    ? `<button class="topbar-back" onclick="window.location.hash='#/'">${svgIcon('arrow')}<span>Inicio</span></button>`
+    ? `<button class="topbar-back" onclick="window.history.back()">${svgIcon('arrow')}<span>Atrás</span></button>`
     : '';
-  const brand = showBack
-    ? `<span class="topbar-brand"><span class="accent">${branchName}</span></span>`
-    : `<span class="topbar-brand">La <span class="accent">Crêpe</span> Parisienne</span>`;
-  const explorerLink = `<a href="#/explorador" class="topbar-link" style="margin-right: 12px; font-size: 14px; text-decoration: none; color: var(--fg-muted); display: inline-flex; align-items: center; gap: 6px; width: 16px; height: 16px; overflow: visible; white-space: nowrap;">${svgIcon('search')} <span style="transform: translateY(-1px);">Explorador</span></a>`;
-  const currMonthLabel = DataLoader.currentMonth ? new Date(DataLoader.currentYear, DataLoader.currentMonth - 1).toLocaleString('es-ES', {month: 'long'}).replace(/^./, c=>c.toUpperCase()) : '';
+  const brand = `<a href="#/" class="topbar-brand">La <span class="accent">Crêpe</span> Parisienne</a>`;
+  
+  const currentHash = window.location.hash;
+  const navLinks = `
+    <nav class="topbar-nav">
+      <a href="#/" class="topbar-link ${currentHash === '#/' || currentHash === '' ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
+      <a href="#/dashboards" class="topbar-link ${currentHash === '#/dashboards' ? 'active' : ''}" title="Gráficas y Volumen">${svgIcon('barChart')} <span>Dashboards</span></a>
+      <a href="#/explorador" class="topbar-link ${currentHash === '#/explorador' ? 'active' : ''}" title="Minería de Datos">${svgIcon('search')} <span>Explorador</span></a>
+      <a href="#/acerca" class="topbar-link ${currentHash === '#/acerca' ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Metodología</span></a>
+    </nav>
+  `;
 
   return `<header class="topbar">
     <div class="topbar-left">${back}${brand}</div>
+    ${navLinks}
     <div class="topbar-right">
-      ${explorerLink}
-      ${!showBack && DataLoader.currentMonth ? `<span class="topbar-month">GDL · ${currMonthLabel} ${DataLoader.currentYear}</span>` : ''}
       <button class="dark-toggle" onclick="toggleDark()" aria-label="Cambiar tema">${darkMode ? svgIcon('sun') : svgIcon('moon')}</button>
     </div>
   </header>`;

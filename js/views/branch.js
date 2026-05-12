@@ -64,9 +64,9 @@ const BranchView = {
     const problemSection = meta.problemas.length ? `
       <div class="status-warn-box" style="margin-bottom:14px;">
         <div class="topic">Problemas identificados en reseñas</div>
-        <ol style="margin:8px 0 0 16px;line-height:1.7;font-size:13px;">
+        <ul class="problem-list">
           ${meta.problemas.map(p => `<li>${p}</li>`).join('')}
-        </ol>
+        </ul>
       </div>` : '';
 
     // Best/worst quotes
