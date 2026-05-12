@@ -92,6 +92,7 @@ const HomeView = {
     document.getElementById('app').innerHTML = `
       ${buildTopbar()}
       <section class="hero">
+        <img src="favicon.png" alt="" class="hero-watermark">
         <div class="hero-inner">
           <div class="hero-left">
             <div class="hero-label-row">
@@ -134,7 +135,14 @@ const HomeView = {
       </section>
 
       ${negativasMayo > 0 ? `<div class="home-grid-2" style="margin-bottom: 24px; align-items: start;">
-        <div class="alert-strip" style="margin-bottom: 0;">
+        <div class="alert-strip alert-box-sunken" style="margin-bottom: 0;">
+          <div class="watermark-stars">
+            ${svgIcon('starFilled')}
+            ${svgIcon('star')}
+            ${svgIcon('star')}
+            ${svgIcon('star')}
+            ${svgIcon('star')}
+          </div>
           <div class="alert-icon-box">!</div>
           <div class="alert-content">
             <div class="alert-title">Alerta · ${capitalizedCurrMonth} ${currYear}</div>
@@ -150,7 +158,7 @@ const HomeView = {
 
       <section class="section r">
         <div class="section-head">
-          <div class="section-title">Sucursales <span class="accent">por desempeño</span></div>
+          <div class="section-title">Evaluación <span class="accent">de sucursales</span></div>
           <div class="filter-row">
             <button class="chip ${this.filter === 'todas' ? 'active' : ''}" onclick="HomeView.setFilter('todas')">Todas <span class="chip-count">${branches.length}</span></button>
             <button class="chip ${this.filter === 'alerta' ? 'active' : ''}" onclick="HomeView.setFilter('alerta')">Con alerta <span class="chip-count">${conAlerta.length}</span></button>
@@ -227,10 +235,17 @@ const HomeView = {
     const goodReviews = data.reviews.filter(r => r.stars === 5 && r.text && r.text.length > 30);
     if (goodReviews.length === 0) return '';
     const randomGood = goodReviews[Math.floor(Math.random() * goodReviews.length)];
-    return `<div class="chart-card" style="background: var(--verde-deep); color: var(--crema); border: none;">
+    return `<div class="chart-card highlight-box">
+      <div class="watermark-stars">
+        ${svgIcon('starFilled')}
+        ${svgIcon('starFilled')}
+        ${svgIcon('starFilled')}
+        ${svgIcon('starFilled')}
+        ${svgIcon('starFilled')}
+      </div>
       <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--sage); margin-bottom: 8px;">Lo más destacado</div>
-      <div style="font-family: var(--serif); font-size: 20px; font-style: italic; line-height: 1.4; margin-bottom: 12px;">"${randomGood.text}"</div>
-      <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-family: var(--serif); font-size: 20px; font-style: italic; line-height: 1.4; margin-bottom: 12px; position: relative; z-index: 1;">"${randomGood.text}"</div>
+      <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1;">
         <span style="font-size: 13px; font-weight: 500;">— ${randomGood.sucursal}</span>
         <span style="color: var(--optima);">${starStr(5)}</span>
       </div>

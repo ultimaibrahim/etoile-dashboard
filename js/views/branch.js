@@ -36,7 +36,16 @@ const BranchView = {
 
     // Evaluación de KPIs (Scorecard)
     const kpiVolClass = stats.count >= KpiMeta.volumenMeta ? 'optimal' : 'attention';
-    const hasTextRatio = stats.count > 0 ? (reviews.filter(r => r.text && r.text.length > 5).length / stats.count) : 0;
+    
+    // Calidad de reseña: Positivas sin texto NO penalizan si contamos "con texto" en el numerador y el denominador. 
+    // Wait, the user said: "meta reseñas sin texto positivas (negativas no cuentan) para hacer el calculo mas exacto".
+    // Esto significa Denominador = (Total de reseñas) - (Negativas sin texto). 
+    // O mejor: Denominador = (Todas las positivas) + (Negativas con texto).
+    const negativasSinTexto = reviews.filter(r => r.stars <= 3 && (!r.text || r.text.length <= 5)).length;
+    const countForQuality = stats.count - negativasSinTexto;
+    const conTexto = reviews.filter(r => r.text && r.text.length > 5).length;
+    
+    const hasTextRatio = countForQuality > 0 ? (conTexto / countForQuality) : 0;
     const kpiCalClass = hasTextRatio >= KpiMeta.calidadTextoMeta ? 'optimal' : 'attention';
     const kpiRatClass = stats.avg >= KpiMeta.ratingMinimo || stats.avg === 0 ? 'optimal' : 'critical';
 
@@ -96,9 +105,9 @@ const BranchView = {
         <div class="bh-eyebrow">
           <span>Guadalajara</span>
         </div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+        <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
           <h1 class="bh-name">${meta.nombre}</h1>
-          <select id="monthSelect" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: var(--sans); font-weight: 500; font-size: 14px; outline: none; cursor: pointer;">
+          <select id="monthSelect" class="month-selector">
             ${selectorOptions}
           </select>
         </div>

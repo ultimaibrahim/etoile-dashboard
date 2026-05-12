@@ -102,7 +102,7 @@ function buildTopbar(showBack = false, branchName = '') {
     <nav class="topbar-nav">
       <a href="#/" class="topbar-link ${currentHash === '#/' || currentHash === '' ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
       <a href="#/dashboards" class="topbar-link ${currentHash === '#/dashboards' ? 'active' : ''}" title="Gráficas y Volumen">${svgIcon('barChart')} <span>Dashboards</span></a>
-      <a href="#/acerca" class="topbar-link ${currentHash === '#/acerca' ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Metodología</span></a>
+      <a href="#/acerca" class="topbar-link ${currentHash === '#/acerca' ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
     </nav>
   `;
 
