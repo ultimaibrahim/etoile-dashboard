@@ -10,12 +10,8 @@ const SUCURSALES_META = [
     abr: 'Andares',
     historico: 4.3,
     q1Status: 'critical',
-    alertTheme: 'Calidad de ingredientes',
-    problemas: [
-      'Actitud del personal: grosería, indiferencia y mal trato documentados.',
-      'Tiempos de espera: 20-30 minutos, tickets perdidos, pedidos ignorados.',
-      'Riesgo sanitario: uso de guantes contaminados para preparar alimentos.'
-    ]
+    alertTheme: null,
+    problemas: []
   },
   {
     id: 'patria',
@@ -23,7 +19,7 @@ const SUCURSALES_META = [
     abr: 'Patria',
     historico: 4.5,
     q1Status: 'optimal',
-    alertTheme: 'Errores en pedidos y cobros',
+    alertTheme: null,
     problemas: []
   },
   {
@@ -41,11 +37,8 @@ const SUCURSALES_META = [
     abr: 'Midtown',
     historico: 4.5,
     q1Status: 'attention',
-    alertTheme: 'Ingredientes faltantes y frescura',
-    problemas: [
-      'Actitud del personal: atención con desprecio y desgano en reseñas recientes.',
-      'Calidad de ingredientes: mermeladas artificiales, rellenos insuficientes.'
-    ]
+    alertTheme: null,
+    problemas: []
   },
   {
     id: 'via-viva',
@@ -99,7 +92,7 @@ const SUCURSAL_NAME_MAP = {
 const KpiMeta = {
   volumenMeta: 4,
   calidadTextoMeta: 0.70,
-  ratingMinimo: 4.5
+  ratingMinimo: 4.60
 };
 
 const MONTH_NAMES = [

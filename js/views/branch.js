@@ -1,9 +1,10 @@
 /**
- * views/branch.js — Vista de sucursal con scorecard PDF y citas.
+ * views/branch.js — Vista de sucursal con selector de mes, scorecard de KPIs y reseñas mensuales.
  */
 
 const BranchView = {
-  activeTab: 'mayo',
+  activeYear: 2026,
+  activeMonth: null,
 
   async render(params) {
     const meta = getBranchById(params.id);
@@ -12,192 +13,123 @@ const BranchView = {
       return;
     }
 
-    // Cargar meses disponibles
-    for (const m of DataLoader.manifest['2026']) {
-      await DataLoader.loadMonth(2026, m);
+    if (!this.activeMonth) {
+      this.activeMonth = DataLoader.currentMonth;
     }
 
-    const aprilReviews = DataLoader.getReviewsForBranch(2026, 4, meta.id);
-    const mayReviews = DataLoader.getReviewsForBranch(2026, 5, meta.id);
-    const aprilStats = DataLoader.computeBranchStats(2026, 4, meta.id);
-    const mayStats = DataLoader.computeBranchStats(2026, 5, meta.id);
+    // Asegurar carga de los meses
+    const availableMonths = DataLoader.manifest[this.activeYear] || [];
+    for (const m of availableMonths) {
+      await DataLoader.loadMonth(this.activeYear, m);
+    }
 
-    // Q1 stats
+    const reviews = DataLoader.getReviewsForBranch(this.activeYear, this.activeMonth, meta.id);
+    const stats = DataLoader.computeBranchStats(this.activeYear, this.activeMonth, meta.id);
     const q1Info = Q1_DATA.branches[meta.id] || null;
 
-    const alerta = mayStats.negativeCount > 0 || (mayStats.avg > 0 && mayStats.avg < KpiMeta.ratingMinimo);
-    const negM = mayStats.negativeCount;
+    const monthName = new Date(this.activeYear, this.activeMonth - 1).toLocaleString('es-ES', { month: 'long' });
+    const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
-    const delta = mayStats.avg > 0 ? (mayStats.avg - meta.historico) : 0;
+    const delta = stats.avg > 0 ? (stats.avg - meta.historico) : 0;
     const dStr = delta > 0 ? `+${delta.toFixed(2)}` : delta.toFixed(2);
     const dClass = delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : 'flat';
-    const statusDot = alerta ? 'warn' : 'ok';
 
-    const insights = this._buildInsights(meta, mayReviews, mayStats);
+    // Evaluación de KPIs (Scorecard)
+    const kpiVolClass = stats.count >= KpiMeta.volumenMeta ? 'optimal' : 'attention';
+    const hasTextRatio = stats.count > 0 ? (reviews.filter(r => r.text && r.text.length > 5).length / stats.count) : 0;
+    const kpiCalClass = hasTextRatio >= KpiMeta.calidadTextoMeta ? 'optimal' : 'attention';
+    const kpiRatClass = stats.avg >= KpiMeta.ratingMinimo || stats.avg === 0 ? 'optimal' : 'critical';
 
-    // Scorecard PDF-style
     const scorecardSection = `
       <div class="scorecard-grid" style="margin-bottom:14px;">
         <div class="scorecard">
-          <div class="sc-label">Rating histórico</div>
-          <div class="sc-value num">${meta.historico.toFixed(1)}</div>
-          <div class="sc-sub">Google Maps acumulado</div>
+          <div class="sc-label">Volumen de reseñas</div>
+          <div class="sc-value num">${stats.count}</div>
+          <div class="sc-sub">Meta: ≥${KpiMeta.volumenMeta} nuevas</div>
+          <span class="badge badge-${kpiVolClass}">${kpiVolClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
         </div>
         <div class="scorecard">
-          <div class="sc-label">Promedio Mayo</div>
-          <div class="sc-value num ${mayStats.avg >= 4.8 ? 'gold' : mayStats.avg < 4.5 ? 'down' : ''}">${mayStats.avg > 0 ? mayStats.avg.toFixed(2) : '—'}</div>
-          <div class="sc-sub">${mayStats.count} reseñas · ${mayStats.negativeCount} negativas</div>
+          <div class="sc-label">Calidad de reseña</div>
+          <div class="sc-value num">${(hasTextRatio * 100).toFixed(0)}%</div>
+          <div class="sc-sub">Meta: ≥${(KpiMeta.calidadTextoMeta * 100).toFixed(0)}% con texto</div>
+          <span class="badge badge-${kpiCalClass}">${kpiCalClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
         </div>
         <div class="scorecard">
-          <div class="sc-label">Promedio Q1</div>
-          <div class="sc-value num ${q1Info && q1Info.q1Avg >= 4.8 ? 'gold' : q1Info && q1Info.q1Avg < 4.5 ? 'down' : ''}">${q1Info ? q1Info.q1Avg.toFixed(2) : '—'}</div>
-          <div class="sc-sub">Ene–Mar 2026</div>
+          <div class="sc-label">Rating Mensual</div>
+          <div class="sc-value num">${stats.avg > 0 ? stats.avg.toFixed(2) : '—'}</div>
+          <div class="sc-sub">Meta: ≥${KpiMeta.ratingMinimo.toFixed(2)}</div>
+          <span class="badge badge-${kpiRatClass}">${kpiRatClass === 'optimal' ? 'Cumple' : 'Crítico'}</span>
         </div>
         <div class="scorecard">
-          <div class="sc-label">Δ vs Histórico</div>
-          <div class="sc-value num ${dClass}">${mayStats.avg > 0 ? dStr : '—'}</div>
+          <div class="sc-label">Δ vs Histórico (${meta.historico.toFixed(1)})</div>
+          <div class="sc-value num ${dClass}">${stats.avg > 0 ? dStr : '—'}</div>
           <div class="sc-sub">${dClass === 'up' ? '↑ Mejora' : dClass === 'down' ? '↓ Caída' : '→ Estable'}</div>
         </div>
       </div>`;
 
-    // Problemáticas
-    const problemSection = meta.problemas.length ? `
+    // Dynamic Insights
+    const dynamic = computeDynamicInsights(reviews);
+    const insightsHtml = this._buildInsights(meta, reviews, stats);
+    const problemSection = dynamic.problemas.length > 0 ? `
       <div class="status-warn-box" style="margin-bottom:14px;">
-        <div class="topic">Problemas identificados en reseñas</div>
+        <div class="topic">Alerta: ${dynamic.alertTheme}</div>
         <ul class="problem-list">
-          ${meta.problemas.map(p => `<li>${p}</li>`).join('')}
+          ${dynamic.problemas.map(p => `<li>${p}</li>`).join('')}
         </ul>
-      </div>` : '';
-
-    // Best/worst quotes
-    const bestReview = mayReviews.length ? mayReviews.reduce((a, b) => a.stars >= b.stars ? a : b) : null;
-    const worstReview = mayReviews.length ? mayReviews.reduce((a, b) => a.stars <= b.stars ? a : b) : null;
-    const quoteSection = bestReview ? `
-      <div style="display:grid;gap:12px;margin-bottom:14px;">
-        <div>
-          <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);font-weight:700;margin-bottom:8px;">Mejor reseña · Mayo</div>
-          <div class="quote-block">
-            <div class="quote-meta">★ ${bestReview.stars} · ${formatDate(bestReview.publishedAtDate)}${bestReview.isLocalGuide ? ' · Local Guide' : ''}</div>
-            "${(bestReview.text || '').substring(0, 220)}${(bestReview.text || '').length > 220 ? '...' : ''}"
-          </div>
-        </div>
-        ${worstReview && worstReview.stars <= 2 ? `
-        <div>
-          <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--alerta);font-weight:700;margin-bottom:8px;">Peor reseña · Mayo</div>
-          <div class="quote-block warn">
-            <div class="quote-meta">★ ${worstReview.stars} · ${formatDate(worstReview.publishedAtDate)}${worstReview.isLocalGuide ? ' · Local Guide' : ''}</div>
-            "${(worstReview.text || '').substring(0, 220)}${(worstReview.text || '').length > 220 ? '...' : ''}"
-          </div>
-        </div>` : ''}
-      </div>` : '';
-
-    let statusContent = '';
-    if (!alerta) {
-      statusContent = `<div class="status-ok-box">
+      </div>` : `<div class="status-ok-box" style="margin-bottom:14px;">
         <div class="check">✓</div>
         <div class="ok-text">
           <strong>Estable</strong>
-          Sin incidencias registradas en mayo. La sucursal se mantiene en su línea de rating histórico.
+          Sin incidencias recurrentes de gravedad en este periodo.
         </div>
       </div>`;
-    } else {
-      statusContent = `
-        <div class="status-warn-box">
-          <div class="topic">${meta.alertTheme || 'Problemas operativos'}</div>
-          ${negM} reseña${negM !== 1 ? 's' : ''} negativa${negM !== 1 ? 's' : ''} en mayo.
-        </div>
-        ${this._buildRevList(mayReviews.filter(r => r.stars <= 2))}`;
-    }
 
-    const showingReviews = this.activeTab === 'abril' ? aprilReviews : mayReviews;
-    const tabMonth = this.activeTab === 'abril' ? 4 : 5;
-    const tabStats = this.activeTab === 'abril' ? aprilStats : mayStats;
+    const selectorOptions = availableMonths.map(m => {
+      const name = new Date(this.activeYear, m - 1).toLocaleString('es-ES', { month: 'long' });
+      const capName = name.charAt(0).toUpperCase() + name.slice(1);
+      return `<option value="${m}" ${m === this.activeMonth ? 'selected' : ''}>${capName} ${this.activeYear}</option>`;
+    }).join('');
 
     document.getElementById('app').innerHTML = `
       ${buildTopbar(true, meta.nombre)}
       <section class="branch-hero">
         <div class="bh-eyebrow">
-          <span>Guadalajara</span> · <span>Mayo 2026</span>
-          ${alerta ? '<span style="color:#F4A090;">· Alerta activa</span>' : ''}
+          <span>Guadalajara</span>
         </div>
-        <h1 class="bh-name">${meta.nombre}</h1>
-        <div class="bh-metrics">
-          <div class="bh-metric">
-            <div class="bh-metric-val gold num">${mayStats.avg > 0 ? mayStats.avg.toFixed(2) : '—'}</div>
-            <div class="bh-metric-label">Promedio May</div>
-            <div class="bh-metric-sub">${starStr(Math.round(mayStats.avg))}</div>
-          </div>
-          <div class="bh-metric">
-            <div class="bh-metric-val num">${mayStats.count}</div>
-            <div class="bh-metric-label">Reseñas May</div>
-            <div class="bh-metric-sub">${mayStats.guideCount} Local Guides</div>
-          </div>
-          <div class="bh-metric">
-            <div class="bh-metric-val ${dClass} num">${mayStats.avg > 0 ? dStr : '—'}</div>
-            <div class="bh-metric-label">Δ vs Histórico</div>
-            <div class="bh-metric-sub">Hist: ${meta.historico.toFixed(1)}</div>
-          </div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <h1 class="bh-name">${meta.nombre}</h1>
+          <select id="monthSelect" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: var(--sans); font-weight: 500; font-size: 14px; outline: none; cursor: pointer;">
+            ${selectorOptions}
+          </select>
         </div>
       </section>
 
       <section class="section r">
         <div class="section-head">
-          <div class="section-title">Scorecard <span class="accent">${meta.nombre}</span></div>
+          <div class="section-title">Scorecard <span class="accent">${capitalizedMonth}</span></div>
+          <span class="section-sub">Evaluación de KPIs operativos</span>
         </div>
         ${scorecardSection}
         ${problemSection}
-        ${quoteSection}
       </section>
 
       <section class="section r">
         <div class="section-head">
-          <div class="section-title">Insights <span class="accent">Mayo</span></div>
+          <div class="section-title">Insights <span class="accent">${capitalizedMonth}</span></div>
         </div>
-        <div class="insight-grid">${insights}</div>
+        <div class="insight-grid">${insightsHtml}</div>
       </section>
 
       <section class="section r">
-        <div class="section-head">
-          <div class="section-title">Status <span class="accent">Mayo 2026</span></div>
-          <span class="section-sub">En curso</span>
-        </div>
-        <div class="status-panel ${alerta ? 'alert' : ''}">
-          <div class="status-header" id="sHdr">
-            <div class="status-header-left">
-              <div class="status-icon-box ${statusDot}">${alerta ? '!' : '✓'}</div>
-              <div>
-                <div class="status-title">${alerta ? 'Atención requerida' : 'Sin alertas activas'}</div>
-                <div class="status-subtitle">${alerta ? `${negM} reseña${negM !== 1 ? 's' : ''} negativa${negM !== 1 ? 's' : ''} · ${meta.alertTheme || 'Problemas operativos'}` : 'Sin reseñas negativas en mayo'}</div>
-              </div>
-            </div>
-            <span class="status-chevron ${alerta ? 'open' : ''}" id="sChev">▾</span>
-          </div>
-          <div class="status-body ${alerta ? 'open' : ''}" id="sBody">${statusContent}</div>
-        </div>
-      </section>
-
-      <section class="section r">
-        <div class="section-head">
-          <div class="section-title">Reseñas</div>
-          <div class="segmented" role="tablist">
-            <button class="seg-btn ${this.activeTab === 'abril' ? 'active' : ''}" data-view="abril">
-              Abril
-              <span class="count">${aprilReviews.length}</span>
-            </button>
-            <button class="seg-btn ${this.activeTab === 'mayo' ? 'active' : ''}" data-view="mayo">
-              <span class="dot ${alerta ? 'warn' : 'ok'}"></span>
-              Mayo
-              <span class="count">${mayReviews.length}</span>
-            </button>
+        <div class="section-head" style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div class="section-title">Reseñas</div>
+            <span class="section-sub">${reviews.length} verificadas en ${capitalizedMonth}</span>
           </div>
         </div>
         <div class="reviews-panel">
-          <div class="reviews-panel-header">
-            <span class="rph-title">Reseñas verificadas · ${MONTH_NAMES[tabMonth - 1]}</span>
-            <span class="rph-count">${showingReviews.length} ${showingReviews.length === 1 ? 'reseña' : 'reseñas'}</span>
-          </div>
-          <div class="reviews-list" id="revList">${this._buildRevList(showingReviews.slice(0, 5))}</div>
-          ${showingReviews.length > 5 ? `<button class="show-all-btn" id="showAllBtn">Mostrar todas las ${showingReviews.length} reseñas ↓</button>` : ''}
+          <div class="reviews-list" id="revList">${this._buildRevList(reviews.slice(0, 5))}</div>
+          ${reviews.length > 5 ? `<button class="show-all-btn" id="showAllBtn">Mostrar todas las ${reviews.length} reseñas ↓</button>` : ''}
         </div>
       </section>
 
@@ -206,39 +138,32 @@ const BranchView = {
         Dashboard de Reseñas · Región Guadalajara
       </footer>`;
 
-    document.getElementById('sHdr').onclick = () => {
-      document.getElementById('sBody').classList.toggle('open');
-      document.getElementById('sChev').classList.toggle('open');
+    document.getElementById('monthSelect').onchange = async (e) => {
+      this.activeMonth = parseInt(e.target.value);
+      await this.render(params);
+      initReveal();
     };
-
-    document.querySelectorAll('.seg-btn').forEach(b => {
-      b.onclick = async () => {
-        this.activeTab = b.dataset.view;
-        await this.render(params);
-        initReveal();
-      };
-    });
 
     const btn = document.getElementById('showAllBtn');
     if (btn) {
       let exp = false;
       btn.onclick = () => {
         exp = !exp;
-        document.getElementById('revList').innerHTML = this._buildRevList(exp ? showingReviews : showingReviews.slice(0, 5));
-        btn.textContent = exp ? '↑ Mostrar menos' : `Mostrar todas las ${showingReviews.length} reseñas ↓`;
+        document.getElementById('revList').innerHTML = this._buildRevList(exp ? reviews : reviews.slice(0, 5));
+        btn.textContent = exp ? '↑ Mostrar menos' : `Mostrar todas las ${reviews.length} reseñas ↓`;
       };
     }
   },
 
   _buildInsights(meta, reviews, stats) {
-    const allText = reviews.map(r => r.text.toLowerCase()).join(' ');
+    const allText = reviews.map(r => r.text ? r.text.toLowerCase() : '').join(' ');
     const items = [];
     const delta = stats.avg > 0 ? (stats.avg - meta.historico).toFixed(2) : '0.00';
     const trendTxt = Number(delta) > 0
-      ? `+${delta} sobre histórico (${meta.historico})`
+      ? `+${delta} sobre histórico (${meta.historico.toFixed(1)})`
       : Number(delta) < 0
         ? `${delta} bajo histórico`
-        : `Sin cambio vs ${meta.historico}`;
+        : `Sin cambio vs ${meta.historico.toFixed(1)}`;
     items.push({ m: 'Δ', label: 'Tendencia', val: trendTxt, cls: 'gold' });
 
     if (/(amable|atentos?|servicio|atenci[oó]n|amabilidad)/.test(allText))
@@ -256,6 +181,10 @@ const BranchView = {
     const guides = reviews.filter(r => r.isLocalGuide).length;
     if (guides) items.push({ m: 'LG', label: 'Local Guides', val: `${guides} de ${reviews.length} reseñas son de Local Guides` });
 
+    if (items.length === 1) {
+       items.push({ m: '--', label: 'Sin insights de texto', val: 'Las reseñas del mes no contienen suficientes palabras clave.'});
+    }
+
     return items.slice(0, 5).map(t => `
       <div class="insight-card">
         <span class="insight-marker ${t.cls || ''}">${t.m}</span>
@@ -265,10 +194,10 @@ const BranchView = {
 
   _buildRevList(reviews) {
     if (!reviews.length) {
-      return `<div class="empty-state"><span class="glyph">—</span>Sin reseñas para mostrar</div>`;
+      return `<div class="empty-state"><span class="glyph">—</span>Sin reseñas para mostrar en este mes</div>`;
     }
     return reviews.map(r => {
-      const low = r.stars <= 2;
+      const low = r.stars <= 3;
       return `<div class="review-item${low ? ' negative' : ''}">
         <div class="rev-author">Reseñante de Google${r.isLocalGuide ? `<span class="rev-guide">Local Guide</span>` : ''}</div>
         <span class="rev-stars${low ? ' low' : ''}">${starStr(r.stars)}</span>

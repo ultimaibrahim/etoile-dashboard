@@ -63,36 +63,7 @@ const AboutView = {
         </div>
       </section>
 
-      <section class="section r">
-        <div class="section-head">
-          <div class="section-title">El estándar <span class="accent">ya existe</span></div>
-          <span class="section-sub">Sucursales que han mantenido un récord sin reseñas negativas recientemente, demostrando que el estándar es alcanzable.</span>
-        </div>
-        <div class="branch-grid">
-          <div class="branch-card" style="border-top: 3px solid var(--optima); flex-direction: column;">
-            <div class="bc-top">
-              <div class="bc-name">PUNTO SUR</div>
-              <span class="bc-status ok" title="Estándar óptimo"></span>
-            </div>
-            <div style="margin-top: 8px; font-size: 14px; font-style: italic; color: var(--text-muted);">"Excelente servicio, las crepas deliciosas."</div>
-            <div style="margin-top: auto; display: flex; align-items: baseline; gap: 6px; padding-top: 12px;">
-              <span class="bc-score num" style="font-size: 20px;">4.95</span>
-              <span class="bc-stars-line" style="font-size: 12px;">★★★★★</span>
-            </div>
-          </div>
-          <div class="branch-card" style="border-top: 3px solid var(--optima); flex-direction: column;">
-            <div class="bc-top">
-              <div class="bc-name">PLAZA PATRIA</div>
-              <span class="bc-status ok" title="Estándar óptimo"></span>
-            </div>
-            <div style="margin-top: 8px; font-size: 14px; font-style: italic; color: var(--text-muted);">"La mejor crepa que he probado, felicidades."</div>
-            <div style="margin-top: auto; display: flex; align-items: baseline; gap: 6px; padding-top: 12px;">
-              <span class="bc-score num" style="font-size: 20px;">4.91</span>
-              <span class="bc-stars-line" style="font-size: 12px;">★★★★★</span>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       <section class="section r">
         <div class="section-head">

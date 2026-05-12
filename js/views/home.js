@@ -133,17 +133,19 @@ const HomeView = {
         </div>
       </section>
 
-      ${negativasMayo > 0 ? `<div class="alert-strip">
-        <div class="alert-icon-box">!</div>
-        <div class="alert-content">
-          <div class="alert-title">Alerta · ${capitalizedCurrMonth} ${currYear}</div>
-          <div class="alert-text">${conAlerta.length} sucursales acumulan ${negativasMayo} reseñas negativas.</div>
-          <div class="alert-pills">
-            ${conAlerta.map(s => `<span class="alert-pill">${s.abr} · ${s.statusMayo.negativas}</span>`).join('')}
+      ${negativasMayo > 0 ? `<div class="home-grid-2" style="margin-bottom: 24px; align-items: start;">
+        <div class="alert-strip" style="margin-bottom: 0;">
+          <div class="alert-icon-box">!</div>
+          <div class="alert-content">
+            <div class="alert-title">Alerta · ${capitalizedCurrMonth} ${currYear}</div>
+            <div class="alert-text">${conAlerta.length} sucursales acumulan ${negativasMayo} reseñas negativas.</div>
+            <div class="alert-pills">
+              ${conAlerta.map(s => `<button class="alert-pill" onclick="HomeView.openAlertModal('${s.id}')">${s.abr} · ${s.statusMayo.negativas}</button>`).join('')}
+            </div>
           </div>
         </div>
-      </div>` : ''}
-
+        ${this._buildHighlights(sorted, currYear, currMonth)}
+      </div>` : `<div style="margin-bottom: 24px;">${this._buildHighlights(sorted, currYear, currMonth)}</div>`}
       ${kpiSection}
 
       <section class="section r">
@@ -157,44 +159,6 @@ const HomeView = {
         </div>
         <div class="branch-grid">${cards || '<div class="empty-state"><span class="glyph">—</span>Sin sucursales para este filtro</div>'}</div>
       </section>
-<<<<<<< HEAD
-=======
-
-      ${(() => {
-        const topBranches = sorted.filter(s => s.curr.score >= 4.90 && s.curr.negativeCount === 0);
-        if (topBranches.length > 0) {
-          const currentData = DataLoader.getMonth(currYear, currMonth);
-          return `
-          <section class="section r" style="margin-bottom: var(--s-8);">
-            <div class="section-head">
-              <div class="section-title">El estándar <span class="accent">ya existe</span></div>
-              <span class="section-sub">Sucursales con 0% de reseñas negativas y rating óptimo. El estándar es alcanzable.</span>
-            </div>
-            <div class="branch-grid">
-              ${topBranches.map(s => {
-                const branchReviews = currentData.reviews.filter(r => [s.nombre, s.abr, s.id === 'gal-gdl' ? 'Galerías GDL' : '', s.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].includes(r.sucursal) && r.text && r.text.length > 10 && r.stars === 5);
-                const quote = branchReviews.length > 0 ? branchReviews[0].text : 'Excelente servicio y calidad.';
-                return `
-                <div class="branch-card" style="border-top: 3px solid var(--optima); flex-direction: column;">
-                  <div class="bc-top">
-                    <div class="bc-name">${s.abr}</div>
-                    <span class="bc-status ok" title="Estándar óptimo"></span>
-                  </div>
-                  <div style="margin-top: 8px; font-size: 14px; font-style: italic; color: var(--text-muted);">"${quote}"</div>
-                  <div style="margin-top: auto; display: flex; align-items: baseline; gap: 6px; padding-top: 12px;">
-                    <span class="bc-score num" style="font-size: 20px;">${s.curr.score.toFixed(2)}</span>
-                    <span class="bc-stars-line" style="font-size: 12px;">${starStr(5)}</span>
-                  </div>
-                </div>`;
-              }).join('')}
-            </div>
-          </section>`;
-        }
-        return '';
-      })()}
-
->>>>>>> 3c331c34ad746860b5f6f7c1fa58a7d8ac547282
-
 
 
       <footer class="footer">
@@ -254,5 +218,60 @@ const HomeView = {
     this.filter = f;
     await this.render();
     initReveal();
+  },
+
+  _buildHighlights(branches, year, month) {
+    const data = DataLoader.getMonth(year, month);
+    if (!data) return '';
+    const tops = branches.filter(s => s.curr.score >= 4.80).map(s => s.abr);
+    const goodReviews = data.reviews.filter(r => r.stars === 5 && r.text && r.text.length > 30);
+    if (goodReviews.length === 0) return '';
+    const randomGood = goodReviews[Math.floor(Math.random() * goodReviews.length)];
+    return `<div class="chart-card" style="background: var(--verde-deep); color: var(--crema); border: none;">
+      <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--sage); margin-bottom: 8px;">Lo más destacado</div>
+      <div style="font-family: var(--serif); font-size: 20px; font-style: italic; line-height: 1.4; margin-bottom: 12px;">"${randomGood.text}"</div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 13px; font-weight: 500;">— ${randomGood.sucursal}</span>
+        <span style="color: var(--optima);">${starStr(5)}</span>
+      </div>
+    </div>`;
+  },
+
+  openAlertModal(branchId) {
+    const year = DataLoader.currentYear;
+    const month = DataLoader.currentMonth;
+    const data = DataLoader.getMonth(year, month);
+    if (!data) return;
+
+    const branchMeta = SUCURSALES_META.find(s => s.id === branchId);
+    if (!branchMeta) return;
+
+    const names = [branchMeta.nombre, branchMeta.abr, branchMeta.id === 'gal-gdl' ? 'Galerías GDL' : '', branchMeta.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].filter(Boolean);
+    const negatives = data.reviews.filter(r => r.stars <= 3 && names.includes(r.sucursal));
+
+    const modalHtml = `
+      <div class="modal-overlay active" id="alertModal">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h2 class="modal-title">Alertas: ${branchMeta.abr}</h2>
+            <button class="modal-close" onclick="document.getElementById('alertModal').remove()">×</button>
+          </div>
+          <div class="modal-body">
+            ${negatives.length === 0 ? '<p>No hay reseñas negativas con texto.</p>' : ''}
+            ${negatives.map(r => `
+              <div class="review-item">
+                <div class="ri-head">
+                  <div class="ri-score" style="color: var(--alerta)">${starStr(r.stars)}</div>
+                  <div class="ri-date">${formatDate(r.publishedAtDate)}</div>
+                </div>
+                ${r.text ? `<div class="ri-text">"${r.text}"</div>` : `<div class="ri-text" style="color:var(--text-muted);font-style:italic;">(Sin comentario)</div>`}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
   }
 };

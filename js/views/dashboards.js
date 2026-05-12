@@ -51,8 +51,8 @@ const DashboardsView = {
     const sortedVol = [...branches].sort((a, b) => b.curr.count - a.curr.count);
 
     const trends = [...branches].sort((a, b) => b.curr.count - a.curr.count).map(s => {
-      const pYtd = Math.max(0, ((s.ytd.avg - 3.5) / 1.5 * 100));
-      const pC = Math.max(0, ((s.curr.score - 3.5) / 1.5 * 100));
+      const pYtd = Math.max(0, ((s.ytd.avg - 1.0) / 4.0 * 100));
+      const pC = Math.max(0, ((s.curr.score - 1.0) / 4.0 * 100));
       const delta = s.curr.score > 0 && s.ytd.avg > 0 ? (s.curr.score - s.ytd.avg).toFixed(2) : '0.00';
       const dClass = Number(delta) > 0 ? 'up' : 'flat';
       const dStr = Number(delta) > 0 ? `+${delta}` : delta;
