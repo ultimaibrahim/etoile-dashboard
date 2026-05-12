@@ -43,9 +43,8 @@ const DataLoader = {
     try {
       const res = await fetch(`data/${year}/${String(month).padStart(2, '0')}.json`);
       const data = await res.json();
-      if (data && data.reviews) {
-        data.reviews = data.reviews.filter(r => r.text && r.text.trim().length > 0);
-      }
+      // Preservar todas las reseñas incluyendo las sin texto.
+      // El filtrado se hace en los cálculos de KPI para no perder datos.
       this.cache[key] = data;
       return data;
     } catch (e) {

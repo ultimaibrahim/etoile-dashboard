@@ -3,7 +3,7 @@
  */
 
 const KpiStore = {
-  prefix: 'lcp_kpis_',
+  prefix: 'lcp_kpis_v2_',
 
   _key(year, month) {
     return `${this.prefix}${year}_${String(month).padStart(2, '0')}`;
@@ -58,9 +58,11 @@ const Kpis = {
     const volumenOk = Object.entries(allStats).filter(([id, s]) => s.count >= KpiMeta.volumenMeta).length;
     const volumenTotal = SUCURSALES_META.length;
 
-    // Calidad de texto
-    const withText = reviews.filter(r => r.text && r.text.trim().length > 0).length;
-    const calidadRatio = reviews.length ? withText / reviews.length : 0;
+    // Calidad de texto: reseñas positivas (4-5★) que tienen texto substantivo
+    // Definición acordada: cuántas reseñas positivas incluyen un comentario real
+    const positivas = reviews.filter(r => r.stars >= 4);
+    const positivasConTexto = positivas.filter(r => r.text && r.text.trim().length > 5).length;
+    const calidadRatio = positivas.length ? positivasConTexto / positivas.length : 0;
 
     // Rating mínimo
     const ratings = Object.entries(allStats).map(([id, s]) => ({ id, avg: s.avg }));
