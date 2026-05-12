@@ -37,15 +37,12 @@ const BranchView = {
     // Evaluación de KPIs (Scorecard)
     const kpiVolClass = stats.count >= KpiMeta.volumenMeta ? 'optimal' : 'attention';
     
-    // Calidad de reseña: Positivas sin texto NO penalizan si contamos "con texto" en el numerador y el denominador. 
-    // Wait, the user said: "meta reseñas sin texto positivas (negativas no cuentan) para hacer el calculo mas exacto".
-    // Esto significa Denominador = (Total de reseñas) - (Negativas sin texto). 
-    // O mejor: Denominador = (Todas las positivas) + (Negativas con texto).
-    const negativasSinTexto = reviews.filter(r => r.stars <= 3 && (!r.text || r.text.length <= 5)).length;
-    const countForQuality = stats.count - negativasSinTexto;
-    const conTexto = reviews.filter(r => r.text && r.text.length > 5).length;
+    // Calidad de reseña: Mide cuántas reseñas positivas (4 o 5 estrellas) tuvieron texto.
+    // Ignora por completo las reseñas negativas para no penalizar el score de calidad.
+    const positivas = reviews.filter(r => r.stars >= 4);
+    const positivasConTexto = positivas.filter(r => r.text && r.text.length > 5).length;
     
-    const hasTextRatio = countForQuality > 0 ? (conTexto / countForQuality) : 0;
+    const hasTextRatio = positivas.length > 0 ? (positivasConTexto / positivas.length) : 0;
     const kpiCalClass = hasTextRatio >= KpiMeta.calidadTextoMeta ? 'optimal' : 'attention';
     const kpiRatClass = stats.avg >= KpiMeta.ratingMinimo || stats.avg === 0 ? 'optimal' : 'critical';
 
