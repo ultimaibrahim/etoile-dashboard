@@ -59,7 +59,7 @@
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;max-width:100vw;overflow-x:hidden;}
 body{
   background:var(--bg);color:var(--text);font-family:var(--sans);
   min-height:100vh;overflow-x:hidden;
@@ -991,6 +991,7 @@ a{color:inherit;text-decoration:none;}
   right: -20px;
   transform: translateY(-50%) scale(1.4);
   display: flex;
+  flex-wrap: nowrap;
   gap: 4px;
   opacity: 0.35;
   pointer-events: none;
@@ -998,6 +999,7 @@ a{color:inherit;text-decoration:none;}
 .watermark-stars svg {
   width: 48px;
   height: 48px;
+  flex-shrink: 0;
 }
 .alert-box-sunken .watermark-stars svg:first-child {
   fill: var(--alerta);

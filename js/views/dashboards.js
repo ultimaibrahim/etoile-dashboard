@@ -84,11 +84,16 @@ const DashboardsView = {
             <h1 class="display" style="font-size:clamp(36px,8vw,64px);color:var(--crema);line-height:1.05;">
               Dashboards Analíticos
             </h1>
-            <div style="margin-top: 24px;">
-              <a href="#/trimestre/2026-Q1" class="chip active" style="font-size:15px; padding: 14px 24px; border-radius:16px; box-shadow: var(--sombra-lg); display: inline-flex; width: fit-content; border: 2px solid rgba(245,239,230,0.2);">
-                ${svgIcon('calendar')} Reporte Trimestral (Q1 2026)
-              </a>
-            </div>
+          </div>
+          <div class="hero-right">
+            <a href="#/trimestre/2026-Q1" class="chart-card highlight-box" style="display: flex; flex-direction: column; gap: 12px; text-decoration: none; align-items: flex-start; justify-content: center; height: 100%; border: 1px solid rgba(255,255,255,0.1) !important; background: rgba(255,255,255,0.05) !important;">
+              <div class="watermark-stars" style="opacity: 0.15;">
+                ${svgIcon('calendar')}
+              </div>
+              <div style="font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--sage);">Reporte Especial</div>
+              <div style="font-family: var(--serif); font-size: 24px; line-height: 1.2;">Resumen Trimestral<br><span style="color:var(--crema); opacity:0.8;">Q1 2026</span></div>
+              <span class="trend-badge" style="margin-top: 8px; background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.1); color: var(--crema);">Ver reporte completo →</span>
+            </a>
           </div>
         </div>
       </section>
