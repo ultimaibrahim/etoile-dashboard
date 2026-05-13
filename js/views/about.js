@@ -4,6 +4,17 @@
 
 const CHANGELOG = [
   {
+    v: 'v2.6', date: 'Mayo 2026',
+    items: [
+      'Dashboards: Charts dinámicos y responsive al 100% en pantallas móviles',
+      'Corrección definitiva del bottom nav móvil (fixed edge-to-edge sin espacios)',
+      'Home: Nuevo botón "Siguiente reseña" en card Destacado con transición suave',
+      'Refinamiento de grid layout: espaciados consistentes y heights balanceados',
+      'Changelog: El botón de versión se convierte en easter egg sin estilo de link',
+      'Fix de inicialización de animaciones .r en primera carga',
+    ]
+  },
+  {
     v: 'v2.5', date: 'Mayo 2026',
     items: [
       'Filtrado visual de reseñas sin texto (KPI no afectado)',
@@ -97,7 +108,7 @@ const AboutView = {
             <div style="display:grid;gap:12px;">
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Versión actual</div>
-                <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:default;font-family:var(--mono);font-size:20px;font-weight:700;color:var(--crema);letter-spacing:.04em;" title="">v2.5 · 2026</button>
+                <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:default;font-family:var(--mono);font-size:20px;font-weight:700;color:var(--crema);letter-spacing:.04em;" title="">v2.6 · 2026</button>
               </div>
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Cobertura</div>
