@@ -4,6 +4,7 @@
 
 const HomeView = {
   filter: 'todas',
+  highlightIdx: 0,
 
   async render() {
     Charts.destroyAll();
@@ -173,7 +174,10 @@ const HomeView = {
         Dashboard de Reseñas · Región Guadalajara · Fuente: Google Reviews
       </footer>`;
 
-    requestAnimationFrame(() => document.getElementById('heroNum')?.classList.add('in'));
+    requestAnimationFrame(() => {
+      document.getElementById('heroNum')?.classList.add('in');
+      initReveal();
+    });
   },
 
   _buildKpiSection(kpi, curr, prev, monthName, year) {
@@ -230,11 +234,13 @@ const HomeView = {
   _buildHighlights(branches, year, month) {
     const data = DataLoader.getMonth(year, month);
     if (!data) return '';
-    const tops = branches.filter(s => s.curr.score >= 4.80).map(s => s.abr);
     const goodReviews = data.reviews.filter(r => r.stars === 5 && r.text && r.text.length > 30);
     if (goodReviews.length === 0) return '';
-    const randomGood = goodReviews[Math.floor(Math.random() * goodReviews.length)];
-    return `<div class="chart-card highlight-box">
+    // Ciclar en orden usando highlightIdx
+    const idx = this.highlightIdx % goodReviews.length;
+    const rev = goodReviews[idx];
+    const hasMore = goodReviews.length > 1;
+    return `<div class="chart-card highlight-box r" id="highlightCard">
       <div class="watermark-stars">
         ${svgIcon('starFilled')}
         ${svgIcon('starFilled')}
@@ -242,13 +248,50 @@ const HomeView = {
         ${svgIcon('starFilled')}
         ${svgIcon('starFilled')}
       </div>
-      <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--sage); margin-bottom: 8px;">Lo más destacado</div>
-      <div style="font-family: var(--serif); font-size: 20px; font-style: italic; line-height: 1.4; margin-bottom: 12px; position: relative; z-index: 1;">"${randomGood.text}"</div>
+      <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--sage); margin-bottom: 8px;">Lo m&#225;s destacado</div>
+      <div style="font-family: var(--serif); font-size: 20px; line-height: 1.4; margin-bottom: 12px; position: relative; z-index: 1;">"${rev.text}"</div>
       <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1;">
-        <span style="font-size: 13px; font-weight: 500;">— ${randomGood.sucursal}</span>
-        <span style="color: var(--optima);">${starStr(5)}</span>
+        <span style="font-size: 13px; font-weight: 500;">— ${rev.sucursal}</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="color: var(--optima);">${starStr(5)}</span>
+          ${hasMore ? `<button onclick="HomeView.nextHighlight()" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--crema);font-size:11px;font-weight:600;padding:4px 10px;border-radius:10px;cursor:pointer;letter-spacing:.04em;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,0.22)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">Siguiente &#8594;</button>` : ''}
+        </div>
       </div>
     </div>`;
+  },
+
+  nextHighlight() {
+    this.highlightIdx++;
+    const year = DataLoader.currentYear;
+    const month = DataLoader.currentMonth;
+    const data = DataLoader.getMonth(year, month);
+    const goodReviews = data ? data.reviews.filter(r => r.stars === 5 && r.text && r.text.length > 30) : [];
+    const card = document.getElementById('highlightCard');
+    if (!card || goodReviews.length === 0) return;
+    // Fade out → actualizar → fade in
+    card.style.transition = 'opacity 0.2s ease';
+    card.style.opacity = '0';
+    setTimeout(() => {
+      const idx = this.highlightIdx % goodReviews.length;
+      const rev = goodReviews[idx];
+      card.querySelector('[data-rev-text]') && (card.querySelector('[data-rev-text]').textContent = `"${rev.text}"`);
+      // Re-render solo el card usando la misma lógica
+      const allBranches = SUCURSALES_META.map(m => ({ ...m }));
+      const newCard = this._buildHighlights(allBranches, year, month);
+      const tmp = document.createElement('div');
+      tmp.innerHTML = newCard;
+      const newEl = tmp.firstElementChild;
+      if (newEl) {
+        newEl.style.opacity = '0';
+        newEl.style.transform = 'translateY(8px)';
+        card.replaceWith(newEl);
+        requestAnimationFrame(() => {
+          newEl.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+          newEl.style.opacity = '1';
+          newEl.style.transform = 'translateY(0)';
+        });
+      }
+    }, 200);
   },
 
   openAlertModal(branchId) {
