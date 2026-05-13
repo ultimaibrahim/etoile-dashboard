@@ -121,13 +121,17 @@ a{color:inherit;text-decoration:none;}
 .topbar-brand .accent{font-family:var(--serif);font-style:italic;font-weight:400;
   text-transform:none;letter-spacing:0;font-size:18px;color:var(--sage-light);}
 
-/* Navigation */
+/* Navigation — desktop: inline dentro del header */
 .topbar-nav {
+  display: none; /* oculto en mobile; se muestra como fixed abajo */
+}
+.topbar-nav--desktop {
   display: flex;
   align-items: center;
   gap: 20px;
   margin-left: 24px;
 }
+/* Compartido por ambas versiones del nav */
 .topbar-link {
   display: inline-flex;
   align-items: center;
@@ -138,30 +142,30 @@ a{color:inherit;text-decoration:none;}
   text-decoration: none;
   transition: color 0.2s ease;
 }
-.topbar-link svg {
-  width: 16px;
-  height: 16px;
-}
-.topbar-link:hover {
-  color: var(--crema);
-}
-.topbar-link.active {
-  color: var(--crema);
-  font-weight: 700;
-}
+.topbar-link svg { width: 16px; height: 16px; }
+.topbar-link:hover { color: var(--crema); }
+.topbar-link.active { color: var(--crema); font-weight: 700; }
 
 @media(max-width: 800px) {
+  /* Ocultar la versión desktop del nav */
+  .topbar-nav--desktop { display: none !important; }
+
+  /* Nav mobile: fixed al bottom, de borde a borde */
   .topbar-nav {
+    display: flex;
     position: fixed;
-    bottom: 0; left: 0; right: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
     background: var(--verde-deep);
     height: 56px;
     justify-content: space-around;
-    padding: 0 10px;
+    align-items: center;
+    padding: 0;
+    margin: 0;
     box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
     z-index: 500;
-    gap: 0;
-    margin-left: 0;
   }
   .topbar-link {
     flex-direction: column;

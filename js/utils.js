@@ -99,20 +99,30 @@ function buildTopbar(showBack = false, branchName = '') {
     : `<a href="#/" class="topbar-brand">La <span class="accent">Crêpe</span> Parisienne</a>`;
   
   const currentHash = window.location.hash;
-  const navLinks = `
-    <nav class="topbar-nav">
-      <a href="#/" class="topbar-link ${currentHash === '#/' || currentHash === '' ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
-      <a href="#/dashboards" class="topbar-link ${currentHash === '#/dashboards' ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>
-      <a href="#/acerca" class="topbar-link ${currentHash === '#/acerca' ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
-    </nav>
-  `;
+  const isHome = currentHash === '#/' || currentHash === '';
+  const isDash = currentHash === '#/dashboards';
+  const isAbout = currentHash.startsWith('#/acerca');
 
-  return `<header class="topbar">
-    <div class="topbar-left">${back}${brand}${navLinks}</div>
+  // El nav se emite SEPARADO del header para que position:fixed sea puro
+  const nav = `<nav class="topbar-nav" id="mainNav">
+    <a href="#/" class="topbar-link ${isHome ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
+    <a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>
+    <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
+  </nav>`;
+
+  const header = `<header class="topbar">
+    <div class="topbar-left">${back}${brand}</div>
     <div class="topbar-right">
+      <div class="topbar-nav topbar-nav--desktop" id="mainNavDesktop">
+        <a href="#/" class="topbar-link ${isHome ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
+        <a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>
+        <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
+      </div>
       <button class="dark-toggle" onclick="toggleDark()" aria-label="Cambiar tema">${darkMode ? svgIcon('sun') : svgIcon('moon')}</button>
     </div>
-  </header>`;
+  </header>${nav}`;
+
+  return header;
 }
 
 /* ── INSIGHTS DINÁMICOS ───────────────────────────────── */
