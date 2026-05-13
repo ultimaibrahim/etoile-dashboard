@@ -987,18 +987,18 @@ a{color:inherit;text-decoration:none;}
 }
 .watermark-stars {
   position: absolute;
-  top: 50%;
-  right: -20px;
-  transform: translateY(-50%) scale(1.4);
+  bottom: -18px;
+  right: -12px;
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px;
-  opacity: 0.35;
+  gap: 6px;
+  opacity: 0.22;
   pointer-events: none;
+  z-index: 0;
 }
 .watermark-stars svg {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   flex-shrink: 0;
 }
 .alert-box-sunken .watermark-stars svg:first-child {

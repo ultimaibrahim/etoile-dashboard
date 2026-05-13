@@ -130,12 +130,12 @@ const BranchView = {
         <div class="section-head" style="display: flex; justify-content: space-between; align-items: flex-end;">
           <div>
             <div class="section-title">Reseñas</div>
-            <span class="section-sub">${reviews.length} verificadas en ${capitalizedMonth}</span>
+            <span class="section-sub">${reviews.filter(r => r.text && r.text.trim().length > 0).length} verificadas con texto en ${capitalizedMonth} · ${reviews.length} totales</span>
           </div>
         </div>
         <div class="reviews-panel">
-          <div class="reviews-list" id="revList">${this._buildRevList(reviews.slice(0, 5))}</div>
-          ${reviews.length > 5 ? `<button class="show-all-btn" id="showAllBtn">Mostrar todas las ${reviews.length} reseñas ↓</button>` : ''}
+          <div class="reviews-list" id="revList">${this._buildRevList(reviews.filter(r => r.text && r.text.trim().length > 0).slice(0, 5))}</div>
+          ${reviews.filter(r => r.text && r.text.trim().length > 0).length > 5 ? `<button class="show-all-btn" id="showAllBtn">Mostrar todas las ${reviews.filter(r => r.text && r.text.trim().length > 0).length} reseñas ↓</button>` : ''}
         </div>
       </section>
 
@@ -152,11 +152,12 @@ const BranchView = {
 
     const btn = document.getElementById('showAllBtn');
     if (btn) {
+      const reviewsConTexto = reviews.filter(r => r.text && r.text.trim().length > 0);
       let exp = false;
       btn.onclick = () => {
         exp = !exp;
-        document.getElementById('revList').innerHTML = this._buildRevList(exp ? reviews : reviews.slice(0, 5));
-        btn.textContent = exp ? '↑ Mostrar menos' : `Mostrar todas las ${reviews.length} reseñas ↓`;
+        document.getElementById('revList').innerHTML = this._buildRevList(exp ? reviewsConTexto : reviewsConTexto.slice(0, 5));
+        btn.textContent = exp ? '↑ Mostrar menos' : `Mostrar todas las ${reviewsConTexto.length} reseñas ↓`;
       };
     }
   },
