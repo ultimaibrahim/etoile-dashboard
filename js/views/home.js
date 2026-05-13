@@ -236,7 +236,12 @@ const HomeView = {
     if (!data) return '';
     const goodReviews = data.reviews.filter(r => r.stars === 5 && r.text && r.text.length > 30);
     if (goodReviews.length === 0) return '';
-    // Ciclar en orden usando highlightIdx
+    
+    // Inicializar en un índice aleatorio la primera vez
+    if (this.highlightIdx === 0 && goodReviews.length > 1) {
+      this.highlightIdx = Math.floor(Math.random() * goodReviews.length);
+    }
+
     const idx = this.highlightIdx % goodReviews.length;
     const rev = goodReviews[idx];
     const hasMore = goodReviews.length > 1;
@@ -261,13 +266,20 @@ const HomeView = {
   },
 
   nextHighlight() {
-    this.highlightIdx++;
     const year = DataLoader.currentYear;
     const month = DataLoader.currentMonth;
     const data = DataLoader.getMonth(year, month);
     const goodReviews = data ? data.reviews.filter(r => r.stars === 5 && r.text && r.text.length > 30) : [];
     const card = document.getElementById('highlightCard');
-    if (!card || goodReviews.length === 0) return;
+    if (!card || goodReviews.length <= 1) return;
+
+    // Seleccionar un índice aleatorio diferente al actual
+    let newIdx = Math.floor(Math.random() * goodReviews.length);
+    if (newIdx === (this.highlightIdx % goodReviews.length)) {
+      newIdx = (newIdx + 1) % goodReviews.length;
+    }
+    this.highlightIdx = newIdx;
+
     // Fade out → actualizar → fade in
     card.style.transition = 'opacity 0.2s ease';
     card.style.opacity = '0';
