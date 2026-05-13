@@ -80,7 +80,7 @@ const Kpis = {
       year, month,
       computedAt: new Date().toISOString(),
       volumen: { ok: volumenOk, total: volumenTotal, meta: KpiMeta.volumenMeta },
-      calidadTexto: { withText, total: reviews.length, ratio: calidadRatio, meta: KpiMeta.calidadTextoMeta },
+      calidadTexto: { withText: positivasConTexto, total: positivas.length, ratio: calidadRatio, meta: KpiMeta.calidadTextoMeta },
       ratingMinimo: { belowMin: belowMin.map(r => r.id), meta: KpiMeta.ratingMinimo },
       negativas: totalNegativas,
       tasaRespuesta: { value: tasaRespuesta, totalNegativas, conRespuesta: negativasConRespuesta.length },
