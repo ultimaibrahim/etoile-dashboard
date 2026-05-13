@@ -105,7 +105,7 @@ const HomeView = {
                 <span class="hero-trend">${currGlobal.avgRating >= prevGlobal.avgRating ? '↑' : '↓'} ${Math.abs(currGlobal.avgRating - prevGlobal.avgRating).toFixed(2)} vs ${capitalizedPrevMonth} (${prevGlobal.avgRating.toFixed(2)})</span>
               </div>
             </div>
-            <div class="hero-live"><span class="pulse-dot"></span> Datos en tiempo real · ${currGlobal.totalReviews} reseñas</div>
+            <div class="hero-live"><span class="pulse-dot"></span> ${currGlobal.totalReviews} reseñas en ${capitalizedCurrMonth}</div>
           </div>
           <div class="hero-right">
             <div class="hero-stat">
@@ -133,8 +133,8 @@ const HomeView = {
         </div>
       </section>
 
-      ${negativasMayo > 0 ? `<div class="home-grid-2" style="display: grid; gap: 16px; margin-bottom: 24px; align-items: start;">
-        <div class="alert-strip alert-box-sunken" style="margin-bottom: 0;">
+      ${negativasMayo > 0 ? `<div class="home-grid-2" style="display: grid; gap: 16px; margin-bottom: 24px; align-items: stretch;">
+        <div class="alert-strip alert-box-sunken" style="margin-bottom: 0; height: 100%; box-sizing: border-box;">
           <div class="watermark-stars">
             ${svgIcon('starFilled')}
             ${svgIcon('star')}
@@ -278,7 +278,7 @@ const HomeView = {
                   <div class="ri-score" style="color: var(--alerta)">${starStr(r.stars)}</div>
                   <div class="ri-date">${formatDate(r.publishedAtDate)}</div>
                 </div>
-                ${r.text ? `<div class="ri-text">"${r.text}"</div>` : `<div class="ri-text" style="color:var(--text-muted);font-style:italic;">(Sin comentario)</div>`}
+                ${r.text ? `<div class="ri-text">"${r.text}"</div>` : `<div class="ri-text" style="color:var(--text-muted);">(Sin comentario)</div>`}
               </div>
             `).join('')}
           </div>
@@ -287,5 +287,13 @@ const HomeView = {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+    // Cerrar con Escape
+    const _escHandler = (e) => {
+      if (e.key === 'Escape') {
+        document.getElementById('alertModal')?.remove();
+        document.removeEventListener('keydown', _escHandler);
+      }
+    };
+    document.addEventListener('keydown', _escHandler);
   }
 };
