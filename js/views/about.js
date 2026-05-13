@@ -97,7 +97,7 @@ const AboutView = {
             <div style="display:grid;gap:12px;">
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Versión actual</div>
-                <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:pointer;font-family:var(--mono);font-size:20px;font-weight:700;color:var(--crema);letter-spacing:.04em;text-decoration:underline dotted rgba(245,239,230,0.35);text-underline-offset:4px;" title="Ver changelog">v2.5 · 2026</button>
+                <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:default;font-family:var(--mono);font-size:20px;font-weight:700;color:var(--crema);letter-spacing:.04em;" title="">v2.5 · 2026</button>
               </div>
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Cobertura</div>

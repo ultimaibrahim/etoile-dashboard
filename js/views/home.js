@@ -133,8 +133,8 @@ const HomeView = {
         </div>
       </section>
 
-      ${negativasMayo > 0 ? `<div class="home-grid-2" style="display: grid; gap: 16px; margin-bottom: 24px; align-items: stretch;">
-        <div class="alert-strip alert-box-sunken" style="margin-bottom: 0; height: 100%; box-sizing: border-box;">
+      ${negativasMayo > 0 ? `<div class="home-grid-2" style="margin-bottom: 24px;">
+        <div class="alert-strip alert-box-sunken">
           <div class="watermark-stars">
             ${svgIcon('starFilled')}
             ${svgIcon('star')}
