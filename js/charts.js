@@ -141,6 +141,13 @@ const Charts = {
         }
       }
     });
+    // Auto-hide tooltip on touch after 5s (fix iOS "stuck" tooltip)
+    chart.canvas.addEventListener('touchend', () => {
+      setTimeout(() => {
+        chart.tooltip.setActiveElements([], {});
+        chart.update('none');
+      }, 5000);
+    }, { passive: true });
     this.instances.push(chart);
     return chart;
   }

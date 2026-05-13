@@ -42,11 +42,11 @@ const AboutView = {
       </section>
 
       <!-- PROPÓSITO -->
-      <section class="hero r" style="background:var(--verde-deep);padding:48px 24px;">
-        <div style="max-width:820px;margin:0 auto;">
-          <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,239,230,0.4);margin-bottom:20px;">Nuestro Propósito</div>
-          <h2 style="font-family:var(--serif);font-size:clamp(32px,7vw,58px);color:var(--crema);line-height:1.05;">
-            Crear, operar y crecer modelos innovadores de restaurantes
+      <section class="hero r" style="background:var(--verde-deep);padding:56px 24px;">
+        <div style="max-width:1240px;margin:0 auto;display:flex;flex-direction:column;align-items:flex-end;text-align:right;gap:20px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,239,230,0.4);">Nuestro Propósito</div>
+          <h2 style="font-family:var(--serif);font-size:clamp(28px,6vw,52px);color:var(--crema);line-height:1.1;max-width:720px;">
+            &ldquo;Crear, operar y crecer modelos innovadores de restaurantes que hagan la vida mejor y m&aacute;s divertida para nosotros y nuestros invitados.&rdquo;
           </h2>
         </div>
       </section>
@@ -58,10 +58,9 @@ const AboutView = {
         </div>
         <div style="display:flex;flex-direction:column;gap:12px;">
           ${[
-            { label: 'Misión', text: '"Crear, operar y crecer modelos innovadores de restaurantes que hagan la vida mejor y más divertida para nosotros y nuestros invitados."' },
-            { label: 'Hospitalidad y Excelencia', text: '"Creamos historias de hospitalidad memorable. Documentamos nuestros estándares y los seguimos con orgullo. Entrenamos continuamente para hacer cada día mejor."' },
-            { label: 'Innovación Continua', text: '"Buscamos constantemente nuevas formas de sorprender a nuestros invitados, optimizar operaciones y adoptar tecnología que potencie a nuestro equipo."' },
-            { label: 'Datos como Cultura', text: '"Cada reseña es una conversación. Escuchamos, medimos y actuamos — porque la mejora continua empieza en entender qué piensan quienes nos visitan."' },
+            { label: 'Hospitalidad y Excelencia', text: 'Creamos historias de hospitalidad memorable. Documentamos nuestros estándares y los seguimos con orgullo. Entrenamos continuamente para hacer cada día mejor.' },
+            { label: 'Innovación Continua', text: 'Buscamos constantemente nuevas formas de sorprender a nuestros invitados, optimizar operaciones y adoptar tecnología que potencie a nuestro equipo.' },
+            { label: 'Datos como Cultura', text: 'Cada reseña es una conversación. Escuchamos, medimos y actuamos — porque la mejora continua empieza en entender qué piensan quienes nos visitan.' },
           ].map(v => `
             <div class="chart-card" style="display:flex;align-items:flex-start;gap:16px;padding:18px 22px;">
               <div style="margin-top:2px;flex-shrink:0;">
@@ -71,7 +70,7 @@ const AboutView = {
               </div>
               <div>
                 <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">${v.label}</div>
-                <p style="font-family:var(--serif);font-style:italic;font-size:15px;line-height:1.55;color:var(--text);">${v.text}</p>
+                <p style="font-size:15px;line-height:1.6;color:var(--text);">${v.text}</p>
               </div>
             </div>`).join('')}
         </div>
