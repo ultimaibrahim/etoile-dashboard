@@ -275,7 +275,7 @@ const QuarterView = {
       </section>
 
       <footer class="footer">
-        <span class="brand">La <span class="accent">Crêpe</span> Parisienne</span> · Dashboard de Reseñas<br>
+        <span class="brand" style="text-transform:none; font-family:var(--serif); font-size:18px; font-style:italic;">étoile</span> · Dashboard de Reseñas<br>
         Región Guadalajara
       </footer>`;
   }

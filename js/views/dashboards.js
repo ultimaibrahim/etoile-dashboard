@@ -125,7 +125,7 @@ const DashboardsView = {
       </div>
 
       <footer class="footer">
-        <span class="brand">La <span class="accent">Crêpe</span> Parisienne</span> · Grupo MYT / Grupo Corporativo Alancar<br>
+        <span class="brand" style="text-transform:none; font-family:var(--serif); font-size:18px; font-style:italic;">étoile</span> · Grupo MYT / Grupo Corporativo Alancar<br>
         Dashboard de Reseñas · Región Guadalajara
       </footer>`;
 

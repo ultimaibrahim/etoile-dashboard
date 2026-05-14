@@ -101,7 +101,7 @@ const AboutView = {
               Dashboard de <span style="font-style:italic;color:var(--sage);">Reseñas</span>
             </h1>
             <p style="color:rgba(245,239,230,.75);font-size:15px;line-height:1.6;max-width:460px;">
-              Herramienta operativa para el seguimiento y análisis de reseñas de Google Maps de las 8 sucursales de La Crêpe Parisienne en la región Guadalajara.
+              Herramienta operativa para el seguimiento y análisis de reseñas de Google Maps de las 8 sucursales de étoile en la región Guadalajara.
             </p>
           </div>
           <div class="hero-right">
@@ -198,7 +198,7 @@ const AboutView = {
             <div style="width:40px;height:40px;background:rgba(61,90,71,0.1);color:var(--verde);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:15px;flex-shrink:0;border:1px solid rgba(61,90,71,0.2);">IG</div>
             <div>
               <div style="font-size:14px;font-weight:600;color:var(--text);">Ibrahim García</div>
-              <div style="font-size:12px;color:var(--text-muted);">Product Owner · Dashboard de Reseñas LCP GDL</div>
+              <div style="font-size:12px;color:var(--text-muted);">Product Owner · Dashboard de Reseñas étoile GDL</div>
             </div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -221,8 +221,8 @@ const AboutView = {
       </section>
 
       <footer class="footer">
-        <span class="brand">La <span class="accent">Crêpe</span> Parisienne</span> · Grupo MYT / Corporativo Alancar<br>
-        Dashboard de Reseñas · Región Guadalajara · v2.5 2026
+        <span class="brand" style="text-transform:none; font-family:var(--serif); font-size:18px; font-style:italic;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
+        Dashboard de Reseñas · Región Guadalajara · v2.6 2026
       </footer>`;
 
     requestAnimationFrame(() => initReveal());

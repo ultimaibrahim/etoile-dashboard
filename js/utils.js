@@ -96,7 +96,7 @@ function buildTopbar(showBack = false, branchName = '') {
     : '';
   const brand = showBack
     ? `<span class="topbar-brand"><span class="accent">${branchName}</span></span>`
-    : `<a href="#/" class="topbar-brand">La <span class="accent">Crêpe</span> Parisienne</a>`;
+    : `<a href="#/" class="topbar-brand" style="text-transform:none; font-family:var(--serif); font-size:22px; font-style:italic;">étoile</a>`;
   
   const currentHash = window.location.hash;
   const isHome = currentHash === '#/' || currentHash === '';

@@ -140,7 +140,7 @@ const BranchView = {
       </section>
 
       <footer class="footer">
-        <span class="brand">La <span class="accent">Crêpe</span> Parisienne</span> · ${meta.nombre}<br>
+        <span class="brand" style="text-transform:none; font-family:var(--serif); font-size:18px; font-style:italic;">étoile</span> · ${meta.nombre}<br>
         Dashboard de Reseñas · Región Guadalajara
       </footer>`;
 
