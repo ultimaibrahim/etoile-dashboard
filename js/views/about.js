@@ -101,7 +101,7 @@ const AboutView = {
               Dashboard de <span style="font-style:italic;color:var(--sage);">Reseñas</span>
             </h1>
             <p style="color:rgba(245,239,230,.75);font-size:15px;line-height:1.6;max-width:460px;">
-              Herramienta operativa para el seguimiento y análisis de reseñas de Google Maps de las 8 sucursales de étoile en la región Guadalajara.
+              Herramienta operativa para el seguimiento y análisis de reseñas de Google Maps de las 8 sucursales de La Crêpe Parisienne en la región Guadalajara.
             </p>
           </div>
           <div class="hero-right">
@@ -159,10 +159,10 @@ const AboutView = {
         </div>
         <div style="display:flex;flex-direction:column;gap:12px;">
           ${[
-            { label: 'Hospitalidad y Excelencia', text: 'Creamos historias de hospitalidad memorable. Documentamos nuestros estándares y los seguimos con orgullo. Entrenamos continuamente para hacer cada día mejor.' },
-            { label: 'Innovación Continua', text: 'Buscamos constantemente nuevas formas de sorprender a nuestros invitados, optimizar operaciones y adoptar tecnología que potencie a nuestro equipo.' },
-            { label: 'Datos como Cultura', text: 'Cada reseña es una conversación. Escuchamos, medimos y actuamos — porque la mejora continua empieza en entender qué piensan quienes nos visitan.' },
-          ].map(v => `
+        { label: 'Hospitalidad y Excelencia', text: 'Creamos historias de hospitalidad memorable. Documentamos nuestros estándares y los seguimos con orgullo. Entrenamos continuamente para hacer cada día mejor.' },
+        { label: 'Innovación Continua', text: 'Buscamos constantemente nuevas formas de sorprender a nuestros invitados, optimizar operaciones y adoptar tecnología que potencie a nuestro equipo.' },
+        { label: 'Datos como Cultura', text: 'Cada reseña es una conversación. Escuchamos, medimos y actuamos — porque la mejora continua empieza en entender qué piensan quienes nos visitan.' },
+      ].map(v => `
             <div class="chart-card" style="display:flex;align-items:flex-start;gap:16px;padding:18px 22px;">
               <div style="margin-top:2px;flex-shrink:0;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--oro)" xmlns="http://www.w3.org/2000/svg">
@@ -198,7 +198,7 @@ const AboutView = {
             <div style="width:40px;height:40px;background:rgba(61,90,71,0.1);color:var(--verde);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:15px;flex-shrink:0;border:1px solid rgba(61,90,71,0.2);">IG</div>
             <div>
               <div style="font-size:14px;font-weight:600;color:var(--text);">Ibrahim García</div>
-              <div style="font-size:12px;color:var(--text-muted);">Product Owner · Dashboard de Reseñas étoile GDL</div>
+              <div style="font-size:12px;color:var(--text-muted);">Product Owner · Dashboard de Reseñas LCP GDL</div>
             </div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
