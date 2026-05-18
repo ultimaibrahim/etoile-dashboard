@@ -71,7 +71,7 @@ const HomeView = {
         ? `<div class="bc-mayo warn"><span class="mono">${currMonthShort}</span> <span>${s.statusMayo.negativas} negativa${s.statusMayo.negativas !== 1 ? 's' : ''}</span></div>`
         : `<div class="bc-mayo"><span class="mono">${currMonthShort}</span> <span>Sin incidencias</span></div>`;
       return `
-      <a class="branch-card" href="#/sucursal/${s.id}">
+      <a class="branch-card${s.alerta ? ' alerta' : ''}" href="#/sucursal/${s.id}">
         <div class="bc-top">
           <div class="bc-name">${s.abr}</div>
           <span class="bc-status ${s.alerta ? 'warn' : 'ok'}" title="${s.alerta ? 'Atención requerida' : 'Estable'}"></span>
@@ -103,10 +103,9 @@ const HomeView = {
               <div class="hero-score-side">
                 <span class="hero-stars">${starStr(Math.round(currGlobal.avgRating))}</span>
                 <span class="hero-of">de 5.00</span>
-                <span class="hero-trend">${currGlobal.avgRating >= prevGlobal.avgRating ? '↑' : '↓'} ${Math.abs(currGlobal.avgRating - prevGlobal.avgRating).toFixed(2)} vs ${capitalizedPrevMonth} (${prevGlobal.avgRating.toFixed(2)})</span>
+                <span class="hero-trend" style="${currGlobal.avgRating >= prevGlobal.avgRating ? 'background:rgba(122,216,154,.12);border-color:rgba(122,216,154,.25);color:#A7DBB9;' : 'background:rgba(178,58,43,.12);border-color:rgba(178,58,43,.25);color:#F4A090;'}">${currGlobal.avgRating >= prevGlobal.avgRating ? '↑' : '↓'} ${Math.abs(currGlobal.avgRating - prevGlobal.avgRating).toFixed(2)} vs ${capitalizedPrevMonth} (${prevGlobal.avgRating.toFixed(2)})</span>
               </div>
             </div>
-            <div class="hero-live"><span class="pulse-dot"></span> ${currGlobal.totalReviews} reseñas en ${capitalizedCurrMonth}</div>
           </div>
           <div class="hero-right">
             <div class="hero-stat">
@@ -211,9 +210,11 @@ const HomeView = {
           <div class="scorecard">
             <div class="sc-label">Rating mínimo regional</div>
             <div class="sc-value num">${kpi.ratingMinimo.belowMin.length === 0 ? 'OK' : kpi.ratingMinimo.belowMin.length}</div>
-            <div class="sc-sub">Meta: ninguna < ${KpiMeta.ratingMinimo}</div>
-            <span class="badge badge-${ratClass}">${ratClass === 'optimal' ? 'Cumple' : 'Crítico'}</span>
-            ${kpi.ratingMinimo.belowMin.length > 0 ? `<div style="margin-top:6px;font-size:11px;color:var(--alerta);">${belowNames}</div>` : ''}
+            <div class="sc-sub">Meta: ninguna &lt; ${KpiMeta.ratingMinimo}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;">
+              <span class="badge badge-${ratClass}">${ratClass === 'optimal' ? 'Cumple' : 'Crítico'}</span>
+              ${kpi.ratingMinimo.belowMin.length > 0 ? `<span style="font-size:11px;font-weight:700;color:var(--alerta);">${belowNames}</span>` : ''}
+            </div>
           </div>
           <div class="scorecard">
             <div class="sc-label">Resolución causa raíz</div>
@@ -254,12 +255,12 @@ const HomeView = {
         ${svgIcon('starFilled')}
       </div>
       <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--sage); margin-bottom: 8px;">Lo m&#225;s destacado</div>
-      <div style="font-family: var(--serif); font-size: 20px; line-height: 1.4; margin-bottom: 12px; position: relative; z-index: 1;">"${rev.text}"</div>
-      <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1;">
-        <span style="font-size: 13px; font-weight: 500;">— ${rev.sucursal}</span>
+      <div style="font-size: 16px; line-height: 1.5; margin-bottom: 12px; position: relative; z-index: 1;">"${rev.text}"</div>
+      <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; margin-top: auto;">
+        <span style="font-size: 13px; font-weight: 500; color: rgba(245,239,230,.65); display:flex; align-items:center; gap:6px;"><span style="display:inline-block;width:20px;height:1px;background:rgba(245,239,230,.4);"></span>${rev.sucursal}</span>
         <div style="display:flex;align-items:center;gap:10px;">
-          <span style="color: var(--optima);">${starStr(5)}</span>
-          ${hasMore ? `<button onclick="HomeView.nextHighlight()" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--crema);font-size:11px;font-weight:600;padding:4px 10px;border-radius:10px;cursor:pointer;letter-spacing:.04em;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,0.22)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">Siguiente &#8594;</button>` : ''}
+          <span style="color:#E8955A;font-size:14px;letter-spacing:2px;">${'★'.repeat(5)}</span>
+          ${hasMore ? `<button onclick="HomeView.nextHighlight()" style="background:transparent;border:1px solid rgba(245,239,230,0.35);color:var(--crema);font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;cursor:pointer;letter-spacing:.03em;transition:background .15s, border-color .15s;display:flex;align-items:center;gap:4px;" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.borderColor='rgba(245,239,230,.7)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(245,239,230,0.35)'">Siguiente ›</button>` : ''}
         </div>
       </div>
     </div>`;
