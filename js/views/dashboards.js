@@ -125,7 +125,7 @@ const DashboardsView = {
       </div>
 
       <footer class="footer">
-        <span class="brand" style="text-transform:none; font-family:var(--serif); font-size:18px; font-style:italic;">étoile</span> · La Crêpe Parisienne / Grupo MYT<br>
+        <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · La Crêpe Parisienne / Grupo MYT<br>
         Dashboard de Reseñas · Región Guadalajara
       </footer>`;
 

@@ -190,8 +190,9 @@ const HomeView = {
         </div>
       </section>
 
-      <div style="margin-bottom: 24px;">
+      <div class="home-grid-2" style="margin-top: 0; margin-bottom: 24px;">
         ${alertBannerHtml}
+        ${this._buildHighlights(branches, currYear, currMonth)}
       </div>
 
       ${kpiSection}
@@ -211,7 +212,7 @@ const HomeView = {
       </section>
 
       <footer class="footer">
-        <span class="brand" style="text-transform:none; font-family:var(--serif); font-size:18px; font-style:italic;">étoile</span> · La Crêpe Parisienne / Grupo MYT<br>
+        <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · La Crêpe Parisienne / Grupo MYT<br>
         Dashboard de Reseñas · Región Guadalajara · Fuente: Google Reviews
       </footer>`;
 
@@ -224,7 +225,7 @@ const HomeView = {
       if (heroNumEl) {
         const targetVal = currGlobal.avgRating;
         let startVal = 3.0;
-        const duration = 800;
+        const duration = 1800;
         let startTimestamp = null;
         const step = (timestamp) => {
           if (!startTimestamp) startTimestamp = timestamp;
@@ -334,14 +335,7 @@ const HomeView = {
     }
 
     if (newIdx >= 0 && newIdx < sortedMonths.length) {
-      DataLoader.currentMonth = sortedMonths[newIdx];
-      if (newIdx > 0) {
-        DataLoader.previousMonth = sortedMonths[newIdx - 1];
-        DataLoader.previousYear = currYear;
-      } else {
-        DataLoader.previousMonth = DataLoader.currentMonth === 1 ? 12 : DataLoader.currentMonth - 1;
-        DataLoader.previousYear = DataLoader.currentMonth === 1 ? currYear - 1 : currYear;
-      }
+      DataLoader.setMonth(currYear, sortedMonths[newIdx]);
       this.render();
     }
   },
@@ -610,5 +604,74 @@ const HomeView = {
       }
     };
     document.addEventListener('keydown', _escHandler);
+  },
+
+  _buildHighlights(branches, year, month) {
+    const data = DataLoader.getMonth(year, month);
+    if (!data) return '';
+    const goodReviews = data.reviews.filter(r => r.stars === 5 && r.text && r.text.length > 30);
+    if (goodReviews.length === 0) return '';
+    
+    if (this.highlightIdx === 0 && goodReviews.length > 1) {
+      this.highlightIdx = Math.floor(Math.random() * goodReviews.length);
+    }
+
+    const idx = this.highlightIdx % goodReviews.length;
+    const rev = goodReviews[idx];
+    const hasMore = goodReviews.length > 1;
+    return `
+      <div class="chart-card highlight-box r" id="highlightCard" style="display:flex; flex-direction:column; justify-content:space-between; position:relative; min-height:220px; overflow:hidden;">
+        <div class="watermark-stars" style="position:absolute; right:-20px; bottom:-20px; font-size:120px; opacity:0.04; color:var(--text); pointer-events:none;">★</div>
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--sage); margin-bottom: 8px;">Lo más destacado</div>
+        <div style="font-size: 15px; line-height: 1.5; font-style:italic; margin-bottom: 12px; position: relative; z-index: 1;" data-rev-text>"${rev.text}"</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; margin-top: auto; padding-top:12px; border-top: 1px solid rgba(245,239,230,.06);">
+          <span style="font-size: 13px; font-weight: 500; color: rgba(245,239,230,.65); display:flex; align-items:center; gap:6px;"><span style="display:inline-block;width:12px;height:1px;background:rgba(245,239,230,.4);"></span>${rev.sucursal}</span>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="color:#E8955A;font-size:13px;letter-spacing:1px;">${'★'.repeat(5)}</span>
+            ${hasMore ? `<button onclick="HomeView.nextHighlight()" style="background:transparent;border:1px solid rgba(245,239,230,0.35);color:var(--crema);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;letter-spacing:.03em;transition:background .15s, border-color .15s;display:flex;align-items:center;gap:4px;" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.borderColor='rgba(245,239,230,.7)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(245,239,230,0.35)'">Siguiente ›</button>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  nextHighlight() {
+    const year = DataLoader.currentYear;
+    const month = DataLoader.currentMonth;
+    const data = DataLoader.getMonth(year, month);
+    const goodReviews = data ? data.reviews.filter(r => r.stars === 5 && r.text && r.text.length > 30) : [];
+    const card = document.getElementById('highlightCard');
+    if (!card || goodReviews.length <= 1) return;
+
+    let newIdx = Math.floor(Math.random() * goodReviews.length);
+    if (newIdx === (this.highlightIdx % goodReviews.length)) {
+      newIdx = (newIdx + 1) % goodReviews.length;
+    }
+    this.highlightIdx = newIdx;
+
+    card.style.transition = 'opacity 0.2s ease';
+    card.style.opacity = '0';
+    setTimeout(() => {
+      const idx = this.highlightIdx % goodReviews.length;
+      const rev = goodReviews[idx];
+      const textEl = card.querySelector('[data-rev-text]');
+      if (textEl) textEl.textContent = `"${rev.text}"`;
+      
+      const allBranches = SUCURSALES_META.map(m => ({ ...m }));
+      const newCard = this._buildHighlights(allBranches, year, month);
+      const tmp = document.createElement('div');
+      tmp.innerHTML = newCard;
+      const newEl = tmp.firstElementChild;
+      if (newEl) {
+        newEl.style.opacity = '0';
+        newEl.style.transform = 'translateY(8px)';
+        card.replaceWith(newEl);
+        requestAnimationFrame(() => {
+          newEl.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+          newEl.style.opacity = '1';
+          newEl.style.transform = 'translateY(0)';
+        });
+      }
+    }, 200);
   }
 };

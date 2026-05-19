@@ -3,9 +3,6 @@
  */
 
 const BranchView = {
-  activeYear: 2026,
-  activeMonth: null,
-
   async render(params) {
     const meta = getBranchById(params.id);
     if (!meta) {
@@ -13,21 +10,20 @@ const BranchView = {
       return;
     }
 
-    if (!this.activeMonth) {
-      this.activeMonth = DataLoader.currentMonth;
-    }
+    const activeYear = DataLoader.currentYear;
+    const activeMonth = DataLoader.currentMonth;
 
     // Asegurar carga de los meses
-    const availableMonths = DataLoader.manifest[this.activeYear] || [];
+    const availableMonths = DataLoader.manifest[activeYear] || [];
     for (const m of availableMonths) {
-      await DataLoader.loadMonth(this.activeYear, m);
+      await DataLoader.loadMonth(activeYear, m);
     }
 
-    const reviews = DataLoader.getReviewsForBranch(this.activeYear, this.activeMonth, meta.id);
-    const stats = DataLoader.computeBranchStats(this.activeYear, this.activeMonth, meta.id);
+    const reviews = DataLoader.getReviewsForBranch(activeYear, activeMonth, meta.id);
+    const stats = DataLoader.computeBranchStats(activeYear, activeMonth, meta.id);
     const q1Info = Q1_DATA.branches[meta.id] || null;
 
-    const monthName = new Date(this.activeYear, this.activeMonth - 1).toLocaleString('es-ES', { month: 'long' });
+    const monthName = new Date(activeYear, activeMonth - 1).toLocaleString('es-ES', { month: 'long' });
     const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
     const delta = stats.avg > 0 ? (stats.avg - meta.historico) : 0;
@@ -91,9 +87,9 @@ const BranchView = {
       </div>`;
 
     const selectorOptions = availableMonths.map(m => {
-      const name = new Date(this.activeYear, m - 1).toLocaleString('es-ES', { month: 'long' });
+      const name = new Date(activeYear, m - 1).toLocaleString('es-ES', { month: 'long' });
       const capName = name.charAt(0).toUpperCase() + name.slice(1);
-      return `<option value="${m}" ${m === this.activeMonth ? 'selected' : ''}>${capName} ${this.activeYear}</option>`;
+      return `<option value="${m}" ${m === activeMonth ? 'selected' : ''}>${capName} ${activeYear}</option>`;
     }).join('');
 
     document.getElementById('app').innerHTML = `
@@ -140,12 +136,12 @@ const BranchView = {
       </section>
 
       <footer class="footer">
-        <span class="brand" style="text-transform:none; font-family:var(--serif); font-size:18px; font-style:italic;">étoile</span> · ${meta.nombre}<br>
+        <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · ${meta.nombre}<br>
         Dashboard de Reseñas · Región Guadalajara
       </footer>`;
 
     document.getElementById('monthSelect').onchange = async (e) => {
-      this.activeMonth = parseInt(e.target.value);
+      DataLoader.setMonth(activeYear, parseInt(e.target.value));
       await this.render(params);
       initReveal();
     };

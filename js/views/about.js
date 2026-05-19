@@ -4,6 +4,14 @@
 
 const CHANGELOG = [
   {
+    v: 'v2.8', date: 'Mayo 2026',
+    items: [
+      'Sincronización de Meses: El selector de mes ahora se sincroniza globalmente entre la pantalla principal y las vistas de sucursal',
+      'Lo más destacado: Se restaura la sección de reseñas 5 estrellas destacadas con autoplay aleatorio al lado del banner de alertas',
+      'Font loading: Se corrige la ruta de carga de la tipografía Giaza.otf y se aplica a todas las marcas étoile en footer',
+    ]
+  },
+  {
     v: 'v2.7', date: 'Mayo 2026',
     items: [
       'KPIs: Mapeo de métricas accionables (ej. "negativas sin responder" y listado de sucursales faltantes)',
@@ -233,7 +241,7 @@ const AboutView = {
       </section>
 
       <footer class="footer">
-        <span class="brand" style="text-transform:none; font-family:var(--serif); font-size:18px; font-style:italic;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
+        <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
         Dashboard de Reseñas · Región Guadalajara · v2.7 2026
       </footer>`;
 

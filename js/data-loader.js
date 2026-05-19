@@ -103,5 +103,20 @@ const DataLoader = {
     const avgRating = totalReviews ? reviews.reduce((a, r) => a + r.stars, 0) / totalReviews : 0;
     const withText = reviews.filter(r => r.text && r.text.trim().length > 0).length;
     return { totalReviews, avgRating, withText };
+  },
+
+  setMonth(year, month) {
+    this.currentYear = year;
+    this.currentMonth = month;
+    const availableMonths = this.manifest[year] || [];
+    const sortedMonths = [...availableMonths].sort((a, b) => a - b);
+    const idx = sortedMonths.indexOf(month);
+    if (idx > 0) {
+      this.previousMonth = sortedMonths[idx - 1];
+      this.previousYear = year;
+    } else {
+      this.previousMonth = month === 1 ? 12 : month - 1;
+      this.previousYear = month === 1 ? year - 1 : year;
+    }
   }
 };
