@@ -4,6 +4,18 @@
 
 const CHANGELOG = [
   {
+    v: 'v2.7', date: 'Mayo 2026',
+    items: [
+      'KPIs: Mapeo de métricas accionables (ej. "negativas sin responder" y listado de sucursales faltantes)',
+      'Alertas: Sistema de seguimiento con chips de sucursales y opción de marcar como atendido persistente',
+      'Actividad Reciente: Nuevo feed de reseñas con 3 cards destacadas (mix positivo/negativo) y análisis de causa raíz',
+      'Feed Completo: Drawer lateral deslizable con filtros avanzados por sentimiento y sucursal',
+      'Mes Navegable: Selector de mes en el topbar header con flechas para actualización total reactiva',
+      'Scorecard Hero: Animación de conteo animado para el promedio regional con gradiente dorado',
+      'Surfaces: Profundidad visual mejorada en modo oscuro (#0B0C15, #151725, #1E2132)',
+    ]
+  },
+  {
     v: 'v2.6', date: 'Mayo 2026',
     items: [
       'Dashboards: Charts dinámicos y responsive al 100% en pantallas móviles',
@@ -108,7 +120,7 @@ const AboutView = {
             <div style="display:grid;gap:12px;">
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Versión actual</div>
-                <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:default;font-family:var(--mono);font-size:20px;font-weight:700;color:var(--crema);letter-spacing:.04em;" title="">v2.6 · 2026</button>
+                <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:default;font-family:var(--mono);font-size:20px;font-weight:700;color:var(--crema);letter-spacing:.04em;" title="">v2.7 · 2026</button>
               </div>
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Cobertura</div>
@@ -222,7 +234,7 @@ const AboutView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--serif); font-size:18px; font-style:italic;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
-        Dashboard de Reseñas · Región Guadalajara · v2.6 2026
+        Dashboard de Reseñas · Región Guadalajara · v2.7 2026
       </footer>`;
 
     requestAnimationFrame(() => initReveal());
