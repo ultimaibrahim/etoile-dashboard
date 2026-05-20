@@ -13,12 +13,15 @@ const HomeView = {
     const currMonth = DataLoader.currentMonth;
     const prevMonth = DataLoader.previousMonth;
 
-    await DataLoader.loadMonth(prevYear, prevMonth);
+    const hasPrevMonth = DataLoader.hasMonth(prevYear, prevMonth);
+    if (hasPrevMonth) {
+      await DataLoader.loadMonth(prevYear, prevMonth);
+    }
     await DataLoader.loadMonth(currYear, currMonth);
 
-    const prevStats = DataLoader.getAllBranchStats(prevYear, prevMonth);
+    const prevStats = hasPrevMonth ? DataLoader.getAllBranchStats(prevYear, prevMonth) : {};
     const currStats = DataLoader.getAllBranchStats(currYear, currMonth);
-    const prevGlobal = DataLoader.getGlobalStats(prevYear, prevMonth);
+    const prevGlobal = hasPrevMonth ? DataLoader.getGlobalStats(prevYear, prevMonth) : { totalReviews: 0, avgRating: 0, withText: 0 };
     const currGlobal = DataLoader.getGlobalStats(currYear, currMonth);
 
     const currMonthName = new Date(currYear, currMonth - 1).toLocaleString('es-ES', { month: 'long' });
@@ -67,8 +70,8 @@ const HomeView = {
 
     // KPIs
     const kpiData = await Kpis.computeMonth(currYear, currMonth);
-    const prevKpi = await Kpis.computeMonth(prevYear, prevMonth);
-    const kpiSection = this._buildKpiSection(kpiData, currStats, prevKpi, capitalizedCurrMonth, currYear, capitalizedPrevMonth);
+    const prevKpi = hasPrevMonth ? await Kpis.computeMonth(prevYear, prevMonth) : null;
+    const kpiSection = this._buildKpiSection(kpiData, currStats, prevKpi, capitalizedCurrMonth, currYear, capitalizedPrevMonth, hasPrevMonth);
 
     // Reviews data for Feed
     const currentData = DataLoader.getMonth(currYear, currMonth);
@@ -151,7 +154,7 @@ const HomeView = {
 
     const sortedMonths = [...(DataLoader.manifest[currYear] || [])].sort((a, b) => a - b);
     const selectOptions = sortedMonths.map(m => {
-      const monthName = MONTH_NAMES[m];
+      const monthName = MONTH_NAMES[m - 1];
       const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
       return `<option value="${m}" ${m === currMonth ? 'selected' : ''}>${capMonth} ${currYear}</option>`;
     }).join('');
@@ -163,6 +166,14 @@ const HomeView = {
         </select>
       </div>
     `;
+
+    const trendHtml = hasPrevMonth
+      ? `<span class="hero-trend" style="${currGlobal.avgRating >= prevGlobal.avgRating ? 'background:rgba(122,216,154,.12);border-color:rgba(122,216,154,.25);color:#A7DBB9;' : 'background:rgba(178,58,43,.12);border-color:rgba(178,58,43,.25);color:#F4A090;'}">${currGlobal.avgRating >= prevGlobal.avgRating ? '↑' : '↓'} ${Math.abs(currGlobal.avgRating - prevGlobal.avgRating).toFixed(2)} vs ${capitalizedPrevMonth} (${prevGlobal.avgRating.toFixed(2)})</span>`
+      : `<span class="hero-trend" style="background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.1);color:#FAF5EB;">Meta: 4.50★</span>`;
+
+    const prevVolSubHtml = hasPrevMonth
+      ? `<span class="hero-stat-sub">${prevGlobal.totalReviews} en ${capitalizedPrevMonth.toLowerCase()}</span>`
+      : `<span class="hero-stat-sub">Meta: 4.5+ estrellas</span>`;
 
     document.getElementById('app').innerHTML = `
       ${buildTopbar()}
@@ -178,7 +189,7 @@ const HomeView = {
               <div class="hero-score-side">
                 <span class="hero-stars">${starStr(Math.round(currGlobal.avgRating))}</span>
                 <span class="hero-of">de 5.00</span>
-                <span class="hero-trend" style="${currGlobal.avgRating >= prevGlobal.avgRating ? 'background:rgba(122,216,154,.12);border-color:rgba(122,216,154,.25);color:#A7DBB9;' : 'background:rgba(178,58,43,.12);border-color:rgba(178,58,43,.25);color:#F4A090;'}">${currGlobal.avgRating >= prevGlobal.avgRating ? '↑' : '↓'} ${Math.abs(currGlobal.avgRating - prevGlobal.avgRating).toFixed(2)} vs ${capitalizedPrevMonth} (${prevGlobal.avgRating.toFixed(2)})</span>
+                ${trendHtml}
               </div>
             </div>
           </div>
@@ -187,7 +198,7 @@ const HomeView = {
               <span class="hero-stat-val num">${currGlobal.totalReviews}</span>
               <div class="hero-stat-info">
                 <span class="hero-stat-label">Reseñas ${capitalizedCurrMonth}</span>
-                <span class="hero-stat-sub">${prevGlobal.totalReviews} en ${capitalizedPrevMonth.toLowerCase()}</span>
+                ${prevVolSubHtml}
               </div>
             </div>
             <div class="hero-stat">
@@ -261,7 +272,7 @@ const HomeView = {
     });
   },
 
-  _buildKpiSection(kpi, currStats, prevKpi, monthName, year, prevMonthName) {
+  _buildKpiSection(kpi, currStats, prevKpi, monthName, year, prevMonthName, hasPrevMonth) {
     const missingVol = [];
     for (const meta of SUCURSALES_META) {
       const stats = currStats[meta.id] || { count: 0 };
@@ -275,12 +286,14 @@ const HomeView = {
 
     const calClass = kpi.calidadTexto.ratio >= KpiMeta.calidadTextoMeta ? 'optimal' : 'attention';
     const calValue = `${(kpi.calidadTexto.ratio * 100).toFixed(0)}% con texto`;
-    const calTrend = prevKpi ? kpi.calidadTexto.ratio - prevKpi.calidadTexto.ratio : 0;
-    const calTrendStr = calTrend > 0.005 
-      ? `↑ +${(calTrend * 100).toFixed(0)}% vs ${prevMonthName.substring(0,3)}` 
-      : calTrend < -0.005 
-        ? `↓ ${(calTrend * 100).toFixed(0)}% vs ${prevMonthName.substring(0,3)}` 
-        : 'Sin cambios vs mes anterior';
+    const calTrend = (hasPrevMonth && prevKpi) ? kpi.calidadTexto.ratio - prevKpi.calidadTexto.ratio : 0;
+    const calTrendStr = (hasPrevMonth && prevKpi)
+      ? (calTrend > 0.005 
+        ? `↑ +${(calTrend * 100).toFixed(0)}% vs ${prevMonthName.substring(0,3)}` 
+        : calTrend < -0.005 
+          ? `↓ ${(calTrend * 100).toFixed(0)}% vs ${prevMonthName.substring(0,3)}` 
+          : 'Sin cambios vs mes anterior')
+      : `Meta: ${(KpiMeta.calidadTextoMeta * 100).toFixed(0)}% con texto`;
 
     const ratClass = kpi.ratingMinimo.belowMin.length === 0 ? 'optimal' : 'critical';
     const belowDetails = kpi.ratingMinimo.belowMin.map(id => {
