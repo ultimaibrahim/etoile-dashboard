@@ -96,35 +96,12 @@ function buildTopbar(showBack = false, branchName = '') {
   const isDash = currentHash === '#/dashboards';
   const isAbout = currentHash.startsWith('#/acerca');
 
-  let monthNav = '';
-  if (isHome && typeof DataLoader !== 'undefined' && DataLoader.currentYear && DataLoader.currentMonth && DataLoader.manifest) {
-    const currYear = DataLoader.currentYear;
-    const currMonth = DataLoader.currentMonth;
-    const monthName = new Date(currYear, currMonth - 1).toLocaleString('es-ES', { month: 'long' });
-    const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-    
-    const availableMonths = DataLoader.manifest[currYear] || [];
-    const sortedMonths = [...availableMonths].sort((a,b) => a - b);
-    const currentIdx = sortedMonths.indexOf(currMonth);
-    
-    const hasPrev = currentIdx > 0;
-    const hasNext = currentIdx < sortedMonths.length - 1;
-    
-    monthNav = `
-      <div class="month-selector-nav">
-        <button onclick="HomeView.changeMonth('prev')" ${hasPrev ? '' : 'disabled'}>◀</button>
-        <span>${capMonth} ${currYear}</span>
-        <button onclick="HomeView.changeMonth('next')" ${hasNext ? '' : 'disabled'}>▶</button>
-      </div>
-    `;
-  }
-
   const back = showBack
     ? `<button class="topbar-back" onclick="window.history.back()">${svgIcon('arrow')}<span>Atrás</span></button>`
     : '';
   const titleArea = showBack 
     ? `<span class="topbar-brand"><span class="accent">${branchName}</span></span>`
-    : `<div style="display:flex;align-items:center;"><a href="#/" class="topbar-brand"><span class="accent">étoile</span></a>${monthNav}</div>`;
+    : `<a href="#/" class="topbar-brand"><span class="accent">étoile</span></a>`;
 
   // El nav se emite SEPARADO del header para que position:fixed sea puro
   const nav = `<nav class="topbar-nav" id="mainNav">

@@ -31,19 +31,21 @@ const HomeView = {
       const p = prevStats[meta.id] || { avg: 0, count: 0 };
       const c = currStats[meta.id] || { avg: 0, count: 0, negativeCount: 0 };
       const isAttended = localStorage.getItem(`attended_${meta.id}_${currYear}_${currMonth}`) === 'true';
-      const hasAlert = c.negativeCount > 0 || (c.avg > 0 && c.avg < KpiMeta.ratingMinimo);
+      const branchReviews = DataLoader.getReviewsForBranch(currYear, currMonth, meta.id);
+      const negativeWithTextCount = branchReviews.filter(r => r.stars <= 2 && r.text && r.text.trim().length > 0).length;
+      const hasAlert = negativeWithTextCount > 0;
       const alerta = hasAlert && !isAttended;
       return {
         ...meta,
         prev: { score: p.avg, count: p.count },
-        curr: { score: c.avg, count: c.count, negativeCount: c.negativeCount },
+        curr: { score: c.avg, count: c.count, negativeCount: negativeWithTextCount },
         hasAlert,
         isAttended,
         alerta,
         statusMayo: hasAlert ? {
-          negativas: c.negativeCount,
+          negativas: negativeWithTextCount,
           tema: meta.alertTheme || 'Problemas operativos',
-          detalle: `${c.negativeCount} reseña${c.negativeCount !== 1 ? 's' : ''} negativa${c.negativeCount !== 1 ? 's' : ''} en ${capitalizedCurrMonth.toLowerCase()}.`
+          detalle: `${negativeWithTextCount} reseña${negativeWithTextCount !== 1 ? 's' : ''} negativa${negativeWithTextCount !== 1 ? 's' : ''} en ${capitalizedCurrMonth.toLowerCase()}.`
         } : null
       };
     });
@@ -147,13 +149,29 @@ const HomeView = {
       }
     }
 
+    const sortedMonths = DataLoader.getAvailableMonths(currYear);
+    const selectOptions = sortedMonths.map(m => {
+      const monthName = MONTH_NAMES[m];
+      const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+      return `<option value="${m}" ${m === currMonth ? 'selected' : ''}>${capMonth} ${currYear}</option>`;
+    }).join('');
+
+    const dropdownHtml = `
+      <div class="hero-month-select-container">
+        <select id="heroMonthSelect" class="hero-month-select" onchange="HomeView.handleMonthSelect(this.value)">
+          ${selectOptions}
+        </select>
+      </div>
+    `;
+
     document.getElementById('app').innerHTML = `
       ${buildTopbar()}
       <section class="hero">
         <div class="hero-inner">
           <div class="hero-left">
-            <div class="hero-label-row">
-              <span class="eyebrow" style="color:rgba(245,239,230,.55);">Promedio Regional · ${capitalizedCurrMonth} ${currYear}</span>
+            <div class="hero-label-row" style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:16px;">
+              <span class="eyebrow" style="color:rgba(245,239,230,.55);">Promedio Regional</span>
+              ${dropdownHtml}
             </div>
             <div class="hero-score">
               <span class="hero-score-num num" id="heroNum">${currGlobal.avgRating.toFixed(2)}</span>
@@ -190,14 +208,12 @@ const HomeView = {
         </div>
       </section>
 
-      <div class="home-grid-2" style="margin-top: 0; margin-bottom: 24px;">
+      <div class="home-grid-2" style="margin-top: 24px; margin-bottom: 24px;">
         ${alertBannerHtml}
         ${this._buildHighlights(branches, currYear, currMonth)}
       </div>
 
       ${kpiSection}
-
-      ${this._buildReviewFeed(reviewsList, currYear, currMonth)}
 
       <section class="section r">
         <div class="section-head">
@@ -210,6 +226,8 @@ const HomeView = {
         </div>
         <div class="branch-grid">${cards || '<div class="empty-state"><span class="glyph">—</span>Sin sucursales para este filtro</div>'}</div>
       </section>
+
+      ${this._buildReviewFeed(reviewsList, currYear, currMonth)}
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · La Crêpe Parisienne / Grupo MYT<br>
@@ -281,7 +299,7 @@ const HomeView = {
     return `
       <section class="section r">
         <div class="section-head">
-          <div class="section-title">KPIs de Operación <span class="accent">${monthName} ${year}</span></div>
+          <div class="section-title">KPIs de Operación</div>
           <span class="section-sub">Seguimiento de cumplimiento contra objetivos regionales</span>
         </div>
         <div class="scorecard-grid">
@@ -340,6 +358,13 @@ const HomeView = {
     }
   },
 
+  handleMonthSelect(val) {
+    const month = parseInt(val);
+    const currYear = DataLoader.currentYear;
+    DataLoader.setMonth(currYear, month);
+    this.render();
+  },
+
   markAsAttended(branchId) {
     const year = DataLoader.currentYear;
     const month = DataLoader.currentMonth;
@@ -354,10 +379,9 @@ const HomeView = {
     
     const feedReviews = [];
     if (negatives.length > 0) {
-      feedReviews.push(negatives[0]);
-      if (negatives.length > 1) feedReviews.push(negatives[1]);
+      feedReviews.push(...negatives.slice(0, 3));
     }
-    while (feedReviews.length < 3 && positives.length > 0) {
+    while (feedReviews.length < 8 && positives.length > 0) {
       const nextPos = positives.find(p => !feedReviews.includes(p));
       if (nextPos) {
         feedReviews.push(nextPos);
@@ -367,7 +391,7 @@ const HomeView = {
     }
     
     const textReviews = reviews.filter(r => r.text && r.text.length > 5);
-    while (feedReviews.length < 3 && textReviews.length > 0) {
+    while (feedReviews.length < 8 && textReviews.length > 0) {
       const nextRev = textReviews.find(r => !feedReviews.includes(r));
       if (nextRev) {
         feedReviews.push(nextRev);
@@ -397,7 +421,7 @@ const HomeView = {
     const countWithText = reviews.filter(r => r.text && r.text.trim().length > 0).length;
 
     return `
-      <section class="review-feed-section r">
+      <section class="section review-feed-section r">
         <div class="section-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div>
             <div class="section-title">Actividad Reciente <span class="accent">de reseñas</span></div>
@@ -405,8 +429,10 @@ const HomeView = {
           </div>
           <button class="show-all-btn-link" onclick="HomeView.openFullFeedModal()">Ver todas con texto (${countWithText}) →</button>
         </div>
-        <div class="review-feed-grid">
-          ${cards || '<div class="empty-state">Sin reseñas con texto en este periodo</div>'}
+        <div class="review-feed-carousel-wrapper">
+          <div class="review-feed-grid">
+            ${cards || '<div class="empty-state">Sin reseñas con texto en este periodo</div>'}
+          </div>
         </div>
       </section>
     `;
@@ -566,14 +592,17 @@ const HomeView = {
     if (!branchMeta) return;
 
     const names = [branchMeta.nombre, branchMeta.abr, branchMeta.id === 'gal-gdl' ? 'Galerías GDL' : '', branchMeta.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].filter(Boolean);
-    const negatives = data.reviews.filter(r => r.stars <= 3 && names.includes(r.sucursal));
+    const negatives = data.reviews.filter(r => r.stars <= 3 && names.includes(r.sucursal) && r.text && r.text.trim().length > 0);
+
+    // Freeze background scrolling when opening the modal
+    document.body.style.overflow = 'hidden';
 
     const modalHtml = `
-      <div class="modal-overlay active" id="alertModal">
+      <div class="modal-overlay active" id="alertModal" onclick="if(event.target === this) { this.remove(); document.body.style.overflow = ''; }">
         <div class="modal-box">
           <div class="modal-header">
             <h2 class="modal-title">Alertas: ${branchMeta.abr}</h2>
-            <button class="modal-close" onclick="document.getElementById('alertModal').remove()">×</button>
+            <button class="modal-close" onclick="document.getElementById('alertModal').remove(); document.body.style.overflow = '';">×</button>
           </div>
           <div class="modal-body">
             <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Las siguientes reseñas negativas o promedio bajo requieren atención inmediata en tienda.</p>
@@ -584,13 +613,9 @@ const HomeView = {
                   <div class="ri-score" style="color: var(--alerta)">${starStr(r.stars)}</div>
                   <div class="ri-date">${formatDate(r.publishedAtDate)}</div>
                 </div>
-                ${r.text ? `<div class="ri-text">"${r.text}"</div>` : `<div class="ri-text" style="color:var(--text-muted);">(Sin comentario)</div>`}
+                <div class="ri-text">"${r.text}"</div>
               </div>
             `).join('')}
-            <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
-              <button class="show-all-btn" style="background:transparent; border:1px solid var(--border); color:var(--text);" onclick="document.getElementById('alertModal').remove()">Cerrar</button>
-              <button class="show-all-btn" style="background:var(--ok-bg); border:1px solid rgba(61,138,95,.3); color:var(--ok);" onclick="HomeView.markAsAttended('${branchId}')">Marcar como atendido</button>
-            </div>
           </div>
         </div>
       </div>
@@ -599,7 +624,11 @@ const HomeView = {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const _escHandler = (e) => {
       if (e.key === 'Escape') {
-        document.getElementById('alertModal')?.remove();
+        const modal = document.getElementById('alertModal');
+        if (modal) {
+          modal.remove();
+          document.body.style.overflow = '';
+        }
         document.removeEventListener('keydown', _escHandler);
       }
     };
