@@ -4,6 +4,15 @@
 
 const CHANGELOG = [
   {
+    v: 'v2.9', date: 'Mayo 2026',
+    items: [
+      'Month Dropdown: Se traslada el selector de meses al Hero con un dropdown de diseño premium integrado',
+      'Actividad Reciente: Rediseño del feed en formato carrusel con scroll horizontal y efecto de difuminado lateral',
+      'Alertas sin texto: Se filtran las alertas para mostrar únicamente reseñas negativas con comentarios escritos',
+      'Modal de Alertas: Cierre al hacer clic fuera del recuadro, bloqueo de scroll en el fondo y simplificación de botones de acción',
+    ]
+  },
+  {
     v: 'v2.8', date: 'Mayo 2026',
     items: [
       'Sincronización de Meses: El selector de mes ahora se sincroniza globalmente entre la pantalla principal y las vistas de sucursal',
@@ -128,7 +137,7 @@ const AboutView = {
             <div style="display:grid;gap:12px;">
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Versión actual</div>
-                <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:default;font-family:var(--mono);font-size:20px;font-weight:700;color:var(--crema);letter-spacing:.04em;" title="">v2.7 · 2026</button>
+                <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:default;font-family:var(--mono);font-size:20px;font-weight:700;color:var(--crema);letter-spacing:.04em;" title="">v2.9 · 2026</button>
               </div>
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Cobertura</div>
