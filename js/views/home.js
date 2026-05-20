@@ -149,7 +149,7 @@ const HomeView = {
       }
     }
 
-    const sortedMonths = DataLoader.getAvailableMonths(currYear);
+    const sortedMonths = [...(DataLoader.manifest[currYear] || [])].sort((a, b) => a - b);
     const selectOptions = sortedMonths.map(m => {
       const monthName = MONTH_NAMES[m];
       const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
