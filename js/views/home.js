@@ -282,16 +282,16 @@ const HomeView = {
     }
     const volClass = missingVol.length === 0 ? 'optimal' : 'attention';
     const volValue = `${kpi.volumen.ok} de ${kpi.volumen.total}`;
-    const volSub = missingVol.length > 0 ? `Faltan: ${missingVol.join(', ')}` : 'Todas cumplen la meta';
+    const volSub = missingVol.length > 0 ? `No cumplen: ${missingVol.join(', ')}` : 'Todas cumplen la meta';
 
     const calClass = kpi.calidadTexto.ratio >= KpiMeta.calidadTextoMeta ? 'optimal' : 'attention';
     const calValue = `${(kpi.calidadTexto.ratio * 100).toFixed(0)}% con texto`;
     const calTrend = (hasPrevMonth && prevKpi) ? kpi.calidadTexto.ratio - prevKpi.calidadTexto.ratio : 0;
     const calTrendStr = (hasPrevMonth && prevKpi)
       ? (calTrend > 0.005 
-        ? `↑ +${(calTrend * 100).toFixed(0)}% vs ${prevMonthName.substring(0,3)}` 
+        ? `<span class="kpi-arrow up">↑</span> +${(calTrend * 100).toFixed(0)}% vs ${prevMonthName}` 
         : calTrend < -0.005 
-          ? `↓ ${(calTrend * 100).toFixed(0)}% vs ${prevMonthName.substring(0,3)}` 
+          ? `<span class="kpi-arrow down">↓</span> ${(calTrend * 100).toFixed(0)}% vs ${prevMonthName}` 
           : 'Sin cambios vs mes anterior')
       : `Meta: ${(KpiMeta.calidadTextoMeta * 100).toFixed(0)}% con texto`;
 
@@ -316,30 +316,58 @@ const HomeView = {
           <span class="section-sub">Seguimiento de cumplimiento contra objetivos regionales</span>
         </div>
         <div class="scorecard-grid">
-          <div class="scorecard">
-            <div class="sc-label">Volumen de reseñas</div>
-            <div class="sc-value num" style="font-size:18px; font-weight:700; color:var(--text);">${volValue}</div>
-            <div class="sc-sub" style="font-size:12px; margin-bottom:8px; line-height:1.4;">${volSub}</div>
+          <div class="scorecard status-${volClass}" onclick="this.classList.toggle('active')">
+            <div class="sc-header-row">
+              <span class="sc-label">Volumen de reseñas</span>
+              <span class="sc-chevron">▼</span>
+            </div>
+            <div class="sc-value num">${volValue}</div>
             <span class="badge badge-${volClass}">${volClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
-            <button onclick="document.querySelector('.branch-grid').scrollIntoView({behavior: 'smooth'})" style="background:transparent; border:none; color:var(--sage); font-size:11px; cursor:pointer; padding:0; text-align:left; font-weight:700; margin-top:8px;">Ver detalle sucursales →</button>
+            <div class="sc-details-wrapper">
+              <div class="sc-details-inner">
+                <div class="sc-sub">${volSub}</div>
+                <button onclick="event.stopPropagation(); document.querySelector('.branch-grid').scrollIntoView({behavior: 'smooth'})" style="background:transparent; border:none; color:var(--sage); font-size:11px; cursor:pointer; padding:0; text-align:left; font-weight:700; margin-top:8px;">Ver detalle sucursales →</button>
+              </div>
+            </div>
           </div>
-          <div class="scorecard">
-            <div class="sc-label">Calidad de reseña</div>
-            <div class="sc-value num" style="font-size:18px; font-weight:700; color:var(--text);">${calValue}</div>
-            <div class="sc-sub" style="font-size:12px; margin-bottom:8px; line-height:1.4;">${calTrendStr}</div>
+          <div class="scorecard status-${calClass}" onclick="this.classList.toggle('active')">
+            <div class="sc-header-row">
+              <span class="sc-label">Calidad de reseña</span>
+              <span class="sc-chevron">▼</span>
+            </div>
+            <div class="sc-value num">${calValue}</div>
             <span class="badge badge-${calClass}">${calClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
+            <div class="sc-details-wrapper">
+              <div class="sc-details-inner">
+                <div class="sc-sub">${calTrendStr}</div>
+              </div>
+            </div>
           </div>
-          <div class="scorecard">
-            <div class="sc-label">Rating mínimo regional</div>
-            <div class="sc-value num" style="font-size:18px; font-weight:700; color:var(--text);">${ratValue}</div>
-            <div class="sc-sub" style="font-size:12px; margin-bottom:8px; line-height:1.4;">${ratSub}</div>
+          <div class="scorecard status-${ratClass}" onclick="this.classList.toggle('active')">
+            <div class="sc-header-row">
+              <span class="sc-label">Rating mínimo regional</span>
+              <span class="sc-chevron">▼</span>
+            </div>
+            <div class="sc-value num">${ratValue}</div>
             <span class="badge badge-${ratClass}">${ratClass === 'optimal' ? 'Cumple' : 'Crítico'}</span>
+            <div class="sc-details-wrapper">
+              <div class="sc-details-inner">
+                <div class="sc-sub">${ratSub}</div>
+              </div>
+            </div>
           </div>
-          <div class="scorecard">
-            <div class="sc-label">Resolución causa raíz</div>
-            <div class="sc-value num" style="font-size:18px; font-weight:700; color:var(--text);">${negValue}</div>
-            <div class="sc-sub" style="font-size:12px; margin-bottom:8px; line-height:1.4;">${negSub}</div>
+          <div class="scorecard status-${negClass}" onclick="this.classList.toggle('active')">
+            <div class="sc-header-row">
+              <span class="sc-label">Resolución causa raíz</span>
+              <span class="sc-chevron">▼</span>
+            </div>
+            <div class="sc-value num">${negValue}</div>
             <span class="badge badge-${negClass}">${negClass === 'optimal' ? 'Sin pendientes' : 'Atención'}</span>
+            <div class="sc-details-wrapper">
+              <div class="sc-details-inner">
+                <div class="sc-sub">${negSub}</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>`;
@@ -426,7 +454,6 @@ const HomeView = {
           </div>
           <div class="rc-stars">${starsHtml}</div>
           <p class="rc-text">"${r.text}"</p>
-          ${isNeg ? `<button class="rc-action-btn" onclick="HomeView.analyzeCausaRaiz('${r.sucursal}', '${r.text.replace(/'/g, "\\'")}')">Analizar causa raíz</button>` : ''}
         </div>
       `;
     }).join('');
@@ -451,38 +478,15 @@ const HomeView = {
     `;
   },
 
-  analyzeCausaRaiz(branchName, reviewText) {
-    const modalHtml = `
-      <div class="modal-overlay active" id="causaRaizModal">
-        <div class="modal-box" style="max-width: 500px;">
-          <div class="modal-header">
-            <h2 class="modal-title">Análisis de Causa Raíz</h2>
-            <button class="modal-close" onclick="document.getElementById('causaRaizModal').remove()">×</button>
-          </div>
-          <div class="modal-body">
-            <div style="background:var(--alerta-bg); border-left:4px solid var(--alerta); padding:12px; border-radius:8px; margin-bottom:18px;">
-              <strong style="color:var(--alerta); font-size:13px; display:block; margin-bottom:4px;">${branchName}</strong>
-              <p style="font-style:italic; margin:0; font-size:13.5px; line-height:1.4;">"${reviewText}"</p>
-            </div>
-            <h3 style="font-size:14px; margin-bottom:12px; font-weight:600; color:var(--text);">Acciones recomendadas para la sucursal:</h3>
-            <ul style="padding-left:18px; line-height:1.6; font-size:13px; color:var(--text-muted); margin-bottom:20px;">
-              <li><strong>Contactar al cliente:</strong> Responder en Google My Business en menos de 48 horas.</li>
-              <li><strong>Revisión interna:</strong> Verificar el personal de turno y el flujo de servicio en esa fecha.</li>
-              <li><strong>Alineación en junta:</strong> Abordar la queja específica en la próxima minuta de sucursal.</li>
-            </ul>
-            <button class="show-all-btn" style="width:100%;" onclick="document.getElementById('causaRaizModal').remove()">Cerrar análisis</button>
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-  },
-
   openFullFeedModal() {
     const year = DataLoader.currentYear;
     const month = DataLoader.currentMonth;
     const data = DataLoader.getMonth(year, month);
     if (!data) return;
+    
+    // Freeze background scrolling
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
     
     const sidebarHtml = `
       <div class="sidebar-overlay" id="feedSidebarOverlay" onclick="if(event.target===this) HomeView.closeSidebar()">
@@ -544,6 +548,9 @@ const HomeView = {
       overlay.classList.remove('active');
       setTimeout(() => overlay.remove(), 300);
     }
+    // Restore scrolling
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
   },
 
   filterSidebarReviews() {
@@ -608,14 +615,15 @@ const HomeView = {
     const negatives = data.reviews.filter(r => r.stars <= 3 && names.includes(r.sucursal) && r.text && r.text.trim().length > 0);
 
     // Freeze background scrolling when opening the modal
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
 
     const modalHtml = `
-      <div class="modal-overlay active" id="alertModal" onclick="if(event.target === this) { this.remove(); document.body.style.overflow = ''; }">
+      <div class="modal-overlay active" id="alertModal" onclick="if(event.target === this) { this.remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = ''; }">
         <div class="modal-box">
           <div class="modal-header">
             <h2 class="modal-title">Alertas: ${branchMeta.abr}</h2>
-            <button class="modal-close" onclick="document.getElementById('alertModal').remove(); document.body.style.overflow = '';">×</button>
+            <button class="modal-close" onclick="document.getElementById('alertModal').remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = '';">×</button>
           </div>
           <div class="modal-body">
             <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Las siguientes reseñas negativas o promedio bajo requieren atención inmediata en tienda.</p>
@@ -640,6 +648,7 @@ const HomeView = {
         const modal = document.getElementById('alertModal');
         if (modal) {
           modal.remove();
+          document.documentElement.style.overflow = '';
           document.body.style.overflow = '';
         }
         document.removeEventListener('keydown', _escHandler);
