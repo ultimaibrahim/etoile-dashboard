@@ -316,7 +316,7 @@ const HomeView = {
           <span class="section-sub">Seguimiento de cumplimiento contra objetivos regionales</span>
         </div>
         <div class="scorecard-grid">
-          <div class="scorecard status-${volClass}" onclick="this.classList.toggle('active')">
+          <div class="scorecard status-${volClass}" role="button" tabindex="0" aria-expanded="false" aria-label="Volumen de reseñas: ${volValue}. ${volSub}. Presiona para ver detalles." onclick="this.classList.toggle('active'); this.setAttribute('aria-expanded', this.classList.contains('active') ? 'true' : 'false')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
             <div class="sc-header-row">
               <span class="sc-label">Volumen de reseñas</span>
               <span class="sc-chevron">▼</span>
@@ -330,7 +330,7 @@ const HomeView = {
               </div>
             </div>
           </div>
-          <div class="scorecard status-${calClass}" onclick="this.classList.toggle('active')">
+          <div class="scorecard status-${calClass}" role="button" tabindex="0" aria-expanded="false" aria-label="Calidad de reseña: ${calValue}. ${calTrendStr.replace(/<[^>]*>/g, '')}. Presiona para ver detalles." onclick="this.classList.toggle('active'); this.setAttribute('aria-expanded', this.classList.contains('active') ? 'true' : 'false')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
             <div class="sc-header-row">
               <span class="sc-label">Calidad de reseña</span>
               <span class="sc-chevron">▼</span>
@@ -343,7 +343,7 @@ const HomeView = {
               </div>
             </div>
           </div>
-          <div class="scorecard status-${ratClass}" onclick="this.classList.toggle('active')">
+          <div class="scorecard status-${ratClass}" role="button" tabindex="0" aria-expanded="false" aria-label="Rating mínimo regional: ${ratValue}. ${ratSub}. Presiona para ver detalles." onclick="this.classList.toggle('active'); this.setAttribute('aria-expanded', this.classList.contains('active') ? 'true' : 'false')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
             <div class="sc-header-row">
               <span class="sc-label">Rating mínimo regional</span>
               <span class="sc-chevron">▼</span>
@@ -356,9 +356,9 @@ const HomeView = {
               </div>
             </div>
           </div>
-          <div class="scorecard status-${negClass}" onclick="this.classList.toggle('active')">
+          <div class="scorecard status-${negClass}" role="button" tabindex="0" aria-expanded="false" aria-label="Respuestas a reseñas negativas: ${negValue}. ${negSub}. Presiona para ver detalles." onclick="this.classList.toggle('active'); this.setAttribute('aria-expanded', this.classList.contains('active') ? 'true' : 'false')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
             <div class="sc-header-row">
-              <span class="sc-label">Resolución causa raíz</span>
+              <span class="sc-label">Respuestas a Negativas</span>
               <span class="sc-chevron">▼</span>
             </div>
             <div class="sc-value num">${negValue}</div>
@@ -370,7 +370,8 @@ const HomeView = {
             </div>
           </div>
         </div>
-      </section>`;
+      </section>
+    `;
   },
 
   async setFilter(f) {

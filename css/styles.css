@@ -885,12 +885,15 @@ a{color:inherit;text-decoration:none;}
   box-shadow: var(--sombra-card);
   position: relative;
   overflow: hidden;
-  cursor: pointer;
+  cursor: default;
   display: flex;
   flex-direction: column;
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.3s ease;
 }
-.scorecard:hover {
+.scorecard[role="button"] {
+  cursor: pointer;
+}
+.scorecard[role="button"]:hover {
   transform: translateY(-4px);
   box-shadow: var(--sombra-lg);
 }
@@ -907,7 +910,7 @@ a{color:inherit;text-decoration:none;}
   pointer-events: none;
   z-index: 1;
 }
-.scorecard:hover::after {
+.scorecard[role="button"]:hover::after {
   opacity: 0.12;
 }
 
@@ -915,19 +918,19 @@ a{color:inherit;text-decoration:none;}
 .scorecard.status-optimal {
   --glow-color: var(--ok);
 }
-.scorecard.status-optimal:hover {
+.scorecard.status-optimal[role="button"]:hover {
   border-color: rgba(61, 138, 95, 0.4);
 }
 .scorecard.status-attention {
   --glow-color: var(--oro);
 }
-.scorecard.status-attention:hover {
+.scorecard.status-attention[role="button"]:hover {
   border-color: rgba(184, 144, 47, 0.4);
 }
 .scorecard.status-critical {
   --glow-color: var(--alerta);
 }
-.scorecard.status-critical:hover {
+.scorecard.status-critical[role="button"]:hover {
   border-color: rgba(178, 58, 43, 0.4);
 }
 
