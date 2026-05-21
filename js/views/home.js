@@ -810,7 +810,7 @@ const HomeView = {
             <button class="modal-close" onclick="HomeView.closeReviewDetailModal()">×</button>
           </div>
           <div class="modal-body">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
               <div>
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                   <span style="font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text);">${r.sucursal}</span>
@@ -934,7 +934,11 @@ const HomeView = {
           </div>
           <div class="modal-body">
             <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Las siguientes reseñas negativas requieren reporte a Marketing para su resolución.</p>
-            <button id="copyAlertBtn" onclick="HomeView.copyAlertSummary('${branchId}')" style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center; padding:12px 16px; background:var(--verde); color:var(--crema); border:none; border-radius:var(--radius-sm); font-weight:700; font-size:13px; cursor:pointer; margin-bottom:16px; transition:background .15s, transform .1s;" onmouseover="this.style.background='var(--verde-soft)'" onmouseout="this.style.background='var(--verde)'">${svgIcon('clipboard')} Copiar Resumen para Marketing</button>
+            <div class="copy-report-container">
+              <button id="copyAlertBtn" class="copy-report-btn" onclick="HomeView.copyAlertSummary('${branchId}')">
+                ${svgIcon('clipboard')} Copiar Resumen para Marketing
+              </button>
+            </div>
             ${negatives.length === 0 ? '<p>No hay reseñas negativas con texto.</p>' : ''}
             ${negatives.map(r => `
               <div class="review-item" style="border-left: 2px solid var(--alerta); padding-left:12px; margin-bottom:12px;">
@@ -988,7 +992,12 @@ const HomeView = {
         const original = btn.innerHTML;
         btn.innerHTML = '✓ Copiado al portapapeles';
         btn.style.background = 'var(--ok)';
-        setTimeout(() => { btn.innerHTML = original; btn.style.background = 'var(--verde)'; }, 2500);
+        btn.style.color = '#fff';
+        setTimeout(() => { 
+          btn.innerHTML = original; 
+          btn.style.background = ''; 
+          btn.style.color = ''; 
+        }, 2500);
       }
     } catch (e) {
       console.warn('Copy failed:', e);
@@ -1043,7 +1052,11 @@ const HomeView = {
           <div class="modal-body" style="overflow-y: auto; flex-grow: 1; padding-top: 14px;">
             <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Consolidado de reseñas críticas en la región durante el mes. Reportar a Marketing.</p>
             ${hasIncidents ? `
-              <button id="copyAllAlertsBtn" onclick="HomeView.copyAllAlertsSummary()" style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center; padding:12px 16px; background:var(--verde); color:var(--crema); border:none; border-radius:var(--radius-sm); font-weight:700; font-size:13px; cursor:pointer; margin-bottom:16px; transition:background .15s, transform .1s;" onmouseover="this.style.background='var(--verde-soft)'" onmouseout="this.style.background='var(--verde)'">${svgIcon('clipboard')} Copiar Reporte Consolidado</button>
+              <div class="copy-report-container">
+                <button id="copyAllAlertsBtn" class="copy-report-btn" onclick="HomeView.copyAllAlertsSummary()">
+                  ${svgIcon('clipboard')} Copiar Reporte Consolidado
+                </button>
+              </div>
               ${branchesHtml}
             ` : '<p style="text-align:center; padding:20px; color:var(--text-muted);">No hay reseñas negativas registradas este mes.</p>'}
           </div>
@@ -1101,7 +1114,12 @@ const HomeView = {
         const original = btn.innerHTML;
         btn.innerHTML = '✓ Copiado al portapapeles';
         btn.style.background = 'var(--ok)';
-        setTimeout(() => { btn.innerHTML = original; btn.style.background = 'var(--verde)'; }, 2500);
+        btn.style.color = '#fff';
+        setTimeout(() => { 
+          btn.innerHTML = original; 
+          btn.style.background = ''; 
+          btn.style.color = ''; 
+        }, 2500);
       }
     } catch (e) {
       console.warn('Copy failed:', e);

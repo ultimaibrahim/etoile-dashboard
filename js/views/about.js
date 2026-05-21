@@ -18,6 +18,13 @@ const CHANGELOG_EPOCAS = [
     `,
     versions: [
       {
+        v: 'v3.2.1.altair', date: 'Mayo 2026',
+        items: [
+          'Optimización de Alertas: Rediseño estético y de dimensiones de los botones de copiado de alertas (tanto individual como consolidado) a formato centrado y compacto para evitar bloques masivos en la interfaz.',
+          'Emblema Local Guide: Ajuste sutil del distintivo de Local Guide en la vista de detalle de reseña, limitando el tamaño del icono de estrella SVG para prevenir desbordamientos y saltos de línea indeseados en el texto.'
+        ]
+      },
+      {
         v: 'v3.2.0.altair', date: 'Mayo 2026',
         items: [
           'Evaluación de sucursales: Calificación con estrellas de color oro ubicada ahora al lado del nombre de la sucursal en las tarjetas de la pantalla de inicio y en la cabecera de la vista de sucursal.',

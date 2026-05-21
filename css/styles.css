@@ -1524,6 +1524,66 @@ a{color:inherit;text-decoration:none;}
 [data-theme="dark"] .problem-list li::before {
   color: #F4A090;
 }
+.local-guide-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(184, 144, 47, 0.06);
+  color: var(--oro);
+  border: 1px solid rgba(184, 144, 47, 0.15);
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  width: fit-content;
+  white-space: nowrap;
+}
+.local-guide-badge svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+.copy-report-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+  width: 100%;
+}
+.copy-report-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--verde);
+  color: var(--crema);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+  box-shadow: var(--sombra);
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.copy-report-btn:hover {
+  background: var(--verde-soft);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(31,51,39,.12);
+}
+.copy-report-btn:active {
+  transform: translateY(0);
+}
+.copy-report-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2.2px;
+  flex-shrink: 0;
+}
 
 /* ─── MODAL ─────────────────────────────────────────────── */
 .modal-overlay {
@@ -1579,21 +1639,7 @@ a{color:inherit;text-decoration:none;}
   padding-left: 16px;
   margin: 12px 0;
 }
-.local-guide-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(184, 144, 47, 0.12);
-  color: var(--oro);
-  border: 1px solid rgba(184, 144, 47, 0.25);
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  width: fit-content;
-}
+
 .modal-owner-response {
   font-size: 13.5px;
   line-height: 1.5;
