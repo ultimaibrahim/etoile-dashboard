@@ -2354,15 +2354,25 @@ a{color:inherit;text-decoration:none;}
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 32px 0 0px;
-  padding: 16px 24px;
+  margin: 32px auto 0;
+  max-width: 1240px;
+  padding: 16px 22px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   gap: 16px;
   flex-wrap: wrap;
   box-shadow: var(--sombra-card);
+  /* Márgenes laterales consistentes con .section y .home-grid-2 */
+  width: calc(100% - 28px);
 }
+@media(min-width:760px) {
+  .dashboard-controls-bar {
+    width: calc(100% - 44px);
+    padding: 16px 28px;
+  }
+}
+
 .controls-bar-left {
   display: flex;
   flex-direction: column;

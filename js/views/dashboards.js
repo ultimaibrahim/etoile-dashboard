@@ -185,6 +185,10 @@ const DashboardsView = {
       const maxTotal = Math.max(...sortedVol.map(s => s.curr.count)) + 2;
       Charts.stackedVolume(ctx, labels, okData, warnData, maxTotal);
     }
+
+    requestAnimationFrame(() => {
+      initReveal();
+    });
   },
 
   toggleMonthDropdown(event) {
@@ -202,6 +206,13 @@ const DashboardsView = {
     }
     const currYear = DataLoader.currentYear;
     DataLoader.setMonth(currYear, month);
+
+    // Asegurar que el mes seleccionado y todos los meses YTD estén cargados
+    // antes de renderizar (pueden no estar en caché si no se habían visitado).
+    const monthsToLoad = DataLoader.manifest[currYear] || [];
+    await Promise.all(monthsToLoad.map(m => DataLoader.loadMonth(currYear, m)));
+
     await this.render();
+    initReveal();
   }
 };
