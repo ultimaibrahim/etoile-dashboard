@@ -25,6 +25,14 @@ const DashboardsView = {
     const currMonthName = new Date(currYear, currMonth - 1).toLocaleString('es-ES', { month: 'long' });
     const capitalizedCurrMonth = currMonthName.charAt(0).toUpperCase() + currMonthName.slice(1);
 
+    const sortedMonths = [...(DataLoader.manifest[currYear] || [])].sort((a, b) => a - b);
+    const customOptionsHtml = sortedMonths.map(m => {
+      const monthName = MONTH_NAMES[m - 1];
+      const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+      const isActive = m === currMonth ? ' active' : '';
+      return `<div class="custom-option${isActive}" data-value="${m}" onclick="DashboardsView.selectMonthOption(${m})">${capMonth} ${currYear}</div>`;
+    }).join('');
+
     // Compute YTD avg per branch
     const ytdStats = {};
     SUCURSALES_META.forEach(meta => {
@@ -86,19 +94,44 @@ const DashboardsView = {
             </h1>
           </div>
           <div class="hero-right">
-            <a href="#/trimestre/2026-Q1" class="chart-card highlight-box" style="display: flex; flex-direction: column; gap: 12px; text-decoration: none; align-items: flex-start; justify-content: center; height: 100%; border: 1px solid rgba(255,255,255,0.1) !important; background: rgba(255,255,255,0.05) !important;">
-              <div class="watermark-stars" style="opacity: 0.15;">
+            <a href="#/trimestre/2026-Q1" class="reporte-especial-card">
+              <div class="reporte-watermark">
                 ${svgIcon('calendar')}
               </div>
-              <div style="font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--sage);">Reporte Especial</div>
-              <div style="font-family: var(--serif); font-size: 24px; line-height: 1.2;">Resumen Trimestral<br><span style="color:var(--crema); opacity:0.8;">Q1 2026</span></div>
-              <span class="trend-badge" style="margin-top: 8px; background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.1); color: var(--crema);">Ver reporte completo →</span>
+              <div class="card-tag">Reporte Especial</div>
+              <div class="card-title">Resumen Trimestral<br><span>Q1 2026</span></div>
+              <span class="reporte-especial-btn">
+                Ver reporte completo
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
             </a>
           </div>
         </div>
       </section>
 
-      <div class="home-grid-2" style="margin-top: 32px;">
+      <div class="dashboard-controls-bar">
+        <div class="controls-bar-left">
+          <span class="controls-bar-title">Análisis Mensual</span>
+          <span class="controls-bar-sub">Visualizando estadísticas de ${capitalizedCurrMonth} ${currYear}</span>
+        </div>
+        <div class="controls-bar-right">
+          <div class="custom-select" id="dashMonthDropdown">
+            <button class="custom-select-trigger" onclick="DashboardsView.toggleMonthDropdown(event)">
+              <span class="custom-select-value">${capitalizedCurrMonth} ${currYear}</span>
+              <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="custom-select-options">
+              ${customOptionsHtml}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-grid-2" style="margin-top: 24px;">
         <section class="section r">
           <div class="section-head" style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px;">
             <div>
@@ -129,7 +162,20 @@ const DashboardsView = {
         Dashboard de Reseñas · Región Guadalajara
       </footer>`;
 
-    setTimeout(() => document.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.w + '%'), 350);
+    setTimeout(() => {
+      document.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.w + '%');
+
+      // Close custom select on clicking outside
+      const _clickOutsideHandler = (e) => {
+        const dropdown = document.getElementById('dashMonthDropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+          dropdown.classList.remove('open');
+        }
+      };
+      document.removeEventListener('click', window._dashMonthDropdownOutsideHandler);
+      window._dashMonthDropdownOutsideHandler = _clickOutsideHandler;
+      document.addEventListener('click', _clickOutsideHandler);
+    }, 350);
 
     const ctx = document.getElementById('volChart')?.getContext('2d');
     if (ctx) {
@@ -139,5 +185,23 @@ const DashboardsView = {
       const maxTotal = Math.max(...sortedVol.map(s => s.curr.count)) + 2;
       Charts.stackedVolume(ctx, labels, okData, warnData, maxTotal);
     }
+  },
+
+  toggleMonthDropdown(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById('dashMonthDropdown');
+    if (dropdown) {
+      dropdown.classList.toggle('open');
+    }
+  },
+
+  async selectMonthOption(month) {
+    const dropdown = document.getElementById('dashMonthDropdown');
+    if (dropdown) {
+      dropdown.classList.remove('open');
+    }
+    const currYear = DataLoader.currentYear;
+    DataLoader.setMonth(currYear, month);
+    await this.render();
   }
 };

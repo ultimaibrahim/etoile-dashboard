@@ -18,6 +18,14 @@ const CHANGELOG_EPOCAS = [
     `,
     versions: [
       {
+        v: 'v3.2.2.altair', date: 'Mayo 2026',
+        items: [
+          'Reporte Especial: Correccion del contraste de color y legibilidad en el texto "Resumen Trimestral" (Reporte Especial) dentro del hero de dashboards, independientemente del modo claro o oscuro.',
+          'Agrupamiento visual: Reemplazo del boton del reporte especial por un boton pill estilizado y optimizacion del icono de calendario del fondo para evitar colores distorsionados por fill/stroke conflictivos.',
+          'Selector de periodo: Incorporacion de una nueva barra de controles con selector de mes premium personalizado (custom select organico) para el filtrado de estadisticas y volumen de la seccion de dashboards con cierre dinamico al hacer clic fuera.'
+        ]
+      },
+      {
         v: 'v3.2.1.altair', date: 'Mayo 2026',
         items: [
           'Optimización de Alertas: Rediseño estético y de dimensiones de los botones de copiado de alertas (tanto individual como consolidado) a formato centrado y compacto para evitar bloques masivos en la interfaz.',
@@ -353,7 +361,7 @@ const AboutView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
-        Dashboard de Reseñas · Región Guadalajara · v3.1.0.altair · 2026
+        Dashboard de Reseñas · Región Guadalajara · v3.2.2.altair · 2026
       </footer>`;
 
     requestAnimationFrame(() => initReveal());
