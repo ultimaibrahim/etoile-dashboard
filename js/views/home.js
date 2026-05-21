@@ -11,6 +11,10 @@ const HomeView = {
   carouselStartIndex: 0,
   carouselBatchSize: 8,
   autoplayInterval: null,
+  scrollFraction: 0,
+  isPaused: false,
+  scrollAnimationFrame: null,
+  scrollAnimationActive: false,
 
   async render() {
     Charts.destroyAll();
@@ -355,13 +359,18 @@ const HomeView = {
       // Start Carousel Autoplay
       HomeView.initAutoplay();
 
-      // Pause carousel autoplay on hover or touch
+      // Pause carousel autoplay on hover, click, or touch hold
       const carouselOuter = document.querySelector('.review-feed-carousel-outer');
       if (carouselOuter) {
-        carouselOuter.addEventListener('mouseenter', () => HomeView.clearAutoplay());
-        carouselOuter.addEventListener('mouseleave', () => HomeView.initAutoplay());
-        carouselOuter.addEventListener('touchstart', () => HomeView.clearAutoplay(), { passive: true });
-        carouselOuter.addEventListener('touchend', () => HomeView.initAutoplay(), { passive: true });
+        carouselOuter.addEventListener('mouseenter', () => { HomeView.isPaused = true; });
+        carouselOuter.addEventListener('mouseleave', () => { HomeView.isPaused = false; });
+        carouselOuter.addEventListener('mousedown', () => { HomeView.isPaused = true; });
+        carouselOuter.addEventListener('mouseup', () => { HomeView.isPaused = false; });
+        
+        // Touch events for mobile
+        carouselOuter.addEventListener('touchstart', () => { HomeView.isPaused = true; }, { passive: true });
+        carouselOuter.addEventListener('touchend', () => { HomeView.isPaused = false; }, { passive: true });
+        carouselOuter.addEventListener('touchcancel', () => { HomeView.isPaused = false; }, { passive: true });
       }
     });
   },
@@ -1098,45 +1107,87 @@ const HomeView = {
 
   initAutoplay() {
     this.clearAutoplay();
-    this.autoplayInterval = setInterval(() => {
-      this.autoScrollNext();
-    }, 4000);
+    this.startContinuousScroll();
   },
 
   clearAutoplay() {
-    if (this.autoplayInterval) {
-      clearInterval(this.autoplayInterval);
-      this.autoplayInterval = null;
-    }
+    this.stopContinuousScroll();
   },
 
-  autoScrollNext() {
+  startContinuousScroll() {
+    this.stopContinuousScroll();
     const grid = document.getElementById('reviewFeedGrid');
     if (!grid) return;
-    const maxScrollLeft = grid.scrollWidth - grid.clientWidth;
-    if (grid.scrollLeft >= maxScrollLeft - 10) {
-      this.rotateBatch('next');
-    } else {
-      grid.scrollBy({ left: 296, behavior: 'smooth' });
+
+    this.scrollFraction = grid.scrollLeft;
+    this.isPaused = false;
+    this.scrollAnimationActive = true;
+
+    const animate = () => {
+      if (!this.scrollAnimationActive) return;
+      const gridEl = document.getElementById('reviewFeedGrid');
+      if (!gridEl) {
+        this.scrollAnimationActive = false;
+        return;
+      }
+
+      if (!this.isPaused) {
+        // Sync scroll fraction if external scroll occurred (drag/swipe, arrow click)
+        if (Math.abs(gridEl.scrollLeft - this.scrollFraction) > 1.5) {
+          this.scrollFraction = gridEl.scrollLeft;
+        }
+
+        // Slow continuous scroll speed (0.6px per frame)
+        const speed = 0.6;
+        this.scrollFraction += speed;
+
+        const maxScrollLeft = gridEl.scrollWidth - gridEl.clientWidth;
+        if (this.scrollFraction >= maxScrollLeft - 1) {
+          this.isPaused = true;
+          this.rotateBatch('next');
+        } else {
+          gridEl.scrollLeft = Math.floor(this.scrollFraction);
+        }
+      }
+
+      this.scrollAnimationFrame = requestAnimationFrame(animate);
+    };
+
+    this.scrollAnimationFrame = requestAnimationFrame(animate);
+  },
+
+  stopContinuousScroll() {
+    this.scrollAnimationActive = false;
+    if (this.scrollAnimationFrame) {
+      cancelAnimationFrame(this.scrollAnimationFrame);
+      this.scrollAnimationFrame = null;
     }
   },
 
   scrollCarousel(direction) {
     const grid = document.getElementById('reviewFeedGrid');
     if (!grid) return;
-    this.initAutoplay(); // Reset interval
+    
     const maxScrollLeft = grid.scrollWidth - grid.clientWidth;
     if (direction === 'next') {
       if (grid.scrollLeft >= maxScrollLeft - 10) {
+        this.isPaused = true;
         this.rotateBatch('next');
       } else {
         grid.scrollBy({ left: 296, behavior: 'smooth' });
+        setTimeout(() => {
+          this.scrollFraction = grid.scrollLeft;
+        }, 300);
       }
     } else {
       if (grid.scrollLeft <= 10) {
+        this.isPaused = true;
         this.rotateBatch('prev');
       } else {
         grid.scrollBy({ left: -296, behavior: 'smooth' });
+        setTimeout(() => {
+          this.scrollFraction = grid.scrollLeft;
+        }, 300);
       }
     }
   },
@@ -1145,6 +1196,7 @@ const HomeView = {
     const grid = document.getElementById('reviewFeedGrid');
     if (!grid || !this.carouselPool || this.carouselPool.length <= this.carouselBatchSize) return;
 
+    this.isPaused = true;
     grid.style.transition = 'opacity 0.3s ease';
     grid.style.opacity = '0';
 
@@ -1182,12 +1234,18 @@ const HomeView = {
       }).join('');
 
       grid.innerHTML = cardsHtml;
+      
       if (direction === 'next') {
         grid.scrollLeft = 0;
       } else {
         grid.scrollLeft = grid.scrollWidth - grid.clientWidth;
       }
+      this.scrollFraction = grid.scrollLeft;
       grid.style.opacity = '1';
+      
+      setTimeout(() => {
+        this.isPaused = false;
+      }, 350);
     }, 300);
   }
 };

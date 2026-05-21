@@ -24,7 +24,9 @@ const CHANGELOG_EPOCAS = [
           'Consolidación de reportes: Botón para copiar al portapapeles el resumen de incidencias estructurado para envío directo a Marketing.',
           'Dashboard Scorecards: Ajustes de altura fija y alineación interna vertical (margin-top: auto en barra de progreso) para evitar desalineaciones en móviles.',
           'Ajustes de UI: Centrado vertical y alineación del icono indicador en las tarjetas de sucursal, y transiciones fluidas en hover.',
-          'Estados de alerta: Subsanada la evaluación de hover para marcar en color naranja sucursales que tengan alertas pero promedio igual o superior a la meta de 4.60, y en rojo únicamente si está por debajo.'
+          'Estados de alerta: Subsanada la evaluación de hover para marcar en color naranja sucursales que tengan alertas pero promedio igual o superior a la meta de 4.60, y en rojo únicamente si está por debajo.',
+          'Carrusel de Actividad: Movimiento continuo fluido (0.6px/frame) con pausa inteligente en hover, clic y eventos táctiles.',
+          'Responsividad del Carrusel: Ocultamiento completo de flechas en pantallas móviles para desplazamiento táctil nativo sin interferir con el texto, y gutters laterales de 48px en escritorio.'
         ]
       },
       {
