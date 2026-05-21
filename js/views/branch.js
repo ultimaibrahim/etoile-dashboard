@@ -44,28 +44,32 @@ const BranchView = {
 
     const scorecardSection = `
       <div class="scorecard-grid" style="margin-bottom:14px;">
-        <div class="scorecard">
+        <div class="scorecard status-${kpiVolClass}">
           <div class="sc-label">Volumen de reseñas</div>
           <div class="sc-value num">${stats.count}</div>
-          <div class="sc-sub">Meta: ≥${KpiMeta.volumenMeta} nuevas</div>
+          <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${Math.min(stats.count / KpiMeta.volumenMeta * 100, 100).toFixed(0)}%"></div></div>
           <span class="badge badge-${kpiVolClass}">${kpiVolClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
+          <div class="sc-sub" style="margin-top:6px;">Meta: ≥${KpiMeta.volumenMeta} nuevas</div>
         </div>
-        <div class="scorecard">
+        <div class="scorecard status-${kpiCalClass}">
           <div class="sc-label">Calidad de reseña</div>
           <div class="sc-value num">${(hasTextRatio * 100).toFixed(0)}%</div>
-          <div class="sc-sub">Meta: ≥${(KpiMeta.calidadTextoMeta * 100).toFixed(0)}% con texto</div>
+          <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${Math.min(hasTextRatio / KpiMeta.calidadTextoMeta * 100, 100).toFixed(0)}%"></div></div>
           <span class="badge badge-${kpiCalClass}">${kpiCalClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
+          <div class="sc-sub" style="margin-top:6px;">Meta: ≥${(KpiMeta.calidadTextoMeta * 100).toFixed(0)}% con texto</div>
         </div>
-        <div class="scorecard">
+        <div class="scorecard status-${kpiRatClass}">
           <div class="sc-label">Rating Mensual</div>
           <div class="sc-value num">${stats.avg > 0 ? stats.avg.toFixed(2) : '—'}</div>
-          <div class="sc-sub">Meta: ≥${KpiMeta.ratingMinimo.toFixed(2)}</div>
+          <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${stats.avg > 0 ? Math.min(stats.avg / KpiMeta.ratingMinimo * 100, 100).toFixed(0) : 0}%"></div></div>
           <span class="badge badge-${kpiRatClass}">${kpiRatClass === 'optimal' ? 'Cumple' : 'Crítico'}</span>
+          <div class="sc-sub" style="margin-top:6px;">Meta: ≥${KpiMeta.ratingMinimo.toFixed(2)}</div>
         </div>
-        <div class="scorecard">
+        <div class="scorecard status-${dClass === 'up' ? 'optimal' : dClass === 'down' ? 'attention' : 'optimal'}">
           <div class="sc-label">Δ vs Histórico (${meta.historico.toFixed(1)})</div>
           <div class="sc-value num ${dClass}">${stats.avg > 0 ? dStr : '—'}</div>
-          <div class="sc-sub">${dClass === 'up' ? '↑ Mejora' : dClass === 'down' ? '↓ Caída' : '→ Estable'}</div>
+          <div class="kpi-progress"><div class="kpi-progress-bar" style="width:100%"></div></div>
+          <div class="sc-sub" style="margin-top:6px;">${dClass === 'up' ? '↑ Mejora' : dClass === 'down' ? '↓ Caída' : '→ Estable'}</div>
         </div>
       </div>`;
 
@@ -79,7 +83,7 @@ const BranchView = {
           ${dynamic.problemas.map(p => `<li>${p}</li>`).join('')}
         </ul>
       </div>` : `<div class="status-ok-box" style="margin-bottom:14px;">
-        <div class="check">✓</div>
+        <div class="check" style="display:flex; align-items:center; justify-content:center; width:20px; height:20px; flex-shrink:0;">${svgIcon('check')}</div>
         <div class="ok-text">
           <strong>Estable</strong>
           Sin incidencias recurrentes de gravedad en este periodo.
@@ -145,6 +149,16 @@ const BranchView = {
       await this.render(params);
       initReveal();
     };
+
+    // Re-run progress bars animation after DOM insert
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.kpi-progress-bar').forEach(bar => {
+        const w = bar.style.width;
+        bar.style.width = '0%';
+        requestAnimationFrame(() => { bar.style.width = w; });
+      });
+      initReveal();
+    });
 
     const btn = document.getElementById('showAllBtn');
     if (btn) {

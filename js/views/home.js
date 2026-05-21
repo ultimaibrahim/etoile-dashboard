@@ -5,6 +5,12 @@
 const HomeView = {
   filter: 'todas',
   highlightIdx: 0,
+  searchQuery: '',
+  sortBy: 'default',
+  carouselPool: [],
+  carouselStartIndex: 0,
+  carouselBatchSize: 8,
+  autoplayInterval: null,
 
   async render() {
     Charts.destroyAll();
@@ -33,18 +39,15 @@ const HomeView = {
     const branches = SUCURSALES_META.map(meta => {
       const p = prevStats[meta.id] || { avg: 0, count: 0 };
       const c = currStats[meta.id] || { avg: 0, count: 0, negativeCount: 0 };
-      const isAttended = localStorage.getItem(`attended_${meta.id}_${currYear}_${currMonth}`) === 'true';
       const branchReviews = DataLoader.getReviewsForBranch(currYear, currMonth, meta.id);
       const negativeWithTextCount = branchReviews.filter(r => r.stars <= 2 && r.text && r.text.trim().length > 0).length;
       const hasAlert = negativeWithTextCount > 0;
-      const alerta = hasAlert && !isAttended;
       return {
         ...meta,
         prev: { score: p.avg, count: p.count },
         curr: { score: c.avg, count: c.count, negativeCount: negativeWithTextCount },
         hasAlert,
-        isAttended,
-        alerta,
+        alerta: hasAlert,
         statusMayo: hasAlert ? {
           negativas: negativeWithTextCount,
           tema: meta.alertTheme || 'Problemas operativos',
@@ -77,21 +80,55 @@ const HomeView = {
     const currentData = DataLoader.getMonth(currYear, currMonth);
     const reviewsList = currentData ? currentData.reviews : [];
 
+    // Set up infinite carousel pool
+    const textReviews = reviewsList.filter(r => r.text && r.text.trim().length > 5);
+    const negativesPool = textReviews.filter(r => r.stars <= 2 && r.text.length > 10);
+    const positivesPool = textReviews.filter(r => r.stars === 5 && r.text.length > 20);
+    const restPool = textReviews.filter(r => !negativesPool.includes(r) && !positivesPool.includes(r));
+    this.carouselPool = [...negativesPool, ...positivesPool, ...restPool];
+    this.carouselBatchSize = 8;
+    this.carouselStartIndex = 0;
+
+    const activeReviews = [];
+    if (this.carouselPool.length > 0) {
+      for (let i = 0; i < this.carouselBatchSize; i++) {
+        const idx = (this.carouselStartIndex + i) % this.carouselPool.length;
+        if (this.carouselPool[idx] && !activeReviews.includes(this.carouselPool[idx])) {
+          activeReviews.push(this.carouselPool[idx]);
+        }
+      }
+    }
+    const countWithText = textReviews.length;
+
+    const avgRating = currGlobal.avgRating;
     const cards = sorted.map(s => {
       const delta = (s.curr.score - s.historico);
       const dClass = delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : 'flat';
       const dStr = delta > 0 ? `+${delta.toFixed(2)}` : delta.toFixed(2);
       const currScoreStr = s.curr.score > 0 ? s.curr.score.toFixed(2) : '—';
       const mayoBlock = s.hasAlert
-        ? (s.isAttended 
-          ? `<div class="bc-mayo" style="background:var(--ok-bg); border:1px solid rgba(61,138,95,.2); color:var(--ok);"><span class="mono">${currMonthShort}</span> <span>✓ Atendido (${s.curr.negativeCount} neg)</span></div>`
-          : `<div class="bc-mayo warn"><span class="mono">${currMonthShort}</span> <span>${s.curr.negativeCount} negativa${s.curr.negativeCount !== 1 ? 's' : ''}</span></div>`)
+        ? `<div class="bc-mayo warn"><span class="mono">${currMonthShort}</span> <span>${s.curr.negativeCount} negativa${s.curr.negativeCount !== 1 ? 's' : ''}</span></div>`
         : `<div class="bc-mayo"><span class="mono">${currMonthShort}</span> <span>Sin incidencias</span></div>`;
+
+      let hoverClass = ' stable-green';
+      let statusClass = 'ok';
+      let statusTitle = 'Estable';
+      if (s.alerta) {
+        if (s.curr.score >= KpiMeta.ratingMinimo) {
+          hoverClass = ' alerta-orange';
+          statusClass = 'warn-orange';
+          statusTitle = 'Atención requerida';
+        } else {
+          hoverClass = ' alerta-red';
+          statusClass = 'warn-red';
+          statusTitle = 'Crítico';
+        }
+      }
       return `
-      <a class="branch-card${s.alerta ? ' alerta' : ''}" href="#/sucursal/${s.id}">
+      <a class="branch-card${hoverClass}" href="#/sucursal/${s.id}">
         <div class="bc-top">
           <div class="bc-name">${s.abr}</div>
-          <span class="bc-status ${s.alerta ? 'warn' : 'ok'}" title="${s.alerta ? 'Atención requerida' : 'Estable'}"></span>
+          <span class="bc-status ${statusClass}" title="${statusTitle}"></span>
         </div>
         <div class="bc-score-row">
           <span class="bc-score num">${currScoreStr}</span>
@@ -109,47 +146,40 @@ const HomeView = {
     let alertBannerHtml = '';
     if (conAlerta.length > 0) {
       alertBannerHtml = `
-        <div class="alert-strip alert-box-sunken">
-          <div class="watermark-stars">
+        <div class="alert-strip alert-box-sunken clickable" onclick="HomeView.openAllAlertsModal()">
+          <div class="watermark-stars" style="opacity: 0.05;">
             ${svgIcon('starFilled')}
             ${svgIcon('star')}
             ${svgIcon('star')}
             ${svgIcon('star')}
             ${svgIcon('star')}
           </div>
-          <div class="alert-icon-box">!</div>
-          <div class="alert-content">
-            <div class="alert-title">Alerta Activa · ${capitalizedCurrMonth} ${currYear}</div>
-            <div class="alert-text">${conAlerta.length} sucursal${conAlerta.length !== 1 ? 'es' : ''} con alerta activa (${totalNegativasActivas} reseñas negativas sin atender).</div>
-            <div class="alert-pills">
-              ${conAlerta.map(s => `<button class="alert-pill" onclick="HomeView.openAlertModal('${s.id}')">${s.abr} · ${s.curr.negativeCount}</button>`).join('')}
+          <div class="alert-header-row" style="display:flex; align-items:center; gap:12px; margin-bottom:12px; z-index:1; position:relative;">
+            <div class="alert-icon-box" style="margin-top:0;">${svgIcon('alert')}</div>
+            <div class="alert-title" style="margin-bottom:0;">Alerta Activa · ${capitalizedCurrMonth} ${currYear}</div>
+          </div>
+          <div class="alert-content" style="z-index:1; position:relative; flex-grow:1; display:flex; flex-direction:column; justify-content:space-between;">
+            <div class="alert-text">${conAlerta.length} sucursal${conAlerta.length !== 1 ? 'es' : ''} con alerta activa (${totalNegativasActivas} reseñas negativas). Reportar a Marketing.</div>
+            <div style="border-top: 1.5px dashed var(--border-strong); margin-top: 16px; padding-top: 16px;">
+              <div class="alert-pills" style="margin-top:0;">
+                ${conAlerta.map(s => `<button class="alert-pill" onclick="event.stopPropagation(); HomeView.openAlertModal('${s.id}')">${s.abr} · ${s.curr.negativeCount}</button>`).join('')}
+              </div>
             </div>
           </div>
         </div>
       `;
     } else {
-      const attendedBranches = branches.filter(s => s.hasAlert && s.isAttended);
-      if (attendedBranches.length > 0) {
-        alertBannerHtml = `
-          <div class="alert-strip ok-box-sunken">
-            <div class="alert-icon-box" style="background:var(--ok); color:white; display:flex; align-items:center; justify-content:center; font-weight:700;">✓</div>
-            <div class="alert-content">
-              <div class="alert-title" style="color:var(--ok); font-weight:700;">✓ Alertas Atendidas</div>
-              <div class="alert-text">Todas las incidencias de ${capitalizedCurrMonth} han sido atendidas (${attendedBranches.map(s => s.abr).join(', ')}).</div>
-            </div>
+      alertBannerHtml = `
+        <div class="alert-strip ok-box-sunken">
+          <div class="alert-header-row" style="display:flex; align-items:center; gap:12px; margin-bottom:12px; z-index:1; position:relative;">
+            <div class="alert-icon-box" style="margin-top:0;">${svgIcon('check')}</div>
+            <div class="alert-title" style="margin-bottom:0;">Operación Estable</div>
           </div>
-        `;
-      } else {
-        alertBannerHtml = `
-          <div class="alert-strip ok-box-sunken">
-            <div class="alert-icon-box" style="background:var(--ok); color:white; display:flex; align-items:center; justify-content:center; font-weight:700;">✓</div>
-            <div class="alert-content">
-              <div class="alert-title" style="color:var(--ok); font-weight:700;">✓ Operación Estable</div>
-              <div class="alert-text">Sin alertas registradas en ${capitalizedCurrMonth} ${currYear}. Todo bajo control.</div>
-            </div>
+          <div class="alert-content" style="z-index:1; position:relative; flex-grow:1; display:flex; flex-direction:column; justify-content:flex-start;">
+            <div class="alert-text">Sin alertas registradas en ${capitalizedCurrMonth} ${currYear}. Todo bajo control.</div>
           </div>
-        `;
-      }
+        </div>
+      `;
     }
 
     const sortedMonths = [...(DataLoader.manifest[currYear] || [])].sort((a, b) => a - b);
@@ -216,6 +246,7 @@ const HomeView = {
               </div>
             </div>
           </div>
+          ${this._buildHeroDiagnosis(conAlerta, currGlobal, branches, currStats)}
         </div>
       </section>
 
@@ -227,18 +258,45 @@ const HomeView = {
       ${kpiSection}
 
       <section class="section r">
-        <div class="section-head">
+        <div class="section-head" style="margin-bottom: 8px;">
           <div class="section-title">Evaluación <span class="accent">de sucursales</span></div>
+        </div>
+
+        <div class="branch-controls-bar">
           <div class="filter-row">
             <button class="chip ${this.filter === 'todas' ? 'active' : ''}" onclick="HomeView.setFilter('todas')">Todas <span class="chip-count">${branches.length}</span></button>
             <button class="chip ${this.filter === 'alerta' ? 'active' : ''}" onclick="HomeView.setFilter('alerta')">Con alerta <span class="chip-count">${conAlerta.length}</span></button>
             <button class="chip ${this.filter === 'estables' ? 'active' : ''}" onclick="HomeView.setFilter('estables')">Estables <span class="chip-count">${sinAlerta.length}</span></button>
           </div>
+          
+          <div class="controls-right">
+            <div class="search-wrapper">
+              <span class="search-icon-svg">${svgIcon('search')}</span>
+              <input type="text" class="branch-search-input" id="branchSearchInput" placeholder="Buscar sucursal…" value="${this.searchQuery}" oninput="HomeView.handleBranchSearch(this.value)">
+            </div>
+            
+            <div class="custom-select" id="branchSortDropdown">
+              <button class="custom-select-trigger" onclick="HomeView.toggleSortDropdown(event)">
+                <span class="custom-select-label">Orden:</span>
+                <span class="custom-select-value" id="sortValLabel">${this.getSortLabel(this.sortBy)}</span>
+                <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="custom-select-options">
+                <div class="custom-option${this.sortBy === 'default' ? ' active' : ''}" data-value="default" onclick="HomeView.selectSortOption('default', 'Predeterminado')">Predeterminado</div>
+                <div class="custom-option${this.sortBy === 'rating-desc' ? ' active' : ''}" data-value="rating-desc" onclick="HomeView.selectSortOption('rating-desc', 'Mayor Rating')">Mayor Rating</div>
+                <div class="custom-option${this.sortBy === 'rating-asc' ? ' active' : ''}" data-value="rating-asc" onclick="HomeView.selectSortOption('rating-asc', 'Menor Rating')">Menor Rating</div>
+                <div class="custom-option${this.sortBy === 'volume-desc' ? ' active' : ''}" data-value="volume-desc" onclick="HomeView.selectSortOption('volume-desc', 'Mayor Volumen')">Mayor Volumen</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="branch-grid">${cards || '<div class="empty-state"><span class="glyph">—</span>Sin sucursales para este filtro</div>'}</div>
+
+        <div class="branch-grid" id="branchGrid">${cards || '<div class="empty-state"><span class="glyph">—</span>Sin sucursales para este filtro</div>'}</div>
       </section>
 
-      ${this._buildReviewFeed(reviewsList, currYear, currMonth)}
+      ${this._buildReviewFeed(activeReviews, countWithText)}
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · La Crêpe Parisienne / Grupo MYT<br>
@@ -248,6 +306,17 @@ const HomeView = {
     requestAnimationFrame(() => {
       document.getElementById('heroNum')?.classList.add('in');
       initReveal();
+
+      // Close custom select on clicking outside
+      const _clickOutsideHandler = (e) => {
+        const dropdown = document.getElementById('branchSortDropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+          dropdown.classList.remove('open');
+        }
+      };
+      document.removeEventListener('click', window._branchSortDropdownOutsideHandler);
+      window._branchSortDropdownOutsideHandler = _clickOutsideHandler;
+      document.addEventListener('click', _clickOutsideHandler);
 
       // Counting animation for hero rating
       const heroNumEl = document.getElementById('heroNum');
@@ -268,6 +337,31 @@ const HomeView = {
           }
         };
         window.requestAnimationFrame(step);
+      }
+
+      // Animate KPI progress bars: start at 0 → target width
+      document.querySelectorAll('.kpi-progress-bar').forEach(bar => {
+        const targetWidth = bar.style.width;
+        bar.style.width = '0%';
+        bar.style.transition = 'none';
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            bar.style.transition = '';
+            bar.style.width = targetWidth;
+          });
+        });
+      });
+
+      // Start Carousel Autoplay
+      HomeView.initAutoplay();
+
+      // Pause carousel autoplay on hover or touch
+      const carouselOuter = document.querySelector('.review-feed-carousel-outer');
+      if (carouselOuter) {
+        carouselOuter.addEventListener('mouseenter', () => HomeView.clearAutoplay());
+        carouselOuter.addEventListener('mouseleave', () => HomeView.initAutoplay());
+        carouselOuter.addEventListener('touchstart', () => HomeView.clearAutoplay(), { passive: true });
+        carouselOuter.addEventListener('touchend', () => HomeView.initAutoplay(), { passive: true });
       }
     });
   },
@@ -322,6 +416,7 @@ const HomeView = {
               <span class="sc-chevron">▼</span>
             </div>
             <div class="sc-value num">${volValue}</div>
+            <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${(kpi.volumen.ok / kpi.volumen.total * 100).toFixed(0)}%"></div></div>
             <span class="badge badge-${volClass}">${volClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
             <div class="sc-details-wrapper">
               <div class="sc-details-inner">
@@ -336,6 +431,7 @@ const HomeView = {
               <span class="sc-chevron">▼</span>
             </div>
             <div class="sc-value num">${calValue}</div>
+            <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${Math.min(kpi.calidadTexto.ratio / KpiMeta.calidadTextoMeta * 100, 100).toFixed(0)}%"></div></div>
             <span class="badge badge-${calClass}">${calClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
             <div class="sc-details-wrapper">
               <div class="sc-details-inner">
@@ -349,6 +445,7 @@ const HomeView = {
               <span class="sc-chevron">▼</span>
             </div>
             <div class="sc-value num">${ratValue}</div>
+            <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${((kpi.volumen.total - kpi.ratingMinimo.belowMin.length) / kpi.volumen.total * 100).toFixed(0)}%"></div></div>
             <span class="badge badge-${ratClass}">${ratClass === 'optimal' ? 'Cumple' : 'Crítico'}</span>
             <div class="sc-details-wrapper">
               <div class="sc-details-inner">
@@ -362,6 +459,7 @@ const HomeView = {
               <span class="sc-chevron">▼</span>
             </div>
             <div class="sc-value num">${negValue}</div>
+            <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${(kpi.tasaRespuesta.totalNegativas === 0 ? 100 : (kpi.tasaRespuesta.conRespuesta / kpi.tasaRespuesta.totalNegativas * 100)).toFixed(0)}%"></div></div>
             <span class="badge badge-${negClass}">${negClass === 'optimal' ? 'Sin pendientes' : 'Atención'}</span>
             <div class="sc-details-wrapper">
               <div class="sc-details-inner">
@@ -376,8 +474,94 @@ const HomeView = {
 
   async setFilter(f) {
     this.filter = f;
+    this.searchQuery = '';
+    this.sortBy = 'default';
     await this.render();
     initReveal();
+  },
+
+  handleBranchSearch(query) {
+    this.searchQuery = query.toLowerCase();
+    this._updateBranchGrid();
+  },
+
+  handleBranchSort(value) {
+    this.sortBy = value;
+    this._updateBranchGrid();
+  },
+
+  _updateBranchGrid() {
+    const currYear = DataLoader.currentYear;
+    const currMonth = DataLoader.currentMonth;
+    const currStats = DataLoader.getAllBranchStats(currYear, currMonth);
+    const currMonthName = new Date(currYear, currMonth - 1).toLocaleString('es-ES', { month: 'long' });
+    const capitalizedCurrMonth = currMonthName.charAt(0).toUpperCase() + currMonthName.slice(1);
+    const currMonthShort = capitalizedCurrMonth.substring(0, 3).toUpperCase();
+
+    let branches = SUCURSALES_META.map(meta => {
+      const c = currStats[meta.id] || { avg: 0, count: 0, negativeCount: 0 };
+      const branchReviews = DataLoader.getReviewsForBranch(currYear, currMonth, meta.id);
+      const negativeWithTextCount = branchReviews.filter(r => r.stars <= 2 && r.text && r.text.trim().length > 0).length;
+      return { ...meta, curr: { score: c.avg, count: c.count, negativeCount: negativeWithTextCount }, alerta: negativeWithTextCount > 0 };
+    });
+
+    // Apply chip filter
+    if (this.filter === 'alerta') branches = branches.filter(s => s.alerta);
+    else if (this.filter === 'estables') branches = branches.filter(s => !s.alerta);
+
+    // Apply search
+    if (this.searchQuery) {
+      branches = branches.filter(s =>
+        s.nombre.toLowerCase().includes(this.searchQuery) ||
+        s.abr.toLowerCase().includes(this.searchQuery)
+      );
+    }
+
+    // Apply sort
+    switch (this.sortBy) {
+      case 'rating-desc': branches.sort((a, b) => b.curr.score - a.curr.score); break;
+      case 'rating-asc': branches.sort((a, b) => a.curr.score - b.curr.score); break;
+      case 'volume-desc': branches.sort((a, b) => b.curr.count - a.curr.count); break;
+      default: branches.sort((a, b) => { if (a.alerta !== b.alerta) return a.alerta ? -1 : 1; return b.curr.count - a.curr.count; }); break;
+    }
+
+    const currGlobal = DataLoader.getGlobalStats(currYear, currMonth);
+    const avgRating = currGlobal.avgRating;
+    const cards = branches.map(s => {
+      const delta = (s.curr.score - s.historico);
+      const dClass = delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : 'flat';
+      const dStr = delta > 0 ? `+${delta.toFixed(2)}` : delta.toFixed(2);
+      const currScoreStr = s.curr.score > 0 ? s.curr.score.toFixed(2) : '—';
+      const mayoBlock = s.alerta
+        ? `<div class="bc-mayo warn"><span class="mono">${currMonthShort}</span> <span>${s.curr.negativeCount} negativa${s.curr.negativeCount !== 1 ? 's' : ''}</span></div>`
+        : `<div class="bc-mayo"><span class="mono">${currMonthShort}</span> <span>Sin incidencias</span></div>`;
+
+      let hoverClass = ' stable-green';
+      let statusClass = 'ok';
+      let statusTitle = 'Estable';
+      if (s.alerta) {
+        if (s.curr.score >= KpiMeta.ratingMinimo) {
+          hoverClass = ' alerta-orange';
+          statusClass = 'warn-orange';
+          statusTitle = 'Atención requerida';
+        } else {
+          hoverClass = ' alerta-red';
+          statusClass = 'warn-red';
+          statusTitle = 'Crítico';
+        }
+      }
+      return `
+      <a class="branch-card${hoverClass}" href="#/sucursal/${s.id}">
+        <div class="bc-top"><div class="bc-name">${s.abr}</div><span class="bc-status ${statusClass}" title="${statusTitle}"></span></div>
+        <div class="bc-score-row"><span class="bc-score num">${currScoreStr}</span></div>
+        <div class="bc-stars-line">${s.curr.score > 0 ? starStr(Math.round(s.curr.score)) : '—'}</div>
+        <div class="bc-meta"><span><strong>${s.curr.count}</strong> reseña${s.curr.count !== 1 ? 's' : ''} ${capitalizedCurrMonth.substring(0,3).toLowerCase()}</span><span class="bc-delta ${dClass} num">${dStr} vs hist</span></div>
+        ${mayoBlock}
+      </a>`;
+    }).join('');
+
+    const grid = document.getElementById('branchGrid');
+    if (grid) grid.innerHTML = cards || '<div class="empty-state"><span class="glyph">—</span>Sin sucursales para este filtro</div>';
   },
 
   changeMonth(direction) {
@@ -407,42 +591,36 @@ const HomeView = {
     this.render();
   },
 
-  markAsAttended(branchId) {
-    const year = DataLoader.currentYear;
-    const month = DataLoader.currentMonth;
-    localStorage.setItem(`attended_${branchId}_${year}_${month}`, 'true');
-    document.getElementById('alertModal')?.remove();
-    this.render();
+  _buildHeroDiagnosis(conAlerta, currGlobal, branches, currStats) {
+    const STANDARD = KpiMeta.ratingMinimo; // 4.60
+    if (conAlerta.length > 0) {
+      const names = conAlerta.map(s => s.abr).join(', ');
+      return `
+        <div class="hero-diagnosis status-critical">
+          <span class="hero-diagnosis-icon">${svgIcon('alert')}</span>
+          <span class="hero-diagnosis-text"><strong>FOCO OPERATIVO:</strong> Incidencias en ${names}. Reportar a Marketing para atención inmediata.</span>
+        </div>`;
+    }
+    if (currGlobal.avgRating < STANDARD) {
+      const worst = branches.reduce((min, b) => {
+        const s = currStats[b.id] || { avg: 0 };
+        return (s.avg > 0 && s.avg < (min.score || 99)) ? { name: b.abr, score: s.avg } : min;
+      }, { name: '—', score: 99 });
+      return `
+        <div class="hero-diagnosis status-warn">
+          <span class="hero-diagnosis-icon">${svgIcon('barChart')}</span>
+          <span class="hero-diagnosis-text"><strong>FOCO OPERATIVO:</strong> Promedio regional por debajo del objetivo (${STANDARD.toFixed(2)}★). ${worst.name} registra el desempeño más bajo (${worst.score.toFixed(2)}★).</span>
+        </div>`;
+    }
+    return `
+      <div class="hero-diagnosis status-optimal">
+        <span class="hero-diagnosis-icon">${svgIcon('check')}</span>
+        <span class="hero-diagnosis-text"><strong>OPERACIÓN ESTABLE:</strong> Todas las sucursales cumplen con el estándar regional (${STANDARD.toFixed(2)}★). Mantener consistencia operativa.</span>
+      </div>`;
   },
 
-  _buildReviewFeed(reviews, year, month) {
-    const negatives = reviews.filter(r => r.stars <= 2 && r.text && r.text.length > 10);
-    const positives = reviews.filter(r => r.stars === 5 && r.text && r.text.length > 20);
-    
-    const feedReviews = [];
-    if (negatives.length > 0) {
-      feedReviews.push(...negatives.slice(0, 3));
-    }
-    while (feedReviews.length < 8 && positives.length > 0) {
-      const nextPos = positives.find(p => !feedReviews.includes(p));
-      if (nextPos) {
-        feedReviews.push(nextPos);
-      } else {
-        break;
-      }
-    }
-    
-    const textReviews = reviews.filter(r => r.text && r.text.length > 5);
-    while (feedReviews.length < 8 && textReviews.length > 0) {
-      const nextRev = textReviews.find(r => !feedReviews.includes(r));
-      if (nextRev) {
-        feedReviews.push(nextRev);
-      } else {
-        break;
-      }
-    }
-
-    const cards = feedReviews.map(r => {
+  _buildReviewFeed(activeReviews, countWithText) {
+    const cards = activeReviews.map(r => {
       const isNeg = r.stars <= 3;
       const cardClass = isNeg ? 'review-card neg' : 'review-card';
       const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
@@ -459,8 +637,6 @@ const HomeView = {
       `;
     }).join('');
 
-    const countWithText = reviews.filter(r => r.text && r.text.trim().length > 0).length;
-
     return `
       <section class="section review-feed-section r">
         <div class="section-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
@@ -470,10 +646,14 @@ const HomeView = {
           </div>
           <button class="show-all-btn-link" onclick="HomeView.openFullFeedModal()">Ver todas con texto (${countWithText}) →</button>
         </div>
-        <div class="review-feed-carousel-wrapper">
-          <div class="review-feed-grid">
-            ${cards || '<div class="empty-state">Sin reseñas con texto en este periodo</div>'}
+        <div class="review-feed-carousel-outer" style="position: relative; width: 100%; margin-top: 14px;">
+          <button class="carousel-arrow prev" onclick="HomeView.scrollCarousel('prev')" aria-label="Anterior">${svgIcon('arrow')}</button>
+          <div class="review-feed-carousel-wrapper" style="margin-top: 0;">
+            <div class="review-feed-grid" id="reviewFeedGrid">
+              ${cards || '<div class="empty-state">Sin reseñas con texto en este periodo</div>'}
+            </div>
           </div>
+          <button class="carousel-arrow next" onclick="HomeView.scrollCarousel('next')" aria-label="Siguiente">${svgIcon('arrow')}</button>
         </div>
       </section>
     `;
@@ -619,6 +799,7 @@ const HomeView = {
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
 
+    const monthName = MONTH_NAMES[month - 1] || '';
     const modalHtml = `
       <div class="modal-overlay active" id="alertModal" onclick="if(event.target === this) { this.remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = ''; }">
         <div class="modal-box">
@@ -627,7 +808,8 @@ const HomeView = {
             <button class="modal-close" onclick="document.getElementById('alertModal').remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = '';">×</button>
           </div>
           <div class="modal-body">
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Las siguientes reseñas negativas o promedio bajo requieren atención inmediata en tienda.</p>
+            <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Las siguientes reseñas negativas requieren reporte a Marketing para su resolución.</p>
+            <button id="copyAlertBtn" onclick="HomeView.copyAlertSummary('${branchId}')" style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center; padding:12px 16px; background:var(--verde); color:var(--crema); border:none; border-radius:var(--radius-sm); font-weight:700; font-size:13px; cursor:pointer; margin-bottom:16px; transition:background .15s, transform .1s;" onmouseover="this.style.background='var(--verde-soft)'" onmouseout="this.style.background='var(--verde)'">${svgIcon('clipboard')} Copiar Resumen para Marketing</button>
             ${negatives.length === 0 ? '<p>No hay reseñas negativas con texto.</p>' : ''}
             ${negatives.map(r => `
               <div class="review-item" style="border-left: 2px solid var(--alerta); padding-left:12px; margin-bottom:12px;">
@@ -658,6 +840,149 @@ const HomeView = {
     document.addEventListener('keydown', _escHandler);
   },
 
+  async copyAlertSummary(branchId) {
+    const year = DataLoader.currentYear;
+    const month = DataLoader.currentMonth;
+    const data = DataLoader.getMonth(year, month);
+    if (!data) return;
+    const branchMeta = SUCURSALES_META.find(s => s.id === branchId);
+    if (!branchMeta) return;
+    const names = [branchMeta.nombre, branchMeta.abr, branchMeta.id === 'gal-gdl' ? 'Galerías GDL' : '', branchMeta.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].filter(Boolean);
+    const negatives = data.reviews.filter(r => r.stars <= 3 && names.includes(r.sucursal) && r.text && r.text.trim().length > 0);
+    const monthName = MONTH_NAMES[month - 1] || '';
+    let text = `étoile GDL — Reporte de Incidencias — ${branchMeta.abr} ${monthName} ${year}\n`;
+    text += `${negatives.length} reseña${negatives.length !== 1 ? 's' : ''} crítica${negatives.length !== 1 ? 's' : ''}:\n\n`;
+    negatives.forEach((r, i) => {
+      const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : 'Sin fecha';
+      text += `${i + 1}. ${dateStr} (${'★'.repeat(r.stars)}${'☆'.repeat(5 - r.stars)}): "${r.text}"\n`;
+    });
+    try {
+      await navigator.clipboard.writeText(text);
+      const btn = document.getElementById('copyAlertBtn');
+      if (btn) {
+        const original = btn.innerHTML;
+        btn.innerHTML = '✓ Copiado al portapapeles';
+        btn.style.background = 'var(--ok)';
+        setTimeout(() => { btn.innerHTML = original; btn.style.background = 'var(--verde)'; }, 2500);
+      }
+    } catch (e) {
+      console.warn('Copy failed:', e);
+    }
+  },
+
+  openAllAlertsModal() {
+    const year = DataLoader.currentYear;
+    const month = DataLoader.currentMonth;
+    const data = DataLoader.getMonth(year, month);
+    if (!data) return;
+
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    const monthName = MONTH_NAMES[month - 1] || '';
+    let branchesHtml = '';
+    let hasIncidents = false;
+
+    SUCURSALES_META.forEach(branchMeta => {
+      const names = [branchMeta.nombre, branchMeta.abr, branchMeta.id === 'gal-gdl' ? 'Galerías GDL' : '', branchMeta.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].filter(Boolean);
+      const negatives = data.reviews.filter(r => r.stars <= 3 && names.includes(r.sucursal) && r.text && r.text.trim().length > 0);
+      if (negatives.length > 0) {
+        hasIncidents = true;
+        branchesHtml += `
+          <div class="branch-incident-group" style="margin-bottom: 20px;">
+            <h3 style="font-size:14px; font-weight:700; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+              <span class="bc-status warn-red" style="margin-top:0; width:8px; height:8px;"></span>
+              ${branchMeta.nombre} (${negatives.length})
+            </h3>
+            ${negatives.map(r => `
+              <div class="review-item" style="border-left: 2px solid var(--alerta); padding-left:12px; margin-bottom:12px; margin-left:8px;">
+                <div class="ri-head" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                  <div class="ri-score" style="color: var(--alerta); font-size:11px;">${starStr(r.stars)}</div>
+                  <div class="ri-date" style="font-size:11px; color:var(--text-muted);">${formatDate(r.publishedAtDate)}</div>
+                </div>
+                <div class="ri-text" style="font-size:13px; line-height:1.4; font-style:italic;">"${r.text}"</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+    });
+
+    const modalHtml = `
+      <div class="modal-overlay active" id="alertModal" onclick="if(event.target === this) { this.remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = ''; }">
+        <div class="modal-box" style="max-height: 85vh; display: flex; flex-direction: column;">
+          <div class="modal-header" style="flex-shrink: 0;">
+            <h2 class="modal-title">Todas las Alertas: ${monthName} ${year}</h2>
+            <button class="modal-close" onclick="document.getElementById('alertModal').remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = '';">×</button>
+          </div>
+          <div class="modal-body" style="overflow-y: auto; flex-grow: 1; padding-top: 14px;">
+            <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Consolidado de reseñas críticas en la región durante el mes. Reportar a Marketing.</p>
+            ${hasIncidents ? `
+              <button id="copyAllAlertsBtn" onclick="HomeView.copyAllAlertsSummary()" style="display:flex; align-items:center; gap:8px; width:100%; justify-content:center; padding:12px 16px; background:var(--verde); color:var(--crema); border:none; border-radius:var(--radius-sm); font-weight:700; font-size:13px; cursor:pointer; margin-bottom:16px; transition:background .15s, transform .1s;" onmouseover="this.style.background='var(--verde-soft)'" onmouseout="this.style.background='var(--verde)'">${svgIcon('clipboard')} Copiar Reporte Consolidado</button>
+              ${branchesHtml}
+            ` : '<p style="text-align:center; padding:20px; color:var(--text-muted);">No hay reseñas negativas registradas este mes.</p>'}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const _escHandler = (e) => {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('alertModal');
+        if (modal) {
+          modal.remove();
+          document.documentElement.style.overflow = '';
+          document.body.style.overflow = '';
+        }
+        document.removeEventListener('keydown', _escHandler);
+      }
+    };
+    document.addEventListener('keydown', _escHandler);
+  },
+
+  async copyAllAlertsSummary() {
+    const year = DataLoader.currentYear;
+    const month = DataLoader.currentMonth;
+    const data = DataLoader.getMonth(year, month);
+    if (!data) return;
+    const monthName = MONTH_NAMES[month - 1] || '';
+
+    let text = `étoile GDL — Reporte Consolidado de Incidencias — ${monthName} ${year}\n\n`;
+    let totalCount = 0;
+
+    SUCURSALES_META.forEach(branchMeta => {
+      const names = [branchMeta.nombre, branchMeta.abr, branchMeta.id === 'gal-gdl' ? 'Galerías GDL' : '', branchMeta.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].filter(Boolean);
+      const negatives = data.reviews.filter(r => r.stars <= 3 && names.includes(r.sucursal) && r.text && r.text.trim().length > 0);
+      if (negatives.length > 0) {
+        totalCount += negatives.length;
+        text += `• ${branchMeta.nombre} (${negatives.length} reseña${negatives.length !== 1 ? 's' : ''} crítica${negatives.length !== 1 ? 's' : ''}):\n`;
+        negatives.forEach((r, i) => {
+          const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : 'Sin fecha';
+          text += `  ${i + 1}. ${dateStr} (${'★'.repeat(r.stars)}${'☆'.repeat(5 - r.stars)}): "${r.text}"\n`;
+        });
+        text += '\n';
+      }
+    });
+
+    if (totalCount === 0) {
+      text += 'Sin incidencias registradas.';
+    }
+
+    try {
+      await navigator.clipboard.writeText(text.trim());
+      const btn = document.getElementById('copyAllAlertsBtn');
+      if (btn) {
+        const original = btn.innerHTML;
+        btn.innerHTML = '✓ Copiado al portapapeles';
+        btn.style.background = 'var(--ok)';
+        setTimeout(() => { btn.innerHTML = original; btn.style.background = 'var(--verde)'; }, 2500);
+      }
+    } catch (e) {
+      console.warn('Copy failed:', e);
+    }
+  },
+
   _buildHighlights(branches, year, month) {
     const data = DataLoader.getMonth(year, month);
     if (!data) return '';
@@ -673,14 +998,19 @@ const HomeView = {
     const hasMore = goodReviews.length > 1;
     return `
       <div class="chart-card highlight-box r" id="highlightCard" style="display:flex; flex-direction:column; justify-content:space-between; position:relative; min-height:220px; overflow:hidden;">
-        <div class="watermark-stars" style="position:absolute; right:-20px; bottom:-20px; font-size:120px; opacity:0.04; color:var(--text); pointer-events:none;">★</div>
-        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--sage); margin-bottom: 8px;">Lo más destacado</div>
-        <div style="font-size: 15px; line-height: 1.5; font-style:italic; margin-bottom: 12px; position: relative; z-index: 1;" data-rev-text>"${rev.text}"</div>
-        <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; margin-top: auto; padding-top:12px; border-top: 1px solid rgba(245,239,230,.06);">
-          <span style="font-size: 13px; font-weight: 500; color: rgba(245,239,230,.65); display:flex; align-items:center; gap:6px;"><span style="display:inline-block;width:12px;height:1px;background:rgba(245,239,230,.4);"></span>${rev.sucursal}</span>
+        <div class="watermark-stars" style="position:absolute; right:-20px; bottom:-20px; font-size:120px; opacity:0.08; color:var(--oro); pointer-events:none;">★</div>
+        <div class="highlight-header-row" style="display:flex; align-items:center; gap:12px; margin-bottom:12px; z-index:1; position:relative;">
+          <div class="highlight-icon-box" style="width:36px; height:36px; border-radius:50%; background:rgba(184,144,47,0.1); color:var(--oro); display:grid; place-items:center; flex-shrink:0;">
+            ${svgIcon('starFilled')}
+          </div>
+          <div class="highlight-title" style="font-weight:700; font-size:14px; color:var(--sage); text-transform:uppercase; letter-spacing:.06em; margin-bottom:0;">Lo más destacado</div>
+        </div>
+        <div style="font-size: 15px; line-height: 1.5; font-style:italic; margin-bottom: 12px; position: relative; z-index: 1; flex-grow:1;" data-rev-text>"${rev.text}"</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; margin-top: auto; padding-top:12px; border-top: 1px solid var(--border);">
+          <span style="font-size: 13px; font-weight: 500; color: var(--text-muted); display:flex; align-items:center; gap:6px;"><span style="display:inline-block;width:12px;height:1px;background:var(--border);"></span>${rev.sucursal}</span>
           <div style="display:flex;align-items:center;gap:10px;">
-            <span style="color:#E8955A;font-size:13px;letter-spacing:1px;">${'★'.repeat(5)}</span>
-            ${hasMore ? `<button onclick="HomeView.nextHighlight()" style="background:transparent;border:1px solid rgba(245,239,230,0.35);color:var(--crema);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;letter-spacing:.03em;transition:background .15s, border-color .15s;display:flex;align-items:center;gap:4px;" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.borderColor='rgba(245,239,230,.7)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(245,239,230,0.35)'">Siguiente ›</button>` : ''}
+            <span style="color:var(--oro);font-size:13px;letter-spacing:1px;">${'★'.repeat(5)}</span>
+            ${hasMore ? `<button onclick="HomeView.nextHighlight()" style="background:transparent;border:1px solid var(--border);color:var(--text);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;letter-spacing:.03em;transition:background .15s, border-color .15s;display:flex;align-items:center;gap:4px;" onmouseover="this.style.background='var(--bg)';this.style.borderColor='var(--text-dim)'" onmouseout="this.style.background='transparent';this.style.borderColor='var(--border)'">Siguiente ›</button>` : ''}
           </div>
         </div>
       </div>
@@ -725,5 +1055,139 @@ const HomeView = {
         });
       }
     }, 200);
+  },
+
+  toggleSortDropdown(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById('branchSortDropdown');
+    if (dropdown) {
+      dropdown.classList.toggle('open');
+    }
+  },
+
+  selectSortOption(val, labelText) {
+    this.sortBy = val;
+    const labelEl = document.getElementById('sortValLabel');
+    if (labelEl) labelEl.textContent = labelText;
+    
+    // Update active class on options
+    const dropdown = document.getElementById('branchSortDropdown');
+    if (dropdown) {
+      dropdown.querySelectorAll('.custom-option').forEach(opt => {
+        if (opt.getAttribute('data-value') === val) {
+          opt.classList.add('active');
+        } else {
+          opt.classList.remove('active');
+        }
+      });
+      dropdown.classList.remove('open');
+    }
+    
+    this._updateBranchGrid();
+  },
+
+  getSortLabel(val) {
+    const map = {
+      'default': 'Predeterminado',
+      'rating-desc': 'Mayor Rating',
+      'rating-asc': 'Menor Rating',
+      'volume-desc': 'Mayor Volumen'
+    };
+    return map[val] || 'Predeterminado';
+  },
+
+  initAutoplay() {
+    this.clearAutoplay();
+    this.autoplayInterval = setInterval(() => {
+      this.autoScrollNext();
+    }, 4000);
+  },
+
+  clearAutoplay() {
+    if (this.autoplayInterval) {
+      clearInterval(this.autoplayInterval);
+      this.autoplayInterval = null;
+    }
+  },
+
+  autoScrollNext() {
+    const grid = document.getElementById('reviewFeedGrid');
+    if (!grid) return;
+    const maxScrollLeft = grid.scrollWidth - grid.clientWidth;
+    if (grid.scrollLeft >= maxScrollLeft - 10) {
+      this.rotateBatch('next');
+    } else {
+      grid.scrollBy({ left: 296, behavior: 'smooth' });
+    }
+  },
+
+  scrollCarousel(direction) {
+    const grid = document.getElementById('reviewFeedGrid');
+    if (!grid) return;
+    this.initAutoplay(); // Reset interval
+    const maxScrollLeft = grid.scrollWidth - grid.clientWidth;
+    if (direction === 'next') {
+      if (grid.scrollLeft >= maxScrollLeft - 10) {
+        this.rotateBatch('next');
+      } else {
+        grid.scrollBy({ left: 296, behavior: 'smooth' });
+      }
+    } else {
+      if (grid.scrollLeft <= 10) {
+        this.rotateBatch('prev');
+      } else {
+        grid.scrollBy({ left: -296, behavior: 'smooth' });
+      }
+    }
+  },
+
+  rotateBatch(direction) {
+    const grid = document.getElementById('reviewFeedGrid');
+    if (!grid || !this.carouselPool || this.carouselPool.length <= this.carouselBatchSize) return;
+
+    grid.style.transition = 'opacity 0.3s ease';
+    grid.style.opacity = '0';
+
+    setTimeout(() => {
+      const poolSize = this.carouselPool.length;
+      if (direction === 'next') {
+        this.carouselStartIndex = (this.carouselStartIndex + this.carouselBatchSize) % poolSize;
+      } else {
+        this.carouselStartIndex = (this.carouselStartIndex - this.carouselBatchSize + poolSize) % poolSize;
+      }
+
+      const newReviews = [];
+      for (let i = 0; i < this.carouselBatchSize; i++) {
+        const idx = (this.carouselStartIndex + i) % poolSize;
+        if (this.carouselPool[idx]) {
+          newReviews.push(this.carouselPool[idx]);
+        }
+      }
+
+      const cardsHtml = newReviews.map(r => {
+        const isNeg = r.stars <= 3;
+        const cardClass = isNeg ? 'review-card neg' : 'review-card';
+        const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
+        const timeStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
+        return `
+          <div class="${cardClass}">
+            <div class="rc-head">
+              <span class="rc-branch">${r.sucursal}</span>
+              <span class="rc-date">${timeStr}</span>
+            </div>
+            <div class="rc-stars">${starsHtml}</div>
+            <p class="rc-text">"${r.text}"</p>
+          </div>
+        `;
+      }).join('');
+
+      grid.innerHTML = cardsHtml;
+      if (direction === 'next') {
+        grid.scrollLeft = 0;
+      } else {
+        grid.scrollLeft = grid.scrollWidth - grid.clientWidth;
+      }
+      grid.style.opacity = '1';
+    }, 300);
   }
 };

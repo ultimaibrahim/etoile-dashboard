@@ -43,6 +43,9 @@ const Router = {
 
     // Destroy charts before transition
     Charts.destroyAll();
+    if (window.HomeView && typeof HomeView.clearAutoplay === 'function') {
+      HomeView.clearAutoplay();
+    }
 
     setTimeout(async () => {
       const route = this.match(hash);
