@@ -89,7 +89,10 @@ const HomeView = {
     const negativesPool = textReviews.filter(r => r.stars <= 2 && r.text.length > 10);
     const positivesPool = textReviews.filter(r => r.stars === 5 && r.text.length > 20);
     const restPool = textReviews.filter(r => !negativesPool.includes(r) && !positivesPool.includes(r));
-    this.carouselPool = [...negativesPool, ...positivesPool, ...restPool];
+    this.carouselPool = [...negativesPool, ...positivesPool, ...restPool].map((r, index) => {
+      r.carouselId = index;
+      return r;
+    });
     this.carouselBatchSize = 8;
     this.carouselStartIndex = 0;
 
@@ -635,7 +638,7 @@ const HomeView = {
       const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
       const timeStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
       return `
-        <div class="${cardClass}">
+        <div class="${cardClass}" onclick="HomeView.openReviewDetailModal(${r.carouselId})">
           <div class="rc-head">
             <span class="rc-branch">${r.sucursal}</span>
             <span class="rc-date">${timeStr}</span>
@@ -741,6 +744,86 @@ const HomeView = {
     // Restore scrolling
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
+  },
+
+  openReviewDetailModal(carouselId) {
+    const r = this.carouselPool.find(item => item.carouselId === carouselId);
+    if (!r) return;
+
+    // Freeze background scrolling
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    // Pause continuous scroll
+    HomeView.isPaused = true;
+
+    const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
+    const dateStr = r.publishedAtDate ? formatDate(r.publishedAtDate) : 'Sin fecha';
+    
+    // Check if isLocalGuide
+    const localGuideBadge = r.isLocalGuide 
+      ? `<span class="local-guide-badge">${svgIcon('starFilled')} Local Guide</span>`
+      : '';
+      
+    // Reply/Owner response
+    const responseHtml = r.responseFromOwnerText
+      ? `<div class="modal-owner-response"><strong>Respuesta del Propietario:</strong> "${r.responseFromOwnerText}"</div>`
+      : '';
+
+    const modalHtml = `
+      <div class="modal-overlay active" id="reviewDetailModal" onclick="if(event.target === this) HomeView.closeReviewDetailModal()">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h2 class="modal-title">Detalle de Reseña</h2>
+            <button class="modal-close" onclick="HomeView.closeReviewDetailModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+              <div>
+                <div style="font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text);">${r.sucursal}</div>
+                <div style="font-size:11px; font-family:var(--mono); color:var(--text-dim); margin-top:2px;">${dateStr}</div>
+              </div>
+              ${localGuideBadge}
+            </div>
+            
+            <div style="color:var(--oro); font-size:16px; letter-spacing:2px; margin-top:4px;">${starsHtml}</div>
+            
+            <blockquote class="modal-quote">"${r.text}"</blockquote>
+            
+            ${responseHtml}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Remove any stale handler first
+    if (window._escReviewDetailHandler) {
+      document.removeEventListener('keydown', window._escReviewDetailHandler);
+    }
+    
+    window._escReviewDetailHandler = (e) => {
+      if (e.key === 'Escape') {
+        HomeView.closeReviewDetailModal();
+      }
+    };
+    document.addEventListener('keydown', window._escReviewDetailHandler);
+  },
+
+  closeReviewDetailModal() {
+    const modal = document.getElementById('reviewDetailModal');
+    if (modal) {
+      modal.remove();
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
+    if (window._escReviewDetailHandler) {
+      document.removeEventListener('keydown', window._escReviewDetailHandler);
+      window._escReviewDetailHandler = null;
+    }
+    // Resume continuous scroll
+    HomeView.isPaused = false;
   },
 
   filterSidebarReviews() {
@@ -1222,7 +1305,7 @@ const HomeView = {
         const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
         const timeStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
         return `
-          <div class="${cardClass}">
+          <div class="${cardClass}" onclick="HomeView.openReviewDetailModal(${r.carouselId})">
             <div class="rc-head">
               <span class="rc-branch">${r.sucursal}</span>
               <span class="rc-date">${timeStr}</span>

@@ -26,7 +26,9 @@ const CHANGELOG_EPOCAS = [
           'Ajustes de UI: Centrado vertical y alineación del icono indicador en las tarjetas de sucursal, y transiciones fluidas en hover.',
           'Estados de alerta: Subsanada la evaluación de hover para marcar en color naranja sucursales que tengan alertas pero promedio igual o superior a la meta de 4.60, y en rojo únicamente si está por debajo.',
           'Carrusel de Actividad: Movimiento continuo fluido (0.6px/frame) con pausa inteligente en hover, clic y eventos táctiles.',
-          'Responsividad del Carrusel: Ocultamiento completo de flechas en pantallas móviles para desplazamiento táctil nativo sin interferir con el texto, y gutters laterales de 48px en escritorio.'
+          'Responsividad del Carrusel: Ocultamiento completo de flechas en pantallas móviles para desplazamiento táctil nativo sin interferir con el texto, y gutters laterales de 48px en escritorio.',
+          'Detalle de Reseñas: Modal emergente premium con desenfoque de fondo (backdrop-filter) para leer reseñas completas al hacer clic en las tarjetas del carrusel, con congelamiento de scroll del body y reanudación automática del carrusel al cerrar.',
+          'Recorte de texto: Limitación visual estricta a 3 líneas de texto con puntos suspensivos en las tarjetas del carrusel, asegurando una visualización uniforme de las reseñas.'
         ]
       },
       {
