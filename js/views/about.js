@@ -18,6 +18,14 @@ const CHANGELOG_EPOCAS = [
     `,
     versions: [
       {
+        v: 'v3.2.0.altair', date: 'Mayo 2026',
+        items: [
+          'Evaluación de sucursales: Calificación con estrellas de color oro ubicada ahora al lado del nombre de la sucursal en las tarjetas de la pantalla de inicio y en la cabecera de la vista de sucursal.',
+          'Dropdowns personalizados: Sustitución de todos los selectores HTML nativos restantes por selectores orgánicos y estilizados de diseño premium, incluyendo el selector de mes del Hero, los filtros de sentimiento y sucursal de la barra lateral, y el selector de mes de la vista de sucursal.',
+          'Interacciones y UX: Implementación de cierre automático al hacer clic fuera del dropdown para todos los nuevos selectores orgánicos y resguardo del estado del filtro de la barra lateral en memoria.'
+        ]
+      },
+      {
         v: 'v3.1.0.altair', date: 'Mayo 2026',
         items: [
           'Agrupación e informes: Unificación de alertas regionales con la capacidad de ver el feed completo de reseñas críticas desde un botón general.',

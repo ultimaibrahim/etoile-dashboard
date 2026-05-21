@@ -135,12 +135,12 @@ const HomeView = {
       <a class="branch-card${hoverClass}" href="#/sucursal/${s.id}">
         <div class="bc-top">
           <div class="bc-name">${s.abr}</div>
+          <div class="bc-card-stars">${s.curr.score > 0 ? starStr(Math.round(s.curr.score)) : '—'}</div>
           <span class="bc-status ${statusClass}" title="${statusTitle}"></span>
         </div>
         <div class="bc-score-row">
           <span class="bc-score num">${currScoreStr}</span>
         </div>
-        <div class="bc-stars-line">${s.curr.score > 0 ? starStr(Math.round(s.curr.score)) : '—'}</div>
         <div class="bc-meta">
           <span><strong>${s.curr.count}</strong> reseña${s.curr.count !== 1 ? 's' : ''} ${capitalizedCurrMonth.substring(0,3).toLowerCase()}</span>
           <span class="bc-delta ${dClass} num">${dStr} vs hist</span>
@@ -190,17 +190,26 @@ const HomeView = {
     }
 
     const sortedMonths = [...(DataLoader.manifest[currYear] || [])].sort((a, b) => a - b);
-    const selectOptions = sortedMonths.map(m => {
+    const customOptionsHtml = sortedMonths.map(m => {
       const monthName = MONTH_NAMES[m - 1];
       const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-      return `<option value="${m}" ${m === currMonth ? 'selected' : ''}>${capMonth} ${currYear}</option>`;
+      const isActive = m === currMonth ? ' active' : '';
+      return `<div class="custom-option${isActive}" data-value="${m}" onclick="HomeView.selectHeroMonthOption(${m})">${capMonth} ${currYear}</div>`;
     }).join('');
 
     const dropdownHtml = `
       <div class="hero-month-select-container">
-        <select id="heroMonthSelect" class="hero-month-select" onchange="HomeView.handleMonthSelect(this.value)">
-          ${selectOptions}
-        </select>
+        <div class="custom-select" id="heroMonthDropdown">
+          <button class="custom-select-trigger" onclick="HomeView.toggleHeroMonthDropdown(event)">
+            <span class="custom-select-value">${capitalizedCurrMonth} ${currYear}</span>
+            <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="custom-select-options">
+            ${customOptionsHtml}
+          </div>
+        </div>
       </div>
     `;
 
@@ -314,15 +323,16 @@ const HomeView = {
       document.getElementById('heroNum')?.classList.add('in');
       initReveal();
 
-      // Close custom select on clicking outside
+      // Close custom selects on clicking outside
       const _clickOutsideHandler = (e) => {
-        const dropdown = document.getElementById('branchSortDropdown');
-        if (dropdown && !dropdown.contains(e.target)) {
-          dropdown.classList.remove('open');
-        }
+        document.querySelectorAll('.custom-select.open').forEach(dropdown => {
+          if (!dropdown.contains(e.target)) {
+            dropdown.classList.remove('open');
+          }
+        });
       };
-      document.removeEventListener('click', window._branchSortDropdownOutsideHandler);
-      window._branchSortDropdownOutsideHandler = _clickOutsideHandler;
+      document.removeEventListener('click', window._customSelectsOutsideHandler);
+      window._customSelectsOutsideHandler = _clickOutsideHandler;
       document.addEventListener('click', _clickOutsideHandler);
 
       // Counting animation for hero rating
@@ -564,9 +574,12 @@ const HomeView = {
       }
       return `
       <a class="branch-card${hoverClass}" href="#/sucursal/${s.id}">
-        <div class="bc-top"><div class="bc-name">${s.abr}</div><span class="bc-status ${statusClass}" title="${statusTitle}"></span></div>
+        <div class="bc-top">
+          <div class="bc-name">${s.abr}</div>
+          <div class="bc-card-stars">${s.curr.score > 0 ? starStr(Math.round(s.curr.score)) : '—'}</div>
+          <span class="bc-status ${statusClass}" title="${statusTitle}"></span>
+        </div>
         <div class="bc-score-row"><span class="bc-score num">${currScoreStr}</span></div>
-        <div class="bc-stars-line">${s.curr.score > 0 ? starStr(Math.round(s.curr.score)) : '—'}</div>
         <div class="bc-meta"><span><strong>${s.curr.count}</strong> reseña${s.curr.count !== 1 ? 's' : ''} ${capitalizedCurrMonth.substring(0,3).toLowerCase()}</span><span class="bc-delta ${dClass} num">${dStr} vs hist</span></div>
         ${mayoBlock}
       </a>`;
@@ -677,6 +690,9 @@ const HomeView = {
     const data = DataLoader.getMonth(year, month);
     if (!data) return;
     
+    this.feedSentiment = 'todas';
+    this.feedBranch = 'todas';
+    
     // Freeze background scrolling
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
@@ -692,20 +708,36 @@ const HomeView = {
           <div class="sidebar-filters">
             <div class="filter-group">
               <label>Sentimiento</label>
-              <select id="feedFilterSentiment" onchange="HomeView.filterSidebarReviews()">
-                <option value="todas">Todas las calificaciones</option>
-                <option value="positivas">Positivas (4-5★)</option>
-                <option value="neutras">Neutras (3★)</option>
-                <option value="negativas">Negativas (1-2★)</option>
-              </select>
+              <div class="custom-select" id="sidebarSentimentDropdown">
+                <button class="custom-select-trigger" onclick="HomeView.toggleSidebarSentimentDropdown(event)">
+                  <span class="custom-select-value" id="sentimentValLabel">Todas las calificaciones</span>
+                  <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="custom-select-options">
+                  <div class="custom-option active" data-value="todas" onclick="HomeView.selectSidebarSentimentOption('todas', 'Todas las calificaciones')">Todas las calificaciones</div>
+                  <div class="custom-option" data-value="positivas" onclick="HomeView.selectSidebarSentimentOption('positivas', 'Positivas (4-5★)')">Positivas (4-5★)</div>
+                  <div class="custom-option" data-value="neutras" onclick="HomeView.selectSidebarSentimentOption('neutras', 'Neutras (3★)')">Neutras (3★)</div>
+                  <div class="custom-option" data-value="negativas" onclick="HomeView.selectSidebarSentimentOption('negativas', 'Negativas (1-2★)')">Negativas (1-2★)</div>
+                </div>
+              </div>
             </div>
             
             <div class="filter-group">
               <label>Sucursal</label>
-              <select id="feedFilterBranch" onchange="HomeView.filterSidebarReviews()">
-                <option value="todas">Todas las sucursales</option>
-                ${SUCURSALES_META.map(s => `<option value="${s.nombre}">${s.abr}</option>`).join('')}
-              </select>
+              <div class="custom-select" id="sidebarBranchDropdown">
+                <button class="custom-select-trigger" onclick="HomeView.toggleSidebarBranchDropdown(event)">
+                  <span class="custom-select-value" id="sidebarBranchValLabel">Todas las sucursales</span>
+                  <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="custom-select-options">
+                  <div class="custom-option active" data-value="todas" onclick="HomeView.selectSidebarBranchOption('todas', 'Todas las sucursales')">Todas las sucursales</div>
+                  ${SUCURSALES_META.map(s => `<div class="custom-option" data-value="${s.nombre}" onclick="HomeView.selectSidebarBranchOption('${s.nombre}', '${s.abr}')">${s.abr}</div>`).join('')}
+                </div>
+              </div>
             </div>
           </div>
           
@@ -780,13 +812,14 @@ const HomeView = {
           <div class="modal-body">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
               <div>
-                <div style="font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text);">${r.sucursal}</div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span style="font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text);">${r.sucursal}</span>
+                  <span style="color:var(--oro); font-size:14px; letter-spacing:1px; display:inline-flex; align-items:center;">${starsHtml}</span>
+                </div>
                 <div style="font-size:11px; font-family:var(--mono); color:var(--text-dim); margin-top:2px;">${dateStr}</div>
               </div>
               ${localGuideBadge}
             </div>
-            
-            <div style="color:var(--oro); font-size:16px; letter-spacing:2px; margin-top:4px;">${starsHtml}</div>
             
             <blockquote class="modal-quote">"${r.text}"</blockquote>
             
@@ -832,8 +865,8 @@ const HomeView = {
     const data = DataLoader.getMonth(year, month);
     if (!data) return;
 
-    const sentiment = document.getElementById('feedFilterSentiment').value;
-    const branchNameFilter = document.getElementById('feedFilterBranch').value;
+    const sentiment = this.feedSentiment || 'todas';
+    const branchNameFilter = this.feedBranch || 'todas';
 
     let filtered = data.reviews.filter(r => r.text && r.text.trim().length > 0);
 
@@ -1330,5 +1363,81 @@ const HomeView = {
         this.isPaused = false;
       }, 350);
     }, 300);
+  },
+
+  toggleHeroMonthDropdown(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById('heroMonthDropdown');
+    if (dropdown) {
+      dropdown.classList.toggle('open');
+    }
+  },
+
+  selectHeroMonthOption(month) {
+    const dropdown = document.getElementById('heroMonthDropdown');
+    if (dropdown) {
+      dropdown.classList.remove('open');
+    }
+    const currYear = DataLoader.currentYear;
+    DataLoader.setMonth(currYear, month);
+    this.render();
+  },
+
+  toggleSidebarSentimentDropdown(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById('sidebarSentimentDropdown');
+    const branchDropdown = document.getElementById('sidebarBranchDropdown');
+    if (branchDropdown) branchDropdown.classList.remove('open');
+    if (dropdown) {
+      dropdown.classList.toggle('open');
+    }
+  },
+
+  selectSidebarSentimentOption(val, labelText) {
+    this.feedSentiment = val;
+    const labelEl = document.getElementById('sentimentValLabel');
+    if (labelEl) labelEl.textContent = labelText;
+
+    const dropdown = document.getElementById('sidebarSentimentDropdown');
+    if (dropdown) {
+      dropdown.querySelectorAll('.custom-option').forEach(opt => {
+        if (opt.getAttribute('data-value') === val) {
+          opt.classList.add('active');
+        } else {
+          opt.classList.remove('active');
+        }
+      });
+      dropdown.classList.remove('open');
+    }
+    this.filterSidebarReviews();
+  },
+
+  toggleSidebarBranchDropdown(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById('sidebarBranchDropdown');
+    const sentimentDropdown = document.getElementById('sidebarSentimentDropdown');
+    if (sentimentDropdown) sentimentDropdown.classList.remove('open');
+    if (dropdown) {
+      dropdown.classList.toggle('open');
+    }
+  },
+
+  selectSidebarBranchOption(val, labelText) {
+    this.feedBranch = val;
+    const labelEl = document.getElementById('sidebarBranchValLabel');
+    if (labelEl) labelEl.textContent = labelText;
+
+    const dropdown = document.getElementById('sidebarBranchDropdown');
+    if (dropdown) {
+      dropdown.querySelectorAll('.custom-option').forEach(opt => {
+        if (opt.getAttribute('data-value') === val) {
+          opt.classList.add('active');
+        } else {
+          opt.classList.remove('active');
+        }
+      });
+      dropdown.classList.remove('open');
+    }
+    this.filterSidebarReviews();
   }
 };

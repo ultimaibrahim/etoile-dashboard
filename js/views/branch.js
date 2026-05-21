@@ -4,6 +4,7 @@
 
 const BranchView = {
   async render(params) {
+    this.activeParams = params;
     const meta = getBranchById(params.id);
     if (!meta) {
       Router.navigate('#/');
@@ -90,11 +91,26 @@ const BranchView = {
         </div>
       </div>`;
 
-    const selectorOptions = availableMonths.map(m => {
+    const customOptionsHtml = availableMonths.map(m => {
       const name = new Date(activeYear, m - 1).toLocaleString('es-ES', { month: 'long' });
       const capName = name.charAt(0).toUpperCase() + name.slice(1);
-      return `<option value="${m}" ${m === activeMonth ? 'selected' : ''}>${capName} ${activeYear}</option>`;
+      const isActive = m === activeMonth ? ' active' : '';
+      return `<div class="custom-option${isActive}" data-value="${m}" onclick="BranchView.selectMonthOption(${m})">${capName} ${activeYear}</div>`;
     }).join('');
+
+    const dropdownHtml = `
+      <div class="custom-select" id="branchMonthDropdown">
+        <button class="custom-select-trigger" onclick="BranchView.toggleMonthDropdown(event)">
+          <span class="custom-select-value">${capitalizedMonth} ${activeYear}</span>
+          <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="custom-select-options">
+          ${customOptionsHtml}
+        </div>
+      </div>
+    `;
 
     document.getElementById('app').innerHTML = `
       ${buildTopbar(true, meta.nombre)}
@@ -103,10 +119,13 @@ const BranchView = {
           <span>Guadalajara</span>
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-          <h1 class="bh-name">${meta.nombre}</h1>
-          <select id="monthSelect" class="month-selector">
-            ${selectorOptions}
-          </select>
+          <h1 class="bh-name" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px;">
+            ${meta.nombre}
+            <span style="font-family: var(--mono); color: #E8A020; font-size: 20px; letter-spacing: 2px; font-weight: normal; margin-top: 6px;">
+              ${stats.avg > 0 ? starStr(Math.round(stats.avg)) : '—'}
+            </span>
+          </h1>
+          ${dropdownHtml}
         </div>
       </section>
 
@@ -144,12 +163,6 @@ const BranchView = {
         Dashboard de Reseñas · Región Guadalajara
       </footer>`;
 
-    document.getElementById('monthSelect').onchange = async (e) => {
-      DataLoader.setMonth(activeYear, parseInt(e.target.value));
-      await this.render(params);
-      initReveal();
-    };
-
     // Re-run progress bars animation after DOM insert
     requestAnimationFrame(() => {
       document.querySelectorAll('.kpi-progress-bar').forEach(bar => {
@@ -158,6 +171,17 @@ const BranchView = {
         requestAnimationFrame(() => { bar.style.width = w; });
       });
       initReveal();
+
+      // Close custom select on clicking outside
+      const _clickOutsideHandler = (e) => {
+        const dropdown = document.getElementById('branchMonthDropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+          dropdown.classList.remove('open');
+        }
+      };
+      document.removeEventListener('click', window._branchMonthDropdownOutsideHandler);
+      window._branchMonthDropdownOutsideHandler = _clickOutsideHandler;
+      document.addEventListener('click', _clickOutsideHandler);
     });
 
     const btn = document.getElementById('showAllBtn');
@@ -222,5 +246,24 @@ const BranchView = {
         <div class="rev-text">${(r.text || '').replace(/\n/g, '<br>')}</div>
       </div>`;
     }).join('');
+  },
+
+  toggleMonthDropdown(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById('branchMonthDropdown');
+    if (dropdown) {
+      dropdown.classList.toggle('open');
+    }
+  },
+
+  async selectMonthOption(month) {
+    const dropdown = document.getElementById('branchMonthDropdown');
+    if (dropdown) {
+      dropdown.classList.remove('open');
+    }
+    const activeYear = DataLoader.currentYear;
+    DataLoader.setMonth(activeYear, month);
+    await this.render(this.activeParams);
+    initReveal();
   }
 };
