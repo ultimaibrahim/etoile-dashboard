@@ -2146,9 +2146,19 @@ a{color:inherit;text-decoration:none;}
   display: flex;
   flex-direction: column;
   gap: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.sidebar-review-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-lg);
+  border-color: var(--sage);
 }
 .sidebar-review-card.neg {
   border-left: 3px solid var(--alerta);
+}
+.sidebar-review-card.neg:hover {
+  border-color: var(--alerta);
 }
 .src-head {
   display: flex;
@@ -2416,6 +2426,307 @@ a{color:inherit;text-decoration:none;}
   right: 0;
   left: auto;
 }
+
+/* ────────────────────────────────────────────────────────── */
+/* ─── PREMIUM UI: CRYSTAL & SQUIRCLE SYSTEM ──────────────── */
+/* ────────────────────────────────────────────────────────── */
+
+/* Variables Premium */
+html[data-ui-premium="true"] {
+  --sans: 'Plus Jakarta Sans', "Helvetica Neue", Arial, sans-serif;
+  --serif: 'Playfair Display', "Instrument Serif", serif;
+  --mono: 'JetBrains Mono', monospace;
+  --giaza: 'Playfair Display', serif;
+
+  --radius: 20px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+
+  /* Colores Ajustados */
+  --oro: #C5A059;
+  --verde: #2E4D3C;
+  --verde-soft: #3D5E4D;
+  --verde-deep: #1E3025;
+
+  /* Glassmorphism en modo claro */
+  --surface: rgba(255, 255, 255, 0.45);
+  --surface-2: rgba(250, 245, 235, 0.75);
+  --border: rgba(22, 22, 20, 0.06);
+  --border-strong: rgba(22, 22, 20, 0.12);
+  --sombra-card: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
+  --sombra-lg: 0 12px 36px 0 rgba(31, 38, 135, 0.12);
+}
+
+html[data-ui-premium="true"][data-theme="dark"] {
+  --bg: #0E1210; /* Carbón bosque */
+  --surface: rgba(21, 25, 23, 0.7);
+  --surface-2: rgba(29, 35, 32, 0.8);
+  --border: rgba(237, 230, 216, 0.06);
+  --border-strong: rgba(237, 230, 216, 0.12);
+  --sombra-card: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+  --sombra-lg: 0 16px 40px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* Aplicación de Desenfoque (Glassmorphic) */
+html[data-ui-premium="true"] .chart-card,
+html[data-ui-premium="true"] .scorecard,
+html[data-ui-premium="true"] .alert-strip,
+html[data-ui-premium="true"] .status-warn-box,
+html[data-ui-premium="true"] .status-ok-box,
+html[data-ui-premium="true"] .modal-content,
+html[data-ui-premium="true"] .custom-select-options,
+html[data-ui-premium="true"] .review-card,
+html[data-ui-premium="true"] .review-item {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Transición de propiedades para el cambio mágico de UI */
+body,
+.chart-card,
+.scorecard,
+.alert-strip,
+.status-warn-box,
+.status-ok-box,
+.review-card,
+.custom-select-trigger,
+.month-selector,
+.modal-content {
+  transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              border-radius 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s ease,
+              transform 0.2s ease;
+}
+
+/* Botón flotante para Alternar UI */
+.ui-premium-toggle {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 9999;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.ui-premium-toggle:hover {
+  transform: scale(1.1) rotate(12deg);
+  border-color: var(--oro);
+  box-shadow: 0 8px 24px rgba(197, 160, 89, 0.3);
+}
+.ui-premium-toggle svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  transition: transform 0.3s ease;
+}
+html[data-ui-premium="true"] .ui-premium-toggle {
+  background: var(--verde-deep);
+  color: var(--crema-soft);
+  border-color: var(--oro);
+  box-shadow: 0 8px 24px rgba(46, 77, 60, 0.4);
+}
+
+/* View Transitions Animación de Sweep Radial */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ────────────────────────────────────────────────────────── */
+/* ─── WIDGET COMPARATIVO ANTES VS DESPUÉS (SLIDER) ───────── */
+/* ────────────────────────────────────────────────────────── */
+.comp-slider-card {
+  margin-bottom: 24px;
+  padding: 0 !important;
+  overflow: hidden;
+  position: relative;
+  min-height: 240px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--sombra-card);
+}
+
+.comp-slider-wrapper {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+  user-select: none;
+}
+
+.comp-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Capa de antes (Original/Plana) */
+.comp-layer.before {
+  background: #FAF5EB;
+  color: #161614;
+}
+[data-theme="dark"] .comp-layer.before {
+  background: #151725;
+  color: #EDE6D8;
+}
+
+/* Capa de después (Premium/Crystal) */
+.comp-layer.after {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--text);
+  clip-path: inset(0 0 0 50%); /* Controlado por JS */
+}
+[data-theme="dark"] .comp-layer.after {
+  background: rgba(21, 25, 23, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.comp-content-box {
+  width: 80%;
+  max-width: 420px;
+  padding: 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(22,22,20,.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  text-align: center;
+  transition: all 0.3s ease;
+  background: #ffffff;
+}
+[data-theme="dark"] .comp-content-box {
+  background: #1E2132;
+  border-color: rgba(237,230,216,.08);
+}
+
+.comp-layer.after .comp-content-box {
+  border-radius: 20px;
+  border-color: var(--glass-border);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
+  background: var(--surface-2);
+}
+
+.comp-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+.comp-layer.before .comp-badge {
+  background: #E8DCC7;
+  color: #6B6960;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+}
+.comp-layer.after .comp-badge {
+  background: var(--oro);
+  color: #fff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: 0.1em;
+}
+
+.comp-title {
+  margin-bottom: 8px;
+}
+.comp-layer.before .comp-title {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+}
+.comp-layer.after .comp-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  font-size: 22px;
+}
+
+.comp-desc {
+  font-size: 13px;
+  opacity: 0.8;
+}
+.comp-layer.before .comp-desc {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+}
+.comp-layer.after .comp-desc {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* El controlador táctil / slider bar */
+.comp-slider-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%; /* Controlado por JS */
+  width: 2px;
+  background: var(--oro);
+  cursor: ew-resize;
+  z-index: 10;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.comp-slider-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--oro);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ew-resize;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  z-index: 11;
+  pointer-events: none;
+}
+.comp-slider-button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.comp-label-tag {
+  position: absolute;
+  top: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: bold;
+  z-index: 5;
+  background: rgba(0,0,0,0.4);
+  color: #fff;
+}
+.comp-label-tag.before { left: 12px; }
+.comp-label-tag.after { right: 12px; }
 
 
 

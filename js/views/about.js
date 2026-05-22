@@ -18,6 +18,16 @@ const CHANGELOG_EPOCAS = [
     `,
     versions: [
       {
+        v: 'v3.2.5.altair', date: 'Mayo 2026',
+        items: [
+          'UI Premium: Estética Crystal & Squircle condicional activada con atributo html[data-ui-premium="true"] (tipografías Plus Jakarta Sans y Playfair Display, radios de 20px, y efectos glassmorphic con blur de 14px).',
+          'Botón flotante premium: Integración de control en la esquina inferior derecha con transición de barrido radial animada (radial clip-path sweep) al cambiar de tema.',
+          'Previsualizador interactivo: Widget comparador Antes vs Después (split card con slider deslizante) en la vista Acerca de para evaluar la nueva propuesta gráfica.',
+          'Asistente de respuestas AI: Borradores estáticos de respuesta profesional según el número de estrellas en el modal de detalle de reseñas (con botón de copiado rápido al portapapeles).',
+          'Interacciones y Modal: Habilitada la apertura de la ficha detallada de reseñas al hacer clic en elementos del feed principal, la barra de búsqueda lateral y la vista mensual por sucursal.'
+        ]
+      },
+      {
         v: 'v3.2.4.altair', date: 'Mayo 2026',
         items: [
           'Alineación estética: Reemplazada la línea divisoria punteada/discontinua en la tarjeta de Alerta Activa por una línea divisoria continua y sutil, idéntica a la empleada en la sección de Destacados.',
@@ -263,6 +273,42 @@ const AboutView = {
         </div>
       </section>
 
+      <!-- COMPARADOR DE UI (Antes vs Después) -->
+      <section class="section r">
+        <div class="section-head">
+          <div class="section-title">Previsualizador <span class="accent">de Diseño Premium</span></div>
+        </div>
+        <p style="color:var(--text-muted);font-size:14px;line-height:1.6;margin-bottom:16px;">
+          Arrastra el control deslizante central para comparar la interfaz actual plana frente a la nueva propuesta premium "Crystal & Squircle" (tipografías refinadas, bordes suavizados y efecto de vidrio esmerilado).
+        </p>
+        <div class="comp-slider-card">
+          <div class="comp-slider-wrapper">
+            <div class="comp-layer before">
+              <div class="comp-content-box">
+                <span class="comp-badge">Diseño Actual</span>
+                <h3 class="comp-title">Interfaz Clásica</h3>
+                <p class="comp-desc">Diseño plano con tipografías estándar y esquinas angulares de 14px.</p>
+              </div>
+            </div>
+            <div class="comp-layer after">
+              <div class="comp-content-box">
+                <span class="comp-badge">UI Premium</span>
+                <h3 class="comp-title">Crystal & Squircle</h3>
+                <p class="comp-desc">Tipografía Playfair Serif, Outfit para números, esquinas de 20px y fondos de cristal.</p>
+              </div>
+            </div>
+            <div class="comp-slider-bar"></div>
+            <div class="comp-slider-button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 7l-5 5 5 5M16 7l5 5-5 5" />
+              </svg>
+            </div>
+            <span class="comp-label-tag before">Antes</span>
+            <span class="comp-label-tag after">Después</span>
+          </div>
+        </div>
+      </section>
+
       <!-- CHANGELOG oculto -->
       <div id="changelogPanel" style="display:none;overflow:hidden;transition:max-height 0.4s ease;">
         <section class="section">
@@ -312,7 +358,7 @@ const AboutView = {
         </div>
         <div style="display:flex;flex-direction:column;gap:12px;">
           ${[
-        { label: 'Hospitalidad y Excelencia', text: 'Creamos historias de hospitalidad memorable. Documentamos nuestros estándares y los seguimos con orgullo. Entrenamos continuamente para hacer cada día mejor.' },
+        { label: 'Hospitalidad y Excelencia', text: 'Creamos historias de hospitalidad memorable. Documentamos nuestros estándares and los seguimos con orgullo. Entrenamos continuamente para hacer cada día mejor.' },
         { label: 'Innovación Continua', text: 'Buscamos constantemente nuevas formas de sorprender a nuestros invitados, optimizar operaciones y adoptar tecnología que potencie a nuestro equipo.' },
         { label: 'Datos como Cultura', text: 'Cada reseña es una conversación. Escuchamos, medimos y actuamos — porque la mejora continua empieza en entender qué piensan quienes nos visitan.' },
       ].map(v => `
@@ -359,7 +405,7 @@ const AboutView = {
                style="text-decoration:none;background:var(--surface-2);padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;color:var(--text-muted);border:1px solid var(--border);transition:all 0.2s ease;display:flex;align-items:center;gap:6px;"
                onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--sage)';"
                onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border)';">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,6 12,13 22,6"/></svg>
+               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,6 12,13 22,6"/></svg>
               ultima.ibrahim@proton.me
             </a>
             <a href="https://wa.me/5213333223998" target="_blank"
@@ -375,10 +421,57 @@ const AboutView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
-        Dashboard de Reseñas · Región Guadalajara · v3.2.4.altair · 2026
+        Dashboard de Reseñas · Región Guadalajara · v3.2.5.altair · 2026
       </footer>`;
 
-    requestAnimationFrame(() => initReveal());
+    requestAnimationFrame(() => {
+      initReveal();
+      AboutView.initSlider();
+    });
+  },
+
+  initSlider() {
+    const container = document.querySelector('.comp-slider-wrapper');
+    if (!container) return;
+    const bar = container.querySelector('.comp-slider-bar');
+    const btn = container.querySelector('.comp-slider-button');
+    const afterLayer = container.querySelector('.comp-layer.after');
+    
+    let isDragging = false;
+    
+    const update = (clientX) => {
+      const rect = container.getBoundingClientRect();
+      let x = clientX - rect.left;
+      if (x < 0) x = 0;
+      if (x > rect.width) x = rect.width;
+      const pct = (x / rect.width) * 100;
+      
+      bar.style.left = `${pct}%`;
+      if (btn) btn.style.left = `${pct}%`;
+      afterLayer.style.clipPath = `inset(0 0 0 ${pct}%)`;
+    };
+    
+    const onStart = (e) => {
+      isDragging = true;
+      update(e.touches ? e.touches[0].clientX : e.clientX);
+    };
+    
+    const onMove = (e) => {
+      if (!isDragging) return;
+      update(e.touches ? e.touches[0].clientX : e.clientX);
+    };
+    
+    const onEnd = () => {
+      isDragging = false;
+    };
+    
+    container.addEventListener('mousedown', onStart);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+    
+    container.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onEnd);
   },
 
   toggleChangelog() {

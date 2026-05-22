@@ -239,7 +239,7 @@ const BranchView = {
     }
     return reviews.map(r => {
       const low = r.stars <= 3;
-      return `<div class="review-item${low ? ' negative' : ''}">
+      return `<div class="review-item${low ? ' negative' : ''}" onclick="HomeView.openReviewDetailModal('${r.globalId}')" style="cursor: pointer;">
         <div class="rev-author">Reseñante de Google${r.isLocalGuide ? `<span class="rev-guide">Local Guide</span>` : ''}</div>
         <span class="rev-stars${low ? ' low' : ''}">${starStr(r.stars)}</span>
         <div class="rev-meta">${formatDate(r.publishedAtDate)} · ${r.sucursal}</div>

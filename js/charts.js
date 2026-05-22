@@ -13,6 +13,9 @@ const Charts = {
   },
 
   barVolume(ctx, labels, data, colors) {
+    const fontSans = premiumUi ? 'Plus Jakarta Sans, sans-serif' : 'Helvetica Neue, Helvetica, Arial, sans-serif';
+    const fontMono = premiumUi ? 'JetBrains Mono, monospace' : 'ui-monospace, SF Mono, Menlo, monospace';
+
     const chart = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -33,8 +36,8 @@ const Charts = {
           legend: { display: false },
           tooltip: {
             backgroundColor: darkMode ? '#1C2220' : '#161614',
-            titleFont: { family: 'Helvetica Neue, Helvetica, Arial', size: 12, weight: '700' },
-            bodyFont: { family: 'Helvetica Neue, Helvetica, Arial', size: 11 },
+            titleFont: { family: fontSans, size: 12, weight: '700' },
+            bodyFont: { family: fontSans, size: 11 },
             padding: 10,
             displayColors: false,
             callbacks: {
@@ -47,7 +50,7 @@ const Charts = {
             beginAtZero: true,
             grid: { color: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' },
             ticks: {
-              font: { size: 10, family: 'ui-monospace, SF Mono, Menlo' },
+              font: { size: 10, family: fontMono },
               color: darkMode ? '#8A9E94' : '#8A877C',
               precision: 0
             }
@@ -55,7 +58,7 @@ const Charts = {
           x: {
             grid: { display: false },
             ticks: {
-              font: { size: 10, family: 'Helvetica Neue, Helvetica' },
+              font: { size: 10, family: fontSans },
               color: darkMode ? '#9DA89F' : '#6B6960',
               maxRotation: 30
             }
@@ -68,6 +71,9 @@ const Charts = {
   },
 
   stackedVolume(ctx, labels, okData, warnData, maxTotal) {
+    const fontSans = premiumUi ? 'Plus Jakarta Sans, sans-serif' : 'Helvetica Neue, Helvetica, Arial, sans-serif';
+    const fontMono = premiumUi ? 'JetBrains Mono, monospace' : 'ui-monospace, SF Mono, Menlo, monospace';
+
     const chart = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -95,7 +101,7 @@ const Charts = {
             stacked: true,
             grid: { display: false },
             ticks: {
-              font: { size: 10, family: 'Helvetica Neue, Helvetica' },
+              font: { size: 10, family: fontSans },
               color: darkMode ? '#9DA89F' : '#6B6960',
               maxRotation: 30
             }
@@ -106,7 +112,7 @@ const Charts = {
             suggestedMax: maxTotal,
             grid: { color: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' },
             ticks: {
-              font: { size: 10, family: 'ui-monospace, SF Mono, Menlo' },
+              font: { size: 10, family: fontMono },
               color: darkMode ? '#8A9E94' : '#8A877C',
               precision: 0
             }
@@ -118,15 +124,15 @@ const Charts = {
             position: 'top',
             labels: {
               color: darkMode ? '#9DA89F' : '#6B6960',
-              font: { size: 11, family: 'Helvetica Neue, Helvetica' },
+              font: { size: 11, family: fontSans },
               usePointStyle: true,
               pointStyle: 'circle'
             }
           },
           tooltip: {
             backgroundColor: darkMode ? '#1C2220' : '#161614',
-            titleFont: { family: 'Helvetica Neue, Helvetica, Arial', size: 12, weight: '700' },
-            bodyFont: { family: 'Helvetica Neue, Helvetica, Arial', size: 11 },
+            titleFont: { family: fontSans, size: 12, weight: '700' },
+            bodyFont: { family: fontSans, size: 11 },
             padding: 10,
             mode: 'index',
             intersect: false,

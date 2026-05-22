@@ -43,8 +43,11 @@ const DataLoader = {
     try {
       const res = await fetch(`data/${year}/${String(month).padStart(2, '0')}.json`);
       const data = await res.json();
-      // Preservar todas las reseñas incluyendo las sin texto.
-      // El filtrado se hace en los cálculos de KPI para no perder datos.
+      if (data && data.reviews) {
+        data.reviews.forEach((r, idx) => {
+          r.globalId = `${key}-${idx}`;
+        });
+      }
       this.cache[key] = data;
       return data;
     } catch (e) {
@@ -56,6 +59,19 @@ const DataLoader = {
   getMonth(year, month) {
     const key = `${year}-${String(month).padStart(2, '0')}`;
     return this.cache[key] || null;
+  },
+
+  getReviewByGlobalId(globalId) {
+    if (!globalId) return null;
+    const parts = globalId.split('-');
+    if (parts.length < 3) return null;
+    const key = `${parts[0]}-${parts[1]}`;
+    const idx = parseInt(parts[2]);
+    const data = this.cache[key];
+    if (data && data.reviews && data.reviews[idx]) {
+      return data.reviews[idx];
+    }
+    return null;
   },
 
   hasMonth(year, month) {

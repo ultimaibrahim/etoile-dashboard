@@ -779,7 +779,12 @@ const HomeView = {
   },
 
   openReviewDetailModal(carouselId) {
-    const r = this.carouselPool.find(item => item.carouselId === carouselId);
+    let r;
+    if (typeof carouselId === 'string' && carouselId.includes('-')) {
+      r = DataLoader.getReviewByGlobalId(carouselId);
+    } else {
+      r = this.carouselPool.find(item => item.carouselId === carouselId);
+    }
     if (!r) return;
 
     // Freeze background scrolling
@@ -801,6 +806,30 @@ const HomeView = {
     const responseHtml = r.responseFromOwnerText
       ? `<div class="modal-owner-response"><strong>Respuesta del Propietario:</strong> "${r.responseFromOwnerText}"</div>`
       : '';
+
+    // Asistente de Respuesta (AI Response Draft) por estrellas
+    const draftText = r.stars === 5 ? "¡Muchas gracias por tu excelente reseña! Nos alegra saber que disfrutaste de tu visita a La Crêpe Parisienne. Nuestro equipo trabaja día a día para brindar la mejor hospitalidad y calidad. ¡Esperamos verte pronto de nuevo!" :
+                      r.stars === 4 ? "¡Gracias por visitarnos y por tu calificación de 4 estrellas! Nos alegra que hayas tenido una gran experiencia. Si tienes alguna sugerencia para ayudarnos a alcanzar las 5 estrellas en tu próxima visita, no dudes en compartirla. ¡Te esperamos pronto!" :
+                      r.stars === 3 ? "Agradecemos tu visita y tus comentarios. Lamentamos no haber cumplido por completo tus expectativas en esta ocasión. Nos gustaría conocer más detalles sobre tu experiencia para poder mejorar. Por favor, compártenos tus comentarios para poder darles seguimiento." :
+                      r.stars === 2 ? "Agradecemos el tiempo dedicado a compartir tus comentarios. Lamentamos mucho que tu visita haya resultado decepcionante y no cumpliera con los estándares de calidad que nos caracterizan. Tus observaciones sobre los puntos a mejorar ya han sido compartidas con el equipo operativo para su atención inmediata. Si deseas aportar más detalles, por favor contáctanos directamente a oliver.gonzalez@lacrepeparisienne.com." :
+                      r.stars === 1 ? "Lamentamos profundamente la mala experiencia y el fallo en nuestro servicio. En La Crêpe Parisienne la calidad y la hospitalidad son nuestros pilares, y es evidente que en esta ocasión no estuvimos a la altura. Agradecemos que nos lo hagas saber para tomar medidas correctivas inmediatas. Nos gustaría ponernos en contacto contigo para dar seguimiento personal; por favor escríbenos a oliver.gonzalez@lacrepeparisienne.com detallando la fecha y sucursal de tu visita." :
+                      "Lamentamos sinceramente la mala experiencia de tu visita. Agradecemos tus comentarios para ayudarnos a mejorar. Por favor contáctanos en oliver.gonzalez@lacrepeparisienne.com para poder dar un seguimiento personalizado a tu caso.";
+
+    const assistantHtml = `
+      <div class="response-assistant-box" style="margin-top: 20px; padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); position: relative; z-index: 1;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap: 10px;">
+          <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); display:inline-flex; align-items:center; gap:4px;">
+            ${svgIcon('starFilled')} Asistente de Respuesta
+          </span>
+          <button class="copy-report-btn" id="copyResponseDraftBtn" onclick="HomeView.copyResponseDraft(${r.stars})" style="margin:0; padding:4px 8px; font-size:11px; display:inline-flex; align-items:center; gap:4px;">
+            ${svgIcon('clipboard')} Copiar Borrador
+          </button>
+        </div>
+        <p style="font-size:13px; line-height:1.5; color:var(--text); margin:0; font-style:italic;">
+          "${draftText}"
+        </p>
+      </div>
+    `;
 
     const modalHtml = `
       <div class="modal-overlay active" id="reviewDetailModal" onclick="if(event.target === this) HomeView.closeReviewDetailModal()">
@@ -824,6 +853,7 @@ const HomeView = {
             <blockquote class="modal-quote">"${r.text}"</blockquote>
             
             ${responseHtml}
+            ${assistantHtml}
           </div>
         </div>
       </div>
@@ -842,6 +872,36 @@ const HomeView = {
       }
     };
     document.addEventListener('keydown', window._escReviewDetailHandler);
+  },
+
+  async copyResponseDraft(stars) {
+    const drafts = {
+      5: "¡Muchas gracias por tu excelente reseña! Nos alegra saber que disfrutaste de tu visita a La Crêpe Parisienne. Nuestro equipo trabaja día a día para brindar la mejor hospitalidad y calidad. ¡Esperamos verte pronto de nuevo!",
+      4: "¡Gracias por visitarnos y por tu calificación de 4 estrellas! Nos alegra que hayas tenido una gran experiencia. Si tienes alguna sugerencia para ayudarnos a alcanzar las 5 estrellas en tu próxima visita, no dudes en compartirla. ¡Te esperamos pronto!",
+      3: "Agradecemos tu visita y tus comentarios. Lamentamos no haber cumplido por completo tus expectativas en esta ocasión. Nos gustaría conocer más detalles sobre tu experiencia para poder mejorar. Por favor, compártenos tus comentarios para poder darles seguimiento.",
+      2: "Agradecemos el tiempo dedicado a compartir tus comentarios. Lamentamos mucho que tu visita haya resultado decepcionante y no cumpliera con los estándares de calidad que nos caracterizan. Tus observaciones sobre los puntos a mejorar ya han sido compartidas con el equipo operativo para su atención inmediata. Si deseas aportar más detalles, por favor contáctanos directamente a oliver.gonzalez@lacrepeparisienne.com.",
+      1: "Lamentamos profundamente la mala experiencia y el fallo en nuestro servicio. En La Crêpe Parisienne la calidad y la hospitalidad son nuestros pilares, y es evidente que en esta ocasión no estuvimos a la altura. Agradecemos que nos lo hagas saber para tomar medidas correctivas inmediatas. Nos gustaría ponernos en contacto contigo para dar seguimiento personal; por favor escríbenos a oliver.gonzalez@lacrepeparisienne.com detallando la fecha y sucursal de tu visita.",
+      default: "Lamentamos sinceramente la mala experiencia de tu visita. Agradecemos tus comentarios para ayudarnos a mejorar. Por favor contáctanos en oliver.gonzalez@lacrepeparisienne.com para poder dar un seguimiento personalizado a tu caso."
+    };
+    const text = drafts[stars] || drafts.default;
+    
+    try {
+      await navigator.clipboard.writeText(text);
+      const btn = document.getElementById('copyResponseDraftBtn');
+      if (btn) {
+        const original = btn.innerHTML;
+        btn.innerHTML = '✓ Copiado';
+        btn.style.background = 'var(--verde)';
+        btn.style.color = '#fff';
+        setTimeout(() => {
+          btn.innerHTML = original;
+          btn.style.background = '';
+          btn.style.color = '';
+        }, 2000);
+      }
+    } catch (e) {
+      console.warn('Copy draft failed', e);
+    }
   },
 
   closeReviewDetailModal() {
@@ -895,7 +955,7 @@ const HomeView = {
       const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
       const timeStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
       return `
-        <div class="sidebar-review-card ${isNeg ? 'neg' : ''}">
+        <div class="sidebar-review-card ${isNeg ? 'neg' : ''}" onclick="HomeView.openReviewDetailModal('${r.globalId}')">
           <div class="src-head">
             <span class="src-branch">${r.sucursal}</span>
             <span class="src-date">${timeStr}</span>
