@@ -18,6 +18,20 @@ const CHANGELOG_EPOCAS = [
     `,
     versions: [
       {
+        v: 'v3.2.4.altair', date: 'Mayo 2026',
+        items: [
+          'Alineación estética: Reemplazada la línea divisoria punteada/discontinua en la tarjeta de Alerta Activa por una línea divisoria continua y sutil, idéntica a la empleada en la sección de Destacados.',
+          'Glow perimetral: Corregido el efecto hover en las tarjetas de Alerta Activa y Lo más destacado para que emitan un destello (glow) y color de borde congruentes con su color respectivo (rojo para alerta y amarillo/oro para destacado) en lugar de verde.'
+        ]
+      },
+      {
+        v: 'v3.2.3.altair', date: 'Mayo 2026',
+        items: [
+          'Corrección de transición: Subsanado el error que causaba que la vista de dashboards quedara en blanco al cambiar el mes del selector de periodo al re-inicializar el IntersectionObserver.',
+          'Alineación de márgenes: Ajustada la anchura máxima del selector de periodo a 1196px para que mantenga perfecta sintonía y alineación con los márgenes del resto de los elementos y gráficas de la página.'
+        ]
+      },
+      {
         v: 'v3.2.2.altair', date: 'Mayo 2026',
         items: [
           'Reporte Especial: Correccion del contraste de color y legibilidad en el texto "Resumen Trimestral" (Reporte Especial) dentro del hero de dashboards, independientemente del modo claro o oscuro.',
@@ -361,7 +375,7 @@ const AboutView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
-        Dashboard de Reseñas · Región Guadalajara · v3.2.2.altair · 2026
+        Dashboard de Reseñas · Región Guadalajara · v3.2.4.altair · 2026
       </footer>`;
 
     requestAnimationFrame(() => initReveal());

@@ -1755,11 +1755,15 @@ a{color:inherit;text-decoration:none;}
 .alert-strip.clickable {
   cursor: pointer;
 }
-.alert-strip.clickable:hover,
+.alert-strip.clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(178, 58, 43, 0.3) !important;
+  border-color: var(--alerta) !important;
+}
 .highlight-box:hover {
   transform: translateY(-4px);
-  box-shadow: var(--sombra-lg) !important;
-  border-color: var(--sage) !important;
+  box-shadow: 0 8px 24px rgba(184, 144, 47, 0.3) !important;
+  border-color: var(--oro) !important;
 }
 .watermark-stars {
   position: absolute;

@@ -167,7 +167,7 @@ const HomeView = {
           </div>
           <div class="alert-content" style="z-index:1; position:relative; flex-grow:1; display:flex; flex-direction:column; justify-content:space-between;">
             <div class="alert-text">${conAlerta.length} sucursal${conAlerta.length !== 1 ? 'es' : ''} con alerta activa (${totalNegativasActivas} reseñas negativas). Reportar a Marketing.</div>
-            <div style="border-top: 1.5px dashed var(--border-strong); margin-top: 16px; padding-top: 16px;">
+            <div style="border-top: 1px solid var(--border); margin-top: 16px; padding-top: 16px;">
               <div class="alert-pills" style="margin-top:0;">
                 ${conAlerta.map(s => `<button class="alert-pill" onclick="event.stopPropagation(); HomeView.openAlertModal('${s.id}')">${s.abr} · ${s.curr.negativeCount}</button>`).join('')}
               </div>
