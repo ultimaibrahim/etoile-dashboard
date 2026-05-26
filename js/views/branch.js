@@ -250,9 +250,28 @@ const BranchView = {
 
   toggleMonthDropdown(event) {
     event.stopPropagation();
-    const dropdown = document.getElementById('branchMonthDropdown');
-    if (dropdown) {
-      dropdown.classList.toggle('open');
+    if (window.innerWidth < 600) {
+      const activeYear = DataLoader.currentYear;
+      const activeMonth = DataLoader.currentMonth;
+      const availableMonths = DataLoader.manifest[activeYear] || [];
+      const sortedMonths = [...availableMonths].sort((a, b) => a - b);
+      const options = sortedMonths.map(m => {
+        const monthName = new Date(activeYear, m - 1).toLocaleString('es-ES', { month: 'long' });
+        const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+        return {
+          value: m,
+          label: `${capMonth} ${activeYear}`,
+          active: m === activeMonth
+        };
+      });
+      showBottomSheet('Seleccionar Periodo', options, (val) => {
+        BranchView.selectMonthOption(parseInt(val));
+      });
+    } else {
+      const dropdown = document.getElementById('branchMonthDropdown');
+      if (dropdown) {
+        dropdown.classList.toggle('open');
+      }
     }
   },
 

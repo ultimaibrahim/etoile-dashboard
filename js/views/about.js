@@ -18,12 +18,40 @@ const CHANGELOG_EPOCAS = [
     `,
     versions: [
       {
+        v: 'v3.4.0.altair', date: 'Mayo 2026',
+        items: [
+          'Consolidación Tipográfica: Unificado el sistema de fuentes tipográficas para usar Plus Jakarta Sans, Playfair Display y JetBrains Mono por defecto en todos los modos.',
+          'Botones y Safe Areas: Soporte completo para env(safe-area-inset-bottom) en la barra de navegación móvil y adaptaciones de padding para evitar conflictos con la barra de gestos de iOS.',
+          'Bottom Sheet Drawers: Implementado un menú deslizante inferior (Bottom Sheet) premium para selectores en móvil en lugar de los desplegables flotantes tradicionales.',
+          'Compact KPIs: Reorganizada la cuadrícula de scorecards de KPIs regionales a un formato de 2x2 en dispositivos móviles para ahorrar espacio vertical.',
+          'Optimización de Autoplay: El carrusel de opiniones recientes respeta la directiva prefers-reduced-motion y deshabilita el auto-scroll si el usuario lo solicita.',
+          'Responsividad de Ejes en Gráficos: Títulos y leyendas de ejes Chart.js optimizados para pantallas pequeñas (ocultando descripciones repetitivas en móvil) y padding dinámico en gráficos de clasificación.'
+        ]
+      },
+      {
+        v: 'v3.3.1.altair', date: 'Mayo 2026',
+        items: [
+          'Dual Y-Axis en Volumen: Gráfico de volumen de opiniones optimizado para usar doble eje Y agrupado, destacando quejas negativas en el eje derecho y evitando el aplastamiento por escala.',
+          'Etiquetas de Desviación en Ranking: Visualización del puntaje exacto y su desviación con respecto a la meta (ej. +0.20 / -0.40) al final de cada barra en el ranking de sucursales, junto con una línea vertical de meta en 4.60.',
+          'Línea de Meta en Tendencia YTD: Ajustado el rango del eje Y de 4.5 a 5.0 y añadida la línea de meta horizontal en 4.60.',
+          'Distribución de Estrellas Horizontal: Barra horizontal interactiva que reemplaza la dona anterior, mostrando cantidades y porcentajes directamente sin recortes.'
+        ]
+      },
+      {
+        v: 'v3.3.0.altair', date: 'Mayo 2026',
+        items: [
+          'Cuadro de Mando Macro: Rediseño completo de la sección de dashboards con un layout de 4 gráficos interactivos (Volumen Apilado, Ranking de Calificación, Distribución de Estrellas y Tendencia Regional YTD).',
+          'Alertas Proactivas: Nuevo de módulo de visualización ejecutiva en dashboards para identificar de forma proactiva caídas de rating, bajo desempeño, focos de incidencias y quejas desatendidas.',
+          'Eliminación de Respuestas de IA: Remoción definitiva de la funcionalidad de borradores de respuesta asistidos por inteligencia artificial en el modal de detalles.',
+          'Mejora de Contraste Premium: Ajustes de opacidad en superficies glassmorphic y color de fondo en tema oscuro para asegurar legibilidad bajo la interfaz Crystal.'
+        ]
+      },
+      {
         v: 'v3.2.5.altair', date: 'Mayo 2026',
         items: [
           'UI Premium: Estética Crystal & Squircle condicional activada con atributo html[data-ui-premium="true"] (tipografías Plus Jakarta Sans y Playfair Display, radios de 20px, y efectos glassmorphic con blur de 14px).',
           'Botón flotante premium: Integración de control en la esquina inferior derecha con transición de barrido radial animada (radial clip-path sweep) al cambiar de tema.',
           'Previsualizador interactivo: Widget comparador Antes vs Después (split card con slider deslizante) en la vista Acerca de para evaluar la nueva propuesta gráfica.',
-          'Asistente de respuestas AI: Borradores estáticos de respuesta profesional según el número de estrellas en el modal de detalle de reseñas (con botón de copiado rápido al portapapeles).',
           'Interacciones y Modal: Habilitada la apertura de la ficha detallada de reseñas al hacer clic en elementos del feed principal, la barra de búsqueda lateral y la vista mensual por sucursal.'
         ]
       },
@@ -273,41 +301,6 @@ const AboutView = {
         </div>
       </section>
 
-      <!-- COMPARADOR DE UI (Antes vs Después) -->
-      <section class="section r">
-        <div class="section-head">
-          <div class="section-title">Previsualizador <span class="accent">de Diseño Premium</span></div>
-        </div>
-        <p style="color:var(--text-muted);font-size:14px;line-height:1.6;margin-bottom:16px;">
-          Arrastra el control deslizante central para comparar la interfaz actual plana frente a la nueva propuesta premium "Crystal & Squircle" (tipografías refinadas, bordes suavizados y efecto de vidrio esmerilado).
-        </p>
-        <div class="comp-slider-card">
-          <div class="comp-slider-wrapper">
-            <div class="comp-layer before">
-              <div class="comp-content-box">
-                <span class="comp-badge">Diseño Actual</span>
-                <h3 class="comp-title">Interfaz Clásica</h3>
-                <p class="comp-desc">Diseño plano con tipografías estándar y esquinas angulares de 14px.</p>
-              </div>
-            </div>
-            <div class="comp-layer after">
-              <div class="comp-content-box">
-                <span class="comp-badge">UI Premium</span>
-                <h3 class="comp-title">Crystal & Squircle</h3>
-                <p class="comp-desc">Tipografía Playfair Serif, Outfit para números, esquinas de 20px y fondos de cristal.</p>
-              </div>
-            </div>
-            <div class="comp-slider-bar"></div>
-            <div class="comp-slider-button">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 7l-5 5 5 5M16 7l5 5-5 5" />
-              </svg>
-            </div>
-            <span class="comp-label-tag before">Antes</span>
-            <span class="comp-label-tag after">Después</span>
-          </div>
-        </div>
-      </section>
 
       <!-- CHANGELOG oculto -->
       <div id="changelogPanel" style="display:none;overflow:hidden;transition:max-height 0.4s ease;">
@@ -421,57 +414,12 @@ const AboutView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
-        Dashboard de Reseñas · Región Guadalajara · v3.2.5.altair · 2026
+        Dashboard de Reseñas · Región Guadalajara · v3.4.0.altair · 2026
       </footer>`;
 
     requestAnimationFrame(() => {
       initReveal();
-      AboutView.initSlider();
     });
-  },
-
-  initSlider() {
-    const container = document.querySelector('.comp-slider-wrapper');
-    if (!container) return;
-    const bar = container.querySelector('.comp-slider-bar');
-    const btn = container.querySelector('.comp-slider-button');
-    const afterLayer = container.querySelector('.comp-layer.after');
-    
-    let isDragging = false;
-    
-    const update = (clientX) => {
-      const rect = container.getBoundingClientRect();
-      let x = clientX - rect.left;
-      if (x < 0) x = 0;
-      if (x > rect.width) x = rect.width;
-      const pct = (x / rect.width) * 100;
-      
-      bar.style.left = `${pct}%`;
-      if (btn) btn.style.left = `${pct}%`;
-      afterLayer.style.clipPath = `inset(0 0 0 ${pct}%)`;
-    };
-    
-    const onStart = (e) => {
-      isDragging = true;
-      update(e.touches ? e.touches[0].clientX : e.clientX);
-    };
-    
-    const onMove = (e) => {
-      if (!isDragging) return;
-      update(e.touches ? e.touches[0].clientX : e.clientX);
-    };
-    
-    const onEnd = () => {
-      isDragging = false;
-    };
-    
-    container.addEventListener('mousedown', onStart);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onEnd);
-    
-    container.addEventListener('touchstart', onStart, { passive: true });
-    window.addEventListener('touchmove', onMove, { passive: true });
-    window.addEventListener('touchend', onEnd);
   },
 
   toggleChangelog() {

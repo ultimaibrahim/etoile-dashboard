@@ -160,3 +160,123 @@ function computeDynamicInsights(reviews) {
   
   return { alertTheme: theme, problemas };
 }
+
+function createSparklineSVG(data, width = 120, height = 36, color = '#6B907D') {
+  if (!Array.isArray(data) || data.length < 2) {
+    return `<svg width="${width}" height="${height}" class="sparkline"></svg>`;
+  }
+  
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min;
+  const padding = 2;
+  
+  const points = data.map((val, index) => {
+    const x = (index / (data.length - 1)) * (width - 2 * padding) + padding;
+    const y = range === 0 
+      ? height / 2 
+      : height - padding - ((val - min) / range) * (height - 2 * padding);
+    return { x, y };
+  });
+
+  let pathD = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    pathD += ` L ${points[i].x} ${points[i].y}`;
+  }
+
+  const fillD = `${pathD} L ${points[points.length - 1].x} ${height} L ${points[0].x} ${height} Z`;
+  const gradId = `spark-grad-${Math.random().toString(36).substr(2, 9)}`;
+
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" class="sparkline" style="overflow: visible;">
+      <defs>
+        <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${color}" stop-opacity="0.25" />
+          <stop offset="100%" stop-color="${color}" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      <path d="${fillD}" fill="url(#${gradId})" />
+      <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="${points[points.length - 1].x}" cy="${points[points.length - 1].y}" r="3" fill="${color}" />
+    </svg>
+  `;
+}
+
+/**
+ * Abre una Bottom Sheet (hoja deslizante inferior) en móvil.
+ * @param {string} title - Título de la Bottom Sheet.
+ * @param {Array<{value: any, label: string, active: boolean}>} options - Opciones a mostrar.
+ * @param {Function} onSelect - Callback que recibe la opción seleccionada.
+ */
+function showBottomSheet(title, options, onSelect) {
+  const existing = document.getElementById('globalBottomSheet');
+  if (existing) existing.remove();
+
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+
+  const optionsHtml = options.map(opt => {
+    const activeClass = opt.active ? ' active' : '';
+    const checkIcon = opt.active ? svgIcon('check') : '';
+    return `
+      <div class="bottom-sheet-option${activeClass}" data-value="${opt.value}">
+        <span>${opt.label}</span>
+        <span class="bottom-sheet-check">${checkIcon}</span>
+      </div>
+    `;
+  }).join('');
+
+  const html = `
+    <div class="bottom-sheet-overlay" id="globalBottomSheet">
+      <div class="bottom-sheet-container">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-header">
+          <h3 class="bottom-sheet-title">${title}</h3>
+          <button class="bottom-sheet-close" id="closeBottomSheetBtn">×</button>
+        </div>
+        <div class="bottom-sheet-options">
+          ${optionsHtml}
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', html);
+
+  const overlay = document.getElementById('globalBottomSheet');
+
+  requestAnimationFrame(() => {
+    overlay.classList.add('active');
+  });
+
+  const closeBottomSheet = () => {
+    overlay.classList.remove('active');
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+    setTimeout(() => {
+      overlay.remove();
+    }, 300);
+  };
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeBottomSheet();
+  });
+  document.getElementById('closeBottomSheetBtn').addEventListener('click', closeBottomSheet);
+
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      closeBottomSheet();
+      document.removeEventListener('keydown', escHandler);
+    }
+  };
+  document.addEventListener('keydown', escHandler);
+
+  overlay.querySelectorAll('.bottom-sheet-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const val = opt.getAttribute('data-value');
+      onSelect(val);
+      closeBottomSheet();
+    });
+  });
+}
+

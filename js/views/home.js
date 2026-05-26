@@ -23,11 +23,17 @@ const HomeView = {
     const currMonth = DataLoader.currentMonth;
     const prevMonth = DataLoader.previousMonth;
 
+    // Load YTD months concurrently for current year to calculate sparklines
+    const ytdMonths = (DataLoader.manifest && DataLoader.manifest[currYear]) 
+      ? [...DataLoader.manifest[currYear]].filter(m => m <= currMonth).sort((a,b) => a - b)
+      : [currMonth];
+
     const hasPrevMonth = DataLoader.hasMonth(prevYear, prevMonth);
+    const loadPromises = ytdMonths.map(m => DataLoader.loadMonth(currYear, m));
     if (hasPrevMonth) {
-      await DataLoader.loadMonth(prevYear, prevMonth);
+      loadPromises.push(DataLoader.loadMonth(prevYear, prevMonth));
     }
-    await DataLoader.loadMonth(currYear, currMonth);
+    await Promise.all(loadPromises);
 
     const prevStats = hasPrevMonth ? DataLoader.getAllBranchStats(prevYear, prevMonth) : {};
     const currStats = DataLoader.getAllBranchStats(currYear, currMonth);
@@ -78,7 +84,19 @@ const HomeView = {
     // KPIs
     const kpiData = await Kpis.computeMonth(currYear, currMonth);
     const prevKpi = hasPrevMonth ? await Kpis.computeMonth(prevYear, prevMonth) : null;
-    const kpiSection = this._buildKpiSection(kpiData, currStats, prevKpi, capitalizedCurrMonth, currYear, capitalizedPrevMonth, hasPrevMonth);
+
+    // Compute YTD KPIs for sparklines
+    const ytdKpiPromises = ytdMonths.map(m => Kpis.computeMonth(currYear, m));
+    const ytdKpis = await Promise.all(ytdKpiPromises);
+
+    const sparklines = {
+      volumen: ytdKpis.map(k => k.volumen.ok),
+      calidad: ytdKpis.map(k => k.calidadTexto.ratio * 100),
+      rating: ytdKpis.map(k => k.global.avgRating),
+      respuestas: ytdKpis.map(k => k.tasaRespuesta.value * 100)
+    };
+
+    const kpiSection = this._buildKpiSection(kpiData, currStats, prevKpi, capitalizedCurrMonth, currYear, capitalizedPrevMonth, hasPrevMonth, sparklines);
 
     // Reviews data for Feed
     const currentData = DataLoader.getMonth(currYear, currMonth);
@@ -388,7 +406,7 @@ const HomeView = {
     });
   },
 
-  _buildKpiSection(kpi, currStats, prevKpi, monthName, year, prevMonthName, hasPrevMonth) {
+  _buildKpiSection(kpi, currStats, prevKpi, monthName, year, prevMonthName, hasPrevMonth, sparklines) {
     const missingVol = [];
     for (const meta of SUCURSALES_META) {
       const stats = currStats[meta.id] || { count: 0 };
@@ -425,6 +443,12 @@ const HomeView = {
     const negValue = `${unanswered} sin responder`;
     const negSub = `De ${kpi.tasaRespuesta.totalNegativas} negativas totales`;
 
+    // Generate sparklines SVGs
+    const volSpark = createSparklineSVG(sparklines?.volumen || [], 110, 32, volClass === 'optimal' ? '#7A9E8A' : '#c97d10');
+    const calSpark = createSparklineSVG(sparklines?.calidad || [], 110, 32, calClass === 'optimal' ? '#7A9E8A' : '#c97d10');
+    const ratSpark = createSparklineSVG(sparklines?.rating || [], 110, 32, ratClass === 'optimal' ? '#7A9E8A' : '#c62828');
+    const negSpark = createSparklineSVG(sparklines?.respuestas || [], 110, 32, negClass === 'optimal' ? '#7A9E8A' : '#c62828');
+
     return `
       <section class="section r">
         <div class="section-head">
@@ -437,7 +461,10 @@ const HomeView = {
               <span class="sc-label">Volumen de reseñas</span>
               <span class="sc-chevron">▼</span>
             </div>
-            <div class="sc-value num">${volValue}</div>
+            <div class="sc-value-row">
+              <div class="sc-value num">${volValue}</div>
+              <div class="sc-sparkline">${volSpark}</div>
+            </div>
             <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${(kpi.volumen.ok / kpi.volumen.total * 100).toFixed(0)}%"></div></div>
             <span class="badge badge-${volClass}">${volClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
             <div class="sc-details-wrapper">
@@ -452,7 +479,10 @@ const HomeView = {
               <span class="sc-label">Calidad de reseña</span>
               <span class="sc-chevron">▼</span>
             </div>
-            <div class="sc-value num">${calValue}</div>
+            <div class="sc-value-row">
+              <div class="sc-value num">${calValue}</div>
+              <div class="sc-sparkline">${calSpark}</div>
+            </div>
             <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${Math.min(kpi.calidadTexto.ratio / KpiMeta.calidadTextoMeta * 100, 100).toFixed(0)}%"></div></div>
             <span class="badge badge-${calClass}">${calClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
             <div class="sc-details-wrapper">
@@ -466,7 +496,10 @@ const HomeView = {
               <span class="sc-label">Rating mínimo regional</span>
               <span class="sc-chevron">▼</span>
             </div>
-            <div class="sc-value num">${ratValue}</div>
+            <div class="sc-value-row">
+              <div class="sc-value num">${ratValue}</div>
+              <div class="sc-sparkline">${ratSpark}</div>
+            </div>
             <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${((kpi.volumen.total - kpi.ratingMinimo.belowMin.length) / kpi.volumen.total * 100).toFixed(0)}%"></div></div>
             <span class="badge badge-${ratClass}">${ratClass === 'optimal' ? 'Cumple' : 'Crítico'}</span>
             <div class="sc-details-wrapper">
@@ -480,7 +513,10 @@ const HomeView = {
               <span class="sc-label">Respuestas a Negativas</span>
               <span class="sc-chevron">▼</span>
             </div>
-            <div class="sc-value num">${negValue}</div>
+            <div class="sc-value-row">
+              <div class="sc-value num">${negValue}</div>
+              <div class="sc-sparkline">${negSpark}</div>
+            </div>
             <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${(kpi.tasaRespuesta.totalNegativas === 0 ? 100 : (kpi.tasaRespuesta.conRespuesta / kpi.tasaRespuesta.totalNegativas * 100)).toFixed(0)}%"></div></div>
             <span class="badge badge-${negClass}">${negClass === 'optimal' ? 'Sin pendientes' : 'Atención'}</span>
             <div class="sc-details-wrapper">
@@ -807,30 +843,6 @@ const HomeView = {
       ? `<div class="modal-owner-response"><strong>Respuesta del Propietario:</strong> "${r.responseFromOwnerText}"</div>`
       : '';
 
-    // Asistente de Respuesta (AI Response Draft) por estrellas
-    const draftText = r.stars === 5 ? "¡Muchas gracias por tu excelente reseña! Nos alegra saber que disfrutaste de tu visita a La Crêpe Parisienne. Nuestro equipo trabaja día a día para brindar la mejor hospitalidad y calidad. ¡Esperamos verte pronto de nuevo!" :
-                      r.stars === 4 ? "¡Gracias por visitarnos y por tu calificación de 4 estrellas! Nos alegra que hayas tenido una gran experiencia. Si tienes alguna sugerencia para ayudarnos a alcanzar las 5 estrellas en tu próxima visita, no dudes en compartirla. ¡Te esperamos pronto!" :
-                      r.stars === 3 ? "Agradecemos tu visita y tus comentarios. Lamentamos no haber cumplido por completo tus expectativas en esta ocasión. Nos gustaría conocer más detalles sobre tu experiencia para poder mejorar. Por favor, compártenos tus comentarios para poder darles seguimiento." :
-                      r.stars === 2 ? "Agradecemos el tiempo dedicado a compartir tus comentarios. Lamentamos mucho que tu visita haya resultado decepcionante y no cumpliera con los estándares de calidad que nos caracterizan. Tus observaciones sobre los puntos a mejorar ya han sido compartidas con el equipo operativo para su atención inmediata. Si deseas aportar más detalles, por favor contáctanos directamente a oliver.gonzalez@lacrepeparisienne.com." :
-                      r.stars === 1 ? "Lamentamos profundamente la mala experiencia y el fallo en nuestro servicio. En La Crêpe Parisienne la calidad y la hospitalidad son nuestros pilares, y es evidente que en esta ocasión no estuvimos a la altura. Agradecemos que nos lo hagas saber para tomar medidas correctivas inmediatas. Nos gustaría ponernos en contacto contigo para dar seguimiento personal; por favor escríbenos a oliver.gonzalez@lacrepeparisienne.com detallando la fecha y sucursal de tu visita." :
-                      "Lamentamos sinceramente la mala experiencia de tu visita. Agradecemos tus comentarios para ayudarnos a mejorar. Por favor contáctanos en oliver.gonzalez@lacrepeparisienne.com para poder dar un seguimiento personalizado a tu caso.";
-
-    const assistantHtml = `
-      <div class="response-assistant-box" style="margin-top: 20px; padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); position: relative; z-index: 1;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap: 10px;">
-          <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); display:inline-flex; align-items:center; gap:4px;">
-            ${svgIcon('starFilled')} Asistente de Respuesta
-          </span>
-          <button class="copy-report-btn" id="copyResponseDraftBtn" onclick="HomeView.copyResponseDraft(${r.stars})" style="margin:0; padding:4px 8px; font-size:11px; display:inline-flex; align-items:center; gap:4px;">
-            ${svgIcon('clipboard')} Copiar Borrador
-          </button>
-        </div>
-        <p style="font-size:13px; line-height:1.5; color:var(--text); margin:0; font-style:italic;">
-          "${draftText}"
-        </p>
-      </div>
-    `;
-
     const modalHtml = `
       <div class="modal-overlay active" id="reviewDetailModal" onclick="if(event.target === this) HomeView.closeReviewDetailModal()">
         <div class="modal-box">
@@ -853,7 +865,6 @@ const HomeView = {
             <blockquote class="modal-quote">"${r.text}"</blockquote>
             
             ${responseHtml}
-            ${assistantHtml}
           </div>
         </div>
       </div>
@@ -874,35 +885,7 @@ const HomeView = {
     document.addEventListener('keydown', window._escReviewDetailHandler);
   },
 
-  async copyResponseDraft(stars) {
-    const drafts = {
-      5: "¡Muchas gracias por tu excelente reseña! Nos alegra saber que disfrutaste de tu visita a La Crêpe Parisienne. Nuestro equipo trabaja día a día para brindar la mejor hospitalidad y calidad. ¡Esperamos verte pronto de nuevo!",
-      4: "¡Gracias por visitarnos y por tu calificación de 4 estrellas! Nos alegra que hayas tenido una gran experiencia. Si tienes alguna sugerencia para ayudarnos a alcanzar las 5 estrellas en tu próxima visita, no dudes en compartirla. ¡Te esperamos pronto!",
-      3: "Agradecemos tu visita y tus comentarios. Lamentamos no haber cumplido por completo tus expectativas en esta ocasión. Nos gustaría conocer más detalles sobre tu experiencia para poder mejorar. Por favor, compártenos tus comentarios para poder darles seguimiento.",
-      2: "Agradecemos el tiempo dedicado a compartir tus comentarios. Lamentamos mucho que tu visita haya resultado decepcionante y no cumpliera con los estándares de calidad que nos caracterizan. Tus observaciones sobre los puntos a mejorar ya han sido compartidas con el equipo operativo para su atención inmediata. Si deseas aportar más detalles, por favor contáctanos directamente a oliver.gonzalez@lacrepeparisienne.com.",
-      1: "Lamentamos profundamente la mala experiencia y el fallo en nuestro servicio. En La Crêpe Parisienne la calidad y la hospitalidad son nuestros pilares, y es evidente que en esta ocasión no estuvimos a la altura. Agradecemos que nos lo hagas saber para tomar medidas correctivas inmediatas. Nos gustaría ponernos en contacto contigo para dar seguimiento personal; por favor escríbenos a oliver.gonzalez@lacrepeparisienne.com detallando la fecha y sucursal de tu visita.",
-      default: "Lamentamos sinceramente la mala experiencia de tu visita. Agradecemos tus comentarios para ayudarnos a mejorar. Por favor contáctanos en oliver.gonzalez@lacrepeparisienne.com para poder dar un seguimiento personalizado a tu caso."
-    };
-    const text = drafts[stars] || drafts.default;
-    
-    try {
-      await navigator.clipboard.writeText(text);
-      const btn = document.getElementById('copyResponseDraftBtn');
-      if (btn) {
-        const original = btn.innerHTML;
-        btn.innerHTML = '✓ Copiado';
-        btn.style.background = 'var(--verde)';
-        btn.style.color = '#fff';
-        setTimeout(() => {
-          btn.innerHTML = original;
-          btn.style.background = '';
-          btn.style.color = '';
-        }, 2000);
-      }
-    } catch (e) {
-      console.warn('Copy draft failed', e);
-    }
-  },
+
 
   closeReviewDetailModal() {
     const modal = document.getElementById('reviewDetailModal');
@@ -1262,9 +1245,27 @@ const HomeView = {
 
   toggleSortDropdown(event) {
     event.stopPropagation();
-    const dropdown = document.getElementById('branchSortDropdown');
-    if (dropdown) {
-      dropdown.classList.toggle('open');
+    if (window.innerWidth < 600) {
+      const options = [
+        { value: 'default', label: 'Predeterminado', active: this.sortBy === 'default' },
+        { value: 'rating-desc', label: 'Mayor Rating', active: this.sortBy === 'rating-desc' },
+        { value: 'rating-asc', label: 'Menor Rating', active: this.sortBy === 'rating-asc' },
+        { value: 'volume-desc', label: 'Mayor Volumen', active: this.sortBy === 'volume-desc' }
+      ];
+      showBottomSheet('Ordenar Sucursales', options, (val) => {
+        const labels = {
+          'default': 'Predeterminado',
+          'rating-desc': 'Mayor Rating',
+          'rating-asc': 'Menor Rating',
+          'volume-desc': 'Mayor Volumen'
+        };
+        HomeView.selectSortOption(val, labels[val]);
+      });
+    } else {
+      const dropdown = document.getElementById('branchSortDropdown');
+      if (dropdown) {
+        dropdown.classList.toggle('open');
+      }
     }
   },
 
@@ -1445,9 +1446,28 @@ const HomeView = {
 
   toggleHeroMonthDropdown(event) {
     event.stopPropagation();
-    const dropdown = document.getElementById('heroMonthDropdown');
-    if (dropdown) {
-      dropdown.classList.toggle('open');
+    if (window.innerWidth < 600) {
+      const currYear = DataLoader.currentYear;
+      const currMonth = DataLoader.currentMonth;
+      const availableMonths = DataLoader.manifest[currYear] || [];
+      const sortedMonths = [...availableMonths].sort((a, b) => a - b);
+      const options = sortedMonths.map(m => {
+        const monthName = MONTH_NAMES[m - 1];
+        const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+        return {
+          value: m,
+          label: `${capMonth} ${currYear}`,
+          active: m === currMonth
+        };
+      });
+      showBottomSheet('Seleccionar Periodo', options, (val) => {
+        HomeView.selectHeroMonthOption(parseInt(val));
+      });
+    } else {
+      const dropdown = document.getElementById('heroMonthDropdown');
+      if (dropdown) {
+        dropdown.classList.toggle('open');
+      }
     }
   },
 
@@ -1463,11 +1483,29 @@ const HomeView = {
 
   toggleSidebarSentimentDropdown(event) {
     event.stopPropagation();
-    const dropdown = document.getElementById('sidebarSentimentDropdown');
-    const branchDropdown = document.getElementById('sidebarBranchDropdown');
-    if (branchDropdown) branchDropdown.classList.remove('open');
-    if (dropdown) {
-      dropdown.classList.toggle('open');
+    if (window.innerWidth < 600) {
+      const options = [
+        { value: 'todas', label: 'Todas las calificaciones', active: this.feedSentiment === 'todas' },
+        { value: 'positivas', label: 'Positivas (4-5★)', active: this.feedSentiment === 'positivas' },
+        { value: 'neutras', label: 'Neutras (3★)', active: this.feedSentiment === 'neutras' },
+        { value: 'negativas', label: 'Negativas (1-2★)', active: this.feedSentiment === 'negativas' }
+      ];
+      showBottomSheet('Filtrar por Calificación', options, (val) => {
+        const labels = {
+          'todas': 'Todas las calificaciones',
+          'positivas': 'Positivas (4-5★)',
+          'neutras': 'Neutras (3★)',
+          'negativas': 'Negativas (1-2★)'
+        };
+        HomeView.selectSidebarSentimentOption(val, labels[val]);
+      });
+    } else {
+      const dropdown = document.getElementById('sidebarSentimentDropdown');
+      const branchDropdown = document.getElementById('sidebarBranchDropdown');
+      if (branchDropdown) branchDropdown.classList.remove('open');
+      if (dropdown) {
+        dropdown.classList.toggle('open');
+      }
     }
   },
 
@@ -1492,11 +1530,27 @@ const HomeView = {
 
   toggleSidebarBranchDropdown(event) {
     event.stopPropagation();
-    const dropdown = document.getElementById('sidebarBranchDropdown');
-    const sentimentDropdown = document.getElementById('sidebarSentimentDropdown');
-    if (sentimentDropdown) sentimentDropdown.classList.remove('open');
-    if (dropdown) {
-      dropdown.classList.toggle('open');
+    if (window.innerWidth < 600) {
+      const options = [
+        { value: 'todas', label: 'Todas las sucursales', active: this.feedBranch === 'todas' },
+        ...SUCURSALES_META.map(s => ({
+          value: s.nombre,
+          label: s.abr,
+          active: this.feedBranch === s.nombre
+        }))
+      ];
+      showBottomSheet('Filtrar por Sucursal', options, (val) => {
+        const branchMeta = SUCURSALES_META.find(s => s.nombre === val);
+        const label = branchMeta ? branchMeta.abr : 'Todas las sucursales';
+        HomeView.selectSidebarBranchOption(val, label);
+      });
+    } else {
+      const dropdown = document.getElementById('sidebarBranchDropdown');
+      const sentimentDropdown = document.getElementById('sidebarSentimentDropdown');
+      if (sentimentDropdown) sentimentDropdown.classList.remove('open');
+      if (dropdown) {
+        dropdown.classList.toggle('open');
+      }
     }
   },
 

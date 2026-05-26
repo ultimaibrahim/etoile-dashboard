@@ -1,5 +1,5 @@
 /**
- * views/dashboards.js — Vista de gráficas: YTD y Volumen con Stacked Bar
+ * views/dashboards.js — Vista de gráficas: YTD, Alertas Proactivas y 4 Gráficas Analíticas
  */
 
 const DashboardsView = {
@@ -8,15 +8,18 @@ const DashboardsView = {
     const currYear = DataLoader.currentYear;
     const currMonth = DataLoader.currentMonth;
 
-    // Load YTD data for current year
+    // Load YTD data for current year concurrently
     let ytdReviews = [];
     if (DataLoader.manifest && DataLoader.manifest[currYear]) {
-      for (const m of DataLoader.manifest[currYear]) {
-        const d = await DataLoader.loadMonth(currYear, m);
+      const months = DataLoader.manifest[currYear];
+      const monthDataList = await Promise.all(
+        months.map(m => DataLoader.loadMonth(currYear, m))
+      );
+      monthDataList.forEach(d => {
         if (d && d.reviews) {
           ytdReviews = ytdReviews.concat(d.reviews);
         }
-      }
+      });
     }
 
     const currStats = DataLoader.getAllBranchStats(currYear, currMonth);
@@ -56,30 +59,107 @@ const DashboardsView = {
       };
     });
 
-    const sortedVol = [...branches].sort((a, b) => b.curr.count - a.curr.count);
+    // Compute Proactive Operational Alerts
+    const alerts = [];
+    const maxNegativeCount = Math.max(...branches.map(b => b.curr.negativeCount));
 
-    const trends = [...branches].sort((a, b) => b.curr.count - a.curr.count).map(s => {
-      const pYtd = Math.max(0, ((s.ytd.avg - 1.0) / 4.0 * 100));
-      const pC = Math.max(0, ((s.curr.score - 1.0) / 4.0 * 100));
-      const delta = s.curr.score > 0 && s.ytd.avg > 0 ? (s.curr.score - s.ytd.avg).toFixed(2) : '0.00';
-      const dClass = Number(delta) > 0 ? 'up' : 'flat';
-      const dStr = Number(delta) > 0 ? `+${delta}` : delta;
-      const currVal = s.curr.score > 0 ? s.curr.score.toFixed(2) : '—';
-      const ytdVal = s.ytd.avg > 0 ? s.ytd.avg.toFixed(2) : '—';
-      return `<div class="trend-row">
-        <div class="trend-row-header">
-          <span class="name">${s.abr}</span>
-          <span class="vals num">
-            ${ytdVal} → <span class="now">${currVal}</span>
-            <span class="delta ${dClass}">${dStr}</span>
-          </span>
+    branches.forEach(b => {
+      const currScore = b.curr.score;
+      const currCount = b.curr.count;
+      const ytdAvg = b.ytd.avg;
+      const negativeCount = b.curr.negativeCount;
+
+      // Count unreplied negative reviews in current month
+      const bReviews = DataLoader.getReviewsForBranch(currYear, currMonth, b.id);
+      const unrepliedCount = bReviews.filter(r => r.stars <= 2 && (!r.responseFromOwnerText || r.responseFromOwnerText.trim() === '')).length;
+
+      // 1. Rating Drop: currScore < ytdAvg - 0.20
+      if (currCount > 0 && ytdAvg > 0 && currScore < ytdAvg - 0.20) {
+        alerts.push({
+          type: 'critical',
+          title: 'Caída de Calificación',
+          tag: 'Crítico',
+          branch: b.nombre,
+          icon: 'alert',
+          desc: `${b.nombre} promedió ${currScore.toFixed(2)} ★ en el mes, una desviación de -${(ytdAvg - currScore).toFixed(2)} ★ respecto a su promedio histórico del año (${ytdAvg.toFixed(2)} ★).`
+        });
+      }
+
+      // 2. Low Performer: currScore < 4.60
+      if (currCount > 0 && currScore < KpiMeta.ratingMinimo) {
+        alerts.push({
+          type: 'attention',
+          title: 'Bajo la Meta Regional',
+          tag: 'Atención',
+          branch: b.nombre,
+          icon: 'alert',
+          desc: `${b.nombre} promedió ${currScore.toFixed(2)} ★, quedando por debajo del estándar mínimo de ${KpiMeta.ratingMinimo.toFixed(2)} ★.`
+        });
+      }
+
+      // 3. Foco de Incidencias: highest negative count (if negativeCount > 0)
+      if (negativeCount > 0 && negativeCount === maxNegativeCount) {
+        alerts.push({
+          type: 'critical',
+          title: 'Foco de Incidencias',
+          tag: 'Crítico',
+          branch: b.nombre,
+          icon: 'alert',
+          desc: `${b.nombre} registró la mayor cantidad de quejas del periodo con ${negativeCount} reseña${negativeCount > 1 ? 's' : ''} crítica${negativeCount > 1 ? 's' : ''} (1-2 ★).`
+        });
+      }
+
+      // 4. Quejas sin Respuesta: unrepliedCount > 0
+      if (unrepliedCount > 0) {
+        alerts.push({
+          type: 'attention',
+          title: 'Quejas sin Respuesta',
+          tag: 'Pendiente',
+          branch: b.nombre,
+          icon: 'calendar',
+          desc: `${b.nombre} cuenta con ${unrepliedCount} reseña${unrepliedCount > 1 ? 's' : ''} crítica${unrepliedCount > 1 ? 's' : ''} de clientes sin respuesta del propietario.`
+        });
+      }
+
+      // 5. Líder Regional: score >= 4.80 y count >= 3
+      if (currScore >= 4.80 && currCount >= 3) {
+        alerts.push({
+          type: 'optimal',
+          title: 'Líder Regional',
+          tag: 'Destacado',
+          branch: b.nombre,
+          icon: 'starFilled',
+          desc: `${b.nombre} mantiene un nivel sobresaliente con un promedio de ${currScore.toFixed(2)} ★ en ${currCount} opiniones recibidas.`
+        });
+      }
+    });
+
+    // Fallback if no alerts
+    if (alerts.length === 0) {
+      alerts.push({
+        type: 'optimal',
+        title: 'Operación Estable',
+        tag: 'Estable',
+        branch: 'General GDL',
+        icon: 'check',
+        desc: 'Sin desviaciones críticas ni alertas de desempeño detectadas en las sucursales para este periodo.'
+      });
+    }
+
+    const activeAlertsCount = alerts.filter(a => a.tag !== 'Estable').length;
+
+    const alertsHtml = alerts.map(a => `
+      <div class="proactive-alert-card ${a.type}">
+        <div class="pac-header">
+          <div class="pac-title-wrap">
+            <span class="pac-icon">${svgIcon(a.icon)}</span>
+            <span class="pac-branch">${a.branch}</span>
+          </div>
+          <span class="pac-tag">${a.tag}</span>
         </div>
-        <div class="trend-stack">
-          <div class="trend-track"><div class="bar-fill bar-hist" data-w="${pYtd.toFixed(1)}"></div></div>
-          <div class="trend-track"><div class="bar-fill bar-curr" data-w="${pC.toFixed(1)}"></div></div>
-        </div>
-      </div>`;
-    }).join('');
+        <p class="pac-desc">${a.desc}</p>
+      </div>
+    `).join('');
 
     document.getElementById('app').innerHTML = `
       ${buildTopbar(false)}
@@ -131,30 +211,58 @@ const DashboardsView = {
         </div>
       </div>
 
-      <div class="home-grid-2" style="margin-top: 24px;">
+      <div class="home-grid-2">
         <section class="section r">
-          <div class="section-head" style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px;">
-            <div>
-              <div class="section-title">Volumen <span class="accent">${capitalizedCurrMonth}</span></div>
-              <span class="section-sub">${currGlobal.totalReviews} reseñas · Negativas vs Positivas/Neutrales</span>
-            </div>
+          <div class="section-head">
+            <div class="section-title">Volumen de Reseñas <span class="accent">${capitalizedCurrMonth}</span></div>
+            <span class="section-sub">${currGlobal.totalReviews} reseñas · Negativas vs Positivas/Neutrales</span>
           </div>
           <div class="chart-card"><div class="chart-wrap"><canvas id="volChart"></canvas></div></div>
         </section>
 
         <section class="section r">
           <div class="section-head">
-            <div class="section-title">Acumulado (YTD) <span class="accent">vs</span> ${capitalizedCurrMonth}</div>
-            <span class="section-sub">Comparativa del desempeño del mes contra el promedio del año actual.</span>
+            <div class="section-title">Ranking de Calificación <span class="accent">${capitalizedCurrMonth}</span></div>
+            <span class="section-sub">Calificación promedio por sucursal en el mes.</span>
           </div>
-          <div class="chart-card">
-            <div class="legend">
-              <div class="legend-item"><span class="legend-swatch hist"></span> YTD ${currYear}</div>
-              <div class="legend-item"><span class="legend-swatch curr"></span> ${capitalizedCurrMonth} ${currYear}</div>
-            </div>
-            ${trends}
-          </div>
+          <div class="chart-card"><div class="chart-wrap"><canvas id="rankingChart"></canvas></div></div>
         </section>
+
+        <section class="section r">
+          <div class="section-head">
+            <div class="section-title">Distribución de Estrellas <span class="accent">${capitalizedCurrMonth}</span></div>
+            <span class="section-sub">Desglose de calificaciones de 1 a 5 estrellas.</span>
+          </div>
+          <div class="chart-card"><div class="chart-wrap"><canvas id="distChart"></canvas></div></div>
+        </section>
+
+        <section class="section r">
+          <div class="section-head">
+            <div class="section-title">Tendencia Regional <span class="accent">YTD</span></div>
+            <span class="section-sub">Evolución de la calificación promedio regional durante el año.</span>
+          </div>
+          <div class="chart-card"><div class="chart-wrap"><canvas id="trendChart"></canvas></div></div>
+        </section>
+      </div>
+
+      <div class="proactive-alerts-container">
+        <div class="proactive-alerts-toggle-container">
+          <button class="alerts-toggle-btn ${alerts.some(a => a.type === 'critical') ? 'has-critical' : ''}" data-count="${activeAlertsCount}" onclick="DashboardsView.toggleAlerts(event)">
+            <span class="toggle-icon-wrap">${svgIcon('alert')}</span>
+            <span class="toggle-text">Ver Alertas Operativas Proactivas (${activeAlertsCount})</span>
+            <span class="toggle-arrow">
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+        <div class="proactive-alerts-wrapper" id="proactiveAlertsWrapper">
+          <h2 class="proactive-alerts-title">${svgIcon('alert')} Alertas Operativas Proactivas</h2>
+          <div class="proactive-alerts-grid">
+            ${alertsHtml}
+          </div>
+        </div>
       </div>
 
       <footer class="footer">
@@ -163,8 +271,6 @@ const DashboardsView = {
       </footer>`;
 
     setTimeout(() => {
-      document.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.dataset.w + '%');
-
       // Close custom select on clicking outside
       const _clickOutsideHandler = (e) => {
         const dropdown = document.getElementById('dashMonthDropdown');
@@ -175,27 +281,125 @@ const DashboardsView = {
       document.removeEventListener('click', window._dashMonthDropdownOutsideHandler);
       window._dashMonthDropdownOutsideHandler = _clickOutsideHandler;
       document.addEventListener('click', _clickOutsideHandler);
-    }, 350);
 
-    const ctx = document.getElementById('volChart')?.getContext('2d');
-    if (ctx) {
-      const labels = sortedVol.map(s => s.abr);
-      const warnData = sortedVol.map(s => s.curr.negativeCount);
-      const okData = sortedVol.map(s => s.curr.count - s.curr.negativeCount);
-      const maxTotal = Math.max(...sortedVol.map(s => s.curr.count)) + 2;
-      Charts.stackedVolume(ctx, labels, okData, warnData, maxTotal);
-    }
+      // Render Charts
+      // 1. Volume Chart
+      const sortedVol = [...branches].sort((a, b) => b.curr.count - a.curr.count);
+      const ctxVol = document.getElementById('volChart')?.getContext('2d');
+      if (ctxVol) {
+        const labels = sortedVol.map(s => s.abr);
+        const warnData = sortedVol.map(s => s.curr.negativeCount);
+        const okData = sortedVol.map(s => s.curr.count - s.curr.negativeCount);
+        Charts.stackedVolume(ctxVol, labels, okData, warnData);
+      }
+
+      // 2. Ranking Chart
+      const sortedRating = [...branches].sort((a, b) => b.curr.score - a.curr.score);
+      const ctxRanking = document.getElementById('rankingChart')?.getContext('2d');
+      if (ctxRanking) {
+        const labels = sortedRating.map(s => s.abr);
+        const data = sortedRating.map(s => s.curr.score);
+        const colors = sortedRating.map(s => {
+          if (s.curr.count === 0) return darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+          return s.curr.score >= KpiMeta.ratingMinimo
+            ? (darkMode ? 'rgba(122,158,138,0.85)' : 'rgba(61,90,71,0.85)')
+            : (s.curr.score >= 4.0 
+                ? (darkMode ? 'rgba(244,201,130,0.85)' : 'rgba(201,125,16,0.85)') 
+                : (darkMode ? 'rgba(244,144,144,0.85)' : 'rgba(198,40,40,0.85)'));
+        });
+        Charts.barRanking(ctxRanking, labels, data, colors);
+      }
+
+      // 3. Distribution Chart
+      const ctxDist = document.getElementById('distChart')?.getContext('2d');
+      if (ctxDist) {
+        const currMonthData = DataLoader.getMonth(currYear, currMonth);
+        const currReviews = currMonthData ? currMonthData.reviews : [];
+        const starCounts = [0, 0, 0, 0, 0]; // 5, 4, 3, 2, 1
+        currReviews.forEach(r => {
+          if (r.stars >= 1 && r.stars <= 5) {
+            starCounts[5 - r.stars]++;
+          }
+        });
+        const labels = ['5 ★', '4 ★', '3 ★', '2 ★', '1 ★'];
+        const colors = darkMode 
+          ? ['rgba(122,158,138,0.85)', 'rgba(137,173,152,0.7)', 'rgba(244,201,130,0.85)', 'rgba(244,160,144,0.85)', 'rgba(244,116,116,0.85)']
+          : ['rgba(61,90,71,0.85)', 'rgba(122,158,138,0.7)', 'rgba(201,125,16,0.85)', 'rgba(178,58,43,0.85)', 'rgba(198,40,40,0.85)'];
+        Charts.starDistributionBar(ctxDist, labels, starCounts, colors);
+      }
+
+      // 4. Trend Chart
+      const ctxTrend = document.getElementById('trendChart')?.getContext('2d');
+      if (ctxTrend) {
+        const trendLabels = [];
+        const trendData = [];
+        for (const m of sortedMonths) {
+          const monthName = MONTH_NAMES[m - 1].substring(0, 3);
+          trendLabels.push(`${monthName} ${currYear}`);
+          const d = DataLoader.getMonth(currYear, m);
+          if (d && d.reviews && d.reviews.length > 0) {
+            const avg = d.reviews.reduce((sum, r) => sum + r.stars, 0) / d.reviews.length;
+            trendData.push(avg);
+          } else {
+            trendData.push(null);
+          }
+        }
+        const color = darkMode ? '#7A9E8A' : '#3D5A47';
+        Charts.lineTrend(ctxTrend, trendLabels, trendData, 'Promedio Regional', color);
+      }
+    }, 350);
 
     requestAnimationFrame(() => {
       initReveal();
     });
   },
 
+  toggleAlerts(event) {
+    const btn = event.currentTarget;
+    const wrapper = document.getElementById('proactiveAlertsWrapper');
+    if (!btn || !wrapper) return;
+
+    const isExpanded = btn.classList.toggle('expanded');
+    wrapper.classList.toggle('expanded');
+
+    const textEl = btn.querySelector('.toggle-text');
+    const count = btn.dataset.count || '0';
+
+    if (isExpanded) {
+      textEl.textContent = 'Ocultar Alertas Operativas Proactivas';
+    } else {
+      if (count === '0') {
+        textEl.textContent = 'Ver Estado de Operación (Estable)';
+      } else {
+        textEl.textContent = `Ver Alertas Operativas Proactivas (${count})`;
+      }
+    }
+  },
+
   toggleMonthDropdown(event) {
     event.stopPropagation();
-    const dropdown = document.getElementById('dashMonthDropdown');
-    if (dropdown) {
-      dropdown.classList.toggle('open');
+    if (window.innerWidth < 600) {
+      const currYear = DataLoader.currentYear;
+      const currMonth = DataLoader.currentMonth;
+      const availableMonths = DataLoader.manifest[currYear] || [];
+      const sortedMonths = [...availableMonths].sort((a, b) => a - b);
+      const options = sortedMonths.map(m => {
+        const monthName = MONTH_NAMES[m - 1];
+        const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+        return {
+          value: m,
+          label: `${capMonth} ${currYear}`,
+          active: m === currMonth
+        };
+      });
+      showBottomSheet('Seleccionar Periodo', options, (val) => {
+        DashboardsView.selectMonthOption(parseInt(val));
+      });
+    } else {
+      const dropdown = document.getElementById('dashMonthDropdown');
+      if (dropdown) {
+        dropdown.classList.toggle('open');
+      }
     }
   },
 
