@@ -38,13 +38,13 @@ const targetLinePlugin = {
       ctx.fillStyle = opts.color || (isDark ? '#B8902F' : '#c97d10');
       ctx.font = opts.font || 'bold 10px Plus Jakarta Sans, sans-serif';
       ctx.textAlign = scale.isHorizontal() ? 'center' : 'right';
-      ctx.textBaseline = scale.isHorizontal() ? 'top' : 'bottom';
+      ctx.textBaseline = 'bottom';
       let labelText = opts.label;
       if (window.innerWidth < 500 && labelText.includes('Regional')) {
         labelText = labelText.replace('Regional ', '');
       }
       if (scale.isHorizontal()) {
-        ctx.fillText(labelText, pixel, top + 5);
+        ctx.fillText(labelText, pixel, top - 4);
       } else {
         ctx.fillText(labelText, right - 5, pixel - 4);
       }
@@ -58,7 +58,6 @@ const rankingLabelsPlugin = {
   afterDatasetsDraw(chart) {
     const { ctx } = chart;
     const metaVal = typeof KpiMeta !== 'undefined' ? KpiMeta.ratingMinimo : 4.60;
-    const isDark = typeof darkMode !== 'undefined' && darkMode;
     const isMobile = window.innerWidth < 500;
 
     chart.data.datasets.forEach((dataset, datasetIndex) => {
@@ -72,18 +71,16 @@ const rankingLabelsPlugin = {
         const devText = `(${sign}${deviation.toFixed(2)})`;
         const labelText = isMobile ? `${val.toFixed(2)}★` : `${val.toFixed(2)} ★ ${devText}`;
 
-        const { x, y } = bar.tooltipPosition();
+        const { y } = bar.tooltipPosition();
+        const startX = chart.chartArea.left + 8;
 
         ctx.save();
         ctx.font = 'bold 10px Plus Jakarta Sans, sans-serif';
-        if (deviation >= 0) {
-          ctx.fillStyle = isDark ? '#8A9E94' : '#3D5A47';
-        } else {
-          ctx.fillStyle = isDark ? '#F49090' : '#C62828';
-        }
+        // Always white text inside the bar for high contrast
+        ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(labelText, x + 6, y);
+        ctx.fillText(labelText, startX, y);
         ctx.restore();
       });
     });
@@ -194,7 +191,7 @@ const Charts = {
     return chart;
   },
 
-  stackedVolume(ctx, labels, okData, warnData) {
+  stackedVolume(ctx, labels, okData, neutralData, warnData) {
     const fontSans = premiumUi ? 'Plus Jakarta Sans, sans-serif' : 'Helvetica Neue, Helvetica, Arial, sans-serif';
     const fontMono = premiumUi ? 'JetBrains Mono, monospace' : 'ui-monospace, SF Mono, Menlo, monospace';
 
@@ -204,20 +201,25 @@ const Charts = {
         labels,
         datasets: [
           {
-            label: 'Positivas / Neutrales',
-            data: okData,
-            backgroundColor: darkMode ? 'rgba(122,158,138,0.75)' : 'rgba(61,90,71,0.75)',
-            borderRadius: 4,
-            yAxisID: 'y',
-            maxBarThickness: 20
-          },
-          {
             label: 'Negativas (1-2★)',
             data: warnData,
             backgroundColor: darkMode ? 'rgba(244,144,144,0.85)' : 'rgba(198,40,40,0.85)',
-            borderRadius: 4,
-            yAxisID: 'yNeg',
-            maxBarThickness: 20
+            borderRadius: 0,
+            maxBarThickness: 24
+          },
+          {
+            label: 'Neutrales (3★)',
+            data: neutralData,
+            backgroundColor: darkMode ? 'rgba(244,201,130,0.85)' : 'rgba(201,125,16,0.85)',
+            borderRadius: 0,
+            maxBarThickness: 24
+          },
+          {
+            label: 'Positivas (4-5★)',
+            data: okData,
+            backgroundColor: darkMode ? 'rgba(122,158,138,0.75)' : 'rgba(61,90,71,0.75)',
+            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+            maxBarThickness: 24
           }
         ]
       },
@@ -226,6 +228,7 @@ const Charts = {
         maintainAspectRatio: false,
         scales: {
           x: {
+            stacked: true,
             grid: { display: false },
             ticks: {
               font: { size: 10, family: fontSans },
@@ -234,37 +237,13 @@ const Charts = {
             }
           },
           y: {
-            type: 'linear',
-            position: 'left',
+            stacked: true,
             beginAtZero: true,
             grid: { color: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' },
             ticks: {
               font: { size: 10, family: fontMono },
               color: darkMode ? '#8A9E94' : '#8A877C',
               precision: 0
-            },
-            title: {
-              display: window.innerWidth >= 500,
-              text: 'Positivas / Neutrales',
-              font: { size: 10, family: fontSans, weight: '600' },
-              color: darkMode ? '#8A9E94' : '#8A877C'
-            }
-          },
-          yNeg: {
-            type: 'linear',
-            position: 'right',
-            beginAtZero: true,
-            grid: { drawOnChartArea: false },
-            ticks: {
-              font: { size: 10, family: fontMono },
-              color: darkMode ? 'rgba(244,144,144,0.9)' : 'rgba(198,40,40,0.9)',
-              precision: 0
-            },
-            title: {
-              display: window.innerWidth >= 500,
-              text: 'Negativas (1-2★)',
-              font: { size: 10, family: fontSans, weight: '600' },
-              color: darkMode ? 'rgba(244,144,144,0.9)' : 'rgba(198,40,40,0.9)'
             }
           }
         },
@@ -331,7 +310,7 @@ const Charts = {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { right: window.innerWidth < 500 ? 46 : 80, top: 15 }
+          padding: { right: 20, top: 15 }
         },
         plugins: {
           legend: { display: false },
@@ -339,7 +318,8 @@ const Charts = {
             scale: 'x',
             value: typeof KpiMeta !== 'undefined' ? KpiMeta.ratingMinimo : 4.60,
             label: 'Meta 4.60',
-            borderColor: 'rgba(184, 144, 47, 0.75)',
+            borderColor: '#c97d10',
+            lineWidth: 2,
             borderDash: [4, 4]
           },
           tooltip: {
@@ -504,6 +484,7 @@ const Charts = {
         datasets: [{
           label,
           data,
+          clip: false,
           borderColor: color,
           backgroundColor: 'transparent',
           borderWidth: 3,
@@ -520,13 +501,17 @@ const Charts = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { top: 12, bottom: 8, left: 8, right: 12 }
+        },
         plugins: {
           legend: { display: false },
           targetLine: {
             scale: 'y',
             value: typeof KpiMeta !== 'undefined' ? KpiMeta.ratingMinimo : 4.60,
             label: 'Meta Regional 4.60',
-            borderColor: 'rgba(184, 144, 47, 0.75)',
+            borderColor: '#c97d10',
+            lineWidth: 2,
             borderDash: [5, 5]
           },
           tooltip: {
@@ -543,13 +528,24 @@ const Charts = {
         scales: {
           y: {
             min: 4.5,
-            max: 5.0,
-            grid: { color: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' },
+            max: 5.15,
+            grid: {
+              color: function(context) {
+                if (context.tick && context.tick.value > 5.0) {
+                  return 'transparent';
+                }
+                return darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+              }
+            },
             ticks: {
               font: { size: 10, family: fontMono },
               color: darkMode ? '#8A9E94' : '#8A877C',
               stepSize: 0.1,
-              precision: 1
+              precision: 1,
+              callback: function(value) {
+                if (value > 5.0) return null;
+                return value.toFixed(1);
+              }
             }
           },
           x: {
@@ -557,6 +553,172 @@ const Charts = {
             ticks: {
               font: { size: 10, family: fontSans },
               color: darkMode ? '#9DA89F' : '#6B6960'
+            }
+          }
+        }
+      }
+    });
+    this.instances.push(chart);
+    return chart;
+  },
+
+  branchRatingTrend(ctx, labels, data, color) {
+    const fontSans = premiumUi ? 'Plus Jakarta Sans, sans-serif' : 'Helvetica Neue, Helvetica, Arial, sans-serif';
+    const fontMono = premiumUi ? 'JetBrains Mono, monospace' : 'ui-monospace, SF Mono, Menlo, monospace';
+    const isDark = typeof darkMode !== 'undefined' && darkMode;
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Rating Promedio',
+          data,
+          clip: false,
+          borderColor: color,
+          backgroundColor: 'transparent',
+          borderWidth: 3,
+          pointBackgroundColor: color,
+          pointBorderColor: isDark ? '#151725' : '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.35,
+          fill: false
+        }]
+      },
+      plugins: [targetLinePlugin],
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: { top: 12, bottom: 8, left: 8, right: 12 }
+        },
+        plugins: {
+          legend: { display: false },
+          targetLine: {
+            scale: 'y',
+            value: typeof KpiMeta !== 'undefined' ? KpiMeta.ratingMinimo : 4.60,
+            label: 'Meta 4.60',
+            borderColor: '#c97d10',
+            lineWidth: 1.5,
+            borderDash: [5, 5]
+          },
+          tooltip: {
+            backgroundColor: isDark ? '#1C2220' : '#161614',
+            titleFont: { family: fontSans, size: 12, weight: '700' },
+            bodyFont: { family: fontSans, size: 11 },
+            padding: 10,
+            displayColors: false,
+            callbacks: {
+              label: c => ` Rating: ${Number(c.raw).toFixed(2)} ★`
+            }
+          }
+        },
+        scales: {
+          y: {
+            min: 2.0,
+            max: 5.2,
+            grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' },
+            ticks: {
+              font: { size: 10, family: fontMono },
+              color: isDark ? '#8A9E94' : '#8A877C',
+              stepSize: 0.5,
+              precision: 1
+            }
+          },
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { size: 10, family: fontSans },
+              color: isDark ? '#9DA89F' : '#6B6960'
+            }
+          }
+        }
+      }
+    });
+    this.instances.push(chart);
+    return chart;
+  },
+
+  branchVolumeTrend(ctx, labels, data, color) {
+    const fontSans = premiumUi ? 'Plus Jakarta Sans, sans-serif' : 'Helvetica Neue, Helvetica, Arial, sans-serif';
+    const fontMono = premiumUi ? 'JetBrains Mono, monospace' : 'ui-monospace, SF Mono, Menlo, monospace';
+    const isDark = typeof darkMode !== 'undefined' && darkMode;
+
+    let rgbaColor = 'rgba(107, 144, 125, 0.1)';
+    if (color.startsWith('#')) {
+      const hex = color.substring(1);
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      rgbaColor = `rgba(${r}, ${g}, ${b}, 0.15)`;
+    }
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Volumen de Reseñas',
+          data,
+          clip: false,
+          borderColor: color,
+          backgroundColor: rgbaColor,
+          borderWidth: 3,
+          pointBackgroundColor: color,
+          pointBorderColor: isDark ? '#151725' : '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.35,
+          fill: true
+        }]
+      },
+      plugins: [targetLinePlugin],
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: { top: 12, bottom: 8, left: 8, right: 12 }
+        },
+        plugins: {
+          legend: { display: false },
+          targetLine: {
+            scale: 'y',
+            value: typeof KpiMeta !== 'undefined' ? KpiMeta.volumenMeta : 15,
+            label: `Meta ${typeof KpiMeta !== 'undefined' ? KpiMeta.volumenMeta : 15}`,
+            borderColor: '#c97d10',
+            lineWidth: 1.5,
+            borderDash: [5, 5]
+          },
+          tooltip: {
+            backgroundColor: isDark ? '#1C2220' : '#161614',
+            titleFont: { family: fontSans, size: 12, weight: '700' },
+            bodyFont: { family: fontSans, size: 11 },
+            padding: 10,
+            displayColors: false,
+            callbacks: {
+              label: c => ` Reseñas: ${c.raw}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grace: '10%',
+            grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' },
+            ticks: {
+              font: { size: 10, family: fontMono },
+              color: isDark ? '#8A9E94' : '#8A877C',
+              precision: 0
+            }
+          },
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { size: 10, family: fontSans },
+              color: isDark ? '#9DA89F' : '#6B6960'
             }
           }
         }

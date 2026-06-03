@@ -279,7 +279,7 @@ const AboutView = {
             <div class="hero-label-row">
               <span class="eyebrow" style="color:rgba(245,239,230,.55);">Acerca de este portal</span>
             </div>
-            <h1 style="font-family:var(--serif);font-size:clamp(28px,6vw,48px);color:var(--crema);line-height:1.1;margin-bottom:14px;">
+            <h1 style="font-family:var(--serif);font-size:clamp(28px,6vw,48px);color:#FAF5EB;line-height:1.1;margin-bottom:14px;">
               Dashboard de <span style="font-style:italic;color:var(--sage);">Reseñas</span>
             </h1>
             <p style="color:rgba(245,239,230,.75);font-size:15px;line-height:1.6;max-width:460px;">
@@ -290,11 +290,11 @@ const AboutView = {
             <div style="display:grid;gap:12px;">
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Versión actual</div>
-                <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:pointer;font-family:var(--sans);font-size:20px;font-weight:700;color:var(--crema);letter-spacing:.04em;" title="Ver Changelog">étoile - Altair</button>
+                <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:pointer;font-family:var(--sans);font-size:20px;font-weight:700;color:#FAF5EB;letter-spacing:.04em;" title="Ver Changelog">étoile - Altair</button>
               </div>
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Cobertura</div>
-                <div style="font-size:15px;font-weight:600;color:var(--crema);">8 sucursales · Región GDL</div>
+                <div style="font-size:15px;font-weight:600;color:#FAF5EB;">8 sucursales · Región GDL</div>
               </div>
             </div>
           </div>
@@ -338,7 +338,7 @@ const AboutView = {
       <section class="hero r" style="background:var(--verde-deep);padding:56px 24px;">
         <div style="max-width:1240px;margin:0 auto;display:flex;flex-direction:column;align-items:flex-end;text-align:right;gap:20px;">
           <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,239,230,0.4);">Nuestro Propósito</div>
-          <h2 style="font-family:var(--serif);font-size:clamp(28px,6vw,52px);color:var(--crema);line-height:1.1;max-width:720px;">
+          <h2 style="font-family:var(--serif);font-size:clamp(28px,6vw,52px);color:#FAF5EB;line-height:1.1;max-width:720px;">
             &ldquo;Crear, operar y crecer modelos innovadores de restaurantes que hagan la vida mejor y más divertida para nosotros y nuestros invitados.&rdquo;
           </h2>
         </div>

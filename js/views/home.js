@@ -77,8 +77,9 @@ const HomeView = {
     else if (this.filter === 'estables') visible = sinAlerta;
 
     const sorted = [...visible].sort((a, b) => {
-      if (a.alerta !== b.alerta) return a.alerta ? -1 : 1;
-      return b.curr.count - a.curr.count;
+      const scoreA = a.curr.score + (a.curr.count > 0 ? 0.15 * Math.log2(a.curr.count) : 0);
+      const scoreB = b.curr.score + (b.curr.count > 0 ? 0.15 * Math.log2(b.curr.count) : 0);
+      return scoreB - scoreA;
     });
 
     // KPIs
@@ -239,7 +240,23 @@ const HomeView = {
       ? `<span class="hero-stat-sub">${prevGlobal.totalReviews} en ${capitalizedPrevMonth.toLowerCase()}</span>`
       : `<span class="hero-stat-sub">Meta: 4.5+ estrellas</span>`;
 
+    const concluded = getConcludedMonthInfo();
+    let concludedBannerHtml = '';
+    if (concluded) {
+      const monthName = MONTH_NAMES[concluded.month - 1];
+      concludedBannerHtml = `
+        <div class="concluded-month-banner" onclick="showConcludedMonthModal(${concluded.year}, ${concluded.month})">
+          <span class="cmb-badge">Reporte Mensual</span>
+          <div class="cmb-content-wrap">
+            <span class="cmb-title">El mes de <strong>${monthName} ${concluded.year}</strong> ha finalizado. El resumen ejecutivo está listo.</span>
+            <span class="cmb-link-btn">Ver Resumen →</span>
+          </div>
+        </div>
+      `;
+    }
+
     document.getElementById('app').innerHTML = `
+      ${concludedBannerHtml}
       ${buildTopbar()}
       <section class="hero">
         <div class="hero-inner">
@@ -580,7 +597,11 @@ const HomeView = {
       case 'rating-desc': branches.sort((a, b) => b.curr.score - a.curr.score); break;
       case 'rating-asc': branches.sort((a, b) => a.curr.score - b.curr.score); break;
       case 'volume-desc': branches.sort((a, b) => b.curr.count - a.curr.count); break;
-      default: branches.sort((a, b) => { if (a.alerta !== b.alerta) return a.alerta ? -1 : 1; return b.curr.count - a.curr.count; }); break;
+      default: branches.sort((a, b) => {
+        const scoreA = a.curr.score + (a.curr.count > 0 ? 0.15 * Math.log2(a.curr.count) : 0);
+        const scoreB = b.curr.score + (b.curr.count > 0 ? 0.15 * Math.log2(b.curr.count) : 0);
+        return scoreB - scoreA;
+      }); break;
     }
 
     const currGlobal = DataLoader.getGlobalStats(currYear, currMonth);

@@ -3,7 +3,7 @@
  */
 
 const KpiStore = {
-  prefix: 'lcp_kpis_v2_',
+  prefix: 'lcp_kpis_v3_',
 
   _key(year, month) {
     return `${this.prefix}${year}_${String(month).padStart(2, '0')}`;
@@ -43,16 +43,17 @@ const KpiStore = {
 
 const Kpis = {
   async computeMonth(year, month) {
+    await DataLoader.loadMonth(year, month);
+    const data = DataLoader.getMonth(year, month);
+    const reviews = data ? data.reviews : [];
+
     const cached = KpiStore.get(year, month);
-    if (!KpiStore.shouldCompute(year, month) && cached) {
+    if (cached && cached.global && cached.global.totalReviews === reviews.length) {
       return cached;
     }
 
-    await DataLoader.loadMonth(year, month);
     const allStats = DataLoader.getAllBranchStats(year, month);
     const global = DataLoader.getGlobalStats(year, month);
-    const data = DataLoader.getMonth(year, month);
-    const reviews = data ? data.reviews : [];
 
     // Volumen
     const volumenOk = Object.entries(allStats).filter(([id, s]) => s.count >= KpiMeta.volumenMeta).length;

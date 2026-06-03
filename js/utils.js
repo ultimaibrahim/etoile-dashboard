@@ -280,3 +280,227 @@ function showBottomSheet(title, options, onSelect) {
   });
 }
 
+/**
+ * Retorna información del último mes concluido disponible en los datos si ya pasó cronológicamente.
+ */
+function getConcludedMonthInfo() {
+  const today = new Date();
+  const curYear = today.getFullYear();
+  const curMonth = today.getMonth() + 1; // 1-indexed
+  
+  if (!DataLoader || !DataLoader.manifest) return null;
+  
+  const years = Object.keys(DataLoader.manifest).map(Number).sort((a, b) => b - a);
+  if (years.length === 0) return null;
+  const latestYear = years[0];
+  const months = [...DataLoader.manifest[latestYear]].sort((a, b) => b - a);
+  if (months.length === 0) return null;
+  const latestMonth = months[0];
+  
+  if (curYear > latestYear || (curYear === latestYear && curMonth > latestMonth)) {
+    return { year: latestYear, month: latestMonth };
+  }
+  return null;
+}
+
+/**
+ * Abre el modal con el resumen ejecutivo del mes concluido.
+ */
+function showConcludedMonthModal(year, month) {
+  const monthName = MONTH_NAMES[month - 1];
+  const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+
+  // Congelar scroll de fondo
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+
+  // Obtener estadísticas
+  const currGlobal = DataLoader.getGlobalStats(year, month);
+  const currStats = DataLoader.getAllBranchStats(year, month);
+
+  // Mes anterior para comparativas
+  let prevYear = year;
+  let prevMonth = month - 1;
+  if (prevMonth === 0) {
+    prevMonth = 12;
+    prevYear = year - 1;
+  }
+  const hasPrev = DataLoader.hasMonth(prevYear, prevMonth);
+  const prevGlobal = hasPrev ? DataLoader.getGlobalStats(prevYear, prevMonth) : { totalReviews: 0, avgRating: 0 };
+
+  // Construir datos de sucursales en el mes concluido
+  const branchesData = SUCURSALES_META.map(meta => {
+    const c = currStats[meta.id] || { avg: 0, count: 0, negativeCount: 0 };
+    return {
+      ...meta,
+      score: c.avg,
+      count: c.count,
+      negativeCount: c.negativeCount
+    };
+  });
+
+  const activeBranches = branchesData.filter(b => b.count > 0);
+  
+  // Sort branches to find the leader, balancing average rating and review volume
+  const sortedForLeader = [...activeBranches].sort((a, b) => {
+    const scoreA = a.score + (a.count > 0 ? 0.15 * Math.log2(a.count) : 0);
+    const scoreB = b.score + (b.count > 0 ? 0.15 * Math.log2(b.count) : 0);
+    return scoreB - scoreA;
+  });
+  
+  const sortedByScoreAsc = [...activeBranches].sort((a, b) => {
+    // Si la calificación es 0, ponerla al final para no distorsionar como crítica
+    if (a.score === 0) return 1;
+    if (b.score === 0) return -1;
+    return a.score - b.score;
+  });
+
+  const sucursalLider = sortedForLeader[0] || null;
+  const sucursalCritica = sortedByScoreAsc[0] || null;
+
+  // Contador de quejas desatendidas
+  const data = DataLoader.getMonth(year, month);
+  const reviews = data ? data.reviews : [];
+  const unrepliedCount = reviews.filter(r => r.stars <= 2 && (!r.responseFromOwnerText || r.responseFromOwnerText.trim() === '')).length;
+  const totalNegatives = reviews.filter(r => r.stars <= 2).length;
+
+  // Comparativas de KPIs
+  const scoreDiff = currGlobal.avgRating - prevGlobal.avgRating;
+  const scoreDiffStr = scoreDiff >= 0 ? `+${scoreDiff.toFixed(2)}` : `${scoreDiff.toFixed(2)}`;
+  
+  const reviewsDiff = currGlobal.totalReviews - prevGlobal.totalReviews;
+  const reviewsDiffStr = reviewsDiff >= 0 ? `+${reviewsDiff}` : `${reviewsDiff}`;
+
+  const modalHtml = `
+    <div class="modal-overlay active" id="concludedMonthModal" onclick="if(event.target === this) { this.remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = ''; }">
+      <div class="modal-box" style="max-width: 680px; width: 90%;">
+        <div class="modal-header">
+          <div>
+            <span class="cmb-badge" style="margin-bottom:4px; background: var(--verde); color: #FAF5EB; border: 1px solid rgba(255,255,255,0.15); display: inline-block;">Análisis Operativo GDL</span>
+            <h2 class="modal-title" style="font-family: var(--serif); font-size: 24px; color: var(--text); margin: 0;">Resumen Ejecutivo — ${capitalizedMonth} ${year}</h2>
+          </div>
+          <button class="modal-close" onclick="document.getElementById('concludedMonthModal').remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = '';">×</button>
+        </div>
+        <div class="modal-body" style="padding-top:16px;">
+          
+          <!-- Métricas Macro -->
+          <div class="scorecard-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px;">
+            <div class="scorecard status-optimal" style="padding: 14px; background: var(--surface-2); display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border);">
+              <div class="sc-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted);">Rating Promedio</div>
+              <div class="sc-value num" style="font-size:28px; margin: 6px 0; color:var(--text); font-weight:700;">${currGlobal.avgRating.toFixed(2)}★</div>
+              <div class="sc-sub" style="font-size:10px; color:${scoreDiff >= 0 ? 'var(--verde)' : 'var(--rojo-soft)'}; font-weight: 600;">
+                ${scoreDiff >= 0 ? '↑' : '↓'} ${scoreDiffStr} vs ${MONTH_NAMES[prevMonth - 1] || ''}
+              </div>
+            </div>
+            <div class="scorecard status-optimal" style="padding: 14px; background: var(--surface-2); display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border);">
+              <div class="sc-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted);">Volumen Reseñas</div>
+              <div class="sc-value num" style="font-size:28px; margin: 6px 0; color:var(--text); font-weight:700;">${currGlobal.totalReviews}</div>
+              <div class="sc-sub" style="font-size:10px; color:${reviewsDiff >= 0 ? 'var(--verde)' : 'var(--rojo-soft)'}; font-weight: 600;">
+                ${reviewsDiff >= 0 ? '↑' : '↓'} ${reviewsDiffStr} vs ${MONTH_NAMES[prevMonth - 1] || ''}
+              </div>
+            </div>
+            <div class="scorecard status-${totalNegatives > 0 ? 'critical' : 'optimal'}" style="padding: 14px; background: var(--surface-2); display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border);">
+              <div class="sc-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted);">Críticas (1-2★)</div>
+              <div class="sc-value num" style="font-size:28px; margin: 6px 0; color: ${totalNegatives > 0 ? 'var(--rojo-soft)' : 'var(--verde)'}; font-weight:700;">${totalNegatives}</div>
+              <div class="sc-sub" style="font-size:10px; color:var(--text-muted);">
+                ${totalNegatives > 0 ? `${unrepliedCount} sin responder` : 'Todas respondidas'}
+              </div>
+            </div>
+          </div>
+
+          <!-- Sucursales Destacadas -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 20px;">
+            ${sucursalLider ? `
+              <div class="proactive-alert-card optimal" style="margin:0; padding:16px;">
+                <div class="pac-header">
+                  <div class="pac-title-wrap">
+                    <span class="pac-icon" style="color: var(--verde);">${svgIcon('starFilled')}</span>
+                    <span class="pac-branch">${sucursalLider.nombre}</span>
+                  </div>
+                  <span class="pac-tag" style="background: rgba(61, 90, 71, 0.1); color: var(--verde); font-size: 9px; font-weight: 700;">Líder</span>
+                </div>
+                <p class="pac-desc" style="font-size: 12px; margin-top: 8px; color:var(--text);">
+                  Promedio de <strong>${sucursalLider.score.toFixed(2)} ★</strong> en ${sucursalLider.count} opiniones. Máximo desempeño regional del periodo.
+                </p>
+              </div>
+            ` : ''}
+            
+            ${sucursalCritica && sucursalCritica.score < KpiMeta.ratingMinimo && sucursalCritica.id !== sucursalLider?.id ? `
+              <div class="proactive-alert-card critical" style="margin:0; padding:16px;">
+                <div class="pac-header">
+                  <div class="pac-title-wrap">
+                    <span class="pac-icon" style="color: var(--rojo-soft);">${svgIcon('alert')}</span>
+                    <span class="pac-branch">${sucursalCritica.nombre}</span>
+                  </div>
+                  <span class="pac-tag" style="background: rgba(198, 40, 40, 0.1); color: var(--rojo-soft); font-size: 9px; font-weight: 700;">Bajo Rendimiento</span>
+                </div>
+                <p class="pac-desc" style="font-size: 12px; margin-top: 8px; color:var(--text);">
+                  Promedio de <strong>${sucursalCritica.score.toFixed(2)} ★</strong> en ${sucursalCritica.count} opiniones. Foco prioritario de atención operativa.
+                </p>
+              </div>
+            ` : `
+              <div class="proactive-alert-card optimal" style="margin:0; padding:16px; border-left: 4px solid var(--verde);">
+                <div class="pac-header">
+                  <div class="pac-title-wrap">
+                    <span class="pac-icon" style="color: var(--verde);">${svgIcon('check')}</span>
+                    <span class="pac-branch">Cumplimiento Regional</span>
+                  </div>
+                  <span class="pac-tag" style="background: rgba(61, 90, 71, 0.1); color: var(--verde); font-size: 9px; font-weight: 700;">100% Ok</span>
+                </div>
+                <p class="pac-desc" style="font-size: 12px; margin-top: 8px; color:var(--text);">
+                  ¡Felicidades! Todas las sucursales activas superaron el mínimo regional de <strong>${KpiMeta.ratingMinimo.toFixed(2)} ★</strong> en este periodo.
+                </p>
+              </div>
+            `}
+          </div>
+
+          <!-- Recomendaciones accionables -->
+          <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px;">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; letter-spacing: 0.05em;">
+              Acciones Recomendadas para Operaciones
+            </div>
+            <ul style="margin:0; padding-left:18px; font-size:13px; color:var(--text); line-height:1.6; list-style-type:disc;">
+              ${totalNegatives > 0 ? `
+                <li style="margin-bottom:8px;">
+                  <strong>Marketing & Respuesta:</strong> Hay <strong>${unrepliedCount}</strong> opiniones críticas (1-2★) sin respuesta del propietario de este mes. Responder a la brevedad en Google Business Profile.
+                </li>
+              ` : `
+                <li style="margin-bottom:8px;">
+                  <strong>Marketing & Respuesta:</strong> ¡Excelente! Sin quejas pendientes de respuesta de este mes.
+                </li>
+              `}
+              ${sucursalCritica && sucursalCritica.score < 4.60 ? `
+                <li style="margin-bottom:8px;">
+                  <strong>Operación Local:</strong> Implementar plan de mejora y revisión de servicio en <strong>${sucursalCritica.nombre}</strong> para revertir el promedio de ${sucursalCritica.score.toFixed(2)}★.
+                </li>
+              ` : ''}
+              ${sucursalLider ? `
+                <li>
+                  <strong>Reconocimiento:</strong> Compartir las buenas prácticas y felicitar al equipo de <strong>${sucursalLider.nombre}</strong> por su promedio de ${sucursalLider.score.toFixed(2)}★.
+                </li>
+              ` : ''}
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  // Escuchar tecla Escape
+  const _escHandler = (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('concludedMonthModal');
+      if (modal) {
+        modal.remove();
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+      }
+      document.removeEventListener('keydown', _escHandler);
+    }
+  };
+  document.addEventListener('keydown', _escHandler);
+}
+

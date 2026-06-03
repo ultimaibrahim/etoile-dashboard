@@ -161,7 +161,23 @@ const DashboardsView = {
       </div>
     `).join('');
 
+    const concluded = getConcludedMonthInfo();
+    let concludedBannerHtml = '';
+    if (concluded) {
+      const monthName = MONTH_NAMES[concluded.month - 1];
+      concludedBannerHtml = `
+        <div class="concluded-month-banner" onclick="showConcludedMonthModal(${concluded.year}, ${concluded.month})">
+          <span class="cmb-badge">Reporte Mensual</span>
+          <div class="cmb-content-wrap">
+            <span class="cmb-title">El mes de <strong>${monthName} ${concluded.year}</strong> ha finalizado. El resumen ejecutivo está listo.</span>
+            <span class="cmb-link-btn">Ver Resumen →</span>
+          </div>
+        </div>
+      `;
+    }
+
     document.getElementById('app').innerHTML = `
+      ${concludedBannerHtml}
       ${buildTopbar(false)}
       <section class="hero" style="padding:48px 22px;">
         <div class="hero-inner">
@@ -169,7 +185,7 @@ const DashboardsView = {
             <div class="hero-label-row">
               <span class="eyebrow" style="color:rgba(245,239,230,.55);">Visualización de Datos</span>
             </div>
-            <h1 class="display" style="font-size:clamp(36px,8vw,64px);color:var(--crema);line-height:1.05;">
+            <h1 class="display" style="font-size:clamp(36px,8vw,64px);color:#FAF5EB;line-height:1.05;">
               Dashboards Analíticos
             </h1>
           </div>
@@ -288,9 +304,22 @@ const DashboardsView = {
       const ctxVol = document.getElementById('volChart')?.getContext('2d');
       if (ctxVol) {
         const labels = sortedVol.map(s => s.abr);
-        const warnData = sortedVol.map(s => s.curr.negativeCount);
-        const okData = sortedVol.map(s => s.curr.count - s.curr.negativeCount);
-        Charts.stackedVolume(ctxVol, labels, okData, warnData);
+        const warnData = [];    // 1-2★
+        const neutralData = []; // 3★
+        const okData = [];      // 4-5★
+
+        sortedVol.forEach(s => {
+          const bReviews = DataLoader.getReviewsForBranch(currYear, currMonth, s.id);
+          const negatives = bReviews.filter(r => r.stars <= 2).length;
+          const neutrals = bReviews.filter(r => r.stars === 3).length;
+          const positives = bReviews.filter(r => r.stars >= 4).length;
+
+          warnData.push(negatives);
+          neutralData.push(neutrals);
+          okData.push(positives);
+        });
+
+        Charts.stackedVolume(ctxVol, labels, okData, neutralData, warnData);
       }
 
       // 2. Ranking Chart

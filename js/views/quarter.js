@@ -195,7 +195,7 @@ const QuarterView = {
             <div class="hero-label-row">
               <span class="eyebrow" style="color:rgba(245,239,230,.55);">Comparativa Trimestral</span>
             </div>
-            <h1 class="display" style="font-size:clamp(48px,10vw,96px);color:var(--crema);line-height:1;">Q${quarter} 2026</h1>
+            <h1 class="display" style="font-size:clamp(48px,10vw,96px);color:#FAF5EB;line-height:1;">Q${quarter} 2026</h1>
             <div style="display:flex;gap:18px;margin-top:18px;flex-wrap:wrap;">
               <div class="hero-stat" style="background:rgba(245,239,230,.06);border:1px solid rgba(245,239,230,.1);border-radius:12px;padding:14px 16px;">
                 <span class="hero-stat-val num">${currQAvg.toFixed(2)}</span>

@@ -20,9 +20,22 @@ const BranchView = {
       await DataLoader.loadMonth(activeYear, m);
     }
 
+    // Carga de mes anterior para comparativas
+    let prevMonth = activeMonth - 1;
+    let prevYear = activeYear;
+    if (prevMonth === 0) {
+      prevMonth = 12;
+      prevYear = activeYear - 1;
+    }
+    const hasPrevMonth = DataLoader.hasMonth(prevYear, prevMonth);
+    let prevStats = null;
+    if (hasPrevMonth) {
+      await DataLoader.loadMonth(prevYear, prevMonth);
+      prevStats = DataLoader.computeBranchStats(prevYear, prevMonth, meta.id);
+    }
+
     const reviews = DataLoader.getReviewsForBranch(activeYear, activeMonth, meta.id);
     const stats = DataLoader.computeBranchStats(activeYear, activeMonth, meta.id);
-    const q1Info = Q1_DATA.branches[meta.id] || null;
 
     const monthName = new Date(activeYear, activeMonth - 1).toLocaleString('es-ES', { month: 'long' });
     const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
@@ -43,6 +56,23 @@ const BranchView = {
     const kpiCalClass = hasTextRatio >= KpiMeta.calidadTextoMeta ? 'optimal' : 'attention';
     const kpiRatClass = stats.avg >= KpiMeta.ratingMinimo || stats.avg === 0 ? 'optimal' : 'critical';
 
+    // Deltas con mes anterior
+    const volDiff = prevStats ? (stats.count - prevStats.count) : 0;
+    const volDiffStr = volDiff >= 0 ? `+${volDiff}` : `${volDiff}`;
+    
+    let prevHasTextRatio = 0;
+    if (hasPrevMonth) {
+      const prevReviews = DataLoader.getReviewsForBranch(prevYear, prevMonth, meta.id);
+      const prevPositivas = prevReviews.filter(r => r.stars >= 4);
+      const prevPositivasConTexto = prevPositivas.filter(r => r.text && r.text.trim().length > 5).length;
+      prevHasTextRatio = prevPositivas.length > 0 ? (prevPositivasConTexto / prevPositivas.length) : 0;
+    }
+    const calDiff = (hasTextRatio - prevHasTextRatio) * 100;
+    const calDiffStr = calDiff >= 0 ? `+${calDiff.toFixed(0)}%` : `${calDiff.toFixed(0)}%`;
+
+    const ratDiff = (prevStats && prevStats.avg > 0) ? (stats.avg - prevStats.avg) : 0;
+    const ratDiffStr = ratDiff >= 0 ? `+${ratDiff.toFixed(2)}` : `${ratDiff.toFixed(2)}`;
+
     const scorecardSection = `
       <div class="scorecard-grid" style="margin-bottom:14px;">
         <div class="scorecard status-${kpiVolClass}">
@@ -50,21 +80,36 @@ const BranchView = {
           <div class="sc-value num">${stats.count}</div>
           <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${Math.min(stats.count / KpiMeta.volumenMeta * 100, 100).toFixed(0)}%"></div></div>
           <span class="badge badge-${kpiVolClass}">${kpiVolClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
-          <div class="sc-sub" style="margin-top:6px;">Meta: ≥${KpiMeta.volumenMeta} nuevas</div>
+          <div class="sc-sub" style="margin-top:6px; display:flex; justify-content:space-between; font-size:10px;">
+            <span>Meta: ≥${KpiMeta.volumenMeta}</span>
+            <span style="color:${volDiff > 0 ? 'var(--verde)' : volDiff < 0 ? 'var(--rojo-soft)' : 'var(--text-muted)'}; font-weight:600;">
+              ${volDiffStr} vs anterior
+            </span>
+          </div>
         </div>
         <div class="scorecard status-${kpiCalClass}">
           <div class="sc-label">Calidad de reseña</div>
           <div class="sc-value num">${(hasTextRatio * 100).toFixed(0)}%</div>
           <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${Math.min(hasTextRatio / KpiMeta.calidadTextoMeta * 100, 100).toFixed(0)}%"></div></div>
           <span class="badge badge-${kpiCalClass}">${kpiCalClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
-          <div class="sc-sub" style="margin-top:6px;">Meta: ≥${(KpiMeta.calidadTextoMeta * 100).toFixed(0)}% con texto</div>
+          <div class="sc-sub" style="margin-top:6px; display:flex; justify-content:space-between; font-size:10px;">
+            <span>Meta: ≥${(KpiMeta.calidadTextoMeta * 100).toFixed(0)}%</span>
+            <span style="color:${calDiff > 0.5 ? 'var(--verde)' : calDiff < -0.5 ? 'var(--rojo-soft)' : 'var(--text-muted)'}; font-weight:600;">
+              ${calDiffStr} vs anterior
+            </span>
+          </div>
         </div>
         <div class="scorecard status-${kpiRatClass}">
           <div class="sc-label">Rating Mensual</div>
           <div class="sc-value num">${stats.avg > 0 ? stats.avg.toFixed(2) : '—'}</div>
           <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${stats.avg > 0 ? Math.min(stats.avg / KpiMeta.ratingMinimo * 100, 100).toFixed(0) : 0}%"></div></div>
           <span class="badge badge-${kpiRatClass}">${kpiRatClass === 'optimal' ? 'Cumple' : 'Crítico'}</span>
-          <div class="sc-sub" style="margin-top:6px;">Meta: ≥${KpiMeta.ratingMinimo.toFixed(2)}</div>
+          <div class="sc-sub" style="margin-top:6px; display:flex; justify-content:space-between; font-size:10px;">
+            <span>Meta: ≥${KpiMeta.ratingMinimo.toFixed(2)}</span>
+            <span style="color:${ratDiff > 0.01 ? 'var(--verde)' : ratDiff < -0.01 ? 'var(--rojo-soft)' : 'var(--text-muted)'}; font-weight:600;">
+              ${ratDiffStr} vs anterior
+            </span>
+          </div>
         </div>
         <div class="scorecard status-${dClass === 'up' ? 'optimal' : dClass === 'down' ? 'attention' : 'optimal'}">
           <div class="sc-label">Δ vs Histórico (${meta.historico.toFixed(1)})</div>
@@ -91,11 +136,26 @@ const BranchView = {
         </div>
       </div>`;
 
-    const customOptionsHtml = availableMonths.map(m => {
-      const name = new Date(activeYear, m - 1).toLocaleString('es-ES', { month: 'long' });
-      const capName = name.charAt(0).toUpperCase() + name.slice(1);
+    // Calculate Monthly Evolution Trends for current year
+    const trendLabels = [];
+    const ratingTrendData = [];
+    const volumeTrendData = [];
+    const sortedMonths = [...availableMonths].sort((a, b) => a - b);
+    for (const m of sortedMonths) {
+      const monthName = new Date(activeYear, m - 1).toLocaleString('es-ES', { month: 'short' });
+      const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+      trendLabels.push(`${capMonth} ${activeYear}`);
+      const statsM = DataLoader.computeBranchStats(activeYear, m, meta.id);
+      ratingTrendData.push(statsM.count > 0 ? statsM.avg : null);
+      volumeTrendData.push(statsM.count);
+    }
+
+    const sortedMonthsDesc = [...availableMonths].sort((a, b) => b - a);
+    const customOptionsHtml = sortedMonthsDesc.map(m => {
+      const monthName = new Date(activeYear, m - 1).toLocaleString('es-ES', { month: 'long' });
+      const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
       const isActive = m === activeMonth ? ' active' : '';
-      return `<div class="custom-option${isActive}" data-value="${m}" onclick="BranchView.selectMonthOption(${m})">${capName} ${activeYear}</div>`;
+      return `<div class="custom-option${isActive}" data-value="${m}" onclick="BranchView.selectMonthOption(${m})">${capMonth} ${activeYear}</div>`;
     }).join('');
 
     const dropdownHtml = `
@@ -146,6 +206,35 @@ const BranchView = {
       </section>
 
       <section class="section r">
+        <div class="section-head">
+          <div class="section-title">Evolución de KPIs <span class="accent">${activeYear}</span></div>
+          <span class="section-sub">Tendencia histórica mensual de calificación y volumen</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--sombra-card);">
+            <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:12px; letter-spacing:0.05em;">Rating Promedio Mensual</div>
+            <div style="height:180px; position:relative;">
+              <canvas id="branchRatingTrendChart"></canvas>
+            </div>
+          </div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--sombra-card);">
+            <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:12px; letter-spacing:0.05em;">Volumen de Reseñas Mensual</div>
+            <div style="height:180px; position:relative;">
+              <canvas id="branchVolumeTrendChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section r">
+        <div class="section-head">
+          <div class="section-title">Áreas de Oportunidad <span class="accent">${capitalizedMonth}</span></div>
+          <span class="section-sub">Aspectos críticos a mejorar según quejas de 1 a 3 estrellas</span>
+        </div>
+        ${this._buildOpportunityAreas(reviews)}
+      </section>
+
+      <section class="section r">
         <div class="section-head" style="display: flex; justify-content: space-between; align-items: flex-end;">
           <div>
             <div class="section-title">Reseñas</div>
@@ -163,7 +252,7 @@ const BranchView = {
         Dashboard de Reseñas · Región Guadalajara
       </footer>`;
 
-    // Re-run progress bars animation after DOM insert
+    // Re-run progress bars animation and load charts after DOM insert
     requestAnimationFrame(() => {
       document.querySelectorAll('.kpi-progress-bar').forEach(bar => {
         const w = bar.style.width;
@@ -172,17 +261,32 @@ const BranchView = {
       });
       initReveal();
 
-      // Close custom select on clicking outside
-      const _clickOutsideHandler = (e) => {
-        const dropdown = document.getElementById('branchMonthDropdown');
-        if (dropdown && !dropdown.contains(e.target)) {
+      // Render Evolution Trend Charts
+      setTimeout(() => {
+        const ratingCtx = document.getElementById('branchRatingTrendChart')?.getContext('2d');
+        const volumeCtx = document.getElementById('branchVolumeTrendChart')?.getContext('2d');
+        const color = darkMode ? '#7A9E8A' : '#3D5A47';
+
+        if (ratingCtx) {
+          Charts.branchRatingTrend(ratingCtx, trendLabels, ratingTrendData, color);
+        }
+        if (volumeCtx) {
+          Charts.branchVolumeTrend(volumeCtx, trendLabels, volumeTrendData, color);
+        }
+      }, 100);
+    });
+
+    // Close custom select on clicking outside
+    const _clickOutsideHandler = (e) => {
+      document.querySelectorAll('.custom-select.open').forEach(dropdown => {
+        if (!dropdown.contains(e.target)) {
           dropdown.classList.remove('open');
         }
-      };
-      document.removeEventListener('click', window._branchMonthDropdownOutsideHandler);
-      window._branchMonthDropdownOutsideHandler = _clickOutsideHandler;
-      document.addEventListener('click', _clickOutsideHandler);
-    });
+      });
+    };
+    document.removeEventListener('click', window._branchDropdownOutsideHandler);
+    window._branchDropdownOutsideHandler = _clickOutsideHandler;
+    document.addEventListener('click', _clickOutsideHandler);
 
     const btn = document.getElementById('showAllBtn');
     if (btn) {
@@ -233,6 +337,111 @@ const BranchView = {
       </div>`).join('');
   },
 
+  _buildOpportunityAreas(reviews) {
+    const negativeReviews = reviews.filter(r => r.stars <= 3 && r.text && r.text.trim().length > 0);
+
+    let serviceCount = 0;
+    let qualityCount = 0;
+    let valueCount = 0;
+
+    const serviceRegex = /mesero|lento|espera|atenci[oó]n|servicio|tade|tarde|tardaron|trato|amabilidad/i;
+    const qualityRegex = /sabor|fr[ií]o|sucio|malo|crudo|calidad|ingrediente|pelo/i;
+    const valueRegex = /caro|precio|porci[oó]n|costo|tama[ñn]o|car[ií]simo|cantidad/i;
+
+    negativeReviews.forEach(r => {
+      const txt = r.text || '';
+      if (serviceRegex.test(txt)) serviceCount++;
+      if (qualityRegex.test(txt)) qualityCount++;
+      if (valueRegex.test(txt)) valueCount++;
+    });
+
+    const getSeverity = (count) => {
+      if (count > 2) return { cls: 'critical', tag: 'Crítico' };
+      if (count > 0) return { cls: 'attention', tag: 'Atención' };
+      return { cls: 'optimal', tag: 'Óptimo' };
+    };
+
+    const serviceSev = getSeverity(serviceCount);
+    const qualitySev = getSeverity(qualityCount);
+    const valueSev = getSeverity(valueCount);
+
+    const serviceDesc = serviceCount > 0
+      ? `Se detectaron <strong>${serviceCount}</strong> comentarios señalando demoras o detalles en la atención (ej. meseros, tiempos de espera).`
+      : 'Sin incidencias reportadas sobre tiempos de espera o atención al cliente.';
+    
+    const qualityDesc = qualityCount > 0
+      ? `Se registraron <strong>${qualityCount}</strong> menciones sobre calidad de producto, temperatura de alimentos o higiene.`
+      : 'Sin incidencias reportadas sobre el sabor, temperatura o higiene de los alimentos.';
+
+    const valueDesc = valueCount > 0
+      ? `Se identificaron <strong>${valueCount}</strong> opiniones cuestionando la relación valor-precio o el tamaño de las porciones.`
+      : 'Sin quejas relativas al precio o tamaño de las porciones.';
+
+    const serviceRec = serviceCount > 2
+      ? 'Revisar tiempos de despacho y reentrenar al personal en servicio al cliente urgente. Posible falta de personal en horas pico.'
+      : serviceCount > 0
+        ? 'Monitorear la velocidad de entrega y recordar al equipo el protocolo de bienvenida y trato al cliente.'
+        : 'Mantener el estándar actual. Reforzar el reconocimiento al equipo por el excelente trato.';
+
+    const qualityRec = qualityCount > 2
+      ? 'Auditar urgentemente la temperatura de los platos, recetas y protocolo de limpieza en cocina. Posible falla en control de calidad.'
+      : qualityCount > 0
+        ? 'Revisar la temperatura de salida de las crepas y asegurar el apego a la receta estándar.'
+        : 'Mantener la constancia en sabor y presentación. Asegurar que las estaciones de trabajo sigan impecables.';
+
+    const valueRec = valueCount > 2
+      ? 'Evaluar la relación valor-precio. Garantizar que el gramaje de los ingredientes coincida exactamente con la ficha técnica.'
+      : valueCount > 0
+        ? 'Asegurar que la presentación de los platos justifique el ticket y vigilar el porcionamiento estándar.'
+        : 'El valor percibido es adecuado. Continuar con la consistencia del tamaño y calidad del producto.';
+
+    return `
+      <div class="proactive-alerts-grid">
+        <div class="proactive-alert-card ${serviceSev.cls}">
+          <div class="pac-header">
+            <div class="pac-title-wrap">
+              <span class="pac-icon">${svgIcon(serviceCount > 0 ? 'alert' : 'check')}</span>
+              <span class="pac-branch">Servicio y Atención</span>
+            </div>
+            <span class="pac-tag">${serviceSev.tag}</span>
+          </div>
+          <p class="pac-desc">${serviceDesc}</p>
+          <div class="pac-action-box">
+            <strong>Recomendación:</strong> ${serviceRec}
+          </div>
+        </div>
+
+        <div class="proactive-alert-card ${qualitySev.cls}">
+          <div class="pac-header">
+            <div class="pac-title-wrap">
+              <span class="pac-icon">${svgIcon(qualityCount > 0 ? 'alert' : 'check')}</span>
+              <span class="pac-branch">Calidad y Limpieza</span>
+            </div>
+            <span class="pac-tag">${qualitySev.tag}</span>
+          </div>
+          <p class="pac-desc">${qualityDesc}</p>
+          <div class="pac-action-box">
+            <strong>Recomendación:</strong> ${qualityRec}
+          </div>
+        </div>
+
+        <div class="proactive-alert-card ${valueSev.cls}">
+          <div class="pac-header">
+            <div class="pac-title-wrap">
+              <span class="pac-icon">${svgIcon(valueCount > 0 ? 'alert' : 'check')}</span>
+              <span class="pac-branch">Precio y Porción</span>
+            </div>
+            <span class="pac-tag">${valueSev.tag}</span>
+          </div>
+          <p class="pac-desc">${valueDesc}</p>
+          <div class="pac-action-box">
+            <strong>Recomendación:</strong> ${valueRec}
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
   _buildRevList(reviews) {
     if (!reviews.length) {
       return `<div class="empty-state"><span class="glyph">—</span>Sin reseñas para mostrar en este mes</div>`;
@@ -250,28 +459,9 @@ const BranchView = {
 
   toggleMonthDropdown(event) {
     event.stopPropagation();
-    if (window.innerWidth < 600) {
-      const activeYear = DataLoader.currentYear;
-      const activeMonth = DataLoader.currentMonth;
-      const availableMonths = DataLoader.manifest[activeYear] || [];
-      const sortedMonths = [...availableMonths].sort((a, b) => a - b);
-      const options = sortedMonths.map(m => {
-        const monthName = new Date(activeYear, m - 1).toLocaleString('es-ES', { month: 'long' });
-        const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-        return {
-          value: m,
-          label: `${capMonth} ${activeYear}`,
-          active: m === activeMonth
-        };
-      });
-      showBottomSheet('Seleccionar Periodo', options, (val) => {
-        BranchView.selectMonthOption(parseInt(val));
-      });
-    } else {
-      const dropdown = document.getElementById('branchMonthDropdown');
-      if (dropdown) {
-        dropdown.classList.toggle('open');
-      }
+    const dropdown = document.getElementById('branchMonthDropdown');
+    if (dropdown) {
+      dropdown.classList.toggle('open');
     }
   },
 
