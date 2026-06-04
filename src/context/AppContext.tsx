@@ -1,7 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabaseClient } from '../lib/supabase';
-import { SUCURSALES_META_ALL, REGION_NAME_MAP, SUCURSAL_NAME_MAP } from '../lib/data';
+import { SUCURSALES_META_ALL, REGION_NAME_MAP } from '../lib/data';
 import { Review, SucursalMeta, UserProfile } from '../types';
+
+const LOCAL_REAL_USERS = [
+  { correo: 'oliver@lcp.mx', nombre: 'Oliver González', rol: 'regional', region: 'GDL', sucursal: null, password: 'lcp2026' },
+  { correo: 'oliver.gonzalez@lacrepeparisienne.com', nombre: 'Oliver Gonzalez', rol: 'regional', region: 'GDL', sucursal: null, password: 'lcp2026' },
+  { correo: 'ultima.ibrahim@proton.me', nombre: 'Ibrahim Garcia', rol: 'admin', region: 'GDL', sucursal: null, password: 'lcp2026' },
+  { correo: 'andares@lacrepeparisienne.com', nombre: 'Gerente Andares', rol: 'gerente', region: 'GDL', sucursal: 'andares', password: 'grupomyt2025' },
+  { correo: 'mercadoandares@lacrepeparisienne.com', nombre: 'Gerente Mercado Andares', rol: 'gerente', region: 'GDL', sucursal: 'andares', password: 'grupomyt2025' },
+  { correo: 'laperla@lacrepeparisienne.com', nombre: 'Gerente La Perla', rol: 'gerente', region: 'GDL', sucursal: 'la-perla', password: 'grupomyt2025' },
+  { correo: 'forumtlaquepaque@lacrepeparisienne.com', nombre: 'Gerente Forum Tlaquepaque', rol: 'gerente', region: 'GDL', sucursal: 'forum', password: 'grupomyt2025' },
+  { correo: 'plazapatria@lacrepeparisienne.com', nombre: 'Gerente Plaza Patria', rol: 'gerente', region: 'GDL', sucursal: 'patria', password: 'grupomyt2025' },
+  { correo: 'galeriasguadalajara@lacrepeparisienne.com', nombre: 'Gerente Galerías GDL', rol: 'gerente', region: 'GDL', sucursal: 'gal-gdl', password: 'grupomyt2025' },
+  { correo: 'midtown@lacrepeparisienne.com', nombre: 'Gerente Midtown', rol: 'gerente', region: 'GDL', sucursal: 'midtown', password: 'grupomyt2025' },
+  { correo: 'viaviva@lacrepeparisienne.com', nombre: 'Gerente Via Viva', rol: 'gerente', region: 'GDL', sucursal: 'via-viva', password: 'grupomyt2025' },
+  { correo: 'galeriassantaanita@lacrepeparisienne.com', nombre: 'Gerente Santa Anita', rol: 'gerente', region: 'GDL', sucursal: 'sta-anita', password: 'grupomyt2025' }
+];
 
 interface AppContextType {
   session: any;
@@ -55,7 +70,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Carga inicial y suscripción a eventos de Supabase Auth
   useEffect(() => {
-    // 1. Intentar restaurar sesión de Apps Script desde LocalStorage
+    // 1. Intentar restaurar sesión local (Apps Script / local database fallback)
     try {
       const saved = localStorage.getItem('lcp_reviews_session_v1');
       if (saved) {
@@ -174,46 +189,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return true;
     }
 
-    // 1. Intentar login con Google Apps Script backend de GDL
-    try {
-      const response = await fetch('https://script.google.com/macros/s/AKfycbwnfhrIGKaAy3LuRdKx7J_QIRH-GelnbazmpoEeaxmbabMcEW9Ue3BcM5X1nCVd0euZ/exec', {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'login', correo: email, password: password })
-      });
-      const data = await response.json();
-      if (data && data.ok && data.user) {
-        const apiSucursal = data.user.sucursal;
-        let sucursalId: string | null = null;
-        if (apiSucursal) {
-          sucursalId = SUCURSAL_NAME_MAP[apiSucursal] || SUCURSAL_NAME_MAP[Object.keys(SUCURSAL_NAME_MAP).find(k => k.toLowerCase() === apiSucursal.toLowerCase()) || ''] || apiSucursal.toLowerCase();
-        }
+    // 1. Intentar login con base de datos local de usuarios reales (desacoplado de Apps Script)
+    const localUser = LOCAL_REAL_USERS.find(
+      u => u.correo === email.trim().toLowerCase() && u.password === password
+    );
 
-        const profile: UserProfile = {
-          id: data.user.correo,
-          nombre: data.user.nombre,
-          rol: data.user.rol,
-          region: data.user.region || 'GDL',
-          sucursal: sucursalId
-        };
-        const sessionObj = { user: { id: data.user.correo, email: data.user.correo }, token: data.token };
+    if (localUser) {
+      const profile: UserProfile = {
+        id: localUser.correo,
+        nombre: localUser.nombre,
+        rol: localUser.rol as any,
+        region: localUser.region,
+        sucursal: localUser.sucursal
+      };
+      const sessionObj = { user: { id: localUser.correo, email: localUser.correo }, token: 'local_token_' + Date.now() };
 
-        setSession(sessionObj);
-        setUserProfile(profile);
-        setActiveRegionState(data.user.region || 'GDL');
+      setSession(sessionObj);
+      setUserProfile(profile);
+      setActiveRegionState(localUser.region);
 
-        localStorage.setItem('lcp_reviews_session_v1', JSON.stringify({
-          session: sessionObj,
-          profile: profile
-        }));
+      localStorage.setItem('lcp_reviews_session_v1', JSON.stringify({
+        session: sessionObj,
+        profile: profile
+      }));
 
-        return true;
-      }
-    } catch (err) {
-      console.warn("Error de autenticación con Google Apps Script:", err);
+      return true;
     }
 
-    // 2. Fallback a Supabase si no se autenticó por Apps Script
+    // 2. Fallback a Supabase si no se autenticó localmente
     if (!supabaseClient) {
       return false;
     }
