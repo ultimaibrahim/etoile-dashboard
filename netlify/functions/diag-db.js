@@ -125,7 +125,8 @@ exports.handler = async (event, context) => {
         logicalDuplicatesCount: logicalDuplicates.length,
         idTypesDistribution: idTypes,
         cleanStatus,
-        branchReviewBreakdown: Object.values(statsByBranch).sort((a,b) => a.region.localeCompare(b.region) || b.totalReviews - a.totalReviews)
+        branchReviewBreakdown: Object.values(statsByBranch).sort((a,b) => a.region.localeCompare(b.region) || b.totalReviews - a.totalReviews),
+        slpReviews: allReviews.filter(r => r.region === 'SLP')
       })
     };
 
