@@ -68,7 +68,7 @@ const SelectRegionView = {
         }
         .srv-subtitle {
           font-size: 15px;
-          color: var(--text-muted);
+          color: rgba(245, 239, 230, 0.7);
           max-width: 580px;
           line-height: 1.5;
           margin: 0;
