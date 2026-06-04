@@ -23,7 +23,7 @@ const SUCURSALES_META_ALL = [
   { id: 'tepeyac', nombre: 'Tepeyac', abr: 'Tepeyac', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'polanquito', nombre: 'Polanquito', abr: 'Polanquito', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'oceania', nombre: 'Oceanía', abr: 'Oceanía', historico: 4.3, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
-  { id: 'artz', nombre: 'Artz Pedregal', abr: 'Artz', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'artz', nombre: 'Artz Pedregal', abr: 'Artz', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX', isCinemex: true },
   { id: 'arcos', nombre: 'Arcos Bosques', abr: 'Arcos', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'mitikah', nombre: 'Mitikah', abr: 'Mitikah', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'coyoacan', nombre: 'Oasis Coyoacán', abr: 'Coyoacán', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
@@ -32,23 +32,20 @@ const SUCURSALES_META_ALL = [
   { id: 'santa-fe', nombre: 'Centro Santa Fe', abr: 'Santa Fe', historico: 4.3, q1Status: 'critical', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'satelite', nombre: 'Plaza Satélite', abr: 'Satélite', historico: 4.4, q1Status: 'attention', alertTheme: null, problemas: [], region: 'CDMX' },
 
-  // Región Monterrey (MTY) - 4 sucursales
+  // Región Monterrey (MTY) - 3 sucursales
   { id: 'gal-mty', nombre: 'Galerías Monterrey', abr: 'Gal. MTY', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'MTY' },
   { id: 'valle-oriente', nombre: 'Galerías Valle Oriente', abr: 'Valle Oriente', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'MTY' },
   { id: 'fashion-drive', nombre: 'Fashion Drive', abr: 'Fashion Drive', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'MTY' },
-  { id: 'punto-valle', nombre: 'Punto Valle', abr: 'Punto Valle', historico: 4.3, q1Status: 'attention', alertTheme: null, problemas: [], region: 'MTY', por_verificar: true },
 
   // Región Guanajuato / León (LEON) - 2 sucursales
   { id: 'altacia', nombre: 'Altacia', abr: 'Altacia', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'LEON' },
-  { id: 'plaza-mayor', nombre: 'Plaza Mayor', abr: 'Plaza Mayor', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'LEON' },
+  { id: 'plaza-mayor', nombre: 'Plaza Mayor', abr: 'Plaza Mayor', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'LEON', isCinemex: true },
 
-  // Región San Luis Potosí (SLP) - 2 sucursales
-  { id: 'the-park', nombre: 'The Park', abr: 'The Park', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'SLP' },
-  { id: 'san-luis', nombre: 'San Luis', abr: 'San Luis', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'SLP' },
+  // Región San Luis Potosí (SLP) - 1 sucursal
+  { id: 'the-park', nombre: 'The Park', abr: 'The Park', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'SLP', isCinemex: true },
 
-  // Región Aguascalientes (AGS) - 2 sucursales
+  // Región Aguascalientes (AGS) - 1 sucursal
   { id: 'altaria', nombre: 'Altaria', abr: 'Altaria', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'AGS' },
-  { id: 'pocitos', nombre: 'Pocitos / Centro', abr: 'Pocitos', historico: 4.3, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'AGS' },
 
   // Región Estado de México / Toluca / Metepec (TOL) - 2 sucursales
   { id: 'gal-metepec', nombre: 'Galerías Metepec', abr: 'Gal. Metepec', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'TOL' },
@@ -61,7 +58,8 @@ const SUCURSALES_META_ALL = [
   { id: 'cancun', nombre: 'Marina Puerto Cancún', abr: 'Puerto Cancún', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CUN' },
 
   // Región Tijuana / Baja California (TJ) - 2 sucursales
-  { id: 'peninsula', nombre: 'Plaza Península', abr: 'Plaza Península', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'TJ' }
+  { id: 'peninsula', nombre: 'Plaza Península', abr: 'Plaza Península', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'TJ' },
+  { id: 'landmark-tj', nombre: 'Landmark Tijuana', abr: 'Landmark TJ', historico: 4.3, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'TJ', isCinemex: true }
 ];
 
 // Nombres legibles de las regiones
@@ -132,7 +130,6 @@ const SUCURSAL_NAME_MAP = {
   'Galerías Monterrey': 'gal-mty',
   'Galerías Valle Oriente': 'valle-oriente',
   'Fashion Drive': 'fashion-drive',
-  'Punto Valle': 'punto-valle',
 
   // LEON
   'Altacia': 'altacia',
@@ -140,11 +137,12 @@ const SUCURSAL_NAME_MAP = {
 
   // SLP
   'The Park': 'the-park',
-  'San Luis': 'san-luis',
+  'San Luis': 'the-park',
 
   // AGS
   'Altaria': 'altaria',
-  'Pocitos / Centro': 'pocitos',
+  'Pocitos': 'altaria',
+  'Pocitos / Centro': 'altaria',
 
   // TOL
   'Galerías Metepec': 'gal-metepec',
@@ -158,7 +156,8 @@ const SUCURSAL_NAME_MAP = {
 
   // TJ
   'Plaza Península': 'peninsula',
-  'Tijuana': 'peninsula'
+  'Landmark Tijuana': 'landmark-tj',
+  'Tijuana': 'landmark-tj'
 };
 
 const KpiMeta = {

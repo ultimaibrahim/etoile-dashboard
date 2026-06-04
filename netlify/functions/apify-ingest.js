@@ -97,7 +97,6 @@ exports.handler = async (event, context) => {
       // Monterrey (MTY)
       if (normalized.includes("valle oriente")) return { sucursalId: "valle-oriente", region: "MTY" };
       if (normalized.includes("fashion drive")) return { sucursalId: "fashion-drive", region: "MTY" };
-      if (normalized.includes("punto valle")) return { sucursalId: "punto-valle", region: "MTY" };
       if (normalized.includes("monterrey")) return { sucursalId: "gal-mty", region: "MTY" }; // "Galerías Monterrey"
 
       // León (LEON)
@@ -105,12 +104,14 @@ exports.handler = async (event, context) => {
       if (normalized.includes("plaza mayor")) return { sucursalId: "plaza-mayor", region: "LEON" };
 
       // San Luis Potosí (SLP)
-      if (normalized.includes("the park")) return { sucursalId: "the-park", region: "SLP" };
-      if (normalized.includes("san luis") || normalized.includes("slp")) return { sucursalId: "san-luis", region: "SLP" };
+      if (normalized.includes("the park") || normalized.includes("san luis") || normalized.includes("slp")) {
+        return { sucursalId: "the-park", region: "SLP" };
+      }
 
       // Aguascalientes (AGS)
-      if (normalized.includes("altaria")) return { sucursalId: "altaria", region: "AGS" };
-      if (normalized.includes("pocitos") || normalized.includes("aguascalientes")) return { sucursalId: "pocitos", region: "AGS" };
+      if (normalized.includes("altaria") || normalized.includes("pocitos") || normalized.includes("aguascalientes")) {
+        return { sucursalId: "altaria", region: "AGS" };
+      }
 
       // Toluca / Metepec (TOL)
       if (normalized.includes("town square")) return { sucursalId: "town-square", region: "TOL" };
@@ -123,7 +124,8 @@ exports.handler = async (event, context) => {
       if (normalized.includes("cancun")) return { sucursalId: "cancun", region: "CUN" };
 
       // Tijuana (TJ)
-      if (normalized.includes("peninsula") || normalized.includes("tijuana")) return { sucursalId: "peninsula", region: "TJ" };
+      if (normalized.includes("peninsula")) return { sucursalId: "peninsula", region: "TJ" };
+      if (normalized.includes("landmark") || normalized.includes("tijuana")) return { sucursalId: "landmark-tj", region: "TJ" };
 
       return null;
     }

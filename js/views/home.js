@@ -633,8 +633,10 @@ const HomeView = {
           statusTitle = 'Crítico';
         }
       }
+      const isCinemex = s.isCinemex || false;
       return `
-      <a class="branch-card${hoverClass}" href="#/sucursal/${s.id}">
+      <a class="branch-card${hoverClass}${isCinemex ? ' cinemex-card' : ''}" href="#/sucursal/${s.id}">
+        ${isCinemex ? `<div class="bc-cinemex-badge">${svgIcon('cinema')} Cinemex</div>` : ''}
         <div class="bc-top">
           <div class="bc-name">${s.abr}</div>
           <div class="bc-card-stars">${s.curr.score > 0 ? starStr(Math.round(s.curr.score)) : '—'}</div>

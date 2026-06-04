@@ -179,12 +179,13 @@ const BranchView = {
           <span>${getRegionName(activeRegion)}</span>
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-          <h1 class="bh-name" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px;">
+          <h1 class="bh-name" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 4px;">
             ${meta.nombre}
             <span style="font-family: var(--mono); color: #E8A020; font-size: 20px; letter-spacing: 2px; font-weight: normal; margin-top: 6px;">
               ${stats.avg > 0 ? starStr(Math.round(stats.avg)) : '—'}
             </span>
           </h1>
+          ${meta.isCinemex ? `<div style="margin-bottom: 4px;"><span class="bh-cinemex-badge">${svgIcon('cinema')} Cinemex</span></div>` : ''}
           ${dropdownHtml}
         </div>
       </section>
