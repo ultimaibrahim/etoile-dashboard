@@ -18,6 +18,16 @@ const CHANGELOG_EPOCAS = [
     `,
     versions: [
       {
+        v: 'v3.4.1.altair', date: 'Junio 2026',
+        items: [
+          'Unificación Regional: Se unificaron las sucursales duplicadas de San Luis y The Park (SLP) en la sucursal única the-park, y de Pocitos y Altaria (AGS) en la sucursal única altaria.',
+          'Consolidación de MTY: Monterrey configurado con 3 sucursales activas (Galerías MTY, Galerías Valle Oriente y Fashion Drive).',
+          'Soporte Cinemex Completo: Añadido tag visual especial, animación perimetral y fondo con marca de agua SVG traslúcida de cine en las tarjetas y vista de detalle de las sucursales ubicadas dentro de complejos Cinemex (Artz, Plaza Mayor, The Park y Landmark Tijuana).',
+          'Tijuana y Landmark: Se restauró la sucursal Landmark Tijuana en lugar de la genérica y se conserva Plaza Península como las dos ubicaciones oficiales de Tijuana.',
+          'Sincronización Ingesta: Actualizado el webhook de Netlify (apify-ingest) para unificar de forma automática los mapeos de San Luis y Pocitos.'
+        ]
+      },
+      {
         v: 'v3.4.0.altair', date: 'Mayo 2026',
         items: [
           'Consolidación Tipográfica: Unificado el sistema de fuentes tipográficas para usar Plus Jakarta Sans, Playfair Display y JetBrains Mono por defecto en todos los modos.',
@@ -414,7 +424,7 @@ const AboutView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
-        Dashboard de Reseñas · Región ${getRegionName(activeRegion)} · v3.4.0.altair · 2026
+        Dashboard de Reseñas · Región ${getRegionName(activeRegion)} · v3.4.1.altair · 2026
       </footer>`;
 
     requestAnimationFrame(() => {
