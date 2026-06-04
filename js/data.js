@@ -61,8 +61,7 @@ const SUCURSALES_META_ALL = [
   { id: 'cancun', nombre: 'Marina Puerto Cancún', abr: 'Puerto Cancún', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CUN' },
 
   // Región Tijuana / Baja California (TJ) - 2 sucursales
-  { id: 'peninsula', nombre: 'Plaza Península', abr: 'Plaza Península', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'TJ' },
-  { id: 'tijuana-generic', nombre: 'Tijuana (Centro/Río)', abr: 'Tijuana', historico: 4.3, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'TJ' }
+  { id: 'peninsula', nombre: 'Plaza Península', abr: 'Plaza Península', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'TJ' }
 ];
 
 // Nombres legibles de las regiones
@@ -159,7 +158,7 @@ const SUCURSAL_NAME_MAP = {
 
   // TJ
   'Plaza Península': 'peninsula',
-  'Tijuana': 'tijuana-generic'
+  'Tijuana': 'peninsula'
 };
 
 const KpiMeta = {

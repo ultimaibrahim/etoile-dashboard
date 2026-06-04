@@ -123,8 +123,7 @@ exports.handler = async (event, context) => {
       if (normalized.includes("cancun")) return { sucursalId: "cancun", region: "CUN" };
 
       // Tijuana (TJ)
-      if (normalized.includes("peninsula")) return { sucursalId: "peninsula", region: "TJ" };
-      if (normalized.includes("tijuana")) return { sucursalId: "tijuana-generic", region: "TJ" };
+      if (normalized.includes("peninsula") || normalized.includes("tijuana")) return { sucursalId: "peninsula", region: "TJ" };
 
       return null;
     }

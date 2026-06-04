@@ -109,10 +109,11 @@ function buildTopbar(showBack = false, branchName = '') {
     ? `<span class="topbar-brand"><span class="accent">${branchName}</span></span>`
     : `<a href="#/" class="topbar-brand"><span class="accent">étoile</span></a>`;
 
-  // El nav se emite SEPARADO del header para que position:fixed sea puro
+  const showDashboards = typeof SUCURSALES_META !== 'undefined' && SUCURSALES_META.length > 1;
+
   const nav = `<nav class="topbar-nav" id="mainNav">
     <a href="#/" class="topbar-link ${isHome ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
-    <a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>
+    ${showDashboards ? `<a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>` : ''}
     <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
   </nav>`;
 
@@ -147,7 +148,7 @@ function buildTopbar(showBack = false, branchName = '') {
     <div class="topbar-right">
       <div class="topbar-nav topbar-nav--desktop" id="mainNavDesktop">
         <a href="#/" class="topbar-link ${isHome ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
-        <a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>
+        ${showDashboards ? `<a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>` : ''}
         <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
       </div>
       <div class="topbar-actions">
@@ -324,10 +325,22 @@ function showBottomSheet(title, options, onSelect) {
 function getConcludedMonthInfo() {
   const today = new Date();
   const curYear = today.getFullYear();
-  const curMonth = today.getMonth() + 1; // 1-indexed
+  const curMonth = today.getMonth() + 1; // 1-indexed (1-12)
+  const curDay = today.getDate(); // 1-31
   
   if (!DataLoader || !DataLoader.manifest) return null;
   
+  // 1. Durante los primeros 7 días del mes, forzar a que el mes concluido sea el mes calendario anterior
+  if (curDay <= 7) {
+    const targetMonth = curMonth === 1 ? 12 : curMonth - 1;
+    const targetYear = curMonth === 1 ? curYear - 1 : curYear;
+    
+    if (DataLoader.hasMonth(targetYear, targetMonth)) {
+      return { year: targetYear, month: targetMonth };
+    }
+  }
+  
+  // 2. A partir del día 8, usar lógica histórica (último disponible en manifest si ya pasó cronológicamente)
   const years = Object.keys(DataLoader.manifest).map(Number).sort((a, b) => b - a);
   if (years.length === 0) return null;
   const latestYear = years[0];

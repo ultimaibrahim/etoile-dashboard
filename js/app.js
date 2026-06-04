@@ -103,6 +103,11 @@ const AppAuth = {
       
       this.session = data.session;
       await this.loadProfile(data.user.id);
+      
+      if (typeof DataLoader !== 'undefined') {
+        DataLoader.cache = {};
+        await DataLoader.init();
+      }
       return true;
     } catch (e) {
       console.error("Error de autenticación:", e.message);
@@ -116,6 +121,15 @@ const AppAuth = {
     }
     this.session = null;
     this.profile = null;
+    
+    if (typeof DataLoader !== 'undefined') {
+      DataLoader.cache = {};
+      DataLoader.manifest = null;
+    }
+    if (typeof setRegionActiva === 'function') {
+      setRegionActiva('GDL');
+    }
+    
     Router.navigate('#/login');
   },
 
@@ -145,6 +159,7 @@ async function initApp() {
 
   // Registrar vistas en el Router
   Router.register('login', () => LoginView.render());
+  Router.register('select-region', () => SelectRegionView.render());
   Router.register('home', () => HomeView.render());
   Router.register('branch', params => BranchView.render(params));
   Router.register('quarter', params => QuarterView.render(params));

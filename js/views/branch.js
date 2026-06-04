@@ -3,7 +3,7 @@
  */
 
 const BranchView = {
-  async render(params) {
+  async render(params, isHomeMode = false) {
     this.activeParams = params;
     const meta = getBranchById(params.id);
     if (!meta) {
@@ -173,7 +173,7 @@ const BranchView = {
     `;
 
     document.getElementById('app').innerHTML = `
-      ${buildTopbar(true, meta.nombre)}
+      ${buildTopbar(!isHomeMode, isHomeMode ? '' : meta.nombre)}
       <section class="branch-hero">
         <div class="bh-eyebrow">
           <span>${getRegionName(activeRegion)}</span>

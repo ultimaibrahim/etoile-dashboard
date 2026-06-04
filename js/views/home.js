@@ -17,6 +17,10 @@ const HomeView = {
   scrollAnimationActive: false,
 
   async render() {
+    if (typeof SUCURSALES_META !== 'undefined' && SUCURSALES_META.length === 1) {
+      await BranchView.render({ id: SUCURSALES_META[0].id }, true);
+      return;
+    }
     Charts.destroyAll();
     const currYear = DataLoader.currentYear;
     const prevYear = DataLoader.previousYear;
@@ -981,8 +985,8 @@ const HomeView = {
     const branchMeta = SUCURSALES_META.find(s => s.id === branchId);
     if (!branchMeta) return;
 
-    const names = [branchMeta.nombre, branchMeta.abr, branchMeta.id === 'gal-gdl' ? 'Galerías GDL' : '', branchMeta.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].filter(Boolean);
-    const negatives = data.reviews.filter(r => r.stars <= 3 && names.includes(r.sucursal) && r.text && r.text.trim().length > 0);
+    const branchReviews = DataLoader.getReviewsForBranch(year, month, branchId);
+    const negatives = branchReviews.filter(r => r.stars <= 3 && r.text && r.text.trim().length > 0);
 
     // Freeze background scrolling when opening the modal
     document.documentElement.style.overflow = 'hidden';
@@ -1040,8 +1044,8 @@ const HomeView = {
     if (!data) return;
     const branchMeta = SUCURSALES_META.find(s => s.id === branchId);
     if (!branchMeta) return;
-    const names = [branchMeta.nombre, branchMeta.abr, branchMeta.id === 'gal-gdl' ? 'Galerías GDL' : '', branchMeta.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].filter(Boolean);
-    const negatives = data.reviews.filter(r => r.stars <= 3 && names.includes(r.sucursal) && r.text && r.text.trim().length > 0);
+    const branchReviews = DataLoader.getReviewsForBranch(year, month, branchId);
+    const negatives = branchReviews.filter(r => r.stars <= 3 && r.text && r.text.trim().length > 0);
     const monthName = MONTH_NAMES[month - 1] || '';
     let text = `étoile GDL — Reporte de Incidencias — ${branchMeta.abr} ${monthName} ${year}\n`;
     text += `${negatives.length} reseña${negatives.length !== 1 ? 's' : ''} crítica${negatives.length !== 1 ? 's' : ''}:\n\n`;
@@ -1082,8 +1086,8 @@ const HomeView = {
     let hasIncidents = false;
 
     SUCURSALES_META.forEach(branchMeta => {
-      const names = [branchMeta.nombre, branchMeta.abr, branchMeta.id === 'gal-gdl' ? 'Galerías GDL' : '', branchMeta.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].filter(Boolean);
-      const negatives = data.reviews.filter(r => r.stars <= 3 && names.includes(r.sucursal) && r.text && r.text.trim().length > 0);
+      const branchReviews = DataLoader.getReviewsForBranch(year, month, branchMeta.id);
+      const negatives = branchReviews.filter(r => r.stars <= 3 && r.text && r.text.trim().length > 0);
       if (negatives.length > 0) {
         hasIncidents = true;
         branchesHtml += `
@@ -1154,8 +1158,8 @@ const HomeView = {
     let totalCount = 0;
 
     SUCURSALES_META.forEach(branchMeta => {
-      const names = [branchMeta.nombre, branchMeta.abr, branchMeta.id === 'gal-gdl' ? 'Galerías GDL' : '', branchMeta.id === 'sta-anita' ? 'Galerías Santa Anita' : ''].filter(Boolean);
-      const negatives = data.reviews.filter(r => r.stars <= 3 && names.includes(r.sucursal) && r.text && r.text.trim().length > 0);
+      const branchReviews = DataLoader.getReviewsForBranch(year, month, branchMeta.id);
+      const negatives = branchReviews.filter(r => r.stars <= 3 && r.text && r.text.trim().length > 0);
       if (negatives.length > 0) {
         totalCount += negatives.length;
         text += `• ${branchMeta.nombre} (${negatives.length} reseña${negatives.length !== 1 ? 's' : ''} crítica${negatives.length !== 1 ? 's' : ''}):\n`;

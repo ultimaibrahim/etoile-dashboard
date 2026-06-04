@@ -246,8 +246,12 @@ const LoginView = {
     try {
       const ok = await AppAuth.login(email, password);
       if (ok) {
-        // Redirigir al inicio después de login exitoso
-        Router.navigate('#/');
+        const role = AppAuth.getUserRole();
+        if (role === 'admin' || role === 'regional' || role === 'zonal') {
+          Router.navigate('#/select-region');
+        } else {
+          Router.navigate('#/');
+        }
       } else {
         this.render('Correo o contraseña incorrectos.');
       }
