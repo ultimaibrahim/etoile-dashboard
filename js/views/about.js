@@ -21,10 +21,11 @@ const CHANGELOG_EPOCAS = [
         v: 'v3.4.1.altair', date: 'Junio 2026',
         items: [
           'Unificación Regional: Se unificaron las sucursales duplicadas de San Luis y The Park (SLP) en la sucursal única the-park, y de Pocitos y Altaria (AGS) en la sucursal única altaria.',
-          'Consolidación de MTY: Monterrey configurado con 3 sucursales activas (Galerías MTY, Galerías Valle Oriente y Fashion Drive).',
+          'Consolidación de MTY: Monterrey configurado con 4 sucursales activas (Galerías MTY, Galerías Valle Oriente, Fashion Drive y Galerías Cumbres).',
           'Soporte Cinemex Completo: Añadido tag visual especial, animación perimetral y fondo con marca de agua SVG traslúcida de cine en las tarjetas y vista de detalle de las sucursales ubicadas dentro de complejos Cinemex (Artz, Plaza Mayor, The Park y Landmark Tijuana).',
           'Tijuana y Landmark: Se restauró la sucursal Landmark Tijuana en lugar de la genérica y se conserva Plaza Península como las dos ubicaciones oficiales de Tijuana.',
-          'Sincronización Ingesta: Actualizado el webhook de Netlify (apify-ingest) para unificar de forma automática los mapeos de San Luis y Pocitos.'
+          'Sincronización Ingesta: Actualizado el webhook de Netlify (apify-ingest) para unificar de forma automática los mapeos de San Luis y Pocitos.',
+          'Alineación con P&L Oficial: Se añadieron las sucursales del P&L oficial, incluyendo Cumbres (MTY), Mercado Andares (GDL, separada de Andares) y las nuevas Cinemex (Artz, Insurgentes, Antara, Reforma 222, Patriotismo y Cinemex The Park), y se removió la sucursal inactiva Aeropuerto.'
         ]
       },
       {
