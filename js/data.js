@@ -15,7 +15,7 @@ const SUCURSALES_META_ALL = [
   { id: 'la-perla', nombre: 'La Perla', abr: 'La Perla', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'GDL' },
   { id: 'forum', nombre: 'Forum Tlaquepaque', abr: 'Forum', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'GDL' },
 
-  // Región Ciudad de México / Valle de México (CDMX) - 14 sucursales
+  // Región Ciudad de México (CDMX) - 14 sucursales
   { id: 'aztlan', nombre: 'Aztlán', abr: 'Aztlán', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'carso', nombre: 'Plaza Carso', abr: 'Plaza Carso', historico: 4.3, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'mexicana', nombre: 'Parque La Mexicana', abr: 'La Mexicana', historico: 4.6, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
@@ -62,7 +62,7 @@ const SUCURSALES_META_ALL = [
 // Nombres legibles de las regiones
 const REGION_NAME_MAP = {
   'GDL': 'Guadalajara',
-  'CDMX': 'Valle de México',
+  'CDMX': 'Ciudad de México',
   'MTY': 'Monterrey',
   'LEON': 'León',
   'SLP': 'San Luis Potosí',

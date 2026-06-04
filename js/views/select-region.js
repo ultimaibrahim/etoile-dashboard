@@ -193,7 +193,7 @@ const SelectRegionView = {
       
       let desc = '';
       if (id === 'GDL') desc = 'Jalisco · Regional';
-      else if (id === 'CDMX') desc = 'Valle de México';
+      else if (id === 'CDMX') desc = 'Ciudad de México';
       else if (id === 'MTY') desc = 'Nuevo León';
       else if (id === 'TJ') desc = 'Baja California';
       else desc = 'Sucursal única';
@@ -223,7 +223,7 @@ const SelectRegionView = {
       <div class="srv-wrapper">
         <div class="srv-container" id="srvContainer">
           <div class="srv-header">
-            <span class="eyebrow" style="color:rgba(245, 239, 230, 0.5); font-weight:700;">Monitoreo Regional</span>
+            <span class="eyebrow" style="color:rgba(245,239,230,0.9); font-weight:700; background:rgba(61,90,71,0.45); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); padding:6px 16px; border-radius:20px; border:1px solid rgba(122,158,138,0.25); letter-spacing:0.08em;">Monitoreo Regional</span>
             <h1 class="srv-title">Selecciona una Región</h1>
             <p class="srv-subtitle">Elige el área operativa que deseas supervisar. Tu perfil administrativo te permite alternar libremente entre regiones.</p>
           </div>
