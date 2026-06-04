@@ -49,7 +49,7 @@ exports.handler = async (event, context) => {
     console.log(`Descargadas ${items.length} reseñas.`);
 
     // 4. Conectar a Supabase usando Service Role Key para hacer bypass a RLS en la escritura
-    const supabaseUrl = process.env.SUPABASE_URL || 'https://lbnqpcrhyebtbblpvazp.supabase.co';
+    const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseServiceKey) {
