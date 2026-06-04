@@ -7,109 +7,75 @@ export const DataLoader = {
   cache: {} as Record<string, { reviews: Review[] }>,
 
   async init(activeRegion: string): Promise<Record<string, number[]>> {
-    // 1. Cargar manifest local como fallback
-    let localManifest: Record<string, number[]> = { "2026": [1, 2, 3, 4, 5, 6] };
+    // Cargar manifest dinámico desde Supabase `review_months`
     try {
-      const res = await fetch('/data/manifest.json');
-      if (res.ok) {
-        localManifest = await res.json();
-      }
-    } catch (e) {
-      console.warn('No se pudo cargar el manifest local, usando inicial de 2026:', e);
-    }
+      const { data, error } = await supabaseClient
+        .from('review_months')
+        .select('*')
+        .eq('region', activeRegion);
 
-    this.manifest = localManifest;
+      if (error) throw error;
 
-    // 2. Intentar cargar el manifest dinámico desde la tabla de Supabase `review_months`
-    if (supabaseClient) {
-      try {
-        const { data, error } = await supabaseClient
-          .from('review_months')
-          .select('*')
-          .eq('region', activeRegion);
+      const dbManifest: Record<string, number[]> = {};
 
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          const dbManifest: Record<string, number[]> = {};
-          data.forEach(row => {
-            const y = String(row.year);
-            if (!dbManifest[y]) dbManifest[y] = [];
-            if (!dbManifest[y].includes(row.month)) {
-              dbManifest[y].push(row.month);
-            }
-          });
-
-          for (const y in dbManifest) {
-            dbManifest[y].sort((a, b) => a - b);
+      if (data && data.length > 0) {
+        data.forEach(row => {
+          const y = String(row.year);
+          if (!dbManifest[y]) dbManifest[y] = [];
+          if (!dbManifest[y].includes(row.month)) {
+            dbManifest[y].push(row.month);
           }
-          this.manifest = dbManifest;
-        }
-      } catch (e) {
-        console.warn('DataLoader: Fallo al cargar manifest desde Supabase. Usando manifest local.', e);
-      }
-    }
+        });
 
-    return this.manifest || localManifest;
+        for (const y in dbManifest) {
+          dbManifest[y].sort((a, b) => a - b);
+        }
+      }
+
+      this.manifest = dbManifest;
+      return dbManifest;
+    } catch (e) {
+      console.error('DataLoader: Error al cargar manifest desde Supabase:', e);
+      this.manifest = {};
+      return {};
+    }
   },
 
   async loadMonth(year: number, month: number, activeRegion: string): Promise<{ reviews: Review[] }> {
     const key = `${year}-${String(month).padStart(2, '0')}`;
     if (this.cache[key]) return this.cache[key];
 
-    // 1. Intentar cargar desde Supabase
-    if (supabaseClient) {
-      try {
-        const startDate = new Date(year, month - 1, 1).toISOString();
-        const endDate = new Date(year, month, 1).toISOString();
-
-        const { data, error } = await supabaseClient
-          .from('reviews')
-          .select('*')
-          .eq('region', activeRegion)
-          .gte('published_at_date', startDate)
-          .lt('published_at_date', endDate);
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          const mappedReviews: Review[] = data.map((r, idx) => ({
-            id: r.id,
-            globalId: `${key}-${idx}`,
-            sucursal: r.sucursal,
-            stars: r.stars,
-            text: r.text,
-            publishedAtDate: r.published_at_date,
-            isLocalGuide: r.is_local_guide || false,
-            responseText: r.response_text || null,
-            responseDate: r.response_date || null
-          }));
-
-          const result = { reviews: mappedReviews };
-          this.cache[key] = result;
-          return result;
-        } else {
-          console.info(`Supabase returned 0 reviews for ${key}, falling back to local JSON files.`);
-        }
-      } catch (e) {
-        console.error(`Error cargando Supabase para ${key}:`, e);
-      }
-    }
-
-    // 2. Fallback local a carpeta public/data/
+    // Cargar reseñas desde Supabase
     try {
-      const res = await fetch(`/data/${year}/${String(month).padStart(2, '0')}.json`);
-      if (!res.ok) throw new Error(`Status ${res.status}`);
-      const data = await res.json();
-      if (data && data.reviews) {
-        data.reviews.forEach((r: any, idx: number) => {
-          r.globalId = `${key}-${idx}`;
-        });
-      }
-      this.cache[key] = data;
-      return data;
+      const startDate = new Date(year, month - 1, 1).toISOString();
+      const endDate = new Date(year, month, 1).toISOString();
+
+      const { data, error } = await supabaseClient
+        .from('reviews')
+        .select('*')
+        .eq('region', activeRegion)
+        .gte('published_at_date', startDate)
+        .lt('published_at_date', endDate);
+
+      if (error) throw error;
+
+      const mappedReviews: Review[] = (data || []).map((r, idx) => ({
+        id: r.id,
+        globalId: `${key}-${idx}`,
+        sucursal: r.sucursal,
+        stars: r.stars,
+        text: r.text,
+        publishedAtDate: r.published_at_date,
+        isLocalGuide: r.is_local_guide || false,
+        responseText: r.response_text || null,
+        responseDate: r.response_date || null
+      }));
+
+      const result = { reviews: mappedReviews };
+      this.cache[key] = result;
+      return result;
     } catch (e) {
-      console.error(`Error cargando JSON local para ${key}:`, e);
+      console.error(`DataLoader: Error cargando reseñas de Supabase para ${key}:`, e);
       return { reviews: [] };
     }
   },
@@ -145,18 +111,8 @@ export const DataLoader = {
     const meta = SUCURSALES_META_ALL.find(s => s.id === branchId);
     if (!meta) return [];
 
-    const names = [meta.nombre, meta.abr];
-    if (branchId === 'gal-gdl') names.push('Galerías GDL');
-    if (branchId === 'sta-anita') names.push('Galerías Santa Anita');
-
-    return data.reviews.filter(r => {
-      // Si la reseña viene del JSON local o tiene ID corto/inexistente
-      if (!r.id || (r.globalId.startsWith(`${year}-${String(month).padStart(2, '0')}`) && r.id.length < 15)) {
-        return names.includes(r.sucursal);
-      }
-      // Si viene de Supabase
-      return r.sucursal === branchId;
-    });
+    // Las reseñas de Supabase usan branchId directamente como `sucursal`
+    return data.reviews.filter(r => r.sucursal === branchId);
   },
 
   computeBranchStats(year: number, month: number, branchId: string): BranchStats {
