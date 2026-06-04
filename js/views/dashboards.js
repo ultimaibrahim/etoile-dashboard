@@ -283,7 +283,7 @@ const DashboardsView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · La Crêpe Parisienne / Grupo MYT<br>
-        Dashboard de Reseñas · Región Guadalajara
+        Dashboard de Reseñas · Región ${activeRegion === 'GDL' ? 'Guadalajara' : 'CDMX'}
       </footer>`;
 
     setTimeout(() => {

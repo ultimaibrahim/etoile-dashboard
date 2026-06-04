@@ -11,6 +11,7 @@ const Router = {
   },
 
   match(hash) {
+    if (hash === '#/login') return { handler: this.routes['login'], params: {} };
     if (hash === '#/') return { handler: this.routes['home'], params: {} };
     if (hash.startsWith('#/sucursal/')) {
       const id = hash.replace('#/sucursal/', '');
@@ -36,6 +37,21 @@ const Router = {
 
   async resolve() {
     const hash = window.location.hash || '#/';
+
+    // Verificar sesión antes de permitir la navegación
+    const authenticated = typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated();
+    if (!authenticated) {
+      if (hash !== '#/login') {
+        window.location.hash = '#/login';
+        return;
+      }
+    } else {
+      if (hash === '#/login') {
+        window.location.hash = '#/';
+        return;
+      }
+    }
+
     const app = document.getElementById('app');
     if (!app) return;
 

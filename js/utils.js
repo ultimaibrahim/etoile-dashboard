@@ -22,7 +22,8 @@ function svgIcon(name) {
     star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
     alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
-    clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>'
+    clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>',
+    logout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>'
   };
   return i[name] || '';
 }
@@ -115,6 +116,30 @@ function buildTopbar(showBack = false, branchName = '') {
     <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
   </nav>`;
 
+  // Selector de región para administradores, regionales y zonales
+  let regionSelect = '';
+  if (typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated()) {
+    const role = AppAuth.getUserRole();
+    if (role === 'admin' || role === 'regional' || role === 'zonal') {
+      regionSelect = `
+        <select class="topbar-region-select" onchange="handleRegionChange(this.value)" aria-label="Cambiar región">
+          <option value="GDL" ${activeRegion === 'GDL' ? 'selected' : ''}>Guadalajara</option>
+          <option value="CDMX" ${activeRegion === 'CDMX' ? 'selected' : ''}>CDMX</option>
+        </select>
+      `;
+    }
+  }
+
+  // Botón de cerrar sesión
+  let logoutBtn = '';
+  if (typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated()) {
+    logoutBtn = `
+      <button class="topbar-logout" onclick="AppAuth.logout()" title="Cerrar sesión" aria-label="Cerrar sesión">
+        ${svgIcon('logout')}
+      </button>
+    `;
+  }
+
   const header = `<header class="topbar">
     <div class="topbar-left">${back}${titleArea}</div>
     <div class="topbar-right">
@@ -123,11 +148,22 @@ function buildTopbar(showBack = false, branchName = '') {
         <a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>
         <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
       </div>
-      <button class="dark-toggle" onclick="toggleDark()" aria-label="Cambiar tema">${darkMode ? svgIcon('sun') : svgIcon('moon')}</button>
+      <div class="topbar-actions">
+        ${regionSelect}
+        <button class="dark-toggle" onclick="toggleDark()" aria-label="Cambiar tema">${darkMode ? svgIcon('sun') : svgIcon('moon')}</button>
+        ${logoutBtn}
+      </div>
     </div>
   </header>${nav}`;
 
   return header;
+}
+
+async function handleRegionChange(region) {
+  if (typeof DataLoader !== 'undefined') {
+    await DataLoader.switchRegion(region);
+    Router.resolve();
+  }
 }
 
 /* ── INSIGHTS DINÁMICOS ───────────────────────────────── */

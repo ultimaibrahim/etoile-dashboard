@@ -283,7 +283,7 @@ const AboutView = {
               Dashboard de <span style="font-style:italic;color:var(--sage);">Reseñas</span>
             </h1>
             <p style="color:rgba(245,239,230,.75);font-size:15px;line-height:1.6;max-width:460px;">
-              Herramienta operativa para el seguimiento y análisis de reseñas de Google Maps de las 8 sucursales de La Crêpe Parisienne en la región Guadalajara.
+              Herramienta operativa para el seguimiento y análisis de reseñas de Google Maps de las sucursales de La Crêpe Parisienne en la región ${activeRegion === 'GDL' ? 'Guadalajara' : 'CDMX'}.
             </p>
           </div>
           <div class="hero-right">
@@ -414,7 +414,7 @@ const AboutView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
-        Dashboard de Reseñas · Región Guadalajara · v3.4.0.altair · 2026
+        Dashboard de Reseñas · Región ${activeRegion === 'GDL' ? 'Guadalajara' : 'CDMX'} · v3.4.0.altair · 2026
       </footer>`;
 
     requestAnimationFrame(() => {
