@@ -114,6 +114,46 @@ exports.handler = async (event, context) => {
       cleanStatus = "Merged san-luis -> the-park en la base de datos de Supabase.";
     }
 
+    // Consultar las RLS policies activas
+    let rlsPolicies = [];
+    try {
+      const { data: policyData, error: policyError } = await supabase.rpc('get_rls_policies');
+      if (policyError) {
+        // Fallback: intentar con query directa
+        const { data: rawPolicies, error: rawError } = await supabase
+          .from('pg_policies')
+          .select('*');
+        rlsPolicies = rawError ? [{ error: rawError.message }] : rawPolicies;
+      } else {
+        rlsPolicies = policyData;
+      }
+    } catch (e) {
+      // Usar SQL directo via REST
+      try {
+        const policyRes = await fetch(`${supabaseUrl}/rest/v1/rpc/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseServiceKey,
+            'Authorization': `Bearer ${supabaseServiceKey}`
+          }
+        });
+        rlsPolicies = [{ note: 'RPC not available, check Supabase dashboard manually' }];
+      } catch(e2) {
+        rlsPolicies = [{ error: e2.message }];
+      }
+    }
+
+    // Consultar profiles para diagnóstico
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, nombre, rol, region, sucursal');
+
+    // Consultar review_months
+    const { data: reviewMonthsData, error: rmError } = await supabase
+      .from('review_months')
+      .select('*');
+
     return {
       statusCode: 200,
       headers: { 
@@ -125,8 +165,10 @@ exports.handler = async (event, context) => {
         logicalDuplicatesCount: logicalDuplicates.length,
         idTypesDistribution: idTypes,
         cleanStatus,
+        profiles: profilesError ? { error: profilesError.message } : profilesData,
+        reviewMonths: rmError ? { error: rmError.message } : reviewMonthsData,
+        rlsPolicies,
         branchReviewBreakdown: Object.values(statsByBranch).sort((a,b) => a.region.localeCompare(b.region) || b.totalReviews - a.totalReviews),
-        slpReviews: allReviews.filter(r => r.region === 'SLP')
       })
     };
 
