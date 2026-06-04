@@ -68,6 +68,7 @@ exports.handler = async (event, context) => {
         .replace(/[^a-z0-9 ]/g, " ");   // deja solo letras y números
 
       // Guadalajara (GDL)
+      if (normalized.includes("mercado andares")) return { sucursalId: "mercado-andares", region: "GDL" };
       if (normalized.includes("andares")) return { sucursalId: "andares", region: "GDL" };
       if (normalized.includes("patria")) return { sucursalId: "patria", region: "GDL" };
       if (normalized.includes("midtown")) return { sucursalId: "midtown", region: "GDL" };
@@ -75,7 +76,7 @@ exports.handler = async (event, context) => {
       if (normalized.includes("via viva")) return { sucursalId: "via-viva", region: "GDL" };
       if (normalized.includes("santa anita")) return { sucursalId: "sta-anita", region: "GDL" };
       if (normalized.includes("la perla")) return { sucursalId: "la-perla", region: "GDL" };
-      if (normalized.includes("forum tlaquepaque") || normalized.includes("forum")) return { sucursalId: "forum", region: "GDL" };
+      if (normalized.includes("forum tlaquepaque") || normalized.includes("forum") || normalized.includes("tlaquepaque")) return { sucursalId: "forum", region: "GDL" };
 
       // CDMX / Valle de México (CDMX)
       if (normalized.includes("aztlan")) return { sucursalId: "aztlan", region: "CDMX" };
@@ -85,11 +86,15 @@ exports.handler = async (event, context) => {
       if (normalized.includes("tepeyac")) return { sucursalId: "tepeyac", region: "CDMX" };
       if (normalized.includes("polanquito")) return { sucursalId: "polanquito", region: "CDMX" };
       if (normalized.includes("oceania")) return { sucursalId: "oceania", region: "CDMX" };
+      if (normalized.includes("cinemex artz")) return { sucursalId: "cinemex-artz", region: "CDMX" };
+      if (normalized.includes("cinemex insurgentes")) return { sucursalId: "cinemex-insurgentes", region: "CDMX" };
+      if (normalized.includes("cinemex antara")) return { sucursalId: "cinemex-antara", region: "CDMX" };
+      if (normalized.includes("cinemex reforma")) return { sucursalId: "cinemex-reforma", region: "CDMX" };
+      if (normalized.includes("cinemex patriotismo")) return { sucursalId: "cinemex-patriotismo", region: "CDMX" };
       if (normalized.includes("artz") || normalized.includes("pedregal")) return { sucursalId: "artz", region: "CDMX" };
       if (normalized.includes("arcos bosques") || normalized.includes("arcos")) return { sucursalId: "arcos", region: "CDMX" };
       if (normalized.includes("mitikah")) return { sucursalId: "mitikah", region: "CDMX" };
       if (normalized.includes("oasis") || normalized.includes("coyoacan")) return { sucursalId: "coyoacan", region: "CDMX" };
-      if (normalized.includes("aeropuerto") || normalized.includes("terminal 1") || normalized.includes("t1")) return { sucursalId: "aeropuerto", region: "CDMX" };
       if (normalized.includes("duraznos")) return { sucursalId: "duraznos", region: "CDMX" };
       if (normalized.includes("santa fe") || normalized.includes("santafe")) return { sucursalId: "santa-fe", region: "CDMX" };
       if (normalized.includes("satelite")) return { sucursalId: "satelite", region: "CDMX" };
@@ -97,6 +102,7 @@ exports.handler = async (event, context) => {
       // Monterrey (MTY)
       if (normalized.includes("valle oriente")) return { sucursalId: "valle-oriente", region: "MTY" };
       if (normalized.includes("fashion drive")) return { sucursalId: "fashion-drive", region: "MTY" };
+      if (normalized.includes("cumbres")) return { sucursalId: "cumbres", region: "MTY" };
       if (normalized.includes("monterrey")) return { sucursalId: "gal-mty", region: "MTY" }; // "Galerías Monterrey"
 
       // León (LEON)
@@ -104,6 +110,7 @@ exports.handler = async (event, context) => {
       if (normalized.includes("plaza mayor")) return { sucursalId: "plaza-mayor", region: "LEON" };
 
       // San Luis Potosí (SLP)
+      if (normalized.includes("cinemex the park")) return { sucursalId: "cinemex-the-park", region: "SLP" };
       if (normalized.includes("the park") || normalized.includes("san luis") || normalized.includes("slp")) {
         return { sucursalId: "the-park", region: "SLP" };
       }
@@ -114,7 +121,7 @@ exports.handler = async (event, context) => {
       }
 
       // Toluca / Metepec (TOL)
-      if (normalized.includes("town square")) return { sucursalId: "town-square", region: "TOL" };
+      if (normalized.includes("town square") || normalized.includes("ts metepec")) return { sucursalId: "town-square", region: "TOL" };
       if (normalized.includes("metepec") || normalized.includes("toluca")) return { sucursalId: "gal-metepec", region: "TOL" }; // "Galerías Metepec"
 
       // Querétaro (QRO)

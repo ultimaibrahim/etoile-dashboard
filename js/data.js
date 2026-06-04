@@ -5,8 +5,9 @@
 
 // Todos los metadatos de sucursales en todas las regiones
 const SUCURSALES_META_ALL = [
-  // Región Guadalajara (GDL) - 8 sucursales
+  // Región Guadalajara (GDL) - 9 sucursales
   { id: 'andares', nombre: 'Andares', abr: 'Andares', historico: 4.3, q1Status: 'critical', alertTheme: null, problemas: [], region: 'GDL' },
+  { id: 'mercado-andares', nombre: 'Mercado Andares', abr: 'Merc. Andares', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'GDL' },
   { id: 'patria', nombre: 'Plaza Patria', abr: 'Patria', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'GDL' },
   { id: 'midtown', nombre: 'Midtown Jalisco', abr: 'Midtown', historico: 4.5, q1Status: 'attention', alertTheme: null, problemas: [], region: 'GDL' },
   { id: 'gal-gdl', nombre: 'Galerías Guadalajara', abr: 'Gal. GDL', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'GDL' },
@@ -15,7 +16,7 @@ const SUCURSALES_META_ALL = [
   { id: 'la-perla', nombre: 'La Perla', abr: 'La Perla', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'GDL' },
   { id: 'forum', nombre: 'Forum Tlaquepaque', abr: 'Forum', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'GDL' },
 
-  // Región Ciudad de México / Valle de México (CDMX) - 15 sucursales
+  // Región Ciudad de México / Valle de México (CDMX) - 19 sucursales
   { id: 'aztlan', nombre: 'Aztlán', abr: 'Aztlán', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'carso', nombre: 'Plaza Carso', abr: 'Plaza Carso', historico: 4.3, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'mexicana', nombre: 'Parque La Mexicana', abr: 'La Mexicana', historico: 4.6, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
@@ -23,26 +24,32 @@ const SUCURSALES_META_ALL = [
   { id: 'tepeyac', nombre: 'Tepeyac', abr: 'Tepeyac', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'polanquito', nombre: 'Polanquito', abr: 'Polanquito', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'oceania', nombre: 'Oceanía', abr: 'Oceanía', historico: 4.3, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
-  { id: 'artz', nombre: 'Artz Pedregal', abr: 'Artz', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX', isCinemex: true },
+  { id: 'artz', nombre: 'Artz Pedregal', abr: 'Artz', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'arcos', nombre: 'Arcos Bosques', abr: 'Arcos', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'mitikah', nombre: 'Mitikah', abr: 'Mitikah', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'coyoacan', nombre: 'Oasis Coyoacán', abr: 'Coyoacán', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
-  { id: 'aeropuerto', nombre: 'Aeropuerto Terminal 1', abr: 'Aeropuerto T1', historico: 4.2, q1Status: 'critical', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'duraznos', nombre: 'Parque Duraznos', abr: 'Duraznos', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'santa-fe', nombre: 'Centro Santa Fe', abr: 'Santa Fe', historico: 4.3, q1Status: 'critical', alertTheme: null, problemas: [], region: 'CDMX' },
   { id: 'satelite', nombre: 'Plaza Satélite', abr: 'Satélite', historico: 4.4, q1Status: 'attention', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'cinemex-artz', nombre: 'Cinemex Artz', abr: 'Cinemex Artz', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX', isCinemex: true },
+  { id: 'cinemex-insurgentes', nombre: 'Cinemex Insurgentes', abr: 'Cinemex Insurg.', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX', isCinemex: true },
+  { id: 'cinemex-antara', nombre: 'Cinemex Antara', abr: 'Cinemex Antara', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX', isCinemex: true },
+  { id: 'cinemex-reforma', nombre: 'Cinemex Reforma 222', abr: 'Cinemex Ref. 222', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX', isCinemex: true },
+  { id: 'cinemex-patriotismo', nombre: 'Cinemex Patriotismo', abr: 'Cinemex Patr.', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX', isCinemex: true },
 
-  // Región Monterrey (MTY) - 3 sucursales
+  // Región Monterrey (MTY) - 4 sucursales
   { id: 'gal-mty', nombre: 'Galerías Monterrey', abr: 'Gal. MTY', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'MTY' },
   { id: 'valle-oriente', nombre: 'Galerías Valle Oriente', abr: 'Valle Oriente', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'MTY' },
   { id: 'fashion-drive', nombre: 'Fashion Drive', abr: 'Fashion Drive', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'MTY' },
+  { id: 'cumbres', nombre: 'Galerías Cumbres', abr: 'Cumbres', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'MTY' },
 
   // Región Guanajuato / León (LEON) - 2 sucursales
   { id: 'altacia', nombre: 'Altacia', abr: 'Altacia', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'LEON' },
   { id: 'plaza-mayor', nombre: 'Plaza Mayor', abr: 'Plaza Mayor', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'LEON', isCinemex: true },
 
-  // Región San Luis Potosí (SLP) - 1 sucursal
-  { id: 'the-park', nombre: 'The Park', abr: 'The Park', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'SLP', isCinemex: true },
+  // Región San Luis Potosí (SLP) - 2 sucursales
+  { id: 'the-park', nombre: 'The Park', abr: 'The Park', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'SLP' },
+  { id: 'cinemex-the-park', nombre: 'Cinemex The Park', abr: 'Cinemex The Park', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'SLP', isCinemex: true },
 
   // Región Aguascalientes (AGS) - 1 sucursal
   { id: 'altaria', nombre: 'Altaria', abr: 'Altaria', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'AGS' },
@@ -99,45 +106,62 @@ function setRegionActiva(region) {
 const SUCURSAL_NAME_MAP = {
   // GDL
   'Andares': 'andares',
+  'Mercado Andares': 'mercado-andares',
   'Plaza Patria': 'patria',
+  'Patria': 'patria',
   'Galerías GDL': 'gal-gdl',
   'Galerías Guadalajara': 'gal-gdl',
   'Midtown': 'midtown',
   'Midtown Jalisco': 'midtown',
   'Via Viva': 'via-viva',
+  'Vía Viva': 'via-viva',
   'Galerías Santa Anita': 'sta-anita',
+  'Santa Anita': 'sta-anita',
   'La Perla': 'la-perla',
   'Forum Tlaquepaque': 'forum',
+  'Tlaquepaque': 'forum',
 
   // CDMX
   'Aztlán': 'aztlan',
   'Plaza Carso': 'carso',
   'Parque La Mexicana': 'mexicana',
+  'La Mexicana': 'mexicana',
   'Paseo Acoxpa': 'acoxpa',
   'Tepeyac': 'tepeyac',
   'Polanquito': 'polanquito',
   'Oceanía': 'oceania',
   'Artz Pedregal': 'artz',
+  'Artz': 'artz',
   'Arcos Bosques': 'arcos',
   'Mitikah': 'mitikah',
   'Oasis Coyoacán': 'coyoacan',
-  'Aeropuerto Terminal 1': 'aeropuerto',
+  'Oasis': 'coyoacan',
   'Parque Duraznos': 'duraznos',
   'Centro Santa Fe': 'santa-fe',
+  'Santa Fe': 'santa-fe',
   'Plaza Satélite': 'satelite',
+  'Cinemex Artz': 'cinemex-artz',
+  'Cinemex Insurgentes': 'cinemex-insurgentes',
+  'Cinemex Antara': 'cinemex-antara',
+  'Cinemex Reforma 222': 'cinemex-reforma',
+  'Cinemex Patriotismo': 'cinemex-patriotismo',
 
   // MTY
   'Galerías Monterrey': 'gal-mty',
   'Galerías Valle Oriente': 'valle-oriente',
   'Fashion Drive': 'fashion-drive',
+  'Galerías Cumbres': 'cumbres',
+  'Cumbres': 'cumbres',
 
   // LEON
   'Altacia': 'altacia',
   'Plaza Mayor': 'plaza-mayor',
+  'Cinemex Plaza Mayor': 'plaza-mayor',
 
   // SLP
   'The Park': 'the-park',
   'San Luis': 'the-park',
+  'Cinemex The Park': 'cinemex-the-park',
 
   // AGS
   'Altaria': 'altaria',
@@ -147,6 +171,7 @@ const SUCURSAL_NAME_MAP = {
   // TOL
   'Galerías Metepec': 'gal-metepec',
   'Town Square Metepec': 'town-square',
+  'TS Metepec': 'town-square',
 
   // QRO
   'Antea': 'antea',
@@ -156,7 +181,9 @@ const SUCURSAL_NAME_MAP = {
 
   // TJ
   'Plaza Península': 'peninsula',
+  'Peninsula Tijuana': 'peninsula',
   'Landmark Tijuana': 'landmark-tj',
+  'Cinemex Landmark Tijuana': 'landmark-tj',
   'Tijuana': 'landmark-tj'
 };
 
