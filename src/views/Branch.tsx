@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { DataLoader } from '../services/dataLoader';
-import { starStr, formatDate, computeDynamicInsights } from '../utils';
+import { starStr, formatDate, computeDynamicInsights, initReveal } from '../utils';
 import { KpiMeta, MONTH_NAMES, SUCURSALES_META_ALL } from '../lib/data';
 import { Review, BranchStats } from '../types';
 import Topbar from '../components/Topbar';
@@ -20,7 +20,8 @@ export const Branch: React.FC = () => {
     currentYear,
     currentMonth,
     setCurrentPeriod,
-    isAuthenticated
+    isAuthenticated,
+    sucursalesMeta
   } = useApp();
 
   const [loading, setLoading] = useState(true);
@@ -96,11 +97,21 @@ export const Branch: React.FC = () => {
     return () => document.removeEventListener('click', closeDropdown);
   }, []);
 
+  // Inicializar animaciones de scroll cuando termina de cargar
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        initReveal();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+
   if (!isAuthenticated || !meta) return null;
 
   const capitalizedMonth = MONTH_NAMES[currentMonth - 1] || '';
 
-  // Cálculo de deltas e indicadores
+  // Calculation of deltas and indicators
   const delta = stats.avg > 0 ? (stats.avg - meta.historico) : 0;
   const dStr = delta > 0 ? `+${delta.toFixed(2)}` : delta.toFixed(2);
   const dClass = delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : 'flat';
@@ -250,7 +261,7 @@ export const Branch: React.FC = () => {
 
   return (
     <>
-      <Topbar showBack={true} branchName={meta.nombre} />
+      <Topbar showBack={sucursalesMeta.length > 1} branchName={meta.nombre} />
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '20px' }}>

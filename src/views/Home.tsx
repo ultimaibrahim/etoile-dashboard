@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { DataLoader } from '../services/dataLoader';
 import { Kpis } from '../services/kpis';
-import { starStr, formatDate, computeDynamicInsights, getConcludedMonthInfo } from '../utils';
+import { starStr, formatDate, computeDynamicInsights, getConcludedMonthInfo, initReveal } from '../utils';
 import { KpiMeta, REGION_NAME_MAP, MONTH_NAMES } from '../lib/data';
 import { Review, BranchStats } from '../types';
 import Topbar from '../components/Topbar';
@@ -94,14 +94,15 @@ export const Home: React.FC = () => {
       setManifest(dbManifest);
 
       // Si el mes actual del context no está en el manifest de la región activa, poner el último disponible
-      const years = Object.keys(dbManifest).map(Number).sort((a, b) => b - a);
-      if (years.length > 0) {
-        const latestYear = years[0];
-        const months = [...dbManifest[latestYear]].sort((a, b) => b - a);
-        if (months.length > 0) {
-          const latestMonth = months[0];
-          // Evitar bucle si ya coincide
-          if (latestYear !== currentYear || latestMonth !== currentMonth) {
+      const hasYear = !!dbManifest[currentYear];
+      const hasMonth = hasYear && dbManifest[currentYear].includes(currentMonth);
+      if (!hasMonth) {
+        const years = Object.keys(dbManifest).map(Number).sort((a, b) => b - a);
+        if (years.length > 0) {
+          const latestYear = years[0];
+          const months = [...dbManifest[latestYear]].sort((a, b) => b - a);
+          if (months.length > 0) {
+            const latestMonth = months[0];
             setCurrentPeriod(latestYear, latestMonth);
             return; // Esperar al siguiente trigger por dependencia de currentYear/currentMonth
           }
@@ -173,6 +174,23 @@ export const Home: React.FC = () => {
       fetchData();
     }
   }, [activeRegion, currentYear, currentMonth, isAuthenticated]);
+
+  // Redireccionar automáticamente si la región solo tiene 1 sucursal (ej: León, SLP, AGS)
+  useEffect(() => {
+    if (!loading && sucursalesMeta.length === 1) {
+      navigate(`/sucursal/${sucursalesMeta[0].id}`, { replace: true });
+    }
+  }, [loading, sucursalesMeta, navigate]);
+
+  // Inicializar animaciones de scroll cuando termina de cargar
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        initReveal();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   // Cerrar dropdowns interactivos al hacer click fuera
   useEffect(() => {

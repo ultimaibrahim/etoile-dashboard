@@ -8,7 +8,7 @@ import { Review } from '../types';
 import Topbar from '../components/Topbar';
 import RatingStars from '../components/RatingStars';
 import Icon from '../components/Icon';
-import { formatDate } from '../utils';
+import { formatDate, initReveal } from '../utils';
 
 interface BranchQuarterStats {
   id: string;
@@ -171,6 +171,16 @@ export const Quarter: React.FC = () => {
 
     fetchData();
   }, [q, activeRegion, isAuthenticated, sucursalesMeta]);
+
+  // Inicializar animaciones de scroll cuando termina de cargar
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        initReveal();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   if (!isAuthenticated) return null;
 

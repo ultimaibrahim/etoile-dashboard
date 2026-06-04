@@ -72,7 +72,7 @@ export const DataLoader = {
 
         if (error) throw error;
 
-        if (data) {
+        if (data && data.length > 0) {
           const mappedReviews: Review[] = data.map((r, idx) => ({
             id: r.id,
             globalId: `${key}-${idx}`,
@@ -88,6 +88,8 @@ export const DataLoader = {
           const result = { reviews: mappedReviews };
           this.cache[key] = result;
           return result;
+        } else {
+          console.info(`Supabase returned 0 reviews for ${key}, falling back to local JSON files.`);
         }
       } catch (e) {
         console.error(`Error cargando Supabase para ${key}:`, e);

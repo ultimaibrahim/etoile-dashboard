@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import Home from './views/Home';
 import Login from './views/Login';
@@ -42,9 +42,20 @@ const AdminGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
+const RevealScrollHandler: React.FC = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  return null;
+};
+
 export const AppContent: React.FC = () => {
   return (
     <BrowserRouter>
+      <RevealScrollHandler />
       <Routes>
         <Route path="/login" element={<Login />} />
         

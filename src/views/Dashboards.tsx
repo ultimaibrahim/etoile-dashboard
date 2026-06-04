@@ -12,7 +12,7 @@ import {
   StarDistributionBarChart, 
   LineTrendChart 
 } from '../components/DashboardCharts';
-import { getConcludedMonthInfo } from '../utils';
+import { getConcludedMonthInfo, initReveal } from '../utils';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 
 interface ProactiveAlert {
@@ -301,6 +301,16 @@ export const Dashboards: React.FC = () => {
 
     fetchData();
   }, [activeRegion, currentYear, currentMonth, darkMode, isAuthenticated]);
+
+  // Inicializar animaciones de scroll cuando termina de cargar
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        initReveal();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   // Cierre de dropdown
   useEffect(() => {

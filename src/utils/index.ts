@@ -114,3 +114,17 @@ export function getConcludedMonthInfo(manifest: Record<string, number[]> | null)
   }
   return null;
 }
+
+export function initReveal(): () => void {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.r').forEach((el) => obs.observe(el));
+  return () => obs.disconnect();
+}

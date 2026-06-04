@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabaseClient } from '../lib/supabase';
-import { SUCURSALES_META_ALL, REGION_NAME_MAP } from '../lib/data';
+import { SUCURSALES_META_ALL, REGION_NAME_MAP, SUCURSAL_NAME_MAP } from '../lib/data';
 import { Review, SucursalMeta, UserProfile } from '../types';
 
 interface AppContextType {
@@ -18,7 +18,7 @@ interface AppContextType {
   currentMonth: number;
   setCurrentPeriod: (year: number, month: number) => void;
   sucursalesMeta: SucursalMeta[];
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, demoBranch?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -35,9 +35,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [homeFilter, setHomeFilter] = useState<string>('todas');
   
-  // Período activo (por defecto, Junio 2026 en consonancia con la fecha actual del sistema)
+  // Período activo (por defecto, Mayo 2026 ya que el manifest local llega hasta el mes 5)
   const [currentYear, setCurrentYear] = useState<number>(2026);
-  const [currentMonth, setCurrentMonth] = useState<number>(6);
+  const [currentMonth, setCurrentMonth] = useState<number>(5);
 
   // Lista dinámica de sucursales según la región seleccionada
   const sucursalesMeta = SUCURSALES_META_ALL.filter(s => s.region === activeRegion);
@@ -55,6 +55,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Carga inicial y suscripción a eventos de Supabase Auth
   useEffect(() => {
+    // 1. Intentar restaurar sesión de Apps Script desde LocalStorage
+    try {
+      const saved = localStorage.getItem('lcp_reviews_session_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.session && parsed.profile) {
+          setSession(parsed.session);
+          setUserProfile(parsed.profile);
+          setActiveRegionState(parsed.profile.region || 'GDL');
+          setLoadingAuth(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error("Error al restaurar sesión de localStorage:", e);
+    }
+
     if (!supabaseClient) {
       // Modo Demo fallback si no hay Supabase configurado
       setSession({ user: { id: "demo-user", email: "demo@lacrepeparisienne.com" } });
@@ -131,10 +148,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    if (!supabaseClient) {
-      if (email === 'demo@lacrepeparisienne.com') {
-        setSession({ user: { id: "demo-user", email: "demo@lacrepeparisienne.com" } });
+  const login = async (email: string, password: string, demoBranch?: string): Promise<boolean> => {
+    if (email === 'demo@lacrepeparisienne.com') {
+      setSession({ user: { id: "demo-user", email: "demo@lacrepeparisienne.com" } });
+      if (demoBranch) {
+        const branchMeta = SUCURSALES_META_ALL.find(b => b.id === demoBranch);
+        setUserProfile({
+          id: "demo-user",
+          nombre: `Ibrahim (${branchMeta?.nombre || demoBranch} - Gerente)`,
+          rol: "gerente",
+          region: branchMeta?.region || "GDL",
+          sucursal: demoBranch
+        });
+        setActiveRegionState(branchMeta?.region || "GDL");
+      } else {
         setUserProfile({
           id: "demo-user",
           nombre: "Ibrahim García (Demo)",
@@ -142,8 +169,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           region: "GDL",
           sucursal: null
         });
+        setActiveRegionState("GDL");
+      }
+      return true;
+    }
+
+    // 1. Intentar login con Google Apps Script backend de GDL
+    try {
+      const response = await fetch('https://script.google.com/macros/s/AKfycbwnfhrIGKaAy3LuRdKx7J_QIRH-GelnbazmpoEeaxmbabMcEW9Ue3BcM5X1nCVd0euZ/exec', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'login', correo: email, password: password })
+      });
+      const data = await response.json();
+      if (data && data.ok && data.user) {
+        const apiSucursal = data.user.sucursal;
+        let sucursalId: string | null = null;
+        if (apiSucursal) {
+          sucursalId = SUCURSAL_NAME_MAP[apiSucursal] || SUCURSAL_NAME_MAP[Object.keys(SUCURSAL_NAME_MAP).find(k => k.toLowerCase() === apiSucursal.toLowerCase()) || ''] || apiSucursal.toLowerCase();
+        }
+
+        const profile: UserProfile = {
+          id: data.user.correo,
+          nombre: data.user.nombre,
+          rol: data.user.rol,
+          region: data.user.region || 'GDL',
+          sucursal: sucursalId
+        };
+        const sessionObj = { user: { id: data.user.correo, email: data.user.correo }, token: data.token };
+
+        setSession(sessionObj);
+        setUserProfile(profile);
+        setActiveRegionState(data.user.region || 'GDL');
+
+        localStorage.setItem('lcp_reviews_session_v1', JSON.stringify({
+          session: sessionObj,
+          profile: profile
+        }));
+
         return true;
       }
+    } catch (err) {
+      console.warn("Error de autenticación con Google Apps Script:", err);
+    }
+
+    // 2. Fallback a Supabase si no se autenticó por Apps Script
+    if (!supabaseClient) {
       return false;
     }
 
@@ -156,14 +227,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return true;
     } catch (e: any) {
-      console.error("Error de login:", e.message);
+      console.error("Error de login en Supabase:", e.message);
       return false;
     }
   };
 
   const logout = async () => {
+    localStorage.removeItem('lcp_reviews_session_v1');
     if (supabaseClient) {
-      await supabaseClient.auth.signOut();
+      try {
+        await supabaseClient.auth.signOut();
+      } catch (e) {
+        console.warn("Supabase signout warning:", e);
+      }
     }
     setSession(null);
     setUserProfile(null);

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import Topbar from '../components/Topbar';
 import Icon from '../components/Icon';
 import { Star, Download, Mail, MessageSquare } from 'lucide-react';
+import { initReveal } from '../utils';
 
 interface ChangelogVersion {
   v: string;
@@ -283,6 +284,14 @@ const CHANGELOG_EPOCAS: EpochGroup[] = [
 export const About: React.FC = () => {
   const { activeRegion, sucursalesMeta } = useApp();
   const [changelogOpen, setChangelogOpen] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const cleanup = initReveal();
+      return cleanup;
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const toggleChangelog = () => {
     setChangelogOpen(prev => !prev);
