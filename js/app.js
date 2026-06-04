@@ -7,10 +7,10 @@
 const SUPABASE_URL = 'https://lbnqpcrhyebtbblpvazp.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_WXCdzeTmvrF2IGJfogAMGw_FBP-mr8Y';
 
-let supabase = null;
+var supabaseClient = null;
 try {
   if (SUPABASE_URL && SUPABASE_URL !== 'https://placeholder.supabase.co') {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 } catch (e) {
   console.error("Error al inicializar Supabase client:", e);
@@ -45,7 +45,7 @@ const AppAuth = {
   profile: null,
 
   async init() {
-    if (!supabase) {
+    if (!supabaseClient) {
       // Fallback de desarrollo / modo demo si no hay Supabase configurado
       console.warn("Supabase no configurado. Iniciando en modo demo público.");
       this.session = { user: { id: "demo-user", email: "demo@lacrepeparisienne.com" } };
@@ -55,7 +55,7 @@ const AppAuth = {
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabaseClient.auth.getSession();
       this.session = session;
       if (session) {
         await this.loadProfile(session.user.id);
@@ -68,9 +68,9 @@ const AppAuth = {
   },
 
   async loadProfile(uid) {
-    if (!supabase) return;
+    if (!supabaseClient) return;
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('profiles')
         .select('*')
         .eq('id', uid)
@@ -89,7 +89,7 @@ const AppAuth = {
   },
 
   async login(email, password) {
-    if (!supabase) {
+    if (!supabaseClient) {
       // Login exitoso para modo demo
       if (email === 'demo@lacrepeparisienne.com') {
         return true;
@@ -98,7 +98,7 @@ const AppAuth = {
     }
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
       this.session = data.session;
@@ -111,8 +111,8 @@ const AppAuth = {
   },
 
   async logout() {
-    if (supabase) {
-      await supabase.auth.signOut();
+    if (supabaseClient) {
+      await supabaseClient.auth.signOut();
     }
     this.session = null;
     this.profile = null;

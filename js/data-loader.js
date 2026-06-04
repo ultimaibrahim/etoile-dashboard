@@ -22,9 +22,9 @@ const DataLoader = {
     }
 
     // 2. Si Supabase está inicializado, intentar cargar el manifest dinámico de la base de datos
-    if (typeof supabase !== 'undefined' && supabase !== null) {
+    if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('review_months')
           .select('*')
           .eq('region', activeRegion);
@@ -87,13 +87,13 @@ const DataLoader = {
     if (this.cache[key]) return this.cache[key];
 
     // 1. Intentar cargar desde Supabase si está disponible
-    if (typeof supabase !== 'undefined' && supabase !== null) {
+    if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
         const startDate = new Date(year, month - 1, 1).toISOString();
         const endDate = new Date(year, month, 1).toISOString(); // primer día del mes siguiente (exclusivo)
 
         // Nota: Si el usuario es gerente, RLS restringirá esto automáticamente
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('reviews')
           .select('*')
           .eq('region', activeRegion)
