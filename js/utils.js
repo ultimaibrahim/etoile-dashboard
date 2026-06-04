@@ -121,10 +121,12 @@ function buildTopbar(showBack = false, branchName = '') {
   if (typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated()) {
     const role = AppAuth.getUserRole();
     if (role === 'admin' || role === 'regional' || role === 'zonal') {
+      const regionOptions = Object.entries(typeof REGION_NAME_MAP !== 'undefined' ? REGION_NAME_MAP : { 'GDL': 'Guadalajara', 'CDMX': 'CDMX' })
+        .map(([id, name]) => `<option value="${id}" ${activeRegion === id ? 'selected' : ''}>${name}</option>`)
+        .join('');
       regionSelect = `
         <select class="topbar-region-select" onchange="handleRegionChange(this.value)" aria-label="Cambiar región">
-          <option value="GDL" ${activeRegion === 'GDL' ? 'selected' : ''}>Guadalajara</option>
-          <option value="CDMX" ${activeRegion === 'CDMX' ? 'selected' : ''}>CDMX</option>
+          ${regionOptions}
         </select>
       `;
     }

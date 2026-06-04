@@ -61,28 +61,71 @@ exports.handler = async (event, context) => {
 
     // Mapeador de sucursales a ID y Región
     function matchSucursalAndRegion(name) {
-      const normalized = name.toLowerCase();
-      
-      // Región Guadalajara (GDL)
+      // Normalizar texto quitando acentos básicos para facilitar coincidencias
+      const normalized = name.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // quita tildes, diéresis, circunflejos
+        .replace(/[^a-z0-9 ]/g, " ");   // deja solo letras y números
+
+      // Guadalajara (GDL)
       if (normalized.includes("andares")) return { sucursalId: "andares", region: "GDL" };
       if (normalized.includes("patria")) return { sucursalId: "patria", region: "GDL" };
-      if (normalized.includes("galerías guadalajara") || normalized.includes("galerias gdl")) return { sucursalId: "gal-gdl", region: "GDL" };
       if (normalized.includes("midtown")) return { sucursalId: "midtown", region: "GDL" };
-      if (normalized.includes("via viva") || normalized.includes("viva viva")) return { sucursalId: "via-viva", region: "GDL" };
+      if (normalized.includes("galerias guadalajara") || normalized.includes("galerias gdl")) return { sucursalId: "gal-gdl", region: "GDL" };
+      if (normalized.includes("via viva")) return { sucursalId: "via-viva", region: "GDL" };
       if (normalized.includes("santa anita")) return { sucursalId: "sta-anita", region: "GDL" };
       if (normalized.includes("la perla")) return { sucursalId: "la-perla", region: "GDL" };
-      if (normalized.includes("forum tlaquepaque")) return { sucursalId: "forum", region: "GDL" };
-      
-      // Región Ciudad de México (CDMX)
-      if (normalized.includes("roma")) return { sucursalId: "roma", region: "CDMX" };
-      if (normalized.includes("condesa")) return { sucursalId: "condesa", region: "CDMX" };
-      if (normalized.includes("polanco")) return { sucursalId: "polanco", region: "CDMX" };
-      if (normalized.includes("coyoacán") || normalized.includes("coyoacan")) return { sucursalId: "coyoacan", region: "CDMX" };
-      if (normalized.includes("santa fe")) return { sucursalId: "santa-fe", region: "CDMX" };
-      if (normalized.includes("interlomas")) return { sucursalId: "interlomas", region: "CDMX" };
-      if (normalized.includes("satélite") || normalized.includes("satelite")) return { sucursalId: "satelite", region: "CDMX" };
-      if (normalized.includes("del valle")) return { sucursalId: "del-valle", region: "CDMX" };
-      
+      if (normalized.includes("forum tlaquepaque") || normalized.includes("forum")) return { sucursalId: "forum", region: "GDL" };
+
+      // CDMX / Valle de México (CDMX)
+      if (normalized.includes("aztlan")) return { sucursalId: "aztlan", region: "CDMX" };
+      if (normalized.includes("carso")) return { sucursalId: "carso", region: "CDMX" };
+      if (normalized.includes("mexicana")) return { sucursalId: "mexicana", region: "CDMX" };
+      if (normalized.includes("acoxpa")) return { sucursalId: "acoxpa", region: "CDMX" };
+      if (normalized.includes("tepeyac")) return { sucursalId: "tepeyac", region: "CDMX" };
+      if (normalized.includes("polanquito")) return { sucursalId: "polanquito", region: "CDMX" };
+      if (normalized.includes("oceania")) return { sucursalId: "oceania", region: "CDMX" };
+      if (normalized.includes("artz") || normalized.includes("pedregal")) return { sucursalId: "artz", region: "CDMX" };
+      if (normalized.includes("arcos bosques") || normalized.includes("arcos")) return { sucursalId: "arcos", region: "CDMX" };
+      if (normalized.includes("mitikah")) return { sucursalId: "mitikah", region: "CDMX" };
+      if (normalized.includes("oasis") || normalized.includes("coyoacan")) return { sucursalId: "coyoacan", region: "CDMX" };
+      if (normalized.includes("aeropuerto") || normalized.includes("terminal 1") || normalized.includes("t1")) return { sucursalId: "aeropuerto", region: "CDMX" };
+      if (normalized.includes("duraznos")) return { sucursalId: "duraznos", region: "CDMX" };
+      if (normalized.includes("santa fe") || normalized.includes("santafe")) return { sucursalId: "santa-fe", region: "CDMX" };
+      if (normalized.includes("satelite")) return { sucursalId: "satelite", region: "CDMX" };
+
+      // Monterrey (MTY)
+      if (normalized.includes("valle oriente")) return { sucursalId: "valle-oriente", region: "MTY" };
+      if (normalized.includes("fashion drive")) return { sucursalId: "fashion-drive", region: "MTY" };
+      if (normalized.includes("punto valle")) return { sucursalId: "punto-valle", region: "MTY" };
+      if (normalized.includes("monterrey")) return { sucursalId: "gal-mty", region: "MTY" }; // "Galerías Monterrey"
+
+      // León (LEON)
+      if (normalized.includes("altacia")) return { sucursalId: "altacia", region: "LEON" };
+      if (normalized.includes("plaza mayor")) return { sucursalId: "plaza-mayor", region: "LEON" };
+
+      // San Luis Potosí (SLP)
+      if (normalized.includes("the park")) return { sucursalId: "the-park", region: "SLP" };
+      if (normalized.includes("san luis") || normalized.includes("slp")) return { sucursalId: "san-luis", region: "SLP" };
+
+      // Aguascalientes (AGS)
+      if (normalized.includes("altaria")) return { sucursalId: "altaria", region: "AGS" };
+      if (normalized.includes("pocitos") || normalized.includes("aguascalientes")) return { sucursalId: "pocitos", region: "AGS" };
+
+      // Toluca / Metepec (TOL)
+      if (normalized.includes("town square")) return { sucursalId: "town-square", region: "TOL" };
+      if (normalized.includes("metepec") || normalized.includes("toluca")) return { sucursalId: "gal-metepec", region: "TOL" }; // "Galerías Metepec"
+
+      // Querétaro (QRO)
+      if (normalized.includes("antea") || normalized.includes("queretaro")) return { sucursalId: "antea", region: "QRO" };
+
+      // Cancún (CUN)
+      if (normalized.includes("cancun")) return { sucursalId: "cancun", region: "CUN" };
+
+      // Tijuana (TJ)
+      if (normalized.includes("peninsula")) return { sucursalId: "peninsula", region: "TJ" };
+      if (normalized.includes("tijuana")) return { sucursalId: "tijuana-generic", region: "TJ" };
+
       return null;
     }
 

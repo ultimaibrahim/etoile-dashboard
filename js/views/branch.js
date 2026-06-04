@@ -176,7 +176,7 @@ const BranchView = {
       ${buildTopbar(true, meta.nombre)}
       <section class="branch-hero">
         <div class="bh-eyebrow">
-          <span>${activeRegion === 'GDL' ? 'Guadalajara' : 'CDMX'}</span>
+          <span>${getRegionName(activeRegion)}</span>
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
           <h1 class="bh-name" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px;">
@@ -249,7 +249,7 @@ const BranchView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · ${meta.nombre}<br>
-        Dashboard de Reseñas · Región ${activeRegion === 'GDL' ? 'Guadalajara' : 'CDMX'}
+        Dashboard de Reseñas · Región ${getRegionName(activeRegion)}
       </footer>`;
 
     // Re-run progress bars animation and load charts after DOM insert

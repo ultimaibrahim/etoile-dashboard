@@ -5,170 +5,83 @@
 
 // Todos los metadatos de sucursales en todas las regiones
 const SUCURSALES_META_ALL = [
-  // Región Guadalajara (GDL)
-  {
-    id: 'andares',
-    nombre: 'Andares',
-    abr: 'Andares',
-    historico: 4.3,
-    q1Status: 'critical',
-    alertTheme: null,
-    problemas: [],
-    region: 'GDL'
-  },
-  {
-    id: 'patria',
-    nombre: 'Plaza Patria',
-    abr: 'Patria',
-    historico: 4.5,
-    q1Status: 'optimal',
-    alertTheme: null,
-    problemas: [],
-    region: 'GDL'
-  },
-  {
-    id: 'gal-gdl',
-    nombre: 'Galerías GDL',
-    abr: 'Gal. GDL',
-    historico: 4.4,
-    q1Status: 'optimal',
-    alertTheme: null,
-    problemas: [],
-    region: 'GDL'
-  },
-  {
-    id: 'midtown',
-    nombre: 'Midtown',
-    abr: 'Midtown',
-    historico: 4.5,
-    q1Status: 'attention',
-    alertTheme: null,
-    problemas: [],
-    region: 'GDL'
-  },
-  {
-    id: 'via-viva',
-    nombre: 'Via Viva',
-    abr: 'Via Viva',
-    historico: 4.8,
-    q1Status: 'attention',
-    alertTheme: null,
-    problemas: [],
-    region: 'GDL'
-  },
-  {
-    id: 'sta-anita',
-    nombre: 'Galerías Santa Anita',
-    abr: 'Sta. Anita',
-    historico: 4.7,
-    q1Status: 'optimal',
-    alertTheme: null,
-    problemas: [],
-    region: 'GDL'
-  },
-  {
-    id: 'la-perla',
-    nombre: 'La Perla',
-    abr: 'La Perla',
-    historico: 4.4,
-    q1Status: 'optimal',
-    alertTheme: null,
-    problemas: [],
-    region: 'GDL'
-  },
-  {
-    id: 'forum',
-    nombre: 'Forum Tlaquepaque',
-    abr: 'Forum',
-    historico: 4.4,
-    q1Status: 'optimal',
-    alertTheme: null,
-    problemas: [],
-    region: 'GDL'
-  },
+  // Región Guadalajara (GDL) - 8 sucursales
+  { id: 'andares', nombre: 'Andares', abr: 'Andares', historico: 4.3, q1Status: 'critical', alertTheme: null, problemas: [], region: 'GDL' },
+  { id: 'patria', nombre: 'Plaza Patria', abr: 'Patria', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'GDL' },
+  { id: 'midtown', nombre: 'Midtown Jalisco', abr: 'Midtown', historico: 4.5, q1Status: 'attention', alertTheme: null, problemas: [], region: 'GDL' },
+  { id: 'gal-gdl', nombre: 'Galerías Guadalajara', abr: 'Gal. GDL', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'GDL' },
+  { id: 'via-viva', nombre: 'Via Viva', abr: 'Via Viva', historico: 4.8, q1Status: 'attention', alertTheme: null, problemas: [], region: 'GDL' },
+  { id: 'sta-anita', nombre: 'Galerías Santa Anita', abr: 'Sta. Anita', historico: 4.7, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'GDL' },
+  { id: 'la-perla', nombre: 'La Perla', abr: 'La Perla', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'GDL' },
+  { id: 'forum', nombre: 'Forum Tlaquepaque', abr: 'Forum', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'GDL' },
 
-  // Región Ciudad de México (CDMX)
-  {
-    id: 'roma',
-    nombre: 'Roma',
-    abr: 'Roma',
-    historico: 4.5,
-    q1Status: 'optimal',
-    alertTheme: null,
-    problemas: [],
-    region: 'CDMX'
-  },
-  {
-    id: 'condesa',
-    nombre: 'Condesa',
-    abr: 'Condesa',
-    historico: 4.6,
-    q1Status: 'optimal',
-    alertTheme: null,
-    problemas: [],
-    region: 'CDMX'
-  },
-  {
-    id: 'polanco',
-    nombre: 'Polanco',
-    abr: 'Polanco',
-    historico: 4.4,
-    q1Status: 'optimal',
-    alertTheme: null,
-    problemas: [],
-    region: 'CDMX'
-  },
-  {
-    id: 'coyoacan',
-    nombre: 'Coyoacán',
-    abr: 'Coyoacán',
-    historico: 4.7,
-    q1Status: 'optimal',
-    alertTheme: null,
-    problemas: [],
-    region: 'CDMX'
-  },
-  {
-    id: 'santa-fe',
-    nombre: 'Santa Fe',
-    abr: 'Santa Fe',
-    historico: 4.2,
-    q1Status: 'critical',
-    alertTheme: null,
-    problemas: [],
-    region: 'CDMX'
-  },
-  {
-    id: 'interlomas',
-    nombre: 'Interlomas',
-    abr: 'Interlomas',
-    historico: 4.5,
-    q1Status: 'optimal',
-    alertTheme: null,
-    problemas: [],
-    region: 'CDMX'
-  },
-  {
-    id: 'satelite',
-    nombre: 'Satélite',
-    abr: 'Satelite',
-    historico: 4.3,
-    q1Status: 'attention',
-    alertTheme: null,
-    problemas: [],
-    region: 'CDMX'
-  },
-  {
-    id: 'del-valle',
-    nombre: 'Del Valle',
-    abr: 'Del Valle',
-    historico: 4.6,
-    q1Status: 'optimal',
-    alertTheme: null,
-    problemas: [],
-    region: 'CDMX'
-  }
+  // Región Ciudad de México / Valle de México (CDMX) - 15 sucursales
+  { id: 'aztlan', nombre: 'Aztlán', abr: 'Aztlán', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'carso', nombre: 'Plaza Carso', abr: 'Plaza Carso', historico: 4.3, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'mexicana', nombre: 'Parque La Mexicana', abr: 'La Mexicana', historico: 4.6, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'acoxpa', nombre: 'Paseo Acoxpa', abr: 'Acoxpa', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'tepeyac', nombre: 'Tepeyac', abr: 'Tepeyac', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'polanquito', nombre: 'Polanquito', abr: 'Polanquito', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'oceania', nombre: 'Oceanía', abr: 'Oceanía', historico: 4.3, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'artz', nombre: 'Artz Pedregal', abr: 'Artz', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'arcos', nombre: 'Arcos Bosques', abr: 'Arcos', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'mitikah', nombre: 'Mitikah', abr: 'Mitikah', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'coyoacan', nombre: 'Oasis Coyoacán', abr: 'Coyoacán', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'aeropuerto', nombre: 'Aeropuerto Terminal 1', abr: 'Aeropuerto T1', historico: 4.2, q1Status: 'critical', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'duraznos', nombre: 'Parque Duraznos', abr: 'Duraznos', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'santa-fe', nombre: 'Centro Santa Fe', abr: 'Santa Fe', historico: 4.3, q1Status: 'critical', alertTheme: null, problemas: [], region: 'CDMX' },
+  { id: 'satelite', nombre: 'Plaza Satélite', abr: 'Satélite', historico: 4.4, q1Status: 'attention', alertTheme: null, problemas: [], region: 'CDMX' },
+
+  // Región Monterrey (MTY) - 4 sucursales
+  { id: 'gal-mty', nombre: 'Galerías Monterrey', abr: 'Gal. MTY', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'MTY' },
+  { id: 'valle-oriente', nombre: 'Galerías Valle Oriente', abr: 'Valle Oriente', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'MTY' },
+  { id: 'fashion-drive', nombre: 'Fashion Drive', abr: 'Fashion Drive', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'MTY' },
+  { id: 'punto-valle', nombre: 'Punto Valle', abr: 'Punto Valle', historico: 4.3, q1Status: 'attention', alertTheme: null, problemas: [], region: 'MTY', por_verificar: true },
+
+  // Región Guanajuato / León (LEON) - 2 sucursales
+  { id: 'altacia', nombre: 'Altacia', abr: 'Altacia', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'LEON' },
+  { id: 'plaza-mayor', nombre: 'Plaza Mayor', abr: 'Plaza Mayor', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'LEON' },
+
+  // Región San Luis Potosí (SLP) - 2 sucursales
+  { id: 'the-park', nombre: 'The Park', abr: 'The Park', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'SLP' },
+  { id: 'san-luis', nombre: 'San Luis', abr: 'San Luis', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'SLP' },
+
+  // Región Aguascalientes (AGS) - 2 sucursales
+  { id: 'altaria', nombre: 'Altaria', abr: 'Altaria', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'AGS' },
+  { id: 'pocitos', nombre: 'Pocitos / Centro', abr: 'Pocitos', historico: 4.3, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'AGS' },
+
+  // Región Estado de México / Toluca / Metepec (TOL) - 2 sucursales
+  { id: 'gal-metepec', nombre: 'Galerías Metepec', abr: 'Gal. Metepec', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'TOL' },
+  { id: 'town-square', nombre: 'Town Square Metepec', abr: 'Town Square', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'TOL' },
+
+  // Región Querétaro (QRO) - 1 sucursal
+  { id: 'antea', nombre: 'Antea', abr: 'Antea', historico: 4.6, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'QRO' },
+
+  // Región Cancún / Quintana Roo (CUN) - 1 sucursal
+  { id: 'cancun', nombre: 'Marina Puerto Cancún', abr: 'Puerto Cancún', historico: 4.5, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'CUN' },
+
+  // Región Tijuana / Baja California (TJ) - 2 sucursales
+  { id: 'peninsula', nombre: 'Plaza Península', abr: 'Plaza Península', historico: 4.4, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'TJ' },
+  { id: 'tijuana-generic', nombre: 'Tijuana (Centro/Río)', abr: 'Tijuana', historico: 4.3, q1Status: 'optimal', alertTheme: null, problemas: [], region: 'TJ' }
 ];
+
+// Nombres legibles de las regiones
+const REGION_NAME_MAP = {
+  'GDL': 'Guadalajara',
+  'CDMX': 'Valle de México',
+  'MTY': 'Monterrey',
+  'LEON': 'León',
+  'SLP': 'San Luis Potosí',
+  'AGS': 'Aguascalientes',
+  'TOL': 'Toluca / Metepec',
+  'QRO': 'Querétaro',
+  'CUN': 'Cancún',
+  'TJ': 'Tijuana'
+};
+
+function getRegionName(region) {
+  return REGION_NAME_MAP[region] || region;
+}
 
 // Región activa por defecto en el cliente
 let activeRegion = 'GDL';
@@ -178,7 +91,7 @@ let SUCURSALES_META = SUCURSALES_META_ALL.filter(s => s.region === activeRegion)
 
 // Función para alternar o establecer la región activa en el frontend
 function setRegionActiva(region) {
-  if (region === 'CDMX' || region === 'GDL') {
+  if (REGION_NAME_MAP[region]) {
     activeRegion = region;
     SUCURSALES_META = SUCURSALES_META_ALL.filter(s => s.region === activeRegion);
     return true;
@@ -191,21 +104,62 @@ const SUCURSAL_NAME_MAP = {
   'Andares': 'andares',
   'Plaza Patria': 'patria',
   'Galerías GDL': 'gal-gdl',
+  'Galerías Guadalajara': 'gal-gdl',
   'Midtown': 'midtown',
+  'Midtown Jalisco': 'midtown',
   'Via Viva': 'via-viva',
   'Galerías Santa Anita': 'sta-anita',
   'La Perla': 'la-perla',
   'Forum Tlaquepaque': 'forum',
 
   // CDMX
-  'Roma': 'roma',
-  'Condesa': 'condesa',
-  'Polanco': 'polanco',
-  'Coyoacán': 'coyoacan',
-  'Santa Fe': 'santa-fe',
-  'Interlomas': 'interlomas',
-  'Satélite': 'satelite',
-  'Del Valle': 'del-valle'
+  'Aztlán': 'aztlan',
+  'Plaza Carso': 'carso',
+  'Parque La Mexicana': 'mexicana',
+  'Paseo Acoxpa': 'acoxpa',
+  'Tepeyac': 'tepeyac',
+  'Polanquito': 'polanquito',
+  'Oceanía': 'oceania',
+  'Artz Pedregal': 'artz',
+  'Arcos Bosques': 'arcos',
+  'Mitikah': 'mitikah',
+  'Oasis Coyoacán': 'coyoacan',
+  'Aeropuerto Terminal 1': 'aeropuerto',
+  'Parque Duraznos': 'duraznos',
+  'Centro Santa Fe': 'santa-fe',
+  'Plaza Satélite': 'satelite',
+
+  // MTY
+  'Galerías Monterrey': 'gal-mty',
+  'Galerías Valle Oriente': 'valle-oriente',
+  'Fashion Drive': 'fashion-drive',
+  'Punto Valle': 'punto-valle',
+
+  // LEON
+  'Altacia': 'altacia',
+  'Plaza Mayor': 'plaza-mayor',
+
+  // SLP
+  'The Park': 'the-park',
+  'San Luis': 'san-luis',
+
+  // AGS
+  'Altaria': 'altaria',
+  'Pocitos / Centro': 'pocitos',
+
+  // TOL
+  'Galerías Metepec': 'gal-metepec',
+  'Town Square Metepec': 'town-square',
+
+  // QRO
+  'Antea': 'antea',
+
+  // CUN
+  'Marina Puerto Cancún': 'cancun',
+
+  // TJ
+  'Plaza Península': 'peninsula',
+  'Tijuana': 'tijuana-generic'
 };
 
 const KpiMeta = {

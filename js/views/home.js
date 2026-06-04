@@ -286,7 +286,7 @@ const HomeView = {
               <span class="hero-stat-val num">${branches.length}</span>
               <div class="hero-stat-info">
                 <span class="hero-stat-label">Sucursales</span>
-                <span class="hero-stat-sub">Región GDL</span>
+                <span class="hero-stat-sub">Región ${activeRegion}</span>
               </div>
             </div>
             <div class="hero-stat ${totalNegativasActivas > 0 ? 'warn' : ''}">
@@ -351,7 +351,7 @@ const HomeView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · La Crêpe Parisienne / Grupo MYT<br>
-        Dashboard de Reseñas · Región ${activeRegion === 'GDL' ? 'Guadalajara' : 'CDMX'} · Fuente: Google Reviews
+        Dashboard de Reseñas · Región ${getRegionName(activeRegion)} · Fuente: Google Reviews
       </footer>`;
 
     requestAnimationFrame(() => {
@@ -724,7 +724,7 @@ const HomeView = {
         <div class="section-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div>
             <div class="section-title">Actividad Reciente <span class="accent">de reseñas</span></div>
-            <span class="section-sub">Extracto del pulso de la operación en ${activeRegion === 'GDL' ? 'Guadalajara' : 'CDMX'}</span>
+            <span class="section-sub">Extracto del pulso de la operación en ${getRegionName(activeRegion)}</span>
           </div>
           <button class="show-all-btn-link" onclick="HomeView.openFullFeedModal()">Ver todas con texto (${countWithText}) →</button>
         </div>
