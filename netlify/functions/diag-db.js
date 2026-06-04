@@ -104,6 +104,14 @@ exports.handler = async (event, context) => {
 
       if (delError) throw delError;
       cleanStatus = "Base de datos reviews completamente vaciada.";
+    } else if (queryParams.action === 'merge_slp') {
+      const { error: updateError } = await supabase
+        .from('reviews')
+        .update({ sucursal: 'the-park' })
+        .eq('sucursal', 'san-luis');
+
+      if (updateError) throw updateError;
+      cleanStatus = "Merged san-luis -> the-park en la base de datos de Supabase.";
     }
 
     return {
