@@ -165,8 +165,8 @@ const SelectRegionView = {
         }
         .srv-back-login {
           background: transparent;
-          border: 1px solid var(--border);
-          color: var(--text-muted);
+          border: 1px solid rgba(245, 239, 230, 0.3);
+          color: rgba(245, 239, 230, 0.7);
           font-size: 13px;
           font-weight: 500;
           padding: 10px 20px;
@@ -178,9 +178,9 @@ const SelectRegionView = {
           transition: all 0.2s ease;
         }
         .srv-back-login:hover {
-          background: var(--surface-2);
-          color: var(--text);
-          border-color: var(--text-muted);
+          background: rgba(245, 239, 230, 0.1);
+          color: rgba(245, 239, 230, 0.95);
+          border-color: rgba(245, 239, 230, 0.5);
         }
       `;
       document.head.appendChild(style);
@@ -223,7 +223,7 @@ const SelectRegionView = {
       <div class="srv-wrapper">
         <div class="srv-container" id="srvContainer">
           <div class="srv-header">
-            <span class="eyebrow" style="color:var(--verde); font-weight:700;">Monitoreo Regional</span>
+            <span class="eyebrow" style="color:rgba(245, 239, 230, 0.5); font-weight:700;">Monitoreo Regional</span>
             <h1 class="srv-title">Selecciona una Región</h1>
             <p class="srv-subtitle">Elige el área operativa que deseas supervisar. Tu perfil administrativo te permite alternar libremente entre regiones.</p>
           </div>
