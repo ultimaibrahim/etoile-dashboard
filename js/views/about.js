@@ -18,6 +18,15 @@ const CHANGELOG_EPOCAS = [
     `,
     versions: [
       {
+        v: 'v3.4.2.altair', date: 'Junio 2026',
+        items: [
+          'Exclusión de Cinemex y Cumbres: Remoción definitiva del mapa y de las configuraciones del Dashboard de las 8 ubicaciones en complejos Cinemex y de la sucursal Cumbres de Monterrey para evitar ruido visual y tarjetas vacías.',
+          'Unificación Operativa GDL: Fusión formal de las sucursales Andares y Mercado Andares en la sucursal única "andares", compartiendo su única página de Google Reviews.',
+          'Lista de Place IDs Oficiales: Generación de la lista depurada de 33 Place IDs únicos para alimentar el scraper de Apify.',
+          'Ajustes de Sincronización: Actualizado el webhook de Netlify (apify-ingest) para reflejar la unificación de Andares y eliminar los mapeos de Cinemex y Cumbres.'
+        ]
+      },
+      {
         v: 'v3.4.1.altair', date: 'Junio 2026',
         items: [
           'Unificación Regional: Se unificaron las sucursales duplicadas de San Luis y The Park (SLP) en la sucursal única the-park, y de Pocitos y Altaria (AGS) en la sucursal única altaria.',
@@ -305,7 +314,7 @@ const AboutView = {
               </div>
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Cobertura</div>
-                <div style="font-size:15px;font-weight:600;color:#FAF5EB;">8 sucursales · Región GDL</div>
+                <div style="font-size:15px;font-weight:600;color:#FAF5EB;">\${SUCURSALES_META.length} sucursales · Región \${getRegionName(activeRegion)}</div>
               </div>
             </div>
           </div>
@@ -425,7 +434,7 @@ const AboutView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
-        Dashboard de Reseñas · Región ${getRegionName(activeRegion)} · v3.4.1.altair · 2026
+        Dashboard de Reseñas · Región ${getRegionName(activeRegion)} · v3.4.2.altair · 2026
       </footer>`;
 
     requestAnimationFrame(() => {
