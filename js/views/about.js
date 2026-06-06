@@ -323,7 +323,7 @@ const AboutView = {
               </div>
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Cobertura</div>
-                <div style="font-size:15px;font-weight:600;color:#FAF5EB;">\${SUCURSALES_META.length} sucursales · Región \${getRegionName(activeRegion)}</div>
+                <div style="font-size:15px;font-weight:600;color:#FAF5EB;">${SUCURSALES_META.length} sucursales · Región ${getRegionName(activeRegion)}</div>
               </div>
             </div>
           </div>

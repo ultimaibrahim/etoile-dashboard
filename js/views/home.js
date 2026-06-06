@@ -713,10 +713,12 @@ const HomeView = {
       const cardClass = isNeg ? 'review-card neg' : 'review-card';
       const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
       const timeStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
+      const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
+      const branchDisplayName = branchMeta ? branchMeta.abr : r.sucursal;
       return `
         <div class="${cardClass}" onclick="HomeView.openReviewDetailModal(${r.carouselId})">
           <div class="rc-head">
-            <span class="rc-branch">${r.sucursal}</span>
+            <span class="rc-branch">${branchDisplayName}</span>
             <span class="rc-date">${timeStr}</span>
           </div>
           <div class="rc-stars">${starsHtml}</div>
@@ -870,6 +872,9 @@ const HomeView = {
       ? `<div class="modal-owner-response"><strong>Respuesta del Propietario:</strong> "${r.responseFromOwnerText}"</div>`
       : '';
 
+    const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
+    const branchDisplayName = branchMeta ? branchMeta.nombre : r.sucursal;
+
     const modalHtml = `
       <div class="modal-overlay active" id="reviewDetailModal" onclick="if(event.target === this) HomeView.closeReviewDetailModal()">
         <div class="modal-box">
@@ -881,7 +886,7 @@ const HomeView = {
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
               <div>
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                  <span style="font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text);">${r.sucursal}</span>
+                  <span style="font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text);">${branchDisplayName}</span>
                   <span style="color:var(--oro); font-size:14px; letter-spacing:1px; display:inline-flex; align-items:center;">${starsHtml}</span>
                 </div>
                 <div style="font-size:11px; font-family:var(--mono); color:var(--text-dim); margin-top:2px;">${dateStr}</div>
@@ -964,10 +969,12 @@ const HomeView = {
       const isNeg = r.stars <= 2;
       const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
       const timeStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
+      const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
+      const branchDisplayName = branchMeta ? branchMeta.abr : r.sucursal;
       return `
         <div class="sidebar-review-card ${isNeg ? 'neg' : ''}" onclick="HomeView.openReviewDetailModal('${r.globalId}')">
           <div class="src-head">
-            <span class="src-branch">${r.sucursal}</span>
+            <span class="src-branch">${branchDisplayName}</span>
             <span class="src-date">${timeStr}</span>
           </div>
           <div class="src-stars">${starsHtml}</div>
@@ -1209,6 +1216,10 @@ const HomeView = {
     const idx = this.highlightIdx % goodReviews.length;
     const rev = goodReviews[idx];
     const hasMore = goodReviews.length > 1;
+
+    const branchMeta = SUCURSALES_META_ALL.find(s => s.id === rev.sucursal);
+    const branchDisplayName = branchMeta ? branchMeta.nombre : rev.sucursal;
+
     return `
       <div class="chart-card highlight-box r" id="highlightCard" style="display:flex; flex-direction:column; justify-content:space-between; position:relative; min-height:220px; overflow:hidden;">
         <div class="watermark-stars" style="position:absolute; right:-20px; bottom:-20px; font-size:120px; opacity:0.08; color:var(--oro); pointer-events:none;">★</div>
@@ -1220,7 +1231,7 @@ const HomeView = {
         </div>
         <div style="font-size: 15px; line-height: 1.5; font-style:italic; margin-bottom: 12px; position: relative; z-index: 1; flex-grow:1;" data-rev-text>"${rev.text}"</div>
         <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; margin-top: auto; padding-top:12px; border-top: 1px solid var(--border);">
-          <span style="font-size: 13px; font-weight: 500; color: var(--text-muted); display:flex; align-items:center; gap:6px;"><span style="display:inline-block;width:12px;height:1px;background:var(--border);"></span>${rev.sucursal}</span>
+          <span style="font-size: 13px; font-weight: 500; color: var(--text-muted); display:flex; align-items:center; gap:6px;"><span style="display:inline-block;width:12px;height:1px;background:var(--border);"></span>${branchDisplayName}</span>
           <div style="display:flex;align-items:center;gap:10px;">
             <span style="color:var(--oro);font-size:13px;letter-spacing:1px;">${'★'.repeat(5)}</span>
             ${hasMore ? `<button onclick="HomeView.nextHighlight()" style="background:transparent;border:1px solid var(--border);color:var(--text);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;letter-spacing:.03em;transition:background .15s, border-color .15s;display:flex;align-items:center;gap:4px;" onmouseover="this.style.background='var(--bg)';this.style.borderColor='var(--text-dim)'" onmouseout="this.style.background='transparent';this.style.borderColor='var(--border)'">Siguiente ›</button>` : ''}
@@ -1443,10 +1454,12 @@ const HomeView = {
         const cardClass = isNeg ? 'review-card neg' : 'review-card';
         const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
         const timeStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
+        const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
+        const branchDisplayName = branchMeta ? branchMeta.abr : r.sucursal;
         return `
           <div class="${cardClass}" onclick="HomeView.openReviewDetailModal(${r.carouselId})">
             <div class="rc-head">
-              <span class="rc-branch">${r.sucursal}</span>
+              <span class="rc-branch">${branchDisplayName}</span>
               <span class="rc-date">${timeStr}</span>
             </div>
             <div class="rc-stars">${starsHtml}</div>
