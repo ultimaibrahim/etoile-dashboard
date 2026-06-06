@@ -1,6 +1,6 @@
 {
   "name": "reviews-lcp-gdl",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Dashboard de Reseñas LCP con integración full-stack",
   "main": "index.html",
   "dependencies": {

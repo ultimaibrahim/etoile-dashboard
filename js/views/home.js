@@ -112,20 +112,33 @@ const HomeView = {
     const negativesPool = textReviews.filter(r => r.stars <= 2 && r.text.length > 10);
     const positivesPool = textReviews.filter(r => r.stars === 5 && r.text.length > 20);
     const restPool = textReviews.filter(r => !negativesPool.includes(r) && !positivesPool.includes(r));
-    this.carouselPool = [...negativesPool, ...positivesPool, ...restPool].map((r, index) => {
+    
+    // Combine and shuffle the pool for randomization
+    const combinedPool = [...negativesPool, ...positivesPool, ...restPool];
+    for (let i = combinedPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [combinedPool[i], combinedPool[j]] = [combinedPool[j], combinedPool[i]];
+    }
+
+    // Limit to maximum 40 reviews in the carousel pool to avoid rendering too many items
+    if (combinedPool.length > 40) {
+      combinedPool.length = 40;
+    }
+
+    this.carouselPool = combinedPool.map((r, index) => {
       r.carouselId = index;
       return r;
     });
     this.carouselBatchSize = 8;
     this.carouselStartIndex = 0;
 
-    const activeReviews = [];
+    // Render all elements of the pool. If size > 3, duplicate them for seamless wrapping.
+    let activeReviews = [];
     if (this.carouselPool.length > 0) {
-      for (let i = 0; i < this.carouselBatchSize; i++) {
-        const idx = (this.carouselStartIndex + i) % this.carouselPool.length;
-        if (this.carouselPool[idx] && !activeReviews.includes(this.carouselPool[idx])) {
-          activeReviews.push(this.carouselPool[idx]);
-        }
+      if (this.carouselPool.length > 3) {
+        activeReviews = [...this.carouselPool, ...this.carouselPool];
+      } else {
+        activeReviews = [...this.carouselPool];
       }
     }
     const countWithText = textReviews.length;
@@ -176,7 +189,7 @@ const HomeView = {
     let alertBannerHtml = '';
     if (conAlerta.length > 0) {
       alertBannerHtml = `
-        <div class="alert-strip alert-box-sunken clickable" onclick="HomeView.openAllAlertsModal()">
+        <div class="alert-strip alert-box-sunken clickable r" onclick="HomeView.openAllAlertsModal()">
           <div class="watermark-stars" style="opacity: 0.05;">
             ${svgIcon('starFilled')}
             ${svgIcon('star')}
@@ -200,7 +213,7 @@ const HomeView = {
       `;
     } else {
       alertBannerHtml = `
-        <div class="alert-strip ok-box-sunken">
+        <div class="alert-strip ok-box-sunken r">
           <div class="alert-header-row" style="display:flex; align-items:center; gap:12px; margin-bottom:12px; z-index:1; position:relative;">
             <div class="alert-icon-box" style="margin-top:0;">${svgIcon('check')}</div>
             <div class="alert-title" style="margin-bottom:0;">Operación Estable</div>
@@ -708,6 +721,7 @@ const HomeView = {
   },
 
   _buildReviewFeed(activeReviews, countWithText) {
+    const isCarouselDisabled = this.carouselPool.length <= 3;
     const cards = activeReviews.map(r => {
       const isNeg = r.stars <= 3;
       const cardClass = isNeg ? 'review-card neg' : 'review-card';
@@ -736,7 +750,7 @@ const HomeView = {
           </div>
           <button class="show-all-btn-link" onclick="HomeView.openFullFeedModal()">Ver todas con texto (${countWithText}) →</button>
         </div>
-        <div class="review-feed-carousel-outer" style="position: relative; width: 100%; margin-top: 14px;">
+        <div class="review-feed-carousel-outer${isCarouselDisabled ? ' carousel-disabled' : ''}" style="position: relative; width: 100%; margin-top: 14px;">
           <button class="carousel-arrow prev" onclick="HomeView.scrollCarousel('prev')" aria-label="Anterior">${svgIcon('arrow')}</button>
           <div class="review-feed-carousel-wrapper" style="margin-top: 0;">
             <div class="review-feed-grid" id="reviewFeedGrid">
@@ -1340,7 +1354,9 @@ const HomeView = {
 
   initAutoplay() {
     this.clearAutoplay();
-    this.startContinuousScroll();
+    if (this.carouselPool.length > 3) {
+      this.startContinuousScroll();
+    }
   },
 
   clearAutoplay() {
@@ -1350,7 +1366,7 @@ const HomeView = {
   startContinuousScroll() {
     this.stopContinuousScroll();
     const grid = document.getElementById('reviewFeedGrid');
-    if (!grid) return;
+    if (!grid || this.carouselPool.length <= 3) return;
 
     this.scrollFraction = grid.scrollLeft;
     this.isPaused = false;
@@ -1364,6 +1380,18 @@ const HomeView = {
         return;
       }
 
+      const halfWidth = gridEl.scrollWidth / 2;
+      
+      // Wrap around check for continuous loop (works for auto-scroll and manual drag)
+      if (gridEl.scrollLeft >= halfWidth) {
+        gridEl.scrollLeft -= halfWidth;
+        this.scrollFraction = gridEl.scrollLeft;
+      } else if (gridEl.scrollLeft < 5 && this.isPaused) {
+        // If they dragged to the very beginning, wrap to the second copy
+        gridEl.scrollLeft += halfWidth;
+        this.scrollFraction = gridEl.scrollLeft;
+      }
+
       if (!this.isPaused) {
         // Sync scroll fraction if external scroll occurred (drag/swipe, arrow click)
         if (Math.abs(gridEl.scrollLeft - this.scrollFraction) > 1.5) {
@@ -1374,13 +1402,7 @@ const HomeView = {
         const speed = 0.6;
         this.scrollFraction += speed;
 
-        const maxScrollLeft = gridEl.scrollWidth - gridEl.clientWidth;
-        if (this.scrollFraction >= maxScrollLeft - 1) {
-          this.isPaused = true;
-          this.rotateBatch('next');
-        } else {
-          gridEl.scrollLeft = Math.floor(this.scrollFraction);
-        }
+        gridEl.scrollLeft = Math.floor(this.scrollFraction);
       }
 
       this.scrollAnimationFrame = requestAnimationFrame(animate);
@@ -1399,89 +1421,30 @@ const HomeView = {
 
   scrollCarousel(direction) {
     const grid = document.getElementById('reviewFeedGrid');
-    if (!grid) return;
+    if (!grid || this.carouselPool.length <= 3) return;
     
-    const maxScrollLeft = grid.scrollWidth - grid.clientWidth;
+    const halfWidth = grid.scrollWidth / 2;
+    const scrollAmount = 296; // card width + gap (280 + 16)
+    
+    this.isPaused = true;
+    
     if (direction === 'next') {
-      if (grid.scrollLeft >= maxScrollLeft - 10) {
-        this.isPaused = true;
-        this.rotateBatch('next');
-      } else {
-        grid.scrollBy({ left: 296, behavior: 'smooth' });
-        setTimeout(() => {
-          this.scrollFraction = grid.scrollLeft;
-        }, 300);
+      if (grid.scrollLeft >= halfWidth - 10) {
+        grid.scrollLeft -= halfWidth;
       }
+      grid.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     } else {
       if (grid.scrollLeft <= 10) {
-        this.isPaused = true;
-        this.rotateBatch('prev');
-      } else {
-        grid.scrollBy({ left: -296, behavior: 'smooth' });
-        setTimeout(() => {
-          this.scrollFraction = grid.scrollLeft;
-        }, 300);
+        grid.scrollLeft += halfWidth;
       }
+      grid.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
     }
-  },
-
-  rotateBatch(direction) {
-    const grid = document.getElementById('reviewFeedGrid');
-    if (!grid || !this.carouselPool || this.carouselPool.length <= this.carouselBatchSize) return;
-
-    this.isPaused = true;
-    grid.style.transition = 'opacity 0.3s ease';
-    grid.style.opacity = '0';
-
-    setTimeout(() => {
-      const poolSize = this.carouselPool.length;
-      if (direction === 'next') {
-        this.carouselStartIndex = (this.carouselStartIndex + this.carouselBatchSize) % poolSize;
-      } else {
-        this.carouselStartIndex = (this.carouselStartIndex - this.carouselBatchSize + poolSize) % poolSize;
-      }
-
-      const newReviews = [];
-      for (let i = 0; i < this.carouselBatchSize; i++) {
-        const idx = (this.carouselStartIndex + i) % poolSize;
-        if (this.carouselPool[idx]) {
-          newReviews.push(this.carouselPool[idx]);
-        }
-      }
-
-      const cardsHtml = newReviews.map(r => {
-        const isNeg = r.stars <= 3;
-        const cardClass = isNeg ? 'review-card neg' : 'review-card';
-        const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
-        const timeStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
-        const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
-        const branchDisplayName = branchMeta ? branchMeta.abr : r.sucursal;
-        return `
-          <div class="${cardClass}" onclick="HomeView.openReviewDetailModal(${r.carouselId})">
-            <div class="rc-head">
-              <span class="rc-branch">${branchDisplayName}</span>
-              <span class="rc-date">${timeStr}</span>
-            </div>
-            <div class="rc-stars">${starsHtml}</div>
-            <p class="rc-text">"${r.text}"</p>
-          </div>
-        `;
-      }).join('');
-
-      grid.innerHTML = cardsHtml;
-      
-      if (direction === 'next') {
-        grid.scrollLeft = 0;
-      } else {
-        grid.scrollLeft = grid.scrollWidth - grid.clientWidth;
-      }
+    
+    clearTimeout(this.carouselResumeTimeout);
+    this.carouselResumeTimeout = setTimeout(() => {
       this.scrollFraction = grid.scrollLeft;
-      grid.style.opacity = '1';
-      
-      setTimeout(() => {
-        this.isPaused = false;
-      }, 350);
-    }, 300);
+      this.isPaused = false;
+    }, 400); // Wait for smooth scroll to finish before resuming
   },
 
   toggleHeroMonthDropdown(event) {
