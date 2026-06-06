@@ -46,12 +46,10 @@ const AppAuth = {
 
   async init() {
     if (!supabaseClient) {
-      // Fallback de desarrollo / modo demo si no hay Supabase configurado
-      console.warn("Supabase no configurado. Iniciando en modo demo público.");
-      this.session = { user: { id: "demo-user", email: "demo@lacrepeparisienne.com" } };
-      this.profile = { nombre: "Ibrahim García (Demo)", rol: "admin", region: "GDL", sucursal: null };
-      setRegionActiva("GDL");
-      return true;
+      console.error("Supabase no configurado. Acceso denegado.");
+      this.session = null;
+      this.profile = null;
+      return false;
     }
 
     try {
@@ -90,10 +88,6 @@ const AppAuth = {
 
   async login(email, password) {
     if (!supabaseClient) {
-      // Login exitoso para modo demo
-      if (email === 'demo@lacrepeparisienne.com') {
-        return true;
-      }
       return false;
     }
 

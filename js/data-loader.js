@@ -12,16 +12,9 @@ const DataLoader = {
   previousMonth: null,
 
   async init() {
-    // 1. Cargar manifest local por defecto como fallback inicial
-    try {
-      const res = await fetch('data/manifest.json');
-      this.manifest = await res.json();
-    } catch (e) {
-      console.warn('No se pudo cargar el manifest local, usando inicial de 2026:', e);
-      this.manifest = { "2026": [1, 2, 3, 4, 5] };
-    }
+    this.manifest = {};
 
-    // 2. Si Supabase está inicializado, intentar cargar el manifest dinámico de la base de datos
+    // Si Supabase está inicializado, intentar cargar el manifest dinámico de la base de datos
     if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
         const { data, error } = await supabaseClient
@@ -47,7 +40,7 @@ const DataLoader = {
           this.manifest = dbManifest;
         }
       } catch (e) {
-        console.warn('No se pudo cargar el manifest dinámico desde Supabase. Usando manifest local.', e);
+        console.error('No se pudo cargar el manifest dinámico desde Supabase:', e);
       }
     }
 
@@ -55,6 +48,13 @@ const DataLoader = {
   },
 
   setupCurrentPeriods() {
+    if (!this.manifest || Object.keys(this.manifest).length === 0) {
+      this.currentYear = new Date().getFullYear();
+      this.currentMonth = new Date().getMonth() + 1;
+      this.previousYear = this.currentMonth === 1 ? this.currentYear - 1 : this.currentYear;
+      this.previousMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
+      return;
+    }
     const years = Object.keys(this.manifest).map(Number).sort((a, b) => b - a);
     if (years.length > 0) {
       this.currentYear = years[0];
@@ -86,13 +86,12 @@ const DataLoader = {
     const key = `${year}-${String(month).padStart(2, '0')}`;
     if (this.cache[key]) return this.cache[key];
 
-    // 1. Intentar cargar desde Supabase si está disponible
+    // Cargar desde Supabase
     if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
         const startDate = new Date(year, month - 1, 1).toISOString();
         const endDate = new Date(year, month, 1).toISOString(); // primer día del mes siguiente (exclusivo)
 
-        // Nota: Si el usuario es gerente, RLS restringirá esto automáticamente
         const { data, error } = await supabaseClient
           .from('reviews')
           .select('*')
@@ -103,7 +102,7 @@ const DataLoader = {
         if (error) throw error;
 
         // Mapear de base de datos relacional (snake_case) al formato camelCase de la UI
-        const mappedReviews = data.map((r, idx) => ({
+        const mappedReviews = (data || []).map((r, idx) => ({
           id: r.id,
           globalId: `${key}-${idx}`,
           sucursal: r.sucursal, // Mapeado directamente a su ID (ej. 'andares')
@@ -123,21 +122,7 @@ const DataLoader = {
       }
     }
 
-    // 2. Fallback local: Leer archivos JSON mensuales de la carpeta data/
-    try {
-      const res = await fetch(`data/${year}/${String(month).padStart(2, '0')}.json`);
-      const data = await res.json();
-      if (data && data.reviews) {
-        data.reviews.forEach((r, idx) => {
-          r.globalId = `${key}-${idx}`;
-        });
-      }
-      this.cache[key] = data;
-      return data;
-    } catch (e) {
-      console.error(`Error cargando fallback local para ${key}:`, e);
-      return null;
-    }
+    return { reviews: [] };
   },
 
   getMonth(year, month) {
@@ -171,19 +156,7 @@ const DataLoader = {
     const meta = SUCURSALES_META_ALL.find(s => s.id === branchId);
     if (!meta) return [];
 
-    const names = [meta.nombre, meta.abr];
-    if (branchId === 'gal-gdl') names.push('Galerías GDL');
-    if (branchId === 'sta-anita') names.push('Galerías Santa Anita');
-
-    return data.reviews.filter(r => {
-      // Si la reseña no tiene id o si viene del JSON local
-      // (en los JSONs locales, r.sucursal contiene el nombre legible como "Andares" o "Plaza Patria")
-      if (!r.id || r.globalId.startsWith(`${year}-${String(month).padStart(2, '0')}`) && r.id.length < 15) {
-        return names.includes(r.sucursal);
-      }
-      // En Supabase, r.sucursal contiene directamente el id (ej. 'andares')
-      return r.sucursal === branchId;
-    });
+    return data.reviews.filter(r => r.sucursal === branchId);
   },
 
   computeBranchStats(year, month, branchId) {

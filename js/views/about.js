@@ -18,6 +18,15 @@ const CHANGELOG_EPOCAS = [
     `,
     versions: [
       {
+        v: 'v3.4.3.altair', date: 'Junio 2026',
+        items: [
+          'Conexión Exclusiva a Supabase: Eliminación definitiva de fallbacks locales a manifest.json y data/*.json, asegurando que todos los datos provengan únicamente de la base de datos.',
+          'Eliminación de Credenciales Hardcodeadas: Remoción total del modo demo y cuentas/correos @lacrepeparisienne.com hardcodeados en el código de autenticación.',
+          'Seguridad en Endpoints: Protección del endpoint de diagnóstico diag-db.js mediante Bearer token y método POST con cuerpo de confirmación para acciones destructivas.',
+          'Degradación Segura de Privilegios: Corrección del fallo de seguridad que promovía privilegios a administrador ante fallas de conexión con Supabase.'
+        ]
+      },
+      {
         v: 'v3.4.2.altair', date: 'Junio 2026',
         items: [
           'Exclusión de Cinemex y Cumbres: Remoción definitiva del mapa y de las configuraciones del Dashboard de las 8 ubicaciones en complejos Cinemex y de la sucursal Cumbres de Monterrey para evitar ruido visual y tarjetas vacías.',
@@ -434,7 +443,7 @@ const AboutView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
-        Dashboard de Reseñas · Región ${getRegionName(activeRegion)} · v3.4.2.altair · 2026
+        Dashboard de Reseñas · Región ${getRegionName(activeRegion)} · v3.4.3.altair · 2026
       </footer>`;
 
     requestAnimationFrame(() => {
