@@ -127,23 +127,71 @@ exports.handler = async (event, context) => {
       return null;
     }
 
+    let discardedCount = 0;
     for (const item of items) {
+      if (!item.reviewId) {
+        console.warn(`[Descarte] Reseña omitida por falta de reviewId.`);
+        discardedCount++;
+        continue;
+      }
+
       const rawTitle = item.googleSearchString || item.title || "";
       const mapped = matchSucursalAndRegion(rawTitle);
 
-      if (!mapped) continue; // Ignorar reseñas de sucursales no registradas
+      if (!mapped) {
+        console.log(`[Descarte] Sucursal no registrada en mapeador: "${rawTitle}" (Review ID: ${item.reviewId})`);
+        discardedCount++;
+        continue;
+      }
+
+      // Validar calificación (estrellas)
+      const stars = Number(item.stars);
+      if (isNaN(stars) || stars < 1 || stars > 5) {
+        console.warn(`[Descarte] Calificación inválida (${item.stars}) para review ${item.reviewId}`);
+        discardedCount++;
+        continue;
+      }
+
+      // Validar y normalizar fecha de publicación
+      let publishedAtDateIso;
+      try {
+        const d = new Date(item.publishedAtDate);
+        if (isNaN(d.getTime())) throw new Error("Fecha inválida");
+        publishedAtDateIso = d.toISOString();
+      } catch (e) {
+        console.warn(`[Descarte] Fecha de publicación inválida o ausente (${item.publishedAtDate}) para review ${item.reviewId}`);
+        discardedCount++;
+        continue;
+      }
+
+      // Validar y normalizar fecha de respuesta (opcional)
+      let responseDateIso = null;
+      if (item.responseDate) {
+        try {
+          const rd = new Date(item.responseDate);
+          if (!isNaN(rd.getTime())) {
+            responseDateIso = rd.toISOString();
+          }
+        } catch (e) {
+          console.warn(`[Aviso] Fecha de respuesta inválida (${item.responseDate}) para review ${item.reviewId}, se omite la fecha de respuesta.`);
+        }
+      }
 
       reviewsToUpsert.push({
         id: item.reviewId,
         sucursal: mapped.sucursalId,
-        stars: item.stars,
+        stars: stars,
         text: item.text || null,
-        published_at_date: new Date(item.publishedAtDate).toISOString(),
+        published_at_date: publishedAtDateIso,
         is_local_guide: item.isLocalGuide || false,
         response_text: item.responseText || null,
-        response_date: item.responseDate ? new Date(item.responseDate).toISOString() : null,
+        response_date: responseDateIso,
         region: mapped.region
       });
+    }
+
+    if (discardedCount > 0) {
+      console.warn(`[Ingesta] Se descartaron ${discardedCount} ítems por falta de mapeo o datos inválidos.`);
     }
 
     // 5. Realizar el upsert en Supabase
