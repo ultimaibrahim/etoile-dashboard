@@ -7,27 +7,25 @@ reviews-lcp-gdl/
 ├── index.html              # Shell SPA. Carga módulos en orden.
 ├── css/
 │   └── styles.css          # Identidad gráfica unificada (web + PDF).
+├── netlify/
+│   └── functions/
+│       ├── apify-ingest.js # Webhook seguro de ingesta desde Apify a Supabase.
+│       └── diag-db.js      # Endpoint de diagnóstico de base de datos con token Bearer.
 ├── js/
 │   ├── data.js             # Metadatos de sucursales, mapeos, constantes, Q1_DATA.
 │   ├── utils.js            # Helpers puros (fechas, estrellas, SVG, reveal, trimestres).
-│   ├── charts.js           # Configuraciones reutilizables de Chart.js.
-│   ├── kpis.js             # Cálculo de KPIs + cacheo en localStorage.
-│   ├── data-loader.js      # Carga lazy de JSON mensuales bajo demanda.
+│   ├── charts.js           # Configuraciones de Chart.js.
+│   ├── kpis.js             # Cálculo de KPIs.
+│   ├── data-loader.js      # Carga dinámica de reseñas desde Supabase.
 │   ├── router.js           # Hash router SPA con soporte async.
-│   ├── app.js              # Bootstrap: tema, estado global, inicio.
+│   ├── app.js              # Bootstrap: tema, Auth Supabase, inicio.
 │   └── views/
 │       ├── home.js         # Vista principal (mes en curso vs anterior + KPIs).
 │       ├── branch.js       # Vista por sucursal (scorecard PDF, reseñas, problemáticas).
 │       ├── quarter.js      # Vista trimestral (acordeón, ranking, comparativas).
-│       └── about.js        # Acerca de, misión, metodología, descargas.
-├── data/
-│   ├── manifest.json       # Índice de meses disponibles por año.
-│   └── 2026/
-│       ├── 01.json         # Enero 2026 (184 reseñas).
-│       ├── 02.json         # Febrero 2026 (94 reseñas).
-│       ├── 03.json         # Marzo 2026 (112 reseñas).
-│       ├── 04.json         # Abril 2026 (104 reseñas).
-│       └── 05.json         # Mayo 2026 (121 reseñas, en curso).
+│       ├── dashboards.js    # Cuadro de mando ejecutivo (4 gráficos + alertas operativas).
+│       └── about.js        # Acerca de, misión, metodología, descargas y changelog.
+├── data/                   # [DEPRECADO] Datos locales heredados de versiones anteriores.
 └── AGENTS.md               # Este archivo.
 ```
 
@@ -122,24 +120,18 @@ El campo `sucursal` en JSON debe coincidir con uno de los valores aceptados por 
 
 `Q1_DATA` en `js/data.js` contiene promedios y conteos por mes para cada sucursal (Ene–Mar 2026). Se usa en la vista trimestral para evitar recalcular sobre archivos grandes.
 
-## Flujo futuro: Apify → Dashboard
+## Flujo de datos: Apify → Supabase → Dashboard
 
 ```
 Apify Google Maps Reviews Scraper
         ↓
-    CSV crudo (mensual)
+   Webhook POST (Header Authorization: Bearer webhook_secret)
         ↓
-    Script Python (tú lo corres)
+   Netlify Function: /netlify/functions/apify-ingest.js
+        ↓ (Normaliza, valida stars/fechas, mapea sucursales y dedup por ID)
+   Supabase (Tabla: `reviews`)
         ↓
-    CSV limpio → JSON mensual (data/YYYY/MM.json)
-        ↓
-    Actualizar manifest.json (añadir mes)
-        ↓
-    Actualizar Q1_DATA en data.js (si es trimestre nuevo)
-        ↓
-    Push a repo / FTP
-        ↓
-    Dashboard carga datos automáticamente
+   Dashboard (Carga dinámica online por región/sucursal via Supabase Client)
 ```
 
 ### Notas sobre Apify
@@ -156,6 +148,7 @@ Apify Google Maps Reviews Scraper
 | `#/` | Home (mes en curso vs anterior + KPIs) |
 | `#/sucursal/:id` | Detalle de sucursal (scorecard, problemáticas, citas) |
 | `#/trimestre/YYYY-QN` | Comparativa trimestral (ranking, acordeón, evolución) |
+| `#/dashboards` | Cuadro de mando ejecutivo (4 gráficos integrados + alertas operativas) |
 | `#/acerca` | Misión, metodología, descargas |
 
 ## Estilos y componentes (PDF → Web)
