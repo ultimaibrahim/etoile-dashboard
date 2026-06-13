@@ -6,6 +6,7 @@ const BrandView = {
   activeModalReviews: [],
   activeModalTitle: '',
   activeModalBranchId: null,
+  activeDeficitBranchId: null,
 
   async render() {
     const app = document.getElementById('app');
@@ -59,9 +60,6 @@ const BrandView = {
       : 'Estable';
 
     // ── 3. CÁLCULO DE MÉTRICAS REGIONALES CON FÓRMULA DE COMPLEJIDAD OPERATIVA ──
-    // Un 4.89 con 11 sucursales tiene mayor peso/dificultad que un 4.89 con 1 sucursal.
-    // Fórmula de rendimiento ajustado por complejidad:
-    // Score = Promedio * (1 + (Sucursales * 0.02) + (log10(Reseñas + 1) * 0.01))
     const regionStats = {};
     for (const [id, name] of Object.entries(REGION_NAME_MAP)) {
       const regionBranches = SUCURSALES_META_ALL.filter(s => s.region === id);
@@ -94,7 +92,7 @@ const BrandView = {
       };
     }
 
-    // Ordenar regiones por Rendimiento Ponderado (Ajustado) para encontrar la mejor región
+    // Ordenar regiones por Rendimiento Ponderado (Ajustado)
     const rankedRegions = Object.entries(regionStats)
       .filter(([id, stats]) => stats.reviewCount > 0)
       .sort((a, b) => b[1].adjustedScore - a[1].adjustedScore);
@@ -111,7 +109,6 @@ const BrandView = {
       const alerts = bReviews.filter(r => r.stars <= 2).length;
 
       if (count > 0) {
-        // Puntuación de sucursal individual ponderando su volumen
         const score = avg + 0.15 * Math.log2(count);
         branchStats.push({
           ...s,
@@ -132,33 +129,9 @@ const BrandView = {
       .sort((a, b) => a.avg - b.avg)
       .slice(0, 3);
 
-    // ── 5. ALERTAS OPERATIVAS Y DÉFICITS ──
-    const deficits = [];
-    const regionsBelowTarget = Object.entries(regionStats)
-      .filter(([id, stats]) => stats.reviewCount > 0 && stats.avgRating < KpiMeta.ratingMinimo);
-    if (regionsBelowTarget.length > 0) {
-      const names = regionsBelowTarget.map(([id, stats]) => `${stats.name} (${stats.avgRating.toFixed(2)}★)`).join(', ');
-      deficits.push(`<strong>Regiones bajo meta (menor a ${KpiMeta.ratingMinimo.toFixed(2)}★):</strong> ${names}.`);
-    }
-
-    const criticalBranches = branchStats.filter(b => b.avg < 4.30 && b.alerts > 0);
-    if (criticalBranches.length > 0) {
-      const names = criticalBranches.map(b => `
-        <span class="brand-clickable-def" onclick="BrandView.openBranchModal('${b.id}')">${b.nombre} (${b.avg.toFixed(2)}★)</span>
-      `).join(', ');
-      deficits.push(`<strong>Sucursales críticas (menor a 4.30★ con quejas):</strong> ${names}. Haz clic en su nombre para ver los detalles.`);
-    }
-
+    // ── 5. CÁLCULO DE ALERTAS OPERATIVAS Y DÉFICITS ──
+    const criticalBranchesCount = branchStats.filter(b => b.avg < 4.30 && b.alerts > 0).length;
     const unansweredCriticalNegatives = brandReviews.filter(r => r.stars <= 2 && (!r.responseText || r.responseText.trim() === '')).length;
-    if (unansweredCriticalNegatives > 0) {
-      deficits.push(`<strong>Respuestas pendientes:</strong> Hay <span class="brand-clickable-def" onclick="BrandView.openAlertsModal(true)">${unansweredCriticalNegatives} reseñas críticas (1-2★) sin responder</span> en Google Reviews. Haz clic para revisarlas.`);
-    }
-
-    if (deficits.length === 0) {
-      deficits.push(`<strong>Operación Nacional Estable:</strong> Todas las regiones cumplen con el promedio mínimo de ${KpiMeta.ratingMinimo.toFixed(2)}★ y no hay incidencias pendientes de respuesta.`);
-    }
-
-    // ── 6. CONSTRUCCIÓN DE LA INTERFAZ HTML ──
     const monthName = MONTH_NAMES[month - 1];
     const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
@@ -170,170 +143,170 @@ const BrandView = {
       return `<option value="${m}" ${m === month ? 'selected' : ''}>${mCap} ${year}</option>`;
     }).join('');
 
+    // Inyectar el diseño por defecto de la región (Header global)
     app.innerHTML = `
-      <div class="brand-wrapper">
-        <div class="brand-container">
-          
-          <!-- Botón de regreso y encabezado -->
-          <div class="brand-header-actions">
-            <button class="brand-back-btn" onclick="Router.navigate('#/select-region')">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12,19 5,12 12,5"></polyline></svg>
-              <span>Volver a Regiones</span>
-            </button>
-            <div class="brand-period-selector">
-              <select class="brand-month-select" onchange="BrandView.handleMonthSelect(this.value)">
-                ${monthOptions}
-              </select>
-            </div>
-          </div>
-
-          <div class="brand-title-section">
+      ${buildTopbar(true, 'étoile corporativo')}
+      
+      <div class="main-content" style="max-width: 1200px; margin: 0 auto; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 32px;">
+        
+        <!-- Controles de Período y Títulos -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+          <div>
             <span class="brand-eyebrow">Consolidado Corporativo Nacional</span>
-            <h1 class="brand-main-title">Análisis de Marca étoile</h1>
-            <p class="brand-subtitle">Control de calidad operativa, volumen y auditoría de reputación nacional.</p>
+            <h1 class="brand-main-title" style="margin: 4px 0 2px 0;">Análisis de Marca étoile</h1>
+            <p class="brand-subtitle">reputación corporativa y auditoría nacional.</p>
           </div>
-
-          <!-- KPI Grid (Con interacción) -->
-          <div class="brand-kpi-grid">
-            <div class="brand-kpi-card">
-              <span class="brand-kpi-label">Rating Global</span>
-              <span class="brand-kpi-val num gold">${avgRating ? avgRating.toFixed(2) : '—'}★</span>
-              <span class="brand-kpi-sub" style="color:${ratingDelta >= 0 ? 'var(--ok)' : 'var(--alerta)'}">${ratingDeltaStr}</span>
-            </div>
-            
-            <div class="brand-kpi-card brand-interactive-card" onclick="BrandView.openAlertsModal(false)" title="Hacer clic para explorar opiniones">
-              <span class="brand-kpi-label">Volumen Total</span>
-              <span class="brand-kpi-val num">${totalReviews.toLocaleString('es-MX')}</span>
-              <span class="brand-kpi-sub">opiniones en ${capitalizedMonth} (clic para ver)</span>
-            </div>
-            
-            <div class="brand-kpi-card brand-interactive-card alert-card" onclick="BrandView.openAlertsModal(true)" title="Hacer clic para auditar alertas críticas">
-              <span class="brand-kpi-label">Alertas Activas</span>
-              <span class="brand-kpi-val num ${activeAlerts > 0 ? 'red' : 'green'}">${activeAlerts}</span>
-              <span class="brand-kpi-sub" style="color:${alertsDelta <= 0 ? 'var(--ok)' : 'var(--alerta)'}">${alertsDeltaStr} (clic para auditar)</span>
-            </div>
-            
-            <div class="brand-kpi-card">
-              <span class="brand-kpi-label">Mejor Región Ponderada</span>
-              <span class="brand-kpi-val green" style="font-size:24px; font-weight:700; padding:10px 0;">${bestRegionName}</span>
-              <span class="brand-kpi-sub">Score: ${bestRegionScore} (por complejidad)</span>
-            </div>
+          <div class="brand-period-selector">
+            <select class="brand-month-select" onchange="BrandView.handleMonthSelect(this.value)">
+              ${monthOptions}
+            </select>
           </div>
+        </div>
 
-          <!-- Acciones de Operación y Diagnóstico -->
-          <div class="brand-deficits-alert">
+        <!-- KPI Grid (Con interacción) -->
+        <div class="brand-kpi-grid">
+          <div class="brand-kpi-card">
+            <span class="brand-kpi-label">Rating Global</span>
+            <span class="brand-kpi-val num gold">${avgRating ? avgRating.toFixed(2) : '—'}★</span>
+            <span class="brand-kpi-sub" style="color:${ratingDelta >= 0 ? 'var(--ok)' : 'var(--alerta)'}">${ratingDeltaStr}</span>
+          </div>
+          
+          <div class="brand-kpi-card brand-interactive-card" onclick="BrandView.openAllReviewsModal()" title="Hacer clic para explorar opiniones">
+            <span class="brand-kpi-label">Volumen Total</span>
+            <span class="brand-kpi-val num">${totalReviews.toLocaleString('es-MX')}</span>
+            <span class="brand-kpi-sub">opiniones en ${capitalizedMonth} (clic para ver)</span>
+          </div>
+          
+          <div class="brand-kpi-card brand-interactive-card alert-card" onclick="BrandView.openAlertsModal(true)" title="Hacer clic para auditar alertas críticas">
+            <span class="brand-kpi-label">Alertas Activas</span>
+            <span class="brand-kpi-val num ${activeAlerts > 0 ? 'red' : 'green'}">${activeAlerts}</span>
+            <span class="brand-kpi-sub" style="color:${alertsDelta <= 0 ? 'var(--ok)' : 'var(--alerta)'}">${alertsDeltaStr} (clic para auditar)</span>
+          </div>
+          
+          <div class="brand-kpi-card">
+            <span class="brand-kpi-label">Mejor Región Ponderada</span>
+            <span class="brand-kpi-val green" style="font-size:24px; font-weight:700; padding:10px 0;">${bestRegionName}</span>
+            <span class="brand-kpi-sub">Score: ${bestRegionScore} (por complejidad)</span>
+          </div>
+        </div>
+
+        <!-- Acciones de Operación y Diagnóstico (Con botón interactivo) -->
+        <div class="brand-deficits-alert">
+          <div class="brand-deficits-title-row">
             <div class="brand-deficits-title">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
               Acciones Operativas & Diagnóstico Crítico
             </div>
-            <ul class="brand-deficits-list">
-              ${deficits.map(d => `<li>${d}</li>`).join('')}
-            </ul>
+            <button class="brand-audit-btn" onclick="BrandView.openDeficitsAuditModal()">
+              Auditar Sucursales con Alertas
+            </button>
           </div>
-
-          <!-- Tabla de rendimiento con Puntuación de Complejidad Operativa -->
-          <div class="brand-region-performance">
-            <div class="brand-region-perf-header">
-              <div class="brand-region-perf-title">Análisis Operativo por Región (${capitalizedMonth})</div>
-              <div class="brand-info-badge" title="La calificación pondera el rating bruto junto al número de sucursales (+1.8% por sucursal) y volumen de reseñas (+0.8% por logaritmo de volumen), premiando la dificultad operacional.">
-                ¿Cómo se calcula el Score de Complejidad?
-              </div>
-            </div>
-            <table class="brand-region-table">
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Región</th>
-                  <th style="text-align:center;">Sucursales</th>
-                  <th style="text-align:center;">Reseñas</th>
-                  <th>Rating Bruto</th>
-                  <th>Bonus Complejidad</th>
-                  <th>Score Ponderado</th>
-                  <th style="text-align:center;">Alertas</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${Object.entries(regionStats).map(([id, stats]) => {
-                  const scoreVal = stats.adjustedScore;
-                  const scoreClass = scoreVal >= 5.0 ? 'gold-score' : scoreVal >= 4.60 ? 'green-score' : scoreVal > 0 ? 'red-score' : '';
-                  const displayScore = scoreVal > 0 ? `${scoreVal.toFixed(2)} pts` : '—';
-                  const rawRat = stats.avgRating;
-                  const deltaStr = stats.reviewCount > 0 && stats.delta !== 0
-                    ? `<span style="font-size:10px; color:${stats.delta >= 0 ? 'var(--ok)' : 'var(--alerta)'}; margin-left:4px;">(${stats.delta >= 0 ? '+' : ''}${stats.delta.toFixed(2)})</span>`
-                    : '';
-                  return `
-                    <tr class="brand-row-interactive" onclick="BrandView.openRegionModal('${id}')" title="Clic para auditar opiniones de esta región">
-                      <td><span class="brand-region-badge">${id}</span></td>
-                      <td><strong>${stats.name}</strong></td>
-                      <td class="num text-center">${stats.branchCount}</td>
-                      <td class="num text-center">${stats.reviewCount}</td>
-                      <td>
-                        <strong>${rawRat > 0 ? rawRat.toFixed(2) + '★' : '—'}</strong>
-                        ${deltaStr}
-                      </td>
-                      <td class="num text-green">+${stats.complexityPercent}%</td>
-                      <td>
-                        <span class="brand-region-score-num ${scoreClass}">${displayScore}</span>
-                      </td>
-                      <td class="num text-center ${stats.alerts > 0 ? 'red' : 'green'}" style="font-weight:700;">${stats.alerts}</td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Desglose de Líderes y Focos Rojos con Clicks -->
-          <div class="brand-highlights-split">
-            
-            <!-- Líderes -->
-            <div class="brand-split-col">
-              <span class="brand-split-title">Líderes Nacionales</span>
-              ${highlights.length ? highlights.map((h, idx) => `
-                <div class="brand-branch-item brand-item-interactive" onclick="BrandView.openBranchModal('${h.id}')" title="Clic para ver opiniones de ${h.nombre}">
-                  <div class="brand-branch-info">
-                    <span class="brand-branch-name">${idx + 1}. ${h.nombre}</span>
-                    <span class="brand-branch-region">${getRegionName(h.region)}</span>
-                  </div>
-                  <div class="brand-branch-stat">
-                    <span class="brand-branch-rating">${h.avg.toFixed(2)}★</span>
-                    <span class="brand-branch-reviews">${h.count} reseñas</span>
-                  </div>
-                </div>
-              `).join('') : `
-                <div class="brand-branch-item">
-                  <div class="brand-branch-info">
-                    <span class="brand-branch-name" style="font-weight:normal; font-style:italic; color:var(--text-muted);">Sin datos suficientes</span>
-                  </div>
-                </div>
-              `}
-            </div>
-
-            <!-- Focos Rojos -->
-            <div class="brand-split-col">
-              <span class="brand-split-title">Prioridad de Atención (Críticas)</span>
-              ${redFlags.length ? redFlags.map(rf => `
-                <div class="brand-branch-item brand-item-interactive alert-border" onclick="BrandView.openBranchModal('${rf.id}')" title="Clic para auditar quejas de ${rf.nombre}">
-                  <div class="brand-branch-info">
-                    <span class="brand-branch-name">${rf.nombre}</span>
-                    <span class="brand-branch-region">${getRegionName(rf.region)}</span>
-                  </div>
-                  <div class="brand-branch-stat">
-                    <span class="brand-branch-rating" style="color:var(--alerta);">${rf.avg.toFixed(2)}★</span>
-                    <span class="brand-branch-reviews" style="color:var(--alerta); font-weight:700;">${rf.alerts} quejas</span>
-                  </div>
-                </div>
-              `).join('') : `
-                <div class="brand-branch-item">
-                  <div class="brand-branch-info">
-                    <span class="brand-branch-name" style="font-weight:normal; font-style:italic; color:var(--text-muted);">Sin focos rojos activos</span>
-                  </div>
-                </div>
-              `}
-            </div>
-
+          <div class="brand-deficits-summary">
+            Hay <strong>${criticalBranchesCount}</strong> sucursal${criticalBranchesCount !== 1 ? 'es' : ''} en estado crítico y <strong>${unansweredCriticalNegatives}</strong> queja${unansweredCriticalNegatives !== 1 ? 's' : ''} crítica${unansweredCriticalNegatives !== 1 ? 's' : ''} sin responder. Haz clic en el botón para auditar las sucursales y ver el detalle de por qué están en este estado.
           </div>
         </div>
+
+        <!-- Tabla de rendimiento con Puntuación de Complejidad Operativa -->
+        <div class="brand-region-performance">
+          <div class="brand-region-perf-header">
+            <div class="brand-region-perf-title">Análisis Operativo por Región (${capitalizedMonth})</div>
+            <div class="brand-info-badge" title="La calificación pondera el rating bruto junto al número de sucursales (+1.8% por sucursal) y volumen de reseñas (+0.8% por logaritmo de volumen), premiando la dificultad operacional.">
+              ¿Cómo se calcula el Score de Complejidad?
+            </div>
+          </div>
+          <table class="brand-region-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Región</th>
+                <th style="text-align:center;">Sucursales</th>
+                <th style="text-align:center;">Reseñas</th>
+                <th>Rating Bruto</th>
+                <th>Bonus Complejidad</th>
+                <th>Score Ponderado</th>
+                <th style="text-align:center;">Alertas</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.entries(regionStats).map(([id, stats]) => {
+                const scoreVal = stats.adjustedScore;
+                const scoreClass = scoreVal >= 5.0 ? 'gold-score' : scoreVal >= 4.60 ? 'green-score' : scoreVal > 0 ? 'red-score' : '';
+                const displayScore = scoreVal > 0 ? `${scoreVal.toFixed(2)} pts` : '—';
+                const rawRat = stats.avgRating;
+                const deltaStr = stats.reviewCount > 0 && stats.delta !== 0
+                  ? `<span style="font-size:10px; color:${stats.delta >= 0 ? 'var(--ok)' : 'var(--alerta)'}; margin-left:4px;">(${stats.delta >= 0 ? '+' : ''}${stats.delta.toFixed(2)})</span>`
+                  : '';
+                return `
+                  <tr class="brand-row-interactive" onclick="BrandView.openRegionModal('${id}')" title="Clic para auditar opiniones de esta región">
+                    <td><span class="brand-region-badge">${id}</span></td>
+                    <td><strong>${stats.name}</strong></td>
+                    <td class="num text-center">${stats.branchCount}</td>
+                    <td class="num text-center">${stats.reviewCount}</td>
+                    <td>
+                      <strong>${rawRat > 0 ? rawRat.toFixed(2) + '★' : '—'}</strong>
+                      ${deltaStr}
+                    </td>
+                    <td class="num text-green">+${stats.complexityPercent}%</td>
+                    <td>
+                      <span class="brand-region-score-num ${scoreClass}">${displayScore}</span>
+                    </td>
+                    <td class="num text-center ${stats.alerts > 0 ? 'red' : 'green'}" style="font-weight:700;">${stats.alerts}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Desglose de Líderes y Focos Rojos con Clicks -->
+        <div class="brand-highlights-split">
+          <!-- Líderes -->
+          <div class="brand-split-col">
+            <span class="brand-split-title">Líderes Nacionales</span>
+            ${highlights.length ? highlights.map((h, idx) => `
+              <div class="brand-branch-item brand-item-interactive" onclick="BrandView.openBranchModal('${h.id}')" title="Clic para ver opiniones de ${h.nombre}">
+                <div class="brand-branch-info">
+                  <span class="brand-branch-name">${idx + 1}. ${h.nombre}</span>
+                  <span class="brand-branch-region">${getRegionName(h.region)}</span>
+                </div>
+                <div class="brand-branch-stat">
+                  <span class="brand-branch-rating">${h.avg.toFixed(2)}★</span>
+                  <span class="brand-branch-reviews">${h.count} reseñas</span>
+                </div>
+              </div>
+            `).join('') : `
+              <div class="brand-branch-item">
+                <div class="brand-branch-info">
+                  <span class="brand-branch-name" style="font-weight:normal; font-style:italic; color:var(--text-muted);">Sin datos suficientes</span>
+                </div>
+              </div>
+            `}
+          </div>
+
+          <!-- Focos Rojos -->
+          <div class="brand-split-col">
+            <span class="brand-split-title">Prioridad de Atención (Críticas)</span>
+            ${redFlags.length ? redFlags.map(rf => `
+              <div class="brand-branch-item brand-item-interactive alert-border" onclick="BrandView.openBranchModal('${rf.id}')" title="Clic para auditar quejas de ${rf.nombre}">
+                <div class="brand-branch-info">
+                  <span class="brand-branch-name">${rf.nombre}</span>
+                  <span class="brand-branch-region">${getRegionName(rf.region)}</span>
+                </div>
+                <div class="brand-branch-stat">
+                  <span class="brand-branch-rating" style="color:var(--alerta);">${rf.avg.toFixed(2)}★</span>
+                  <span class="brand-branch-reviews" style="color:var(--alerta); font-weight:700;">${rf.alerts} quejas</span>
+                </div>
+              </div>
+            `).join('') : `
+              <div class="brand-branch-item">
+                <div class="brand-branch-info">
+                  <span class="brand-branch-name" style="font-weight:normal; font-style:italic; color:var(--text-muted);">Sin focos rojos activos</span>
+                </div>
+              </div>
+            `}
+          </div>
+        </div>
+
       </div>
     `;
   },
@@ -343,7 +316,6 @@ const BrandView = {
     const meta = SUCURSALES_META_ALL.find(s => s.id === branchId);
     const branchName = meta ? meta.nombre : branchId;
     
-    // Cargar opiniones de la sucursal actual
     const year = DataLoader.currentYear;
     const month = DataLoader.currentMonth;
     const brandReviews = await DataLoader.loadBrandData(year, month);
@@ -358,7 +330,6 @@ const BrandView = {
   async openRegionModal(regionCode) {
     const regionName = getRegionName(regionCode);
     
-    // Cargar opiniones de la región
     const year = DataLoader.currentYear;
     const month = DataLoader.currentMonth;
     const brandReviews = await DataLoader.loadBrandData(year, month);
@@ -366,7 +337,7 @@ const BrandView = {
 
     this.activeModalReviews = regionReviews;
     this.activeModalTitle = `Opiniones en Región: ${regionName}`;
-    this.activeModalBranchId = null; // No corresponde a una sucursal única
+    this.activeModalBranchId = null;
     this.renderModal('all');
   },
 
@@ -375,7 +346,6 @@ const BrandView = {
     const month = DataLoader.currentMonth;
     const brandReviews = await DataLoader.loadBrandData(year, month);
     
-    // Filtrar reseñas de 1 y 2 estrellas
     let alertReviews = brandReviews.filter(r => r.stars <= 2);
     
     if (onlyUnreplied) {
@@ -390,8 +360,18 @@ const BrandView = {
     this.renderModal('all');
   },
 
+  async openAllReviewsModal() {
+    const year = DataLoader.currentYear;
+    const month = DataLoader.currentMonth;
+    const brandReviews = await DataLoader.loadBrandData(year, month);
+
+    this.activeModalReviews = brandReviews;
+    this.activeModalTitle = `Opiniones del Mes (Nacional)`;
+    this.activeModalBranchId = null;
+    this.renderModal('all');
+  },
+
   renderModal(tab = 'all') {
-    // Eliminar modal previo si existe
     this.closeModal();
 
     let filtered = [...this.activeModalReviews];
@@ -410,17 +390,10 @@ const BrandView = {
         ? `<span class="reply-badge green">Respondido</span>`
         : `<span class="reply-badge red">Sin Respuesta</span>`;
       
-      const localGuideHtml = r.isLocalGuide
-        ? `<span class="guide-badge">Local Guide</span>`
-        : '';
-
+      const localGuideHtml = r.isLocalGuide ? `<span class="guide-badge">Local Guide</span>` : '';
       const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
       const branchDisplay = branchMeta ? branchMeta.nombre : r.sucursal;
-
-      const replyBoxHtml = isReplied
-        ? `<div class="modal-rev-reply"><strong>Respuesta del Propietario:</strong> "${r.responseText}"</div>`
-        : '';
-
+      const replyBoxHtml = isReplied ? `<div class="modal-rev-reply"><strong>Respuesta del Propietario:</strong> "${r.responseText}"</div>` : '';
       const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : 'Reciente';
 
       return `
@@ -475,7 +448,241 @@ const BrandView = {
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    document.body.style.overflow = 'hidden'; // Bloquear scroll de fondo
+    document.body.style.overflow = 'hidden';
+  },
+
+  // ── 8. MODAL DE AUDITORÍA DE DÉFICITS (DRILL-DOWN) ──
+  openDeficitsAuditModal() {
+    this.activeDeficitBranchId = null;
+    this.renderDeficitsModal();
+  },
+
+  async renderDeficitsModal() {
+    this.closeModal();
+
+    const year = DataLoader.currentYear;
+    const month = DataLoader.currentMonth;
+    const brandReviews = await DataLoader.loadBrandData(year, month);
+
+    if (this.activeDeficitBranchId) {
+      this.renderDeficitBranchDrilldown(this.activeDeficitBranchId, brandReviews);
+      return;
+    }
+
+    const criticalBranches = [];
+    const belowTargetBranches = [];
+    const unrepliedAlertsMap = {};
+
+    for (const s of SUCURSALES_META_ALL) {
+      const bReviews = brandReviews.filter(r => r.sucursal === s.id);
+      const count = bReviews.length;
+      const avg = count ? bReviews.reduce((sum, r) => sum + r.stars, 0) / count : 0;
+      const alerts = bReviews.filter(r => r.stars <= 2).length;
+      const unreplied = bReviews.filter(r => r.stars <= 2 && (!r.responseText || r.responseText.trim() === '')).length;
+
+      if (count > 0) {
+        if (avg < 4.30 && alerts > 0) {
+          criticalBranches.push({ ...s, avg, count, alerts });
+        } else if (avg < KpiMeta.ratingMinimo) {
+          belowTargetBranches.push({ ...s, avg, count, alerts });
+        }
+        if (unreplied > 0) {
+          unrepliedAlertsMap[s.id] = { ...s, count: unreplied, avg, totalAlerts: alerts };
+        }
+      }
+    }
+
+    const criticalHtml = criticalBranches.length ? criticalBranches.map(b => `
+      <div class="def-audit-card critical" onclick="BrandView.drillDownDeficit('${b.id}')" title="Haz clic para diagnosticar">
+        <div class="def-audit-card-info">
+          <strong>${b.nombre}</strong>
+          <span>${getRegionName(b.region)}</span>
+        </div>
+        <div class="def-audit-card-stat">
+          <span class="def-stat-rating">${b.avg.toFixed(2)}★</span>
+          <span class="def-stat-sub">${b.alerts} quejas</span>
+        </div>
+      </div>
+    `).join('') : '<div class="def-empty-state">Sin sucursales críticas en este mes.</div>';
+
+    const belowTargetHtml = belowTargetBranches.length ? belowTargetBranches.map(b => `
+      <div class="def-audit-card warning" onclick="BrandView.drillDownDeficit('${b.id}')" title="Haz clic para diagnosticar">
+        <div class="def-audit-card-info">
+          <strong>${b.nombre}</strong>
+          <span>${getRegionName(b.region)}</span>
+        </div>
+        <div class="def-audit-card-stat">
+          <span class="def-stat-rating">${b.avg.toFixed(2)}★</span>
+          <span class="def-stat-sub">${b.count} opiniones</span>
+        </div>
+      </div>
+    `).join('') : '<div class="def-empty-state">Todas las sucursales estables cumplen la meta de 4.60★.</div>';
+
+    const unrepliedHtml = Object.keys(unrepliedAlertsMap).length ? Object.values(unrepliedAlertsMap).map(b => `
+      <div class="def-audit-card alert-bg" onclick="BrandView.drillDownDeficit('${b.id}')" title="Haz clic para diagnosticar">
+        <div class="def-audit-card-info">
+          <strong>${b.nombre}</strong>
+          <span>${getRegionName(b.region)}</span>
+        </div>
+        <div class="def-audit-card-stat">
+          <span class="def-stat-rating" style="color:var(--alerta);">${b.count} pendientes</span>
+          <span class="def-stat-sub">de ${b.totalAlerts} quejas</span>
+        </div>
+      </div>
+    `).join('') : '<div class="def-empty-state">100% de quejas respondidas.</div>';
+
+    const modalHtml = `
+      <div class="brand-modal-overlay" id="brandDetailModal" onclick="if(event.target === this) BrandView.closeModal()">
+        <div class="brand-modal-box" style="max-width: 620px;">
+          <div class="brand-modal-header">
+            <h2 class="brand-modal-title">Auditoría de Alertas y Déficits Operativos</h2>
+            <button class="brand-modal-close" onclick="BrandView.closeModal()">×</button>
+          </div>
+          
+          <div class="brand-modal-body" style="padding: 20px;">
+            <p style="font-size:12px; color:var(--text-dim); margin-top:0; margin-bottom: 20px; line-height:1.4;">
+              Selecciona una sucursal del listado para realizar un diagnóstico detallado, leer las quejas recibidas y ver su estado de respuestas.
+            </p>
+            
+            <div class="def-group-section">
+              <span class="def-group-title red">Sucursales Críticas (Calificación &lt; 4.30★ con alertas)</span>
+              <div class="def-group-grid">${criticalHtml}</div>
+            </div>
+            
+            <div class="def-group-section" style="margin-top:24px;">
+              <span class="def-group-title gold">Bajo Meta Mínima (Calificación &lt; 4.60★)</span>
+              <div class="def-group-grid">${belowTargetHtml}</div>
+            </div>
+            
+            <div class="def-group-section" style="margin-top:24px;">
+              <span class="def-group-title red">Respuestas Pendientes en Alertas (1-2★)</span>
+              <div class="def-group-grid">${unrepliedHtml}</div>
+            </div>
+          </div>
+          
+          <div class="brand-modal-footer">
+            <button class="brand-modal-close-btn" onclick="BrandView.closeModal()">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
+  },
+
+  drillDownDeficit(branchId) {
+    this.activeDeficitBranchId = branchId;
+    this.renderDeficitsModal();
+  },
+
+  async renderDeficitBranchDrilldown(branchId, brandReviews) {
+    const meta = SUCURSALES_META_ALL.find(s => s.id === branchId);
+    const branchName = meta ? meta.nombre : branchId;
+
+    const branchReviews = brandReviews.filter(r => r.sucursal === branchId);
+    const count = branchReviews.length;
+    const avg = count ? branchReviews.reduce((sum, r) => sum + r.stars, 0) / count : 0;
+    const alerts = branchReviews.filter(r => r.stars <= 2);
+    const unreplied = alerts.filter(r => !r.responseText || r.responseText.trim() === '').length;
+
+    let reasons = [];
+    if (avg < 4.30) {
+      reasons.push(`<span class="def-reason-badge red">Crítico</span> Su calificación de <strong>${avg.toFixed(2)}★</strong> está en estado crítico.`);
+    } else if (avg < KpiMeta.ratingMinimo) {
+      reasons.push(`<span class="def-reason-badge warning">Bajo Meta</span> Su promedio es de <strong>${avg.toFixed(2)}★</strong>, por debajo del objetivo nacional de ${KpiMeta.ratingMinimo.toFixed(2)}★.`);
+    }
+    if (unreplied > 0) {
+      reasons.push(`<span class="def-reason-badge red">Respuestas pendientes</span> Tiene <strong>${unreplied}</strong> quejas críticas (1-2★) sin contestar.`);
+    }
+
+    const reviewCardsHtml = branchReviews.length ? branchReviews.map(r => {
+      const isCritical = r.stars <= 2;
+      const cardClass = isCritical ? 'modal-rev-card critical' : 'modal-rev-card';
+      const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
+      const isReplied = r.responseText && r.responseText.trim() !== '';
+      const replyStatusHtml = isReplied
+        ? `<span class="reply-badge green">Respondido</span>`
+        : `<span class="reply-badge red">Sin Respuesta</span>`;
+      
+      const localGuideHtml = r.isLocalGuide ? `<span class="guide-badge">Local Guide</span>` : '';
+      const replyBoxHtml = isReplied ? `<div class="modal-rev-reply"><strong>Respuesta del Propietario:</strong> "${r.responseText}"</div>` : '';
+      const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : 'Reciente';
+
+      return `
+        <div class="${cardClass}">
+          <div class="modal-rev-top">
+            <div>
+              <span class="modal-rev-stars">${starsHtml}</span>
+            </div>
+            <div>
+              ${localGuideHtml}
+              ${replyStatusHtml}
+              <span class="modal-rev-date">${dateStr}</span>
+            </div>
+          </div>
+          <div class="modal-rev-text">"${r.text || 'Sin comentario escrito.'}"</div>
+          ${replyBoxHtml}
+        </div>
+      `;
+    }).join('') : '<div style="text-align:center; padding:20px; color:var(--text-dim); font-style:italic;">Sin opiniones este mes.</div>';
+
+    const modalHtml = `
+      <div class="brand-modal-overlay" id="brandDetailModal" onclick="if(event.target === this) BrandView.closeModal()">
+        <div class="brand-modal-box">
+          <div class="brand-modal-header" style="flex-direction:row; align-items:center; justify-content:space-between; gap:16px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <button class="def-back-btn" onclick="BrandView.openDeficitsAuditModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12,19 5,12 12,5"></polyline></svg>
+                <span>Volver</span>
+              </button>
+              <h2 class="brand-modal-title">Diagnóstico: ${branchName}</h2>
+            </div>
+            <button class="brand-modal-close" onclick="BrandView.closeModal()">×</button>
+          </div>
+          
+          <div class="brand-modal-body" style="padding:20px;">
+            <div class="def-branch-header-stats" style="display:flex; gap:12px; margin-bottom:20px;">
+              <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:10px 16px; border-radius:12px; flex:1; text-align:center;">
+                <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Calificación</div>
+                <div style="font-size:20px; font-weight:700; color:${avg < 4.3 ? 'var(--alerta)' : avg < 4.6 ? 'var(--oro)' : 'var(--verde)'};">${avg.toFixed(2)}★</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:10px 16px; border-radius:12px; flex:1; text-align:center;">
+                <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Reseñas</div>
+                <div style="font-size:20px; font-weight:700; font-family:var(--mono);">${count}</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:10px 16px; border-radius:12px; flex:1; text-align:center;">
+                <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Sin Responder</div>
+                <div style="font-size:20px; font-weight:700; color:var(--alerta); font-family:var(--mono);">${unreplied}</div>
+              </div>
+            </div>
+
+            <div class="def-reasons-box" style="background:rgba(235,94,85,0.04); border:1px solid rgba(235,94,85,0.12); border-radius:16px; padding:16px; margin-bottom:24px;">
+              <div style="font-weight:700; font-size:12px; text-transform:uppercase; color:var(--alerta); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                Motivos de Alerta
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px; color:var(--text); line-height:1.4;">
+                ${reasons.map(r => `<div>${r}</div>`).join('')}
+              </div>
+            </div>
+
+            <div style="font-weight:700; font-size:13px; color:var(--text-dim); margin-bottom:12px;">Reseñas del Mes</div>
+            <div class="brand-modal-reviews-list">
+              ${reviewCardsHtml}
+            </div>
+          </div>
+          
+          <div class="brand-modal-footer">
+            <button class="modal-shortcut-btn" onclick="BrandView.navigateToBranch('${branchId}')">Ver Scorecard Completo</button>
+            <button class="brand-modal-close-btn" onclick="BrandView.closeModal()">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
   },
 
   closeModal() {
@@ -483,7 +690,7 @@ const BrandView = {
     if (el) {
       el.remove();
     }
-    document.body.style.overflow = ''; // Restaurar scroll
+    document.body.style.overflow = '';
   },
 
   navigateToBranch(branchId) {
@@ -504,52 +711,10 @@ const BrandView = {
     const style = document.createElement('style');
     style.id = 'brand-dashboard-styles';
     style.textContent = `
-      .brand-wrapper {
-        min-height: 100vh;
-        background: linear-gradient(135deg, var(--verde-deep) 0%, var(--bg) 100%);
-        padding: 40px 20px;
-        box-sizing: border-box;
-        overflow-y: auto;
-      }
-      .brand-container {
-        width: 100%;
-        max-width: 1100px;
-        margin: 0 auto;
+      .brand-period-selector {
         display: flex;
-        flex-direction: column;
-        gap: 32px;
-        animation: brandEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      }
-      @keyframes brandEntrance {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .brand-header-actions {
-        display: flex;
-        justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap;
-        gap: 16px;
-      }
-      .brand-back-btn {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        color: var(--text);
-        padding: 10px 18px;
-        border-radius: 14px;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.2s ease;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-      }
-      .brand-back-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
-        transform: translateX(-3px);
+        gap: 12px;
       }
       .brand-month-select {
         background: rgba(30, 48, 38, 0.7);
@@ -562,9 +727,6 @@ const BrandView = {
         cursor: pointer;
         outline: none;
         backdrop-filter: blur(8px);
-      }
-      .brand-title-section {
-        margin-top: 10px;
       }
       .brand-eyebrow {
         color: var(--oro);
@@ -641,13 +803,23 @@ const BrandView = {
 
       /* Alert/Deficit Panel */
       .brand-deficits-alert {
-        background: rgba(235, 94, 85, 0.08);
-        border: 1px solid rgba(235, 94, 85, 0.18);
+        background: rgba(235, 94, 85, 0.07);
+        border: 1px solid rgba(235, 94, 85, 0.15);
         border-radius: 20px;
-        padding: 20px;
+        padding: 24px;
         box-sizing: border-box;
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .brand-deficits-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
       }
       .brand-deficits-title {
         display: flex;
@@ -658,25 +830,27 @@ const BrandView = {
         font-size: 13px;
         text-transform: uppercase;
         letter-spacing: 0.04em;
-        margin-bottom: 12px;
       }
-      .brand-deficits-list {
-        margin: 0;
-        padding-left: 20px;
+      .brand-audit-btn {
+        background: rgba(235, 94, 85, 0.12);
+        border: 1px solid rgba(235, 94, 85, 0.25);
+        color: var(--alerta);
+        padding: 8px 16px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .brand-audit-btn:hover {
+        background: var(--alerta);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(235,94,85,0.2);
+      }
+      .brand-deficits-summary {
         font-size: 13px;
         line-height: 1.6;
-        color: var(--text);
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      .brand-clickable-def {
-        color: var(--oro);
-        text-decoration: underline;
-        cursor: pointer;
-        font-weight: 600;
-      }
-      .brand-clickable-def:hover {
         color: var(--text);
       }
 
@@ -878,7 +1052,7 @@ const BrandView = {
         animation: modalFadeIn 0.3s ease forwards;
       }
       .brand-modal-box {
-        background: rgba(25, 38, 30, 0.85);
+        background: rgba(25, 38, 30, 0.9);
         border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 24px;
         width: 100%;
@@ -887,7 +1061,7 @@ const BrandView = {
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
         animation: modalScaleUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
       @keyframes modalFadeIn {
@@ -1074,6 +1248,129 @@ const BrandView = {
       .modal-shortcut-btn:hover {
         filter: brightness(1.15);
         transform: translateY(-1px);
+      }
+
+      /* Deficits Audit Modal Styles */
+      .def-group-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .def-group-title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        padding-bottom: 6px;
+      }
+      .def-group-title.red { color: var(--alerta); }
+      .def-group-title.gold { color: var(--oro); }
+      .def-group-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 4px;
+      }
+      .def-audit-card {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 14px;
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .def-audit-card:hover {
+        background: rgba(255,255,255,0.06);
+        border-color: rgba(255,255,255,0.12);
+        transform: translateY(-1px);
+      }
+      .def-audit-card.critical {
+        border-left: 4px solid var(--alerta);
+      }
+      .def-audit-card.warning {
+        border-left: 4px solid var(--oro);
+      }
+      .def-audit-card.alert-bg {
+        border-left: 4px solid var(--alerta);
+        background: rgba(235,94,85,0.02);
+      }
+      .def-audit-card.alert-bg:hover {
+        background: rgba(235,94,85,0.05);
+      }
+      .def-audit-card-info {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .def-audit-card-info strong {
+        font-size: 13.5px;
+        color: var(--text);
+      }
+      .def-audit-card-info span {
+        font-size: 11px;
+        color: var(--text-dim);
+      }
+      .def-audit-card-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 3px;
+      }
+      .def-stat-rating {
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 13.5px;
+      }
+      .def-stat-sub {
+        font-size: 10px;
+        color: var(--text-dim);
+      }
+      .def-empty-state {
+        font-size: 12px;
+        color: var(--text-dim);
+        font-style: italic;
+        padding: 8px 12px;
+      }
+      .def-back-btn {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text);
+        padding: 6px 12px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+      }
+      .def-back-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+        transform: translateX(-2px);
+      }
+      .def-reason-badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        margin-right: 6px;
+        display: inline-block;
+      }
+      .def-reason-badge.red {
+        background: rgba(235,94,85,0.15);
+        color: var(--alerta);
+        border: 1px solid rgba(235,94,85,0.3);
+      }
+      .def-reason-badge.warning {
+        background: rgba(212,175,55,0.15);
+        color: var(--oro);
+        border: 1px solid rgba(212,175,55,0.3);
       }
     `;
     document.head.appendChild(style);
