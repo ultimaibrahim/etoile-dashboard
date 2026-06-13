@@ -97,7 +97,7 @@ function parseQuarterParam(param) {
 }
 
 /* ── TOPBAR ────────────────────────────────────────────── */
-function buildTopbar(showBack = false, branchName = '') {
+function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
   const currentHash = window.location.hash;
   const isHome = currentHash === '#/' || currentHash === '';
   const isDash = currentHash === '#/dashboards';
@@ -112,15 +112,56 @@ function buildTopbar(showBack = false, branchName = '') {
 
   const showDashboards = typeof SUCURSALES_META !== 'undefined' && SUCURSALES_META.length > 1;
 
-  const nav = `<nav class="topbar-nav" id="mainNav">
-    <a href="#/" class="topbar-link ${isHome ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
-    ${showDashboards ? `<a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>` : ''}
-    <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
-  </nav>`;
+  let nav = '';
+  let desktopNav = '';
+  if (isCorporate) {
+    const activeTab = (window.BrandView && window.BrandView.activeTab) || 'resumen';
+    nav = `<nav class="topbar-nav" id="mainNav">
+      <button class="topbar-link ${activeTab === 'resumen' ? 'active' : ''}" onclick="BrandView.switchTab('resumen')" style="background:none; border:none; cursor:pointer;" title="Resumen General">${svgIcon('home')} <span>Resumen</span></button>
+      <button class="topbar-link ${activeTab === 'comparativa' ? 'active' : ''}" onclick="BrandView.switchTab('comparativa')" style="background:none; border:none; cursor:pointer;" title="Comparativa">${svgIcon('barChart')} <span>Comparativa</span></button>
+      <button class="topbar-link ${activeTab === 'alertas' ? 'active' : ''}" onclick="BrandView.switchTab('alertas')" style="background:none; border:none; cursor:pointer;" title="Alertas Críticas">${svgIcon('alert')} <span>Alertas Nac.</span></button>
+    </nav>`;
+
+    desktopNav = `
+      <div class="topbar-nav topbar-nav--desktop" id="mainNavDesktop">
+        <button class="topbar-link ${activeTab === 'resumen' ? 'active' : ''}" onclick="BrandView.switchTab('resumen')" style="background:none; border:none; cursor:pointer;" title="Resumen General">${svgIcon('home')} <span>Resumen</span></button>
+        <button class="topbar-link ${activeTab === 'comparativa' ? 'active' : ''}" onclick="BrandView.switchTab('comparativa')" style="background:none; border:none; cursor:pointer;" title="Comparativa">${svgIcon('barChart')} <span>Comparativa</span></button>
+        <button class="topbar-link ${activeTab === 'alertas' ? 'active' : ''}" onclick="BrandView.switchTab('alertas')" style="background:none; border:none; cursor:pointer;" title="Alertas Críticas">${svgIcon('alert')} <span>Alertas Nac.</span></button>
+      </div>
+    `;
+  } else {
+    nav = `<nav class="topbar-nav" id="mainNav">
+      <a href="#/" class="topbar-link ${isHome ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
+      ${showDashboards ? `<a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>` : ''}
+      <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
+    </nav>`;
+
+    desktopNav = `
+      <div class="topbar-nav topbar-nav--desktop" id="mainNavDesktop">
+        <a href="#/" class="topbar-link ${isHome ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
+        ${showDashboards ? `<a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>` : ''}
+        <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
+      </div>
+    `;
+  }
+
+  // Botón de regreso a selección de región
+  let backToSelectBtn = '';
+  if (typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated()) {
+    const role = AppAuth.getUserRole();
+    if (['admin', 'director', 'regional', 'zonal'].includes(role)) {
+      backToSelectBtn = `
+        <a href="#/select-region" class="topbar-link-regions" title="Volver a Selección de Región" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 10px; background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.18); color: var(--oro); text-decoration: none; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-right: 8px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Regiones</span>
+        </a>
+      `;
+    }
+  }
 
   // Selector de región para administradores, regionales y zonales
   let regionSelect = '';
-  if (typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated()) {
+  if (!isCorporate && typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated()) {
     const role = AppAuth.getUserRole();
     if (role === 'admin' || role === 'regional' || role === 'zonal') {
       const regionOptions = Object.entries(typeof REGION_NAME_MAP !== 'undefined' ? REGION_NAME_MAP : { 'GDL': 'Guadalajara', 'CDMX': 'CDMX' })
@@ -147,12 +188,9 @@ function buildTopbar(showBack = false, branchName = '') {
   const header = `<header class="topbar">
     <div class="topbar-left">${back}${titleArea}</div>
     <div class="topbar-right">
-      <div class="topbar-nav topbar-nav--desktop" id="mainNavDesktop">
-        <a href="#/" class="topbar-link ${isHome ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
-        ${showDashboards ? `<a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>` : ''}
-        <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
-      </div>
+      ${desktopNav}
       <div class="topbar-actions">
+        ${backToSelectBtn}
         ${regionSelect}
         <button class="dark-toggle" onclick="toggleDark()" aria-label="Cambiar tema">${darkMode ? svgIcon('sun') : svgIcon('moon')}</button>
         ${logoutBtn}
