@@ -111,7 +111,9 @@ const DataLoader = {
           publishedAtDate: r.published_at_date,
           isLocalGuide: r.is_local_guide,
           responseText: r.response_text,
-          responseDate: r.response_date
+          responseFromOwnerText: r.response_text,
+          responseDate: r.response_date,
+          responseFromOwnerDate: r.response_date
         }));
 
         const result = { reviews: mappedReviews };
@@ -123,6 +125,76 @@ const DataLoader = {
     }
 
     return { reviews: [] };
+  },
+
+  async loadBrandData(year, month) {
+    const key = `brand-${year}-${String(month).padStart(2, '0')}`;
+    if (this.cache[key]) return this.cache[key];
+
+    if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
+      try {
+        const startDate = new Date(year, month - 1, 1).toISOString();
+        const endDate = new Date(year, month, 1).toISOString(); // primer día del mes siguiente (exclusivo)
+
+        const { data, error } = await supabaseClient
+          .from('reviews')
+          .select('*')
+          .gte('published_at_date', startDate)
+          .lt('published_at_date', endDate);
+
+        if (error) throw error;
+
+        // Mapear de base de datos relacional (snake_case) al formato camelCase de la UI
+        const mappedReviews = (data || []).map((r, idx) => ({
+          id: r.id,
+          globalId: `${key}-${idx}`,
+          sucursal: r.sucursal, // Mapeado directamente a su ID (ej. 'andares')
+          stars: r.stars,
+          text: r.text,
+          publishedAtDate: r.published_at_date,
+          isLocalGuide: r.is_local_guide,
+          responseText: r.response_text,
+          responseFromOwnerText: r.response_text,
+          responseDate: r.response_date,
+          responseFromOwnerDate: r.response_date,
+          region: r.region
+        }));
+
+        this.cache[key] = mappedReviews;
+        return mappedReviews;
+      } catch (e) {
+        console.error(`Error al consultar reseñas globales de Supabase para ${key}:`, e);
+      }
+    }
+
+    // Fallback: Mock data if database query fails or is not configured
+    const mockReviews = [];
+    const seed = month + year;
+    for (const s of SUCURSALES_META_ALL) {
+      const hist = s.historico || 4.5;
+      const count = Math.floor(((seed * 7 + s.id.charCodeAt(0)) % 12) + 6);
+      for (let i = 0; i < count; i++) {
+        let stars = 5;
+        const rand = (seed * 11 + s.id.charCodeAt(0) + i) % 100;
+        if (rand < 6) stars = 1;
+        else if (rand < 14) stars = 2;
+        else if (rand < 28) stars = 3;
+        else if (rand < 48) stars = 4;
+        
+        mockReviews.push({
+          id: `${s.id}-${i}`,
+          globalId: `${key}-${s.id}-${i}`,
+          sucursal: s.id,
+          stars: stars,
+          text: stars <= 2 ? "El servicio fue deficiente y la comida fría." : "Excelente ambiente y deliciosas crepas.",
+          publishedAtDate: new Date(year, month - 1, Math.max(1, (i * 4) % 28)).toISOString(),
+          isLocalGuide: rand % 5 === 0,
+          region: s.region
+        });
+      }
+    }
+    this.cache[key] = mockReviews;
+    return mockReviews;
   },
 
   getMonth(year, month) {

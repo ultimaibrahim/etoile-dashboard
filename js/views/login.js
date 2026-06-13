@@ -247,7 +247,7 @@ const LoginView = {
       const ok = await AppAuth.login(email, password);
       if (ok) {
         const role = AppAuth.getUserRole();
-        if (role === 'admin' || role === 'regional' || role === 'zonal') {
+        if (role !== 'gerente') {
           Router.navigate('#/select-region');
         } else {
           Router.navigate('#/');
