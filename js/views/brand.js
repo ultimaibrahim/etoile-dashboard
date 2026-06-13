@@ -23,6 +23,9 @@ const BrandView = {
       return;
     }
 
+    // Render skeleton immediately during data fetching
+    this.renderSkeleton();
+
     // Inyectar estilos específicos para el dashboard corporativo interactivo
     this.injectStyles();
 
@@ -1374,5 +1377,41 @@ const BrandView = {
       }
     `;
     document.head.appendChild(style);
+  },
+
+  renderSkeleton() {
+    const app = document.getElementById('app');
+    if (!app) return;
+    
+    app.innerHTML = `
+      ${buildTopbar(true, 'étoile corporativo')}
+      <div style="max-width:1200px; margin:0 auto; padding:24px; box-sizing:border-box; display:flex; flex-direction:column; gap:32px;">
+        <!-- Header control skeleton -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+          <div>
+            <div class="skeleton" style="height:12px; width:150px; margin-bottom:8px;"></div>
+            <div class="skeleton" style="height:32px; width:280px; margin-bottom:8px;"></div>
+            <div class="skeleton" style="height:14px; width:200px;"></div>
+          </div>
+          <div class="skeleton" style="height:40px; width:150px; border-radius:14px;"></div>
+        </div>
+        
+        <!-- KPIs Skeletons -->
+        <div class="brand-kpi-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+          <div class="skeleton" style="height: 140px; border-radius: 20px;"></div>
+          <div class="skeleton" style="height: 140px; border-radius: 20px;"></div>
+          <div class="skeleton" style="height: 140px; border-radius: 20px;"></div>
+          <div class="skeleton" style="height: 140px; border-radius: 20px;"></div>
+        </div>
+
+        <!-- Deficit Alert Skeleton -->
+        <div class="skeleton" style="height: 80px; border-radius: 20px;"></div>
+        
+        <!-- Table Skeleton -->
+        <div class="skeleton" style="height: 350px; border-radius: 24px;"></div>
+      </div>
+    `;
+    
+    app.classList.remove('fade-out');
   }
 };

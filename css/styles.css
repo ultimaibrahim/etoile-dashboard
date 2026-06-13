@@ -3284,6 +3284,22 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   stroke-width: 2.5;
 }
 
+/* ─── CUSTOM INTERACTIVE UX CLASS ADDITIONS ─── */
+.kpi-interactive-card:hover .sc-chevron {
+  transform: translateX(4px);
+}
+
+.alert-card-interactive {
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.2s ease;
+}
+
+.alert-card-interactive:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: var(--sombra-lg);
+  border-color: var(--oro);
+}
+
 
 
 

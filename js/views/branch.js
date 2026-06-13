@@ -232,7 +232,7 @@ const BranchView = {
           <div class="section-title">Áreas de Oportunidad <span class="accent">${capitalizedMonth}</span></div>
           <span class="section-sub">Aspectos críticos a mejorar según quejas de 1 a 3 estrellas</span>
         </div>
-        ${this._buildOpportunityAreas(reviews)}
+        ${this._buildOpportunityAreas(reviews, meta.id)}
       </section>
 
       <section class="section r">
@@ -338,7 +338,7 @@ const BranchView = {
       </div>`).join('');
   },
 
-  _buildOpportunityAreas(reviews) {
+  _buildOpportunityAreas(reviews, branchId) {
     const negativeReviews = reviews.filter(r => r.stars <= 3 && r.text && r.text.trim().length > 0);
 
     let serviceCount = 0;
@@ -396,9 +396,21 @@ const BranchView = {
         ? 'Asegurar que la presentación de los platos justifique el ticket y vigilar el porcionamiento estándar.'
         : 'El valor percibido es adecuado. Continuar con la consistencia del tamaño y calidad del producto.';
 
+    const serviceAttr = serviceCount > 0
+      ? `class="proactive-alert-card ${serviceSev.cls} alert-card-interactive" onclick="BranchView.openProblemCategoryModal('servicio', '${branchId}')" title="Haz clic para auditar comentarios de servicio"`
+      : `class="proactive-alert-card ${serviceSev.cls}"`;
+
+    const qualityAttr = qualityCount > 0
+      ? `class="proactive-alert-card ${qualitySev.cls} alert-card-interactive" onclick="BranchView.openProblemCategoryModal('calidad', '${branchId}')" title="Haz clic para auditar comentarios de producto"`
+      : `class="proactive-alert-card ${qualitySev.cls}"`;
+
+    const valueAttr = valueCount > 0
+      ? `class="proactive-alert-card ${valueSev.cls} alert-card-interactive" onclick="BranchView.openProblemCategoryModal('precio', '${branchId}')" title="Haz clic para auditar comentarios de precio"`
+      : `class="proactive-alert-card ${valueSev.cls}"`;
+
     return `
       <div class="proactive-alerts-grid">
-        <div class="proactive-alert-card ${serviceSev.cls}">
+        <div ${serviceAttr}>
           <div class="pac-header">
             <div class="pac-title-wrap">
               <span class="pac-icon">${svgIcon(serviceCount > 0 ? 'alert' : 'check')}</span>
@@ -412,7 +424,7 @@ const BranchView = {
           </div>
         </div>
 
-        <div class="proactive-alert-card ${qualitySev.cls}">
+        <div ${qualityAttr}>
           <div class="pac-header">
             <div class="pac-title-wrap">
               <span class="pac-icon">${svgIcon(qualityCount > 0 ? 'alert' : 'check')}</span>
@@ -426,7 +438,7 @@ const BranchView = {
           </div>
         </div>
 
-        <div class="proactive-alert-card ${valueSev.cls}">
+        <div ${valueAttr}>
           <div class="pac-header">
             <div class="pac-title-wrap">
               <span class="pac-icon">${svgIcon(valueCount > 0 ? 'alert' : 'check')}</span>
@@ -475,5 +487,70 @@ const BranchView = {
     DataLoader.setMonth(activeYear, month);
     await this.render(this.activeParams);
     initReveal();
+  },
+
+  openProblemCategoryModal(category, branchId) {
+    const activeYear = DataLoader.currentYear;
+    const activeMonth = DataLoader.currentMonth;
+    const branchReviews = DataLoader.getReviewsForBranch(activeYear, activeMonth, branchId);
+    
+    let regex;
+    let title;
+    if (category === 'servicio') {
+      regex = /mesero|lento|espera|atenci[oó]n|servicio|tade|tarde|tardaron|trato|amabilidad/i;
+      title = 'Opiniones sobre Servicio y Atención';
+    } else if (category === 'calidad') {
+      regex = /sabor|fr[ií]o|sucio|malo|crudo|calidad|ingrediente|pelo/i;
+      title = 'Opiniones sobre Calidad y Limpieza';
+    } else if (category === 'precio') {
+      regex = /caro|precio|porci[oó]n|costo|tama[ñn]o|car[ií]simo|cantidad/i;
+      title = 'Opiniones sobre Precio y Porción';
+    }
+    
+    const matchedReviews = branchReviews.filter(r => r.text && regex.test(r.text));
+    this.openProblemDetailModal(title, matchedReviews);
+  },
+
+  openProblemDetailModal(title, reviews) {
+    // Freeze background scrolling
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    const reviewCards = reviews.length ? reviews.map(r => {
+      const isNeg = r.stars <= 2;
+      const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
+      const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : 'Reciente';
+      return `
+        <div class="modal-rev-card ${isNeg ? 'critical' : ''}" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:14px; padding:12px 16px; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:12px;">
+            <span style="color:var(--oro); letter-spacing:1px;">${starsHtml}</span>
+            <span style="color:var(--text-dim); font-family:var(--mono);">${dateStr}</span>
+          </div>
+          <div style="font-size:13px; font-style:italic; line-height:1.4; color:var(--text);">"${r.text}"</div>
+          ${r.responseFromOwnerText ? `<div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px 12px; margin-top:8px; font-size:12px; color:var(--text-dim);"><strong>Respuesta:</strong> "${r.responseFromOwnerText}"</div>` : ''}
+        </div>
+      `;
+    }).join('') : '<div style="text-align:center; padding:30px; color:var(--text-dim); font-style:italic;">No hay opiniones en esta categoría.</div>';
+
+    const modalHtml = `
+      <div class="brand-modal-overlay" id="problemDetailModal" onclick="if(event.target === this) { document.getElementById('problemDetailModal').remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = ''; }" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(10, 20, 15, 0.6); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; box-sizing: border-box;">
+        <div class="brand-modal-box" style="background: rgba(25, 38, 30, 0.9); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 24px; width: 100%; max-width: 580px; max-height: 80vh; display: flex; flex-direction: column; box-sizing: border-box; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4); animation: modalScaleUp 0.3s ease;">
+          <div class="brand-modal-header" style="padding: 20px 24px 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;">
+            <h2 class="brand-modal-title" style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text);">${title}</h2>
+            <button class="brand-modal-close" onclick="document.getElementById('problemDetailModal').remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = '';" style="background: none; border: none; color: var(--text-dim); font-size: 24px; cursor: pointer;">×</button>
+          </div>
+          <div class="brand-modal-body" style="padding: 20px 24px; overflow-y: auto; flex: 1;">
+            <div class="brand-modal-reviews-list">
+              ${reviewCards}
+            </div>
+          </div>
+          <div class="brand-modal-footer" style="padding: 14px 24px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: flex-end;">
+            <button class="brand-modal-close-btn" onclick="document.getElementById('problemDetailModal').remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = '';" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text); padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
   }
 };

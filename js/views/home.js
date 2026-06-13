@@ -22,6 +22,10 @@ const HomeView = {
       return;
     }
     Charts.destroyAll();
+
+    // Render skeleton loaders immediately while loading data
+    this.renderSkeleton();
+
     const currYear = DataLoader.currentYear;
     const prevYear = DataLoader.previousYear;
     const currMonth = DataLoader.currentMonth;
@@ -490,41 +494,37 @@ const HomeView = {
           <span class="section-sub">Seguimiento de cumplimiento contra objetivos regionales</span>
         </div>
         <div class="scorecard-grid">
-          <div class="scorecard status-${volClass}" role="button" tabindex="0" aria-expanded="false" aria-label="Volumen de reseñas: ${volValue}. ${volSub}. Presiona para ver detalles." onclick="this.classList.toggle('active'); this.setAttribute('aria-expanded', this.classList.contains('active') ? 'true' : 'false')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+          <!-- Volumen de reseñas: Click opens sidebar -->
+          <div class="scorecard status-${volClass} kpi-interactive-card" role="button" tabindex="0" aria-label="Volumen de reseñas: ${volValue}. ${volSub}. Presiona para abrir feed de opiniones." onclick="HomeView.openFullFeedModal('todas')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
             <div class="sc-header-row">
               <span class="sc-label">Volumen de reseñas</span>
-              <span class="sc-chevron">▼</span>
+              <span class="sc-chevron">→</span>
             </div>
             <div class="sc-value-row">
               <div class="sc-value num">${volValue}</div>
               <div class="sc-sparkline">${volSpark}</div>
             </div>
+            <div class="sc-sub" style="margin-bottom: 8px;">${volSub}</div>
             <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${(kpi.volumen.ok / kpi.volumen.total * 100).toFixed(0)}%"></div></div>
             <span class="badge badge-${volClass}">${volClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
-            <div class="sc-details-wrapper">
-              <div class="sc-details-inner">
-                <div class="sc-sub">${volSub}</div>
-                <button onclick="event.stopPropagation(); document.querySelector('.branch-grid').scrollIntoView({behavior: 'smooth'})" style="background:transparent; border:none; color:var(--sage); font-size:11px; cursor:pointer; padding:0; text-align:left; font-weight:700; margin-top:8px;">Ver detalle sucursales →</button>
-              </div>
-            </div>
           </div>
-          <div class="scorecard status-${calClass}" role="button" tabindex="0" aria-expanded="false" aria-label="Calidad de reseña: ${calValue}. ${calTrendStr.replace(/<[^>]*>/g, '')}. Presiona para ver detalles." onclick="this.classList.toggle('active'); this.setAttribute('aria-expanded', this.classList.contains('active') ? 'true' : 'false')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+
+          <!-- Calidad de reseña: Click opens sidebar -->
+          <div class="scorecard status-${calClass} kpi-interactive-card" role="button" tabindex="0" aria-label="Calidad de reseña: ${calValue}. ${calTrendStr.replace(/<[^>]*>/g, '')}. Presiona para abrir feed de positivas." onclick="HomeView.openFullFeedModal('positivas')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
             <div class="sc-header-row">
               <span class="sc-label">Calidad de reseña</span>
-              <span class="sc-chevron">▼</span>
+              <span class="sc-chevron">→</span>
             </div>
             <div class="sc-value-row">
               <div class="sc-value num">${calValue}</div>
               <div class="sc-sparkline">${calSpark}</div>
             </div>
+            <div class="sc-sub" style="margin-bottom: 8px;">${calTrendStr}</div>
             <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${Math.min(kpi.calidadTexto.ratio / KpiMeta.calidadTextoMeta * 100, 100).toFixed(0)}%"></div></div>
             <span class="badge badge-${calClass}">${calClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
-            <div class="sc-details-wrapper">
-              <div class="sc-details-inner">
-                <div class="sc-sub">${calTrendStr}</div>
-              </div>
-            </div>
           </div>
+
+          <!-- Rating mínimo regional: Collapsible as before -->
           <div class="scorecard status-${ratClass}" role="button" tabindex="0" aria-expanded="false" aria-label="Rating mínimo regional: ${ratValue}. ${ratSub}. Presiona para ver detalles." onclick="this.classList.toggle('active'); this.setAttribute('aria-expanded', this.classList.contains('active') ? 'true' : 'false')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
             <div class="sc-header-row">
               <span class="sc-label">Rating mínimo regional</span>
@@ -542,22 +542,20 @@ const HomeView = {
               </div>
             </div>
           </div>
-          <div class="scorecard status-${negClass}" role="button" tabindex="0" aria-expanded="false" aria-label="Respuestas a reseñas negativas: ${negValue}. ${negSub}. Presiona para ver detalles." onclick="this.classList.toggle('active'); this.setAttribute('aria-expanded', this.classList.contains('active') ? 'true' : 'false')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+
+          <!-- Respuestas a Negativas: Click opens sidebar -->
+          <div class="scorecard status-${negClass} kpi-interactive-card" role="button" tabindex="0" aria-label="Respuestas a reseñas negativas: ${negValue}. ${negSub}. Presiona para abrir feed de quejas sin responder." onclick="HomeView.openFullFeedModal('negativas', true)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
             <div class="sc-header-row">
               <span class="sc-label">Respuestas a Negativas</span>
-              <span class="sc-chevron">▼</span>
+              <span class="sc-chevron">→</span>
             </div>
             <div class="sc-value-row">
               <div class="sc-value num">${negValue}</div>
               <div class="sc-sparkline">${negSpark}</div>
             </div>
+            <div class="sc-sub" style="margin-bottom: 8px;">${negSub}</div>
             <div class="kpi-progress"><div class="kpi-progress-bar" style="width:${(kpi.tasaRespuesta.totalNegativas === 0 ? 100 : (kpi.tasaRespuesta.conRespuesta / kpi.tasaRespuesta.totalNegativas * 100)).toFixed(0)}%"></div></div>
             <span class="badge badge-${negClass}">${negClass === 'optimal' ? 'Sin pendientes' : 'Atención'}</span>
-            <div class="sc-details-wrapper">
-              <div class="sc-details-inner">
-                <div class="sc-sub">${negSub}</div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -763,14 +761,15 @@ const HomeView = {
     `;
   },
 
-  openFullFeedModal() {
+  openFullFeedModal(initialSentiment = 'todas', onlyUnreplied = false) {
     const year = DataLoader.currentYear;
     const month = DataLoader.currentMonth;
     const data = DataLoader.getMonth(year, month);
     if (!data) return;
     
-    this.feedSentiment = 'todas';
+    this.feedSentiment = initialSentiment;
     this.feedBranch = 'todas';
+    this.feedOnlyUnreplied = onlyUnreplied;
     
     // Freeze background scrolling
     document.documentElement.style.overflow = 'hidden';
@@ -789,16 +788,16 @@ const HomeView = {
               <label>Sentimiento</label>
               <div class="custom-select" id="sidebarSentimentDropdown">
                 <button class="custom-select-trigger" onclick="HomeView.toggleSidebarSentimentDropdown(event)">
-                  <span class="custom-select-value" id="sentimentValLabel">Todas las calificaciones</span>
+                  <span class="custom-select-value" id="sentimentValLabel">${this.getSentimentLabel(initialSentiment)}</span>
                   <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </button>
                 <div class="custom-select-options">
-                  <div class="custom-option active" data-value="todas" onclick="HomeView.selectSidebarSentimentOption('todas', 'Todas las calificaciones')">Todas las calificaciones</div>
-                  <div class="custom-option" data-value="positivas" onclick="HomeView.selectSidebarSentimentOption('positivas', 'Positivas (4-5★)')">Positivas (4-5★)</div>
-                  <div class="custom-option" data-value="neutras" onclick="HomeView.selectSidebarSentimentOption('neutras', 'Neutras (3★)')">Neutras (3★)</div>
-                  <div class="custom-option" data-value="negativas" onclick="HomeView.selectSidebarSentimentOption('negativas', 'Negativas (1-2★)')">Negativas (1-2★)</div>
+                  <div class="custom-option ${initialSentiment === 'todas' ? 'active' : ''}" data-value="todas" onclick="HomeView.selectSidebarSentimentOption('todas', 'Todas las calificaciones')">Todas las calificaciones</div>
+                  <div class="custom-option ${initialSentiment === 'positivas' ? 'active' : ''}" data-value="positivas" onclick="HomeView.selectSidebarSentimentOption('positivas', 'Positivas (4-5★)')">Positivas (4-5★)</div>
+                  <div class="custom-option ${initialSentiment === 'neutras' ? 'active' : ''}" data-value="neutras" onclick="HomeView.selectSidebarSentimentOption('neutras', 'Neutras (3★)')">Neutras (3★)</div>
+                  <div class="custom-option ${initialSentiment === 'negativas' ? 'active' : ''}" data-value="negativas" onclick="HomeView.selectSidebarSentimentOption('negativas', 'Negativas (1-2★)')">Negativas (1-2★)</div>
                 </div>
               </div>
             </div>
@@ -817,6 +816,11 @@ const HomeView = {
                   ${SUCURSALES_META.map(s => `<div class="custom-option" data-value="${s.nombre}" onclick="HomeView.selectSidebarBranchOption('${s.nombre}', '${s.abr}')">${s.abr}</div>`).join('')}
                 </div>
               </div>
+            </div>
+
+            <div class="filter-group" style="display:flex; align-items:center; gap:8px; margin-top: 14px; grid-column: 1 / -1;">
+              <input type="checkbox" id="sidebarUnrepliedCheckbox" ${this.feedOnlyUnreplied ? 'checked' : ''} onchange="HomeView.toggleSidebarUnreplied(this.checked)" style="cursor:pointer; width:16px; height:16px; accent-color:var(--oro);">
+              <label for="sidebarUnrepliedCheckbox" style="margin:0; font-size:12px; color:var(--text); cursor:pointer; font-weight:600;">Solo pendientes de respuesta</label>
             </div>
           </div>
           
@@ -844,6 +848,21 @@ const HomeView = {
       }
     };
     document.addEventListener('keydown', _escSidebarHandler);
+  },
+
+  getSentimentLabel(val) {
+    const labels = {
+      'todas': 'Todas las calificaciones',
+      'positivas': 'Positivas (4-5★)',
+      'neutras': 'Neutras (3★)',
+      'negativas': 'Negativas (1-2★)'
+    };
+    return labels[val] || 'Todas las calificaciones';
+  },
+
+  toggleSidebarUnreplied(checked) {
+    this.feedOnlyUnreplied = checked;
+    this.filterSidebarReviews();
   },
 
   closeSidebar() {
@@ -969,6 +988,10 @@ const HomeView = {
 
     if (branchNameFilter !== 'todas') {
       filtered = filtered.filter(r => r.sucursal === branchNameFilter);
+    }
+
+    if (this.feedOnlyUnreplied) {
+      filtered = filtered.filter(r => !r.responseFromOwnerText || r.responseFromOwnerText.trim().length === 0);
     }
 
     const container = document.getElementById('sidebarReviewsContainer');
@@ -1574,5 +1597,42 @@ const HomeView = {
       dropdown.classList.remove('open');
     }
     this.filterSidebarReviews();
+  },
+
+  renderSkeleton() {
+    const app = document.getElementById('app');
+    if (!app) return;
+    
+    app.innerHTML = `
+      ${buildTopbar()}
+      <div style="max-width:1200px; margin:0 auto; padding:24px; box-sizing:border-box; display:flex; flex-direction:column; gap:24px;">
+        <!-- Hero Skeleton -->
+        <div class="skeleton" style="height: 200px; border-radius: 20px;"></div>
+        
+        <!-- Alerts and Highlights Skeletons -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 12px;">
+          <div class="skeleton" style="height: 120px; border-radius: 20px;"></div>
+          <div class="skeleton" style="height: 120px; border-radius: 20px;"></div>
+        </div>
+        
+        <!-- KPIs Skeletons -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 12px;">
+          <div class="skeleton" style="height: 110px; border-radius: 14px;"></div>
+          <div class="skeleton" style="height: 110px; border-radius: 14px;"></div>
+          <div class="skeleton" style="height: 110px; border-radius: 14px;"></div>
+          <div class="skeleton" style="height: 110px; border-radius: 14px;"></div>
+        </div>
+        
+        <!-- Branch Grid Skeletons -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 24px;">
+          <div class="skeleton" style="height: 160px; border-radius: 16px;"></div>
+          <div class="skeleton" style="height: 160px; border-radius: 16px;"></div>
+          <div class="skeleton" style="height: 160px; border-radius: 16px;"></div>
+          <div class="skeleton" style="height: 160px; border-radius: 16px;"></div>
+        </div>
+      </div>
+    `;
+    
+    app.classList.remove('fade-out');
   }
 };
