@@ -154,6 +154,7 @@ async function initApp() {
   // Registrar vistas en el Router
   Router.register('login', () => LoginView.render());
   Router.register('select-region', () => SelectRegionView.render());
+  Router.register('brand', () => BrandView.render());
   Router.register('home', () => HomeView.render());
   Router.register('branch', params => BranchView.render(params));
   Router.register('quarter', params => QuarterView.render(params));

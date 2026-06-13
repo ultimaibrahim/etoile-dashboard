@@ -28,6 +28,9 @@ const Router = {
     if (hash === '#/select-region') {
       return { handler: this.routes['select-region'], params: {} };
     }
+    if (hash === '#/brand') {
+      return { handler: this.routes['brand'], params: {} };
+    }
     if (hash === '#/dashboards') {
       return { handler: this.routes['dashboards'], params: {} };
     }
