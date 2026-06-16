@@ -25,7 +25,7 @@ const SelectRegionView = {
       style.textContent = `
         .srv-wrapper {
           min-height: 100vh;
-          background: linear-gradient(135deg, var(--verde-deep) 0%, var(--bg) 100%);
+          background: var(--bg);
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -61,14 +61,14 @@ const SelectRegionView = {
         .srv-title {
           font-family: var(--giaza);
           font-size: 42px;
-          color: var(--crema);
+          color: var(--text);
           margin: 0;
           font-weight: 400;
           letter-spacing: 0.02em;
         }
         .srv-subtitle {
           font-size: 15px;
-          color: rgba(245, 239, 230, 0.7);
+          color: var(--text-dim);
           max-width: 580px;
           line-height: 1.5;
           margin: 0;
@@ -164,11 +164,11 @@ const SelectRegionView = {
           margin-top: 16px;
         }
         .srv-back-login {
-          background: transparent;
-          border: 1px solid rgba(245, 239, 230, 0.3);
-          color: rgba(245, 239, 230, 0.7);
+          background: var(--surface-2);
+          border: 1px solid var(--border-strong);
+          color: var(--text);
           font-size: 13px;
-          font-weight: 500;
+          font-weight: 600;
           padding: 10px 20px;
           border-radius: 30px;
           cursor: pointer;
@@ -178,9 +178,9 @@ const SelectRegionView = {
           transition: all 0.2s ease;
         }
         .srv-back-login:hover {
-          background: rgba(245, 239, 230, 0.1);
-          color: rgba(245, 239, 230, 0.95);
-          border-color: rgba(245, 239, 230, 0.5);
+          background: var(--border);
+          color: var(--text);
+          border-color: var(--border-strong);
         }
 
         /* ── BRAND DASHBOARD PREMIUM STYLES ── */
@@ -453,8 +453,8 @@ const SelectRegionView = {
 
         /* ── BRAND DASHBOARD SHORTCUT PREMIUM BANNER ── */
         .brand-shortcut-card {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--surface-2);
+          border: 1px solid var(--border-strong);
           border-radius: 24px;
           padding: 32px;
           display: flex;
@@ -462,7 +462,7 @@ const SelectRegionView = {
           align-items: center;
           flex-wrap: wrap;
           gap: 24px;
-          box-shadow: 0 8px 32px rgba(10, 25, 15, 0.2);
+          box-shadow: var(--sombra-lg);
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
           box-sizing: border-box;
@@ -470,9 +470,8 @@ const SelectRegionView = {
           transition: all 0.3s ease;
         }
         .brand-shortcut-card:hover {
-          border-color: rgba(255, 255, 255, 0.16);
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
-          box-shadow: 0 12px 40px rgba(10, 25, 15, 0.3);
+          border-color: var(--oro);
+          box-shadow: var(--sombra-card);
         }
         .brand-shortcut-content {
           flex: 1;
@@ -510,13 +509,13 @@ const SelectRegionView = {
         .brand-shortcut-title {
           font-family: var(--giaza);
           font-size: 32px;
-          color: var(--crema);
+          color: var(--text);
           margin: 0;
           font-weight: 400;
         }
         .brand-shortcut-desc {
           font-size: 13px;
-          color: rgba(245, 239, 230, 0.7);
+          color: var(--text-dim);
           margin: 0;
           line-height: 1.5;
           max-width: 650px;
@@ -540,6 +539,26 @@ const SelectRegionView = {
           filter: brightness(1.15);
           transform: translateY(-2px);
           box-shadow: 0 6px 20px rgba(61,90,71,0.35);
+        }
+
+        @media (max-width: 600px) {
+          .brand-shortcut-card {
+            padding: 20px !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 16px !important;
+          }
+          .brand-shortcut-title {
+            font-size: 24px !important;
+          }
+          .brand-shortcut-desc {
+            font-size: 12.5px !important;
+          }
+          .brand-shortcut-btn {
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 12px 20px !important;
+          }
         }
       `;
       document.head.appendChild(style);
@@ -609,7 +628,7 @@ const SelectRegionView = {
           
           <!-- Region Explorer -->
           <div class="srv-header" style="margin-top: 10px;">
-            <span class="eyebrow" style="color:rgba(245, 239, 230, 0.9); font-weight:700; background:rgba(61,90,71,0.45); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); padding:6px 16px; border-radius:20px; border:1px solid rgba(122,158,138,0.25); letter-spacing:0.08em;">Navegación Regional</span>
+            <span class="eyebrow" style="color: var(--text-dim); font-weight:700; background: var(--surface-2); border: 1px solid var(--border-strong); padding:6px 16px; border-radius:20px; letter-spacing:0.08em;">Navegación Regional</span>
             <h1 class="srv-title">Explorar Regiones</h1>
             <p class="srv-subtitle">Elige el área operativa que deseas supervisar de manera individual.</p>
           </div>

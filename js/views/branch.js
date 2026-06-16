@@ -73,6 +73,69 @@ const BranchView = {
     const ratDiff = (prevStats && prevStats.avg > 0) ? (stats.avg - prevStats.avg) : 0;
     const ratDiffStr = ratDiff >= 0 ? `+${ratDiff.toFixed(2)}` : `${ratDiff.toFixed(2)}`;
 
+    // Cálculo de progreso de calificación histórica (Idea 1)
+    const R = meta.historico;
+    const N = meta.historicoCount || 0;
+    let targetRating = Math.floor(R * 10) / 10 + 0.1;
+    if (targetRating - R < 0.01) {
+      targetRating += 0.1;
+    }
+    targetRating = Math.round(targetRating * 10) / 10;
+    if (targetRating > 4.9) {
+      targetRating = 4.9;
+    }
+
+    let progressBannerHtml = '';
+    if (N > 0) {
+      if (R >= 4.9) {
+        progressBannerHtml = `
+          <div class="rating-progress-banner" style="background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--sombra-card);">
+            <div class="rpb-icon" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(61, 138, 95, 0.12); color: var(--ok); flex-shrink: 0;">
+              ${svgIcon('starFilled')}
+            </div>
+            <div class="rpb-content" style="flex-grow: 1;">
+              <div class="rpb-title" style="font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+                Progreso de Calificación Histórica
+                <span class="badge badge-optimal" style="margin-left: 0;">Excelente</span>
+              </div>
+              <div class="rpb-text" style="font-size: 12.5px; color: var(--text-dim); line-height: 1.4;">
+                La sucursal tiene un promedio histórico sobresaliente de <strong>${R.toFixed(2)}★</strong> (basado en ${N} reseñas). ¡Felicidades por mantener un estándar de excelencia operativa!
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        const x = Math.ceil((N * (targetRating - R)) / (5 - targetRating));
+        progressBannerHtml = `
+          <div class="rating-progress-banner" style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--sombra-card);">
+            <div class="rpb-icon" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(212, 175, 55, 0.1); color: var(--oro); flex-shrink: 0;">
+              ${svgIcon('starFilled')}
+            </div>
+            <div class="rpb-content" style="flex-grow: 1;">
+              <div class="rpb-title" style="font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Progreso de Calificación Histórica</div>
+              <div class="rpb-text" style="font-size: 12.5px; color: var(--text-dim); line-height: 1.4;">
+                Calificación histórica: <strong>${R.toFixed(2)}★</strong> (${N} reseñas). Para elevar la calificación histórica al siguiente punto porcentual de <strong>${targetRating.toFixed(1)}★</strong>, se necesitan recibir consecutivamente <strong>${x}</strong> reseñas perfectas de 5 estrellas.
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    } else {
+      progressBannerHtml = `
+        <div class="rating-progress-banner" style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--sombra-card);">
+          <div class="rpb-icon" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); color: var(--text-muted); flex-shrink: 0;">
+            ${svgIcon('star')}
+          </div>
+          <div class="rpb-content" style="flex-grow: 1;">
+            <div class="rpb-title" style="font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px;">Progreso de Calificación Histórica</div>
+            <div class="rpb-text" style="font-size: 12.5px; color: var(--text-dim); line-height: 1.4;">
+              Aún no hay suficientes reseñas registradas en el historial de esta sucursal para proyectar metas.
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     const scorecardSection = `
       <div class="scorecard-grid" style="margin-bottom:14px;">
         <div class="scorecard status-${kpiVolClass}">
@@ -172,9 +235,39 @@ const BranchView = {
       </div>
     `;
 
+    // Mensaje de bienvenida personalizado (Idea 4)
+    const userName = (typeof AppAuth !== 'undefined' && AppAuth.profile?.nombre) || 'Usuario';
+    const userRole = (typeof AppAuth !== 'undefined' && AppAuth.getUserRole()) || 'gerente';
+    const pendingCritical = reviews.filter(r => r.stars <= 2 && (!r.responseFromOwnerText || r.responseFromOwnerText.trim() === '')).length;
+
+    let welcomeBannerHtml = '';
+    if (userRole === 'gerente') {
+      welcomeBannerHtml = `
+        <div class="welcome-banner-gerente" style="margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 18px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--oro); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">Estatus de Operación</div>
+          <div style="font-family: var(--sans); font-size: 18px; font-weight: 700; color: #FAF5EB; margin-bottom: 4px;">¡Hola, ${userName}!</div>
+          <div style="font-size: 13px; color: rgba(245, 239, 230, 0.85); line-height: 1.45;">
+            Bienvenido, gerente de <strong>${meta.nombre}</strong>. Este mes tienes <strong>${pendingCritical}</strong> opiniones críticas pendientes por responder.
+          </div>
+        </div>
+      `;
+    } else {
+      const roleMap = { admin: 'Administrador', director: 'Director', regional: 'Gerente Regional', zonal: 'Gerente Zonal' };
+      const roleLabel = roleMap[userRole] || userRole;
+      welcomeBannerHtml = `
+        <div class="welcome-banner-gerente" style="margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 18px;">
+          <div style="font-family: var(--sans); font-size: 16px; font-weight: 700; color: #FAF5EB; margin-bottom: 4px;">¡Hola, ${userName}!</div>
+          <div style="font-size: 12.5px; color: rgba(245, 239, 230, 0.7); line-height: 1.4;">
+            Sesión activa como <strong>${roleLabel}</strong>. Visualizando el desempeño de <strong>${meta.nombre}</strong>.
+          </div>
+        </div>
+      `;
+    }
+
     document.getElementById('app').innerHTML = `
       ${buildTopbar(!isHomeMode, isHomeMode ? '' : meta.nombre)}
       <section class="branch-hero">
+        ${welcomeBannerHtml}
         <div class="bh-eyebrow">
           <span>${getRegionName(activeRegion)}</span>
         </div>
@@ -196,6 +289,7 @@ const BranchView = {
           <span class="section-sub">Evaluación de KPIs operativos</span>
         </div>
         ${scorecardSection}
+        ${progressBannerHtml}
         ${problemSection}
       </section>
 
@@ -275,6 +369,15 @@ const BranchView = {
           Charts.branchVolumeTrend(volumeCtx, trendLabels, volumeTrendData, color);
         }
       }, 100);
+
+      // Check for walkthrough (Idea 3)
+      if (localStorage.getItem('lcp_walkthrough_seen') !== 'true') {
+        setTimeout(() => {
+          if (typeof LcpWalkthrough !== 'undefined') {
+            LcpWalkthrough.start();
+          }
+        }, 1200);
+      }
     });
 
     // Close custom select on clicking outside

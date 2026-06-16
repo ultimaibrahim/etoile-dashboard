@@ -77,6 +77,7 @@ const DataLoader = {
     if (setRegionActiva(region)) {
       this.cache = {}; // Vaciar la caché al cambiar de región
       await this.init();
+      await this.computeHistoricalRatings();
       return true;
     }
     return false;
@@ -259,6 +260,45 @@ const DataLoader = {
     const avgRating = totalReviews ? reviews.reduce((a, r) => a + r.stars, 0) / totalReviews : 0;
     const withText = reviews.filter(r => r.text && r.text.trim().length > 0).length;
     return { totalReviews, avgRating, withText };
+  },
+
+  computeBranchHistoricalStats(branchId) {
+    let totalStars = 0;
+    let totalCount = 0;
+    for (const key in this.cache) {
+      if (/^\d{4}-\d{2}$/.test(key)) {
+        const data = this.cache[key];
+        if (data && data.reviews) {
+          const branchReviews = data.reviews.filter(r => r.sucursal === branchId);
+          totalCount += branchReviews.length;
+          totalStars += branchReviews.reduce((sum, r) => sum + r.stars, 0);
+        }
+      }
+    }
+    const avg = totalCount > 0 ? totalStars / totalCount : 0;
+    return { count: totalCount, avg: avg };
+  },
+
+  async computeHistoricalRatings() {
+    if (this.manifest) {
+      const loadPromises = [];
+      for (const year in this.manifest) {
+        for (const month of this.manifest[year]) {
+          loadPromises.push(this.loadMonth(Number(year), month));
+        }
+      }
+      await Promise.all(loadPromises);
+    }
+
+    for (const meta of SUCURSALES_META_ALL) {
+      const stats = this.computeBranchHistoricalStats(meta.id);
+      if (stats.count > 0) {
+        meta.historico = stats.avg;
+        meta.historicoCount = stats.count;
+      } else {
+        meta.historicoCount = 0;
+      }
+    }
   },
 
   setMonth(year, month) {

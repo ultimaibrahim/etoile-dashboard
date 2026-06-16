@@ -322,6 +322,10 @@ const AboutView = {
                 <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:pointer;font-family:var(--sans);font-size:20px;font-weight:700;color:#FAF5EB;letter-spacing:.04em;" title="Ver Changelog">étoile - Altair</button>
               </div>
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
+                <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Guía de Introducción</div>
+                <button onclick="localStorage.removeItem('lcp_walkthrough_seen'); Router.navigate('#/');" style="background:var(--oro);border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:700;color:#FFFFFF;text-align:center;transition:background 0.2s;" onmouseover="this.style.background='#a37b22'" onmouseout="this.style.background='var(--oro)'">Iniciar Tour de Bienvenida</button>
+              </div>
+              <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Cobertura</div>
                 <div style="font-size:15px;font-weight:600;color:#FAF5EB;">${SUCURSALES_META.length} sucursales · Región ${getRegionName(activeRegion)}</div>
               </div>

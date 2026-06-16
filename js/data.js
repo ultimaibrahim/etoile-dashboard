@@ -87,7 +87,11 @@ let SUCURSALES_META = SUCURSALES_META_ALL.filter(s => s.region === activeRegion)
 function setRegionActiva(region) {
   if (REGION_NAME_MAP[region]) {
     activeRegion = region;
-    SUCURSALES_META = SUCURSALES_META_ALL.filter(s => s.region === activeRegion);
+    let base = SUCURSALES_META_ALL.filter(s => s.region === activeRegion);
+    if (typeof AppAuth !== 'undefined' && AppAuth.profile && AppAuth.profile.rol === 'gerente' && AppAuth.profile.sucursal) {
+      base = base.filter(s => s.id === AppAuth.profile.sucursal);
+    }
+    SUCURSALES_META = base;
     return true;
   }
   return false;

@@ -587,9 +587,30 @@ const BrandView = {
 
   toggleMonthDropdown(event) {
     event.stopPropagation();
-    const dropdown = document.getElementById('brandMonthDropdown');
-    if (dropdown) {
-      dropdown.classList.toggle('open');
+    if (window.innerWidth < 600) {
+      const year = DataLoader.currentYear;
+      const month = DataLoader.currentMonth;
+      const availableMonths = DataLoader.manifest[year] || [month];
+      const sortedMonths = [...availableMonths].sort((a, b) => a - b);
+      
+      const options = sortedMonths.map(m => {
+        const mName = MONTH_NAMES[m - 1];
+        const mCap = mName.charAt(0).toUpperCase() + mName.slice(1);
+        return {
+          value: m,
+          label: `${mCap} ${year}`,
+          active: m === month
+        };
+      });
+      
+      showBottomSheet('Seleccionar Periodo', options, (val) => {
+        BrandView.selectMonthOption(parseInt(val));
+      });
+    } else {
+      const dropdown = document.getElementById('brandMonthDropdown');
+      if (dropdown) {
+        dropdown.classList.toggle('open');
+      }
     }
   },
 
@@ -1882,6 +1903,52 @@ const BrandView = {
         background: rgba(212,175,55,0.15);
         color: var(--oro);
         border: 1px solid rgba(212,175,55,0.3);
+      }
+
+      @media (max-width: 500px) {
+        .brand-modal-overlay {
+          padding: 10px;
+        }
+        .brand-modal-box {
+          max-height: 90vh;
+          border-radius: 18px;
+        }
+        .brand-modal-header {
+          padding: 16px 16px 12px 16px !important;
+          gap: 8px !important;
+        }
+        .brand-modal-title {
+          font-size: 15px !important;
+        }
+        .brand-modal-body {
+          padding: 12px 16px !important;
+        }
+        .def-branch-header-stats {
+          flex-wrap: wrap !important;
+          gap: 8px !important;
+          margin-bottom: 16px !important;
+        }
+        .def-branch-header-stats > div {
+          flex: 1 1 calc(50% - 4px) !important;
+          padding: 8px 10px !important;
+          border-radius: 8px !important;
+          box-sizing: border-box;
+        }
+        .def-branch-header-stats > div:last-child {
+          flex: 1 1 100% !important;
+        }
+        .brand-modal-footer {
+          padding: 12px 16px !important;
+          flex-wrap: wrap;
+          gap: 8px !important;
+          justify-content: stretch !important;
+        }
+        .brand-modal-footer button {
+          flex: 1 1 100% !important;
+          margin: 0 !important;
+          padding: 10px !important;
+          font-size: 12.5px !important;
+        }
       }
     `;
     document.head.appendChild(style);

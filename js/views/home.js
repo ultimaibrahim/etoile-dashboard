@@ -276,12 +276,28 @@ const HomeView = {
       `;
     }
 
+    // Mensaje de bienvenida personalizado para roles corporativos / regionales (Idea 4)
+    const userName = (typeof AppAuth !== 'undefined' && AppAuth.profile?.nombre) || 'Usuario';
+    const userRole = (typeof AppAuth !== 'undefined' && AppAuth.getUserRole()) || 'admin';
+    const roleMap = { admin: 'Administrador', director: 'Director', regional: 'Gerente Regional', zonal: 'Gerente Zonal' };
+    const roleLabel = roleMap[userRole] || userRole;
+
+    const welcomeBannerHtml = `
+      <div class="welcome-banner-home" style="margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 14px; width: 100%;">
+        <div style="font-family: var(--sans); font-size: 18px; font-weight: 700; color: #FAF5EB; margin-bottom: 4px;">¡Hola, ${userName}!</div>
+        <div style="font-size: 12.5px; color: rgba(245, 239, 230, 0.75); line-height: 1.4;">
+          Bienvenido al portal regional (${roleLabel}). Actualmente hay <strong>${totalNegativasActivas}</strong> quejas críticas activas en la región.
+        </div>
+      </div>
+    `;
+
     document.getElementById('app').innerHTML = `
       ${concludedBannerHtml}
       ${buildTopbar()}
       <section class="hero">
         <div class="hero-inner">
           <div class="hero-left">
+            ${welcomeBannerHtml}
             <div class="hero-label-row" style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:16px;">
               <span class="eyebrow" style="color:rgba(245,239,230,.55);">Promedio Regional</span>
               ${dropdownHtml}
@@ -427,6 +443,15 @@ const HomeView = {
 
       // Start Carousel Autoplay
       HomeView.initAutoplay();
+
+      // Check for walkthrough (Idea 3)
+      if (localStorage.getItem('lcp_walkthrough_seen') !== 'true') {
+        setTimeout(() => {
+          if (typeof LcpWalkthrough !== 'undefined') {
+            LcpWalkthrough.start();
+          }
+        }, 1200);
+      }
 
       // Pause carousel autoplay on hover, click, or touch hold
       const carouselOuter = document.querySelector('.review-feed-carousel-outer');

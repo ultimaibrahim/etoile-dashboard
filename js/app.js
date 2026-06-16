@@ -101,6 +101,7 @@ const AppAuth = {
       if (typeof DataLoader !== 'undefined') {
         DataLoader.cache = {};
         await DataLoader.init();
+        await DataLoader.computeHistoricalRatings();
       }
       return true;
     } catch (e) {
@@ -150,6 +151,7 @@ async function initApp() {
   await AppAuth.init();
   
   await DataLoader.init();
+  await DataLoader.computeHistoricalRatings();
 
   // Registrar vistas en el Router
   Router.register('login', () => LoginView.render());
@@ -165,8 +167,8 @@ async function initApp() {
   Router.init();
   Router.resolve();
 
-  // Inicializar banner de cookies
-  initCookieBanner();
+  // Inicializar banner de cookies (Deshabilitado temporalmente para revisión legal)
+  // initCookieBanner();
 }
 
 function initCookieBanner() {

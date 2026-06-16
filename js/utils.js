@@ -147,6 +147,7 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
 
   // Botón de regreso a selección de región
   let backToSelectBtn = '';
+  let backToSelectBtnMobile = '';
   if (typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated()) {
     const role = AppAuth.getUserRole();
     if (['admin', 'director', 'regional', 'zonal'].includes(role)) {
@@ -156,11 +157,18 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
           <span>Regiones</span>
         </a>
       `;
+      backToSelectBtnMobile = `
+        <a href="#/select-region" class="topbar-mobile-link" onclick="window.toggleMobileMenu()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Regiones</span>
+        </a>
+      `;
     }
   }
 
   // Selector de región para administradores, regionales y zonales
   let regionSelect = '';
+  let regionSelectMobile = '';
   if (!isCorporate && typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated()) {
     const role = AppAuth.getUserRole();
     if (role === 'admin' || role === 'regional' || role === 'zonal') {
@@ -172,31 +180,94 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
           ${regionOptions}
         </select>
       `;
+      regionSelectMobile = `
+        <div class="topbar-mobile-select-wrap">
+          <span>Región:</span>
+          <select class="topbar-mobile-region-select" onchange="handleRegionChange(this.value); window.toggleMobileMenu();">
+            ${regionOptions}
+          </select>
+        </div>
+      `;
     }
   }
 
   // Botón de cerrar sesión
   let logoutBtn = '';
+  let logoutBtnMobile = '';
   if (typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated()) {
     logoutBtn = `
       <button class="topbar-logout" onclick="AppAuth.logout()" title="Cerrar sesión" aria-label="Cerrar sesión">
         ${svgIcon('logout')}
       </button>
     `;
+    logoutBtnMobile = `
+      <button class="topbar-mobile-link" onclick="AppAuth.logout(); window.toggleMobileMenu();" style="border:none; background:none; text-align:left; width:100%; cursor:pointer; color:inherit;">
+        ${svgIcon('logout')}
+        <span>Cerrar Sesión</span>
+      </button>
+    `;
   }
 
-  const header = `<header class="topbar">
-    <div class="topbar-left">${back}${titleArea}</div>
-    <div class="topbar-right">
-      ${desktopNav}
-      <div class="topbar-actions">
-        ${backToSelectBtn}
-        ${regionSelect}
-        <button class="dark-toggle" onclick="toggleDark()" aria-label="Cambiar tema">${darkMode ? svgIcon('sun') : svgIcon('moon')}</button>
-        ${logoutBtn}
+  // Registrar handler para menú móvil si no existe
+  if (!window.toggleMobileMenu) {
+    window.toggleMobileMenu = (e) => {
+      if (e) e.stopPropagation();
+      const dropdown = document.getElementById('topbarMobileDropdown');
+      if (dropdown) {
+        dropdown.classList.toggle('active');
+        const hamburger = document.querySelector('.topbar-hamburger');
+        if (hamburger) {
+          hamburger.classList.toggle('active');
+        }
+      }
+    };
+    
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('topbarMobileDropdown');
+      const hamburger = document.querySelector('.topbar-hamburger');
+      if (dropdown && dropdown.classList.contains('active')) {
+        if (!dropdown.contains(e.target) && !hamburger.contains(e.target)) {
+          dropdown.classList.remove('active');
+          if (hamburger) hamburger.classList.remove('active');
+        }
+      }
+    });
+  }
+
+  const header = `
+    <header class="topbar">
+      <div class="topbar-left">${back}${titleArea}</div>
+      <div class="topbar-right">
+        ${desktopNav}
+        <div class="topbar-actions">
+          ${backToSelectBtn}
+          ${regionSelect}
+          <button class="dark-toggle" onclick="toggleDark()" aria-label="Cambiar tema">${darkMode ? svgIcon('sun') : svgIcon('moon')}</button>
+          ${logoutBtn}
+        </div>
+        
+        <!-- Botón hamburguesa para móviles -->
+        <button class="topbar-hamburger" onclick="window.toggleMobileMenu(event)" aria-label="Menú">
+          <svg class="hamburger-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line class="line-top" x1="3" y1="6" x2="21" y2="6"></line>
+            <line class="line-mid" x1="3" y1="12" x2="21" y2="12"></line>
+            <line class="line-bot" x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
       </div>
-    </div>
-  </header>${nav}`;
+
+      <!-- Menú desplegable móvil colapsable -->
+      <div class="topbar-mobile-dropdown" id="topbarMobileDropdown">
+        ${backToSelectBtnMobile}
+        ${regionSelectMobile}
+        <button class="topbar-mobile-link" onclick="toggleDark(); window.toggleMobileMenu();" style="border:none; background:none; text-align:left; width:100%; cursor:pointer;">
+          ${darkMode ? svgIcon('sun') : svgIcon('moon')}
+          <span>Tema: ${darkMode ? 'Claro' : 'Oscuro'}</span>
+        </button>
+        ${logoutBtnMobile}
+      </div>
+    </header>${nav}
+  `;
 
   return header;
 }
@@ -593,4 +664,201 @@ function showConcludedMonthModal(year, month) {
   };
   document.addEventListener('keydown', _escHandler);
 }
+
+const LcpWalkthrough = {
+  currentStep: 0,
+  activeTour: 'home',
+  
+  homeSteps: [
+    {
+      target: null,
+      title: "Bienvenido a étoile",
+      body: "El portal de reputación de La Crêpe Parisienne. Vamos a darte un recorrido rápido por las herramientas clave para tu gestión diaria."
+    },
+    {
+      target: ".hero",
+      title: "Desempeño Regional",
+      body: "Aquí visualizas el promedio actual de la región, el volumen de opiniones recibidas y las alertas críticas de un vistazo."
+    },
+    {
+      target: ".scorecard-grid",
+      title: "KPIs de Operación",
+      body: "Monitorea el cumplimiento de las metas del mes: volumen mínimo, calidad de reseñas y la tasa de respuesta a quejas."
+    },
+    {
+      target: ".branch-controls-bar",
+      title: "Filtros y Búsqueda",
+      body: "Utiliza estos controles para buscar sucursales específicas, filtrarlas por estado (en alerta o estables) y ordenarlas a tu conveniencia."
+    },
+    {
+      target: ".review-feed-section",
+      title: "Actividad Reciente",
+      body: "El feed de opiniones te muestra en tiempo real lo que dicen tus clientes. Puedes hacer clic en cualquier reseña para ver el detalle."
+    }
+  ],
+
+  branchSteps: [
+    {
+      target: null,
+      title: "Auditoría de Sucursal",
+      body: "Bienvenido a la vista de detalle de sucursal. Aquí analizaremos el comportamiento de tu tienda en el periodo seleccionado."
+    },
+    {
+      target: ".branch-hero",
+      title: "Desempeño del Mes",
+      body: "Visualiza el nombre de la sucursal, su promedio histórico en estrellas y cambia el mes activo desde el selector desplegable."
+    },
+    {
+      target: ".scorecard-grid",
+      title: "Scorecard Operativo",
+      body: "Mide el volumen de opiniones, la calidad del texto y el promedio mensual de tu tienda contra los objetivos operativos."
+    },
+    {
+      target: ".rating-progress-banner",
+      title: "Progreso Histórico",
+      body: "Esta sección calcula dinámicamente cuántas calificaciones perfectas (5 estrellas) consecutivas necesita recibir tu sucursal para elevar su promedio histórico al siguiente décimo."
+    },
+    {
+      target: ".proactive-alerts-grid",
+      title: "Áreas de Oportunidad",
+      body: "Análisis automático de quejas críticas clasificado en Servicio, Calidad y Precio. Haz clic en las tarjetas en rojo para auditar los comentarios directamente."
+    },
+    {
+      target: ".reviews-panel",
+      title: "Opiniones del Periodo",
+      body: "El listado de comentarios del mes con su calificación, fecha de publicación y texto original. Usa el botón para mostrar todas si hay más de 5."
+    }
+  ],
+
+  get steps() {
+    return this.activeTour === 'branch' ? this.branchSteps : this.homeSteps;
+  },
+
+  start() {
+    const hash = window.location.hash;
+    if (hash.startsWith('#/sucursal/')) {
+      this.activeTour = 'branch';
+    } else {
+      this.activeTour = 'home';
+    }
+    this.currentStep = 0;
+    this.showStep();
+  },
+
+  showStep() {
+    this.cleanup();
+
+    if (this.currentStep >= this.steps.length) {
+      this.finish();
+      return;
+    }
+
+    const step = this.steps[this.currentStep];
+    
+    let overlay = document.getElementById('walkthroughOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'walkthroughOverlay';
+      overlay.className = 'walkthrough-overlay';
+      document.body.appendChild(overlay);
+      setTimeout(() => overlay.classList.add('active'), 10);
+    }
+
+    let targetEl = null;
+    if (step.target) {
+      targetEl = document.querySelector(step.target);
+      if (targetEl) {
+        targetEl.classList.add('walkthrough-highlight');
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    const tooltip = document.createElement('div');
+    tooltip.id = 'walkthroughTooltip';
+    tooltip.className = 'walkthrough-tooltip';
+    
+    const isLast = this.currentStep === this.steps.length - 1;
+    const stepIndicator = `Paso ${this.currentStep + 1} de ${this.steps.length}`;
+    
+    tooltip.innerHTML = `
+      <div class="walkthrough-tooltip-title">
+        <span>${step.title}</span>
+        <span class="walkthrough-tooltip-step">${stepIndicator}</span>
+      </div>
+      <div class="walkthrough-tooltip-body">${step.body}</div>
+      <div class="walkthrough-tooltip-actions">
+        <button class="walkthrough-btn skip" onclick="LcpWalkthrough.skip()">${isLast ? 'Cerrar' : 'Saltar'}</button>
+        <button class="walkthrough-btn next" onclick="LcpWalkthrough.next()">${isLast ? 'Finalizar' : 'Siguiente'}</button>
+      </div>
+    `;
+
+    document.body.appendChild(tooltip);
+    this.positionTooltip(targetEl, tooltip);
+    setTimeout(() => tooltip.classList.add('active'), 50);
+  },
+
+  positionTooltip(targetEl, tooltip) {
+    if (!targetEl) {
+      tooltip.style.position = 'fixed';
+      tooltip.style.top = '50%';
+      tooltip.style.left = '50%';
+      tooltip.style.transform = 'translate(-50%, -50%)';
+      tooltip.style.bottom = 'auto';
+      tooltip.style.right = 'auto';
+      tooltip.style.width = '340px';
+      return;
+    }
+
+    if (window.innerWidth <= 576) {
+      return;
+    }
+
+    const rect = targetEl.getBoundingClientRect();
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+
+    let top = rect.bottom + scrollTop + 12;
+    let left = rect.left + scrollLeft + (rect.width / 2) - 160;
+
+    if (rect.bottom + 220 > window.innerHeight && rect.top > 220) {
+      top = rect.top + scrollTop - 180;
+    }
+
+    if (left < 10) left = 10;
+    if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
+
+    tooltip.style.top = `${top}px`;
+    tooltip.style.left = `${left}px`;
+  },
+
+  next() {
+    this.currentStep++;
+    this.showStep();
+  },
+
+  skip() {
+    this.finish();
+  },
+
+  cleanup() {
+    const prevHighlight = document.querySelector('.walkthrough-highlight');
+    if (prevHighlight) {
+      prevHighlight.classList.remove('walkthrough-highlight');
+    }
+    const prevTooltip = document.getElementById('walkthroughTooltip');
+    if (prevTooltip) {
+      prevTooltip.remove();
+    }
+  },
+
+  finish() {
+    this.cleanup();
+    const overlay = document.getElementById('walkthroughOverlay');
+    if (overlay) {
+      overlay.classList.remove('active');
+      setTimeout(() => overlay.remove(), 300);
+    }
+    localStorage.setItem('lcp_walkthrough_seen', 'true');
+  }
+};
 
