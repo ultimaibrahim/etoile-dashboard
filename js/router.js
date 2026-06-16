@@ -34,6 +34,9 @@ const Router = {
     if (hash === '#/dashboards') {
       return { handler: this.routes['dashboards'], params: {} };
     }
+    if (hash === '#/privacidad') {
+      return { handler: this.routes['privacy'], params: {} };
+    }
     return { handler: this.routes['home'], params: {} };
   },
 
@@ -47,7 +50,7 @@ const Router = {
     // Verificar sesión antes de permitir la navegación
     const authenticated = typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated();
     if (!authenticated) {
-      if (hash !== '#/login') {
+      if (hash !== '#/login' && hash !== '#/privacidad') {
         window.location.hash = '#/login';
         return;
       }

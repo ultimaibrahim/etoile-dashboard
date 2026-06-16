@@ -50,8 +50,11 @@ const LoginView = {
             </button>
           </form>
           
-          <div class="login-footer">
+          <div class="login-footer" style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
             <p>© 2026 Grupo MYT · Corporativo Alancar</p>
+            <p style="margin: 0; font-size: 11px;">
+              <a href="#/privacidad" class="login-footer-link" style="color: var(--text-dim); text-decoration: underline; transition: color 0.2s;" onmouseover="this.style.color='var(--oro)'" onmouseout="this.style.color='var(--text-dim)'">Aviso de Privacidad</a>
+            </p>
           </div>
         </div>
       </div>
