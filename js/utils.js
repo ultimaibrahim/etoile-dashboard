@@ -851,6 +851,90 @@ const LcpWalkthrough = {
     }
   },
 
+  showWelcomeOnboarding(userName, userRole, sucursalName = '') {
+    if (localStorage.getItem('lcp_walkthrough_seen') === 'true') {
+      return;
+    }
+
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'onboardingWelcomeOverlay';
+    overlay.className = 'onboarding-welcome-overlay';
+    
+    let roleTextHtml = '';
+    if (userRole === 'gerente') {
+      roleTextHtml = `
+        <p style="font-size:13.5px; color:var(--text-dim); line-height:1.6; margin-bottom:20px;">
+          Tu rol de <strong>Gerente de Sucursal</strong> te permite supervisar la reputación de tu tienda. En tu panel podrás medir el volumen de opiniones, la calidad de reseñas y dar seguimiento a alertas operativas.
+        </p>
+        <div style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.18); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--oro); line-height:1.5; text-align:left;">
+          <strong>Sucursal asignada:</strong> Estás asignado a <strong>${sucursalName || 'tu sucursal'}</strong>. Tu panel mostrará directamente las estadísticas de esta tienda.
+        </div>
+      `;
+    } else if (userRole === 'zonal') {
+      roleTextHtml = `
+        <p style="font-size:13.5px; color:var(--text-dim); line-height:1.6; margin-bottom:20px;">
+          Tu rol de <strong>Gerente Zonal</strong> te permite auditar las sucursales de tu zona de control. Puedes navegar y alternar entre regiones desde el selector del menú superior para comparar desempeños de distintas zonas.
+        </p>
+        <div style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.18); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--oro); line-height:1.5; text-align:left;">
+          <strong>Tip de navegación:</strong> Puedes ver las métricas de otras regiones mediante los controles del menú superior de la pantalla.
+        </div>
+      `;
+    } else {
+      const roleMap = { admin: 'Administrador', director: 'Director', regional: 'Gerente Regional' };
+      const roleLabel = roleMap[userRole] || userRole;
+      roleTextHtml = `
+        <p style="font-size:13.5px; color:var(--text-dim); line-height:1.6; margin-bottom:20px;">
+          Tu rol de <strong>${roleLabel}</strong> te otorga acceso al <strong>Dashboard Especial de Marca (étoile Corporate)</strong>. Desde ahí puedes analizar el rendimiento consolidado nacional de todas las regiones, Rankings de complejidad y alertas de incidencias.
+        </p>
+        <div style="background:rgba(61,138,95,0.06); border:1px solid rgba(61,138,95,0.15); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--ok); line-height:1.5; text-align:left;">
+          <strong>Auditoría global:</strong> Usa los reportes consolidados para reportar focos rojos y coordinar soluciones con los gerentes regionales.
+        </div>
+      `;
+    }
+
+    overlay.innerHTML = `
+      <div class="onboarding-welcome-box">
+        <div style="font-family:var(--giaza); font-size:48px; color:var(--oro); margin-bottom:10px; line-height:1;">étoile</div>
+        <h2 style="font-family:var(--sans); font-size:18px; font-weight:900; text-stretch:condensed; color:var(--text); text-transform:uppercase; margin-bottom:14px; letter-spacing:0.04em;">
+          ¡Bienvenido, ${userName}!
+        </h2>
+        <div style="font-size:13.5px; color:var(--text); font-weight:600; margin-bottom:16px;">
+          A tu dashboard de reseñas y reputación
+        </div>
+        <div style="margin-bottom:24px;">
+          ${roleTextHtml}
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+          <button class="walkthrough-btn next" onclick="LcpWalkthrough.dismissWelcome(true)" style="width:100%; padding:12px; font-size:13px;">Iniciar recorrido guiado</button>
+          <button class="walkthrough-btn skip" onclick="LcpWalkthrough.dismissWelcome(false)" style="width:100%; padding:10px; font-size:12px; border-color:var(--border-strong);">Saltar introducción</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.classList.add('active'), 50);
+  },
+
+  dismissWelcome(startTour) {
+    const overlay = document.getElementById('onboardingWelcomeOverlay');
+    if (overlay) {
+      overlay.classList.remove('active');
+      setTimeout(() => overlay.remove(), 300);
+    }
+    
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+
+    if (startTour) {
+      this.start();
+    } else {
+      this.finish();
+    }
+  },
+
   finish() {
     this.cleanup();
     const overlay = document.getElementById('walkthroughOverlay');

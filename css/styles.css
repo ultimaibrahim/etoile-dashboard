@@ -3520,6 +3520,46 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   }
 }
 
+/* Onboarding Welcome Screen Styles */
+.onboarding-welcome-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 20, 15, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.onboarding-welcome-overlay.active {
+  opacity: 1;
+}
+
+.onboarding-welcome-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 24px;
+  box-shadow: var(--sombra-lg);
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+  box-sizing: border-box;
+  transform: scale(0.95);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.onboarding-welcome-overlay.active .onboarding-welcome-box {
+  transform: scale(1);
+}
+
 
 
 

@@ -444,13 +444,13 @@ const HomeView = {
       // Start Carousel Autoplay
       HomeView.initAutoplay();
 
-      // Check for walkthrough (Idea 3)
+      // Check for welcome onboarding / walkthrough (Idea 3)
       if (localStorage.getItem('lcp_walkthrough_seen') !== 'true') {
         setTimeout(() => {
           if (typeof LcpWalkthrough !== 'undefined') {
-            LcpWalkthrough.start();
+            LcpWalkthrough.showWelcomeOnboarding(userName, userRole);
           }
-        }, 1200);
+        }, 1000);
       }
 
       // Pause carousel autoplay on hover, click, or touch hold

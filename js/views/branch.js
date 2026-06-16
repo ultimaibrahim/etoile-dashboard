@@ -370,13 +370,13 @@ const BranchView = {
         }
       }, 100);
 
-      // Check for walkthrough (Idea 3)
+      // Check for welcome onboarding / walkthrough (Idea 3)
       if (localStorage.getItem('lcp_walkthrough_seen') !== 'true') {
         setTimeout(() => {
           if (typeof LcpWalkthrough !== 'undefined') {
-            LcpWalkthrough.start();
+            LcpWalkthrough.showWelcomeOnboarding(userName, userRole, meta.nombre);
           }
-        }, 1200);
+        }, 1000);
       }
     });
 

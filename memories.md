@@ -57,3 +57,21 @@ Si la sucursal tiene **4.4★ con 80 reseñas** y queremos subir a **4.5★**:
   - Implementar placeholders dinámicos en las plantillas de bienvenida.
   - Para perfiles gerenciales, inyectar frases contextualizadas como:
     > *"Bienvenido, gerente de {tienda}. Este mes tienes {X} opiniones críticas pendientes por responder."*
+
+---
+
+## 5. Comparativa Interregional de Puntuaciones Ponderadas (Requerimiento para Zonales)
+- **Objetivo:** Permitir a los gerentes zonales y superiores visualizar y comparar el rendimiento de todas las regiones nacionales en un formato unificado.
+- **Detalle de Implementación Futura:**
+  - Desarrollar un dashboard de comparación interregional basado en un score de rendimiento regional ponderado por la complejidad de sucursales activas.
+  - Incluir gráficos de barras comparativos para la calificación media regional del mes.
+  - Implementar gráficos de tendencias temporales (evolución histórica de líneas) para contrastar el crecimiento y declive reputacional de las regiones a lo largo del año.
+
+---
+
+## 6. Automatización de Scrapeo de Reseñas mediante Apify
+- **Objetivo:** Automatizar la descarga y sincronización de reseñas de Google Maps en Supabase sin intervención humana.
+- **Esquema de Automatización Configurado:**
+  - **Programación (Apify Schedule):** Tarea programada mediante Cron `0 0 1,15 * *` para ejecutarse de forma automática el 1 y 15 de cada mes a las 00:00.
+  - **Webhook de Ingesta:** Apify invoca la Netlify Serverless Function `/netlify/functions/apify-ingest` mediante un método POST al completar exitosamente la ejecución (`RUN.SUCCEEDED`).
+  - **Variables de Entorno Clave:** `APIFY_TOKEN` (autorización en Apify API), `APIFY_WEBHOOK_SECRET` (bearer token para autenticación segura en el webhook) y `SUPABASE_SERVICE_ROLE_KEY` (escritura con bypass de RLS).
