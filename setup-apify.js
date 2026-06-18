@@ -94,11 +94,26 @@ async function run() {
   }
 
   // Normalizar el URL de netlify para apuntar a la función serverless
-  let functionUrl = netlifyUrl;
-  if (!functionUrl.endsWith('/.netlify/functions/apify-ingest')) {
-    if (functionUrl.endsWith('/')) {
-      functionUrl += '.netlify/functions/apify-ingest';
-    } else {
+  let functionUrl = netlifyUrl.trim();
+  try {
+    // Si el usuario introdujo una URL completa con hash o ruta (ej: https://site.netlify.app/#/home)
+    // parsed.origin nos dará exactamente "https://site.netlify.app"
+    const parsed = new URL(functionUrl);
+    functionUrl = `${parsed.origin}/.netlify/functions/apify-ingest`;
+  } catch (e) {
+    // Fallback si no empieza con protocolo
+    if (!functionUrl.startsWith('http://') && !functionUrl.startsWith('https://')) {
+      functionUrl = 'https://' + functionUrl;
+    }
+    try {
+      const parsed = new URL(functionUrl);
+      functionUrl = `${parsed.origin}/.netlify/functions/apify-ingest`;
+    } catch (err) {
+      // Fallback final por si falla el constructor de URL
+      functionUrl = functionUrl.split('#')[0].split('?')[0];
+      if (functionUrl.endsWith('/')) {
+        functionUrl = functionUrl.slice(0, -1);
+      }
       functionUrl += '/.netlify/functions/apify-ingest';
     }
   }
