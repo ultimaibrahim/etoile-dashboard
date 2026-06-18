@@ -7,10 +7,53 @@
 const SUPABASE_URL = 'https://lbnqpcrhyebtbblpvazp.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_WXCdzeTmvrF2IGJfogAMGw_FBP-mr8Y';
 
+/* ── COOKIE STORAGE FOR AUTH ───────────────────────────── */
+const CookieStorage = {
+  getItem(key) {
+    const name = key + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i].trim();
+      if (c.indexOf(name) === 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return null;
+  },
+  setItem(key, value) {
+    const d = new Date();
+    d.setTime(d.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 días de persistencia
+    const expires = "expires=" + d.toUTCString();
+    document.cookie = `${key}=${value}; ${expires}; path=/; SameSite=Lax; Secure`;
+  },
+  removeItem(key) {
+    document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure`;
+  }
+};
+
+// Limpiar localStorage de cualquier token anterior de Supabase por seguridad
+try {
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+      localStorage.removeItem(key);
+    }
+  }
+} catch (err) {
+  console.warn("No se pudo limpiar localStorage:", err);
+}
+
 var supabaseClient = null;
 try {
   if (SUPABASE_URL && SUPABASE_URL !== 'https://placeholder.supabase.co') {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        storage: CookieStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
   }
 } catch (e) {
   console.error("Error al inicializar Supabase client:", e);
@@ -88,26 +131,34 @@ const AppAuth = {
 
   async login(email, password) {
     if (!supabaseClient) {
-      return false;
+      throw new Error("Supabase no configurado.");
     }
 
-    try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      
-      this.session = data.session;
-      await this.loadProfile(data.user.id);
-      
-      if (typeof DataLoader !== 'undefined') {
-        DataLoader.cache = {};
-        await DataLoader.init();
-        await DataLoader.computeHistoricalRatings();
+    // 1. Intentar inicio de sesión
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      // Capturar si Supabase reporta que el correo no está confirmado
+      if (error.message && (error.message.includes('confirm') || error.message.includes('verified'))) {
+        throw new Error("email_unconfirmed");
       }
-      return true;
-    } catch (e) {
-      console.error("Error de autenticación:", e.message);
-      return false;
+      throw error;
     }
+
+    // 2. Guard en cliente: bloquear inicio de sesión si el correo no está confirmado
+    if (data.user && !data.user.email_confirmed_at) {
+      await supabaseClient.auth.signOut();
+      throw new Error("email_unconfirmed");
+    }
+
+    this.session = data.session;
+    await this.loadProfile(data.user.id);
+    
+    if (typeof DataLoader !== 'undefined') {
+      DataLoader.cache = {};
+      await DataLoader.init();
+      await DataLoader.computeHistoricalRatings();
+    }
+    return true;
   },
 
   async logout() {

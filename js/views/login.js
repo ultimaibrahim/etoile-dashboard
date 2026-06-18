@@ -247,20 +247,32 @@ const LoginView = {
     const password = document.getElementById('login-password').value;
 
     try {
-      const ok = await AppAuth.login(email, password);
-      if (ok) {
-        const role = AppAuth.getUserRole();
-        if (role !== 'gerente') {
-          Router.navigate('#/select-region');
-        } else {
-          Router.navigate('#/');
-        }
+      await AppAuth.login(email, password);
+      const role = AppAuth.getUserRole();
+      if (role !== 'gerente') {
+        Router.navigate('#/select-region');
       } else {
-        this.render('Correo o contraseña incorrectos.');
+        Router.navigate('#/');
       }
     } catch (e) {
-      console.error(e);
-      this.render('Error de conexión con el servidor.');
+      console.error("Error en login UI:", e);
+      if (e.message === 'email_unconfirmed') {
+        this.render('Por favor, confirma tu correo electrónico. Revisa tu bandeja de entrada para ver el enlace de verificación.');
+      } else if (e.status === 429 || (e.message && (e.message.includes('too many') || e.message.includes('rate limit')))) {
+        this.render('Demasiados intentos. Tu cuenta ha sido bloqueada temporalmente. Por seguridad, espera 15 minutos.');
+      } else if (e.message && (e.message.includes('credentials') || e.message.includes('invalid') || e.message.includes('incorrect'))) {
+        this.render('Correo o contraseña incorrectos.');
+      } else {
+        this.render('Correo o contraseña incorrectos.'); // Fallback genérico amigable
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `
+          <span>Iniciar Sesión</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12,5 19,12 12,19"></polyline></svg>
+        `;
+      }
     }
   }
 };
