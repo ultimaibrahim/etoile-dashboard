@@ -1,43 +1,92 @@
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event, context) => {
-  // Solo permitir peticiones POST
-  if (event.httpMethod !== 'POST') {
+  // 1. Validar el Token de Seguridad de la Ingesta
+  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
+  const queryParams = event.queryStringParameters || {};
+  const secretParam = queryParams.secret;
+  const webhookSecret = process.env.APIFY_WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
     return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method Not Allowed' })
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Falta la variable de entorno APIFY_WEBHOOK_SECRET en Netlify.' })
     };
   }
 
+  const isAuthorized = (authHeader === `Bearer ${webhookSecret}`) || (secretParam === webhookSecret);
+  if (!isAuthorized) {
+    console.warn("Intento de acceso no autorizado a la función de ingesta.");
+    return {
+      statusCode: 401,
+      body: JSON.stringify({ error: 'Unauthorized' })
+    };
+  }
+
+  // 2. Obtener el datasetId
+  let datasetId = null;
+  const isManualSync = queryParams.action === 'sync';
+  const apifyToken = process.env.APIFY_TOKEN;
+
   try {
-    const body = JSON.parse(event.body);
+    if (isManualSync) {
+      if (!apifyToken) {
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Falta la variable de entorno APIFY_TOKEN en Netlify para la sincronización manual.' })
+        };
+      }
 
-    // 1. Validar el Token de Seguridad del Webhook
-    // Apify envía la cabecera "Authorization: Bearer <token>"
-    const authHeader = event.headers['authorization'];
-    const webhookSecret = process.env.APIFY_WEBHOOK_SECRET;
+      console.log("Iniciando sincronización manual...");
+      // A. Listar tareas de Apify para encontrar "google-maps-scraper-lcp"
+      const listTasksRes = await fetch(`https://api.apify.com/v2/actor-tasks?token=${apifyToken}`);
+      if (!listTasksRes.ok) {
+        throw new Error(`Error al listar tareas de Apify: ${listTasksRes.statusText}`);
+      }
+      const tasksData = await listTasksRes.json();
+      const task = tasksData.data.items.find(t => t.name === 'google-maps-scraper-lcp');
+      if (!task) {
+        throw new Error("No se encontró la tarea 'google-maps-scraper-lcp' en tu cuenta de Apify.");
+      }
+      const taskId = task.id;
 
-    if (!authHeader || authHeader !== `Bearer ${webhookSecret}`) {
-      console.warn("Intento de webhook no autorizado.");
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Unauthorized' })
-      };
+      // B. Obtener el último run exitoso de la tarea
+      const runsRes = await fetch(`https://api.apify.com/v2/actor-tasks/${taskId}/runs?token=${apifyToken}&limit=5&desc=true`);
+      if (!runsRes.ok) {
+        throw new Error(`Error al obtener corridas de la tarea: ${runsRes.statusText}`);
+      }
+      const runsData = await runsRes.json();
+      const latestSuccessRun = runsData.data.items.find(r => r.status === 'SUCCEEDED');
+      if (!latestSuccessRun) {
+        throw new Error("No se encontraron ejecuciones exitosas para la tarea 'google-maps-scraper-lcp' en Apify.");
+      }
+      datasetId = latestSuccessRun.defaultDatasetId;
+      console.log(`Dataset encontrado para la última corrida exitosa: ${datasetId}`);
+    } else {
+      // Flujo de Webhook POST estándar
+      if (event.httpMethod !== 'POST') {
+        return {
+          statusCode: 405,
+          body: JSON.stringify({ error: 'Method Not Allowed. Usa POST para webhook, o GET con ?action=sync para sincronización manual.' })
+        };
+      }
+      const body = JSON.parse(event.body || '{}');
+      const runObject = body.resource;
+      if (!runObject || !runObject.defaultDatasetId) {
+        console.warn("Webhook recibido sin defaultDatasetId.");
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'Missing defaultDatasetId' })
+        };
+      }
+      datasetId = runObject.defaultDatasetId;
     }
 
-    // 2. Obtener el datasetId del Run de Apify
-    const runObject = body.resource;
-    if (!runObject || !runObject.defaultDatasetId) {
-      console.warn("Webhook recibido sin defaultDatasetId.");
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Missing defaultDatasetId' })
-      };
+    if (!datasetId) {
+      throw new Error("No se pudo resolver el datasetId.");
     }
-    const datasetId = runObject.defaultDatasetId;
 
     // 3. Descargar las reseñas de la API de Apify
-    const apifyToken = process.env.APIFY_TOKEN;
     const apifyUrl = `https://api.apify.com/v2/datasets/${datasetId}/items?token=${apifyToken}&clean=true`;
 
     console.log(`Descargando dataset ${datasetId} de Apify...`);

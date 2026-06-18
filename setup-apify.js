@@ -150,8 +150,8 @@ async function run() {
       maxCrawledPlacesPerSearch: 1, // Queremos exactamente el primer match de la sucursal
       maxCrawledPlaces: 33,
       scrapeReviews: true,
-      maxReviews: 50, // Límite razonable por lote mensual/quincenal
-      maxReviewsPerPlace: 50,
+      maxReviews: 200, // Límite razonable por lote mensual/quincenal
+      maxReviewsPerPlace: 100,
       reviewsSort: "newest",
       language: "es"
     };
