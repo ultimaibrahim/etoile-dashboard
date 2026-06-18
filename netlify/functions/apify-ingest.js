@@ -87,7 +87,7 @@ exports.handler = async (event, context) => {
     }
 
     // 3. Descargar las reseñas de la API de Apify
-    const apifyUrl = `https://api.apify.com/v2/datasets/${datasetId}/items?token=${apifyToken}&clean=true`;
+    const apifyUrl = `https://api.apify.com/v2/datasets/${datasetId}/items?token=${apifyToken}&clean=true&unwind=reviews`;
 
     console.log(`Descargando dataset ${datasetId} de Apify...`);
     const datasetRes = await fetch(apifyUrl);
@@ -176,8 +176,42 @@ exports.handler = async (event, context) => {
       return null;
     }
 
-    let discardedCount = 0;
+    // Aplanar y normalizar el listado de reseñas de acuerdo a la estructura de Apify (anidada o plana)
+    const reviewsList = [];
     for (const item of items) {
+      if (item.reviews && Array.isArray(item.reviews)) {
+        // Estructura anidada: cada item es una sucursal con array de reviews
+        for (const rev of item.reviews) {
+          reviewsList.push({
+            ...rev,
+            googleSearchString: item.googleSearchString || item.title || item.name || "",
+            reviewId: rev.reviewId || rev.id,
+            stars: rev.stars !== undefined ? rev.stars : rev.rating,
+            text: rev.text,
+            publishedAtDate: rev.publishedAtDate || rev.publishedAt || rev.publishDate || rev.date,
+            isLocalGuide: rev.isLocalGuide !== undefined ? rev.isLocalGuide : (rev.reviewerDetails?.isLocalGuide || rev.reviewer?.isLocalGuide || false),
+            responseText: rev.responseText || rev.ownerResponse?.text,
+            responseDate: rev.responseDate || rev.ownerResponse?.date
+          });
+        }
+      } else {
+        // Estructura plana (sea por unwind=reviews o por scraper especializado)
+        reviewsList.push({
+          ...item,
+          reviewId: item.reviewId || item.id,
+          stars: item.stars !== undefined ? item.stars : item.rating,
+          publishedAtDate: item.publishedAtDate || item.publishedAt || item.publishDate || item.date,
+          isLocalGuide: item.isLocalGuide !== undefined ? item.isLocalGuide : (item.reviewerDetails?.isLocalGuide || item.reviewer?.isLocalGuide || false),
+          responseText: item.responseText || item.ownerResponse?.text,
+          responseDate: item.responseDate || item.ownerResponse?.date
+        });
+      }
+    }
+
+    console.log(`Procesando un total de ${reviewsList.length} reseñas aplanadas...`);
+
+    let discardedCount = 0;
+    for (const item of reviewsList) {
       if (!item.reviewId) {
         console.warn(`[Descarte] Reseña omitida por falta de reviewId.`);
         discardedCount++;
