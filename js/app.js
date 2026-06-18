@@ -13,7 +13,11 @@ const CookieStorage = {
     for (let i = 0; i < ca.length; i++) {
       let c = ca[i].trim();
       if (c.indexOf(name) === 0) {
-        return c.substring(name.length, c.length);
+        try {
+          return decodeURIComponent(c.substring(name.length, c.length));
+        } catch (e) {
+          return c.substring(name.length, c.length);
+        }
       }
     }
     return null;
@@ -22,7 +26,7 @@ const CookieStorage = {
     const d = new Date();
     d.setTime(d.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 días de persistencia
     const expires = "expires=" + d.toUTCString();
-    document.cookie = `${key}=${value}; ${expires}; path=/; SameSite=Lax; Secure`;
+    document.cookie = `${key}=${encodeURIComponent(value)}; ${expires}; path=/; SameSite=Lax; Secure`;
   },
   removeItem(key) {
     document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure`;
