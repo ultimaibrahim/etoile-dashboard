@@ -3,9 +3,7 @@
  */
 
 /* ── SUPABASE CONFIG ───────────────────────────────────── */
-// Estas constantes están configuradas con tus credenciales de Supabase
-const SUPABASE_URL = 'https://lbnqpcrhyebtbblpvazp.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_WXCdzeTmvrF2IGJfogAMGw_FBP-mr8Y';
+// La configuración de Supabase se carga de forma dinámica desde el servidor de Netlify.
 
 /* ── COOKIE STORAGE FOR AUTH ───────────────────────────── */
 const CookieStorage = {
@@ -44,20 +42,6 @@ try {
 }
 
 var supabaseClient = null;
-try {
-  if (SUPABASE_URL && SUPABASE_URL !== 'https://placeholder.supabase.co') {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        storage: CookieStorage,
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    });
-  }
-} catch (e) {
-  console.error("Error al inicializar Supabase client:", e);
-}
 
 /* ── STATE ─────────────────────────────────────────────── */
 let darkMode = localStorage.getItem('lcpDark') === '1';
@@ -198,6 +182,25 @@ const AppAuth = {
 
 /* ── INIT ──────────────────────────────────────────────── */
 async function initApp() {
+  // Obtener configuración pública de Supabase desde Netlify Serverless Function
+  try {
+    const res = await fetch('/.netlify/functions/get-config');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const config = await res.json();
+    if (config.supabaseUrl && config.supabaseAnonKey) {
+      supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
+        auth: {
+          storage: CookieStorage,
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      });
+    }
+  } catch (e) {
+    console.error("No se pudo obtener la configuración de Supabase desde el servidor:", e);
+  }
+
   // Inicializar autenticación y sesión
   await AppAuth.init();
   
