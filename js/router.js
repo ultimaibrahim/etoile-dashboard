@@ -64,7 +64,11 @@ const Router = {
     const app = document.getElementById('app');
     if (!app) return;
 
-    app.classList.add('fade-out');
+    // Mostrar el loader en transiciones de ruta para cubrir skeletons
+    if (window.showLcpLoader) {
+      window.showLcpLoader();
+      window.updateLcpLoader(20);
+    }
 
     // Destroy charts before transition
     Charts.destroyAll();
@@ -74,14 +78,24 @@ const Router = {
 
     setTimeout(async () => {
       const route = this.match(hash);
+      if (window.updateLcpLoader) window.updateLcpLoader(50);
+      
       if (route.handler) {
         await route.handler(route.params);
         this.current = hash;
       }
-      app.classList.remove('fade-out');
+      
+      if (window.updateLcpLoader) window.updateLcpLoader(100);
       window.scrollTo(0, 0);
       initReveal();
-    }, 200);
+
+      // Desvanecer el loader tras renderizar la vista final
+      if (window.hideLcpLoader) {
+        setTimeout(() => {
+          window.hideLcpLoader();
+        }, 300);
+      }
+    }, 150);
   },
 
   init() {

@@ -3616,32 +3616,33 @@ html[data-ui-premium="true"] .ui-premium-toggle {
 }
 .batter-circle {
   fill: none;
-  stroke: var(--crema-dark);
-  stroke-width: 10;
+  stroke: var(--oro);
+  stroke-width: 4;
   stroke-linecap: round;
-  transform: rotate(-90deg);
-  transform-origin: center;
-  stroke-dasharray: 345.5; /* 2 * PI * 55 */
-  stroke-dashoffset: 345.5;
-  transition: stroke-dashoffset 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  stroke-linejoin: round;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  opacity: 0.65;
+  transition: stroke-dashoffset 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 [data-theme="dark"] .batter-circle {
-  stroke: rgba(245, 239, 230, 0.25);
+  stroke: var(--oro);
+  opacity: 0.8;
 }
 .rake-group {
   transform-origin: 100px 100px;
   transform: rotate(0deg);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.rake-handle {
-  stroke: var(--oro);
-  stroke-width: 4;
+.rake-one-line {
+  fill: none;
+  stroke: var(--verde);
+  stroke-width: 2.5;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
-.rake-bar {
-  stroke: var(--oro);
-  stroke-width: 6;
-  stroke-linecap: round;
+[data-theme="dark"] .rake-one-line {
+  stroke: var(--crema);
 }
 .loader-brand {
   display: flex;

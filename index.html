@@ -20,16 +20,13 @@
     <div id="lcp-loader">
         <div class="loader-content">
             <svg class="loader-svg" viewBox="0 0 200 200">
-                <!-- Griddle plate circular -->
-                <circle cx="100" cy="100" r="70" class="griddle-plate" />
-                <!-- Batter outline that fills dynamically -->
-                <circle cx="100" cy="100" r="55" class="batter-circle" />
-                <!-- Rake structure -->
+                <!-- Griddle plate outline (one-line styled outer ring) -->
+                <circle cx="100" cy="100" r="90" class="griddle-plate" />
+                <!-- Spiraling batter swirl (continuous one-line style) -->
+                <path d="M 100,15 C 150,15 185,50 185,100 C 185,150 150,185 100,185 C 50,185 15,150 15,100 C 15,60 45,30 85,30 C 120,30 150,55 150,90 C 150,120 125,145 95,145 C 70,145 50,125 50,100 C 50,80 65,65 85,65" class="batter-circle" />
+                <!-- Detailed one-line T-rake -->
                 <g class="rake-group" id="lcp-loader-rake">
-                    <!-- Handle line -->
-                    <line x1="100" y1="100" x2="100" y2="45" class="rake-handle" />
-                    <!-- Spreading crossbar -->
-                    <line x1="75" y1="45" x2="125" y2="45" class="rake-bar" />
+                    <path d="M 97,100 L 97,48 L 73,48 L 73,42 L 127,42 L 127,48 L 103,48 L 103,100 A 3 3 0 0 1 97,100 Z" class="rake-one-line" />
                 </g>
             </svg>
             <div class="loader-brand">
