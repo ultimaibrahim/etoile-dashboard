@@ -201,7 +201,9 @@ window.updateLcpLoader = function(progress) {
     }
   }
   if (batter) {
-    const totalLength = 1000;
+    // Medir dinámicamente la longitud total del path para sincronización perfecta
+    const totalLength = batter.getTotalLength ? batter.getTotalLength() : 710;
+    batter.style.strokeDasharray = totalLength;
     const offset = totalLength - (totalLength * (progress / 100));
     batter.style.strokeDashoffset = offset;
   }

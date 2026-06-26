@@ -3620,8 +3620,6 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
   opacity: 0.65;
   transition: stroke-dashoffset 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
