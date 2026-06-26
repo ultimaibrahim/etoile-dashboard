@@ -10,9 +10,12 @@ const LoginView = {
     // Clases del contenedor principal para dar la estética premium y centrar el login
     app.innerHTML = `
       <div class="login-wrapper">
+        <div class="login-bg-deco left">${svgIcon('fleur')}</div>
+        <div class="login-bg-deco right">${svgIcon('fleur')}</div>
+        
         <div class="login-card">
           <div class="login-header">
-            <span class="eyebrow">La Crêpe Parisienne</span>
+            <span class="eyebrow" style="color: var(--oro);">La Crêpe Parisienne</span>
             <h1 class="login-title">
               <span class="accent">étoile</span>
               <span class="sub">Dashboard</span>
@@ -52,9 +55,6 @@ const LoginView = {
           
           <div class="login-footer" style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
             <p>© 2026 Grupo MYT · Corporativo Alancar</p>
-            <!-- <p style="margin: 0; font-size: 11px;">
-              <a href="#/privacidad" class="login-footer-link" style="color: var(--text-dim); text-decoration: underline; transition: color 0.2s;" onmouseover="this.style.color='var(--oro)'" onmouseout="this.style.color='var(--text-dim)'">Aviso de Privacidad</a>
-            </p> -->
           </div>
         </div>
       </div>
@@ -70,24 +70,61 @@ const LoginView = {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, var(--verde-deep) 0%, var(--bg) 100%);
+          background: var(--bg);
+          background-image: radial-gradient(circle at center, var(--surface-2) 0%, var(--bg) 100%);
           padding: 20px;
+          position: relative;
+          overflow: hidden;
+        }
+        .login-bg-deco {
+          position: absolute;
+          width: 320px;
+          height: 320px;
+          color: var(--oro);
+          opacity: 0.03;
+          pointer-events: none;
+          z-index: 1;
+          transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.2s ease;
+        }
+        .login-bg-deco.left {
+          bottom: -60px;
+          left: -60px;
+          transform: rotate(18deg);
+        }
+        .login-bg-deco.right {
+          top: -60px;
+          right: -60px;
+          transform: rotate(-18deg);
+        }
+        .login-wrapper:hover .login-bg-deco.left {
+          transform: rotate(24deg) scale(1.05);
+          opacity: 0.05;
+        }
+        .login-wrapper:hover .login-bg-deco.right {
+          transform: rotate(-24deg) scale(1.05);
+          opacity: 0.05;
+        }
+        .login-bg-deco svg {
+          width: 100%;
+          height: 100%;
         }
         .login-card {
           width: 100%;
           max-width: 440px;
           background: var(--surface);
-          border: 1px solid var(--border);
+          border: 1.5px solid var(--border);
+          border-top: 5px solid var(--oro);
           border-radius: var(--radius);
           box-shadow: var(--sombra-lg);
           padding: 40px;
           display: flex;
           flex-direction: column;
           gap: 28px;
-          animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          z-index: 10;
+          animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @keyframes cardEntrance {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .login-header {
@@ -143,6 +180,12 @@ const LoginView = {
           font-size: 13px;
           font-weight: 500;
           line-height: 1.4;
+          animation: shakeError 0.4s ease-in-out;
+        }
+        @keyframes shakeError {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-4px); }
+          75% { transform: translateX(4px); }
         }
         .input-group {
           display: flex;
@@ -155,6 +198,7 @@ const LoginView = {
           text-transform: uppercase;
           letter-spacing: 0.1em;
           color: var(--text-muted);
+          transition: color 0.25s ease;
         }
         .input-container {
           position: relative;
@@ -166,31 +210,38 @@ const LoginView = {
           left: 14px;
           color: var(--text-dim);
           pointer-events: none;
-          transition: color 0.2s;
+          transition: color 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .input-container input {
           width: 100%;
           background: var(--surface-2);
-          border: 1px solid var(--border);
+          border: 1.5px solid var(--border);
           border-radius: var(--radius-sm);
           padding: 14px 16px 14px 44px;
           font-family: var(--sans);
           font-size: 14px;
           color: var(--text);
           outline: none;
-          transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+          transition: border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+                      background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+                      box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                      transform 0.15s ease;
         }
         .input-container input::placeholder {
           color: var(--text-dim);
           opacity: 0.6;
         }
         .input-container input:focus {
-          border-color: var(--verde);
+          border-color: var(--oro);
           background-color: var(--surface);
-          box-shadow: 0 0 0 3px rgba(47, 74, 58, 0.12);
+          box-shadow: 0 0 0 3px rgba(184, 144, 47, 0.15);
         }
         .input-container input:focus + .input-icon {
-          color: var(--verde);
+          color: var(--oro);
+          transform: scale(1.08);
+        }
+        .input-group:focus-within label {
+          color: var(--oro);
         }
         .login-btn {
           margin-top: 10px;
@@ -205,12 +256,20 @@ const LoginView = {
           align-items: center;
           justify-content: center;
           gap: 8px;
-          transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+          transition: background 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+                      transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), 
+                      box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
           box-shadow: var(--sombra);
+        }
+        .login-btn svg {
+          transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .login-btn:hover {
           background: var(--verde-deep);
           box-shadow: var(--sombra-lg);
+        }
+        .login-btn:hover svg {
+          transform: translateX(4px);
         }
         .login-btn:active {
           transform: scale(0.98);

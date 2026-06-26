@@ -81,7 +81,7 @@ const SelectRegionView = {
         }
         .srv-card {
           background: var(--surface);
-          border: 1px solid var(--border);
+          border: 1.5px solid var(--border);
           border-radius: var(--radius);
           padding: 24px;
           display: flex;
@@ -91,28 +91,33 @@ const SelectRegionView = {
           cursor: pointer;
           position: relative;
           overflow: hidden;
-          transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
           box-shadow: var(--sombra);
           box-sizing: border-box;
         }
-        .srv-card::before {
-          content: '';
+        .srv-card .srv-card-deco {
           position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: radial-gradient(circle at 100% 0%, rgba(122, 158, 138, 0.1) 0%, transparent 70%);
-          opacity: 0;
-          transition: opacity 0.3s ease;
+          bottom: -8px;
+          right: -8px;
+          width: 72px;
+          height: 72px;
+          color: var(--oro);
+          opacity: 0.05;
+          pointer-events: none;
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .srv-card .srv-card-deco svg {
+          width: 100%;
+          height: 100%;
         }
         .srv-card:hover {
           transform: translateY(-4px);
-          border-color: var(--verde);
-          box-shadow: 0 12px 30px rgba(61, 90, 71, 0.15);
+          border-color: var(--oro);
+          box-shadow: 0 12px 30px rgba(184, 144, 47, 0.12);
         }
-        .srv-card:hover::before {
-          opacity: 1;
+        .srv-card:hover .srv-card-deco {
+          opacity: 0.15;
+          transform: scale(1.1) rotate(12deg);
         }
         .srv-card-top {
           display: flex;
@@ -608,6 +613,7 @@ const SelectRegionView = {
 
     const cardsHtml = regionsList.map(r => `
       <div class="srv-card" onclick="SelectRegionView.handleSelect('${r.id}')">
+        <div class="srv-card-deco">${svgIcon('fleur')}</div>
         <div class="srv-card-top">
           <span class="srv-card-code">${r.id}</span>
           <span class="srv-card-badge">${r.count} sucursal${r.count !== 1 ? 'es' : ''}</span>

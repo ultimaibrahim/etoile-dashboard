@@ -572,8 +572,11 @@ a{color:inherit;text-decoration:none;}
   gap:14px;margin-bottom:18px;flex-wrap:wrap;
 }
 .section-title{
-  font-family:var(--sans);font-weight:900;font-stretch:condensed;
-  font-size:22px;letter-spacing:-.01em;color:var(--text);
+  font-family: var(--giaza);
+  font-weight: 400;
+  font-size: 26px;
+  letter-spacing: 0.02em;
+  color: var(--text);
   display:flex;align-items:baseline;gap:10px;
 }
 .section-title .accent{font-family:var(--serif);font-style:italic;font-weight:400;

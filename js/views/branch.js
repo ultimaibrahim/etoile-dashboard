@@ -562,11 +562,14 @@ const BranchView = {
     }
     return reviews.map(r => {
       const low = r.stars <= 3;
-      return `<div class="review-item${low ? ' negative' : ''}" onclick="HomeView.openReviewDetailModal('${r.globalId}')" style="cursor: pointer;">
-        <div class="rev-author">Reseñante de Google${r.isLocalGuide ? `<span class="rev-guide">Local Guide</span>` : ''}</div>
-        <span class="rev-stars${low ? ' low' : ''}">${starStr(r.stars)}</span>
-        <div class="rev-meta">${formatDate(r.publishedAtDate)} · ${r.sucursal}</div>
-        <div class="rev-text">${(r.text || '').replace(/\n/g, '<br>')}</div>
+      return `<div class="review-item${low ? ' negative' : ''}" onclick="HomeView.openReviewDetailModal('${r.globalId}')" style="cursor: pointer; position: relative; overflow: hidden; padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div class="review-quote-bg" style="position: absolute; right: 12px; top: 8px; font-size: 80px; font-family: var(--serif); color: var(--oro); opacity: 0.06; pointer-events: none; line-height: 1;">“</div>
+        <div class="rev-author" style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px;">
+          Reseñante de Google${r.isLocalGuide ? `<span class="rev-guide" style="margin-left: 8px; background: rgba(184, 144, 47, 0.1); color: var(--oro); font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">Local Guide</span>` : ''}
+        </div>
+        <span class="rev-stars${low ? ' low' : ''}" style="color: var(--oro); font-size: 13px; letter-spacing: 1px; display: inline-block; margin-bottom: 6px;">${starStr(r.stars)}</span>
+        <div class="rev-meta" style="font-size: 11px; color: var(--text-dim); margin-bottom: 12px;">${formatDate(r.publishedAtDate)} · ${r.sucursal}</div>
+        <div class="rev-text" style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5; font-style: italic;">"${(r.text || '').replace(/\n/g, '<br>')}"</div>
       </div>`;
     }).join('');
   },
