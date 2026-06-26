@@ -279,16 +279,57 @@ const DataLoader = {
     return { count: totalCount, avg: avg };
   },
 
-  async computeHistoricalRatings() {
-    if (this.manifest) {
-      const loadPromises = [];
-      for (const year in this.manifest) {
-        for (const month of this.manifest[year]) {
-          loadPromises.push(this.loadMonth(Number(year), month));
+  async preloadAllReviews() {
+    if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
+      try {
+        const { data, error } = await supabaseClient
+          .from('reviews')
+          .select('*')
+          .eq('region', activeRegion);
+
+        if (error) throw error;
+
+        // Agrupar todas las reseñas en sus respectivos meses en una sola consulta
+        const grouped = {};
+        (data || []).forEach((r, idx) => {
+          if (!r.published_at_date) return;
+          const date = new Date(r.published_at_date);
+          const y = date.getUTCFullYear();
+          const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+          const key = `${y}-${m}`;
+
+          if (!grouped[key]) {
+            grouped[key] = { reviews: [] };
+          }
+
+          grouped[key].reviews.push({
+            id: r.id,
+            globalId: `${key}-${idx}`,
+            sucursal: r.sucursal,
+            stars: r.stars,
+            text: r.text,
+            publishedAtDate: r.published_at_date,
+            isLocalGuide: r.is_local_guide,
+            responseText: r.response_text,
+            responseFromOwnerText: r.response_text,
+            responseDate: r.response_date,
+            responseFromOwnerDate: r.response_date
+          });
+        });
+
+        // Llenar el caché con las reseñas agrupadas
+        for (const key in grouped) {
+          this.cache[key] = grouped[key];
         }
+      } catch (e) {
+        console.error("Error precargando reseñas globales de la región:", e);
       }
-      await Promise.all(loadPromises);
     }
+  },
+
+  async computeHistoricalRatings() {
+    // Carga masiva en un solo query en lugar de multiples llamadas HTTP concurrentes
+    await this.preloadAllReviews();
 
     for (const meta of SUCURSALES_META_ALL) {
       const stats = this.computeBranchHistoricalStats(meta.id);

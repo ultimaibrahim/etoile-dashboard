@@ -190,9 +190,18 @@ window.updateLcpLoader = function(progress) {
   const rake = document.getElementById('lcp-loader-rake');
   const batter = document.querySelector('.batter-circle');
   if (fill) fill.style.width = `${progress}%`;
-  if (rake) rake.style.transform = `rotate(${progress * 3.6}deg)`;
+  if (rake) {
+    rake.style.transform = `rotate(${progress * 3.6}deg)`;
+    const rakePath = rake.querySelector('.rake-one-line');
+    if (rakePath) {
+      const D = 85 - (progress * 0.5); // radio de espiral que va de 85 a 35
+      const W = 25 - (progress * 0.13); // ancho del cabezal en T que se reduce de 25 a 12
+      const pathData = `M 97,100 L 97,${100 - D + 5} L ${100 - W},${100 - D + 5} L ${100 - W},${100 - D} L ${100 + W},${100 - D} L ${100 + W},${100 - D + 5} L 103,${100 - D + 5} L 103,100 A 3 3 0 0 1 97,100 Z`;
+      rakePath.setAttribute('d', pathData);
+    }
+  }
   if (batter) {
-    const totalLength = 408.4;
+    const totalLength = 1000;
     const offset = totalLength - (totalLength * (progress / 100));
     batter.style.strokeDashoffset = offset;
   }
