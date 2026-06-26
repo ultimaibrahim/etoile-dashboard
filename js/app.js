@@ -184,11 +184,37 @@ const AppAuth = {
   }
 };
 
+/* ── LOADER HELPER ────────────────────────────────────── */
+function updateLcpLoader(progress) {
+  const fill = document.getElementById('lcp-loader-fill');
+  const rake = document.getElementById('lcp-loader-rake');
+  const batter = document.querySelector('.batter-circle');
+  if (fill) fill.style.width = `${progress}%`;
+  if (rake) rake.style.transform = `rotate(${progress * 3.6}deg)`;
+  if (batter) {
+    const totalLength = 345.5; // 2 * PI * 55
+    const offset = totalLength - (totalLength * (progress / 100));
+    batter.style.strokeDashoffset = offset;
+  }
+}
+
+async function hideLcpLoader() {
+  const loader = document.getElementById('lcp-loader');
+  if (loader) {
+    loader.classList.add('fade-out');
+    setTimeout(() => {
+      loader.style.display = 'none';
+    }, 800); // coincide con la duración de la transición CSS
+  }
+}
+
 /* ── INIT ──────────────────────────────────────────────── */
 async function initApp() {
+  updateLcpLoader(10);
   // Obtener configuración pública de Supabase desde Netlify Serverless Function
   try {
     const res = await fetch('/.netlify/functions/get-config');
+    updateLcpLoader(30);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const config = await res.json();
     if (config.supabaseUrl && config.supabaseAnonKey) {
@@ -204,12 +230,16 @@ async function initApp() {
   } catch (e) {
     console.error("No se pudo obtener la configuración de Supabase desde el servidor:", e);
   }
+  updateLcpLoader(50);
 
   // Inicializar autenticación y sesión
   await AppAuth.init();
+  updateLcpLoader(70);
   
   await DataLoader.init();
+  updateLcpLoader(85);
   await DataLoader.computeHistoricalRatings();
+  updateLcpLoader(100);
 
   // Registrar vistas en el Router
   Router.register('login', () => LoginView.render());
@@ -224,6 +254,11 @@ async function initApp() {
 
   Router.init();
   Router.resolve();
+
+  // Desvanecer la pantalla de carga tras inicialización completa
+  setTimeout(() => {
+    hideLcpLoader();
+  }, 500);
 
   // Inicializar banner de cookies (Deshabilitado temporalmente para revisión legal)
   // initCookieBanner();

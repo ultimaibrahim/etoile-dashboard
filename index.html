@@ -16,6 +16,32 @@
 </head>
 
 <body>
+    <!-- Rastrillo de Crepa Loader (Pantalla Completa) -->
+    <div id="lcp-loader">
+        <div class="loader-content">
+            <svg class="loader-svg" viewBox="0 0 200 200">
+                <!-- Griddle plate circular -->
+                <circle cx="100" cy="100" r="70" class="griddle-plate" />
+                <!-- Batter outline that fills dynamically -->
+                <circle cx="100" cy="100" r="55" class="batter-circle" />
+                <!-- Rake structure -->
+                <g class="rake-group" id="lcp-loader-rake">
+                    <!-- Handle line -->
+                    <line x1="100" y1="100" x2="100" y2="45" class="rake-handle" />
+                    <!-- Spreading crossbar -->
+                    <line x1="75" y1="45" x2="125" y2="45" class="rake-bar" />
+                </g>
+            </svg>
+            <div class="loader-brand">
+                <span class="brand-text">étoile</span>
+                <span class="brand-sub">La Crêpe Parisienne</span>
+            </div>
+            <div class="loader-progress-bar">
+                <div class="loader-progress-fill" id="lcp-loader-fill"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="app"></div>
 
     <!-- Core -->
