@@ -14,11 +14,9 @@ const BranchView = {
     const activeYear = DataLoader.currentYear;
     const activeMonth = DataLoader.currentMonth;
 
-    // Asegurar carga de los meses
+    // Asegurar carga de los meses en paralelo para máxima velocidad de respuesta
     const availableMonths = DataLoader.manifest[activeYear] || [];
-    for (const m of availableMonths) {
-      await DataLoader.loadMonth(activeYear, m);
-    }
+    await Promise.all(availableMonths.map(m => DataLoader.loadMonth(activeYear, m)));
 
     // Carga de mes anterior para comparativas
     let prevMonth = activeMonth - 1;

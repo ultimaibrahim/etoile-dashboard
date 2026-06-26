@@ -64,10 +64,19 @@ const Router = {
     const app = document.getElementById('app');
     if (!app) return;
 
-    // Mostrar el loader en transiciones de ruta para cubrir skeletons
-    if (window.showLcpLoader) {
+    // Determinar si es una transición principal (Login, Select Region, o inicial)
+    const isMainTransition = !this.current || 
+                             this.current === '#/login' || 
+                             this.current === '#/select-region' || 
+                             hash === '#/select-region' || 
+                             hash === '#/login';
+
+    if (isMainTransition && window.showLcpLoader) {
       window.showLcpLoader();
       window.updateLcpLoader(20);
+    } else {
+      // Sub-transición rápida usando fade-out en app para evitar parpadeos
+      app.classList.add('fade-out');
     }
 
     // Destroy charts before transition
@@ -78,22 +87,28 @@ const Router = {
 
     setTimeout(async () => {
       const route = this.match(hash);
-      if (window.updateLcpLoader) window.updateLcpLoader(50);
+      if (isMainTransition && window.updateLcpLoader) {
+        window.updateLcpLoader(60);
+      }
       
       if (route.handler) {
         await route.handler(route.params);
         this.current = hash;
       }
       
-      if (window.updateLcpLoader) window.updateLcpLoader(100);
-      window.scrollTo(0, 0);
-      initReveal();
-
-      // Desvanecer el loader tras renderizar la vista final
-      if (window.hideLcpLoader) {
-        setTimeout(() => {
-          window.hideLcpLoader();
-        }, 300);
+      if (isMainTransition) {
+        if (window.updateLcpLoader) window.updateLcpLoader(100);
+        window.scrollTo(0, 0);
+        initReveal();
+        if (window.hideLcpLoader) {
+          setTimeout(() => {
+            window.hideLcpLoader();
+          }, 300);
+        }
+      } else {
+        app.classList.remove('fade-out');
+        window.scrollTo(0, 0);
+        initReveal();
       }
     }, 150);
   },

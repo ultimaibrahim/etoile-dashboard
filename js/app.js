@@ -192,7 +192,7 @@ window.updateLcpLoader = function(progress) {
   if (fill) fill.style.width = `${progress}%`;
   if (rake) rake.style.transform = `rotate(${progress * 3.6}deg)`;
   if (batter) {
-    const totalLength = 1000;
+    const totalLength = 408.4;
     const offset = totalLength - (totalLength * (progress / 100));
     batter.style.strokeDashoffset = offset;
   }

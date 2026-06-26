@@ -13,19 +13,17 @@ const QuarterView = {
     const { year, quarter } = qParam;
     const months = getQuarterMonths(quarter);
 
-    // Cargar todos los meses del trimestre
-    for (const m of months) {
-      await DataLoader.loadMonth(year, m);
-    }
+    // Cargar todos los meses del trimestre en paralelo
+    await Promise.all(months.map(m => DataLoader.loadMonth(year, m)));
 
-    // Cargar trimestre anterior para comparativa
+    // Cargar trimestre anterior para comparativa en paralelo
     const prevQ = quarter > 1 ? quarter - 1 : null;
     const prevMonths = prevQ ? getQuarterMonths(prevQ) : [];
-    for (const m of prevMonths) {
-      if (DataLoader.hasMonth(year, m)) {
-        await DataLoader.loadMonth(year, m);
-      }
-    }
+    await Promise.all(
+      prevMonths
+        .filter(m => DataLoader.hasMonth(year, m))
+        .map(m => DataLoader.loadMonth(year, m))
+    );
 
     // Ranking del trimestre
     const branchQStats = SUCURSALES_META.map(meta => {
