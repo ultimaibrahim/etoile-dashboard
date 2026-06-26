@@ -173,20 +173,42 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
   if (!isCorporate && typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated()) {
     const role = AppAuth.getUserRole();
     if (role === 'admin' || role === 'regional' || role === 'zonal') {
-      const regionOptions = Object.entries(typeof REGION_NAME_MAP !== 'undefined' ? REGION_NAME_MAP : { 'GDL': 'Guadalajara', 'CDMX': 'CDMX' })
-        .map(([id, name]) => `<option value="${id}" ${activeRegion === id ? 'selected' : ''}>${name}</option>`)
+      const activeName = (typeof REGION_NAME_MAP !== 'undefined' && REGION_NAME_MAP[activeRegion]) || activeRegion;
+      const optionsHtml = Object.entries(typeof REGION_NAME_MAP !== 'undefined' ? REGION_NAME_MAP : { 'GDL': 'Guadalajara', 'CDMX': 'CDMX' })
+        .map(([id, name]) => {
+          const isActive = id === activeRegion ? ' active' : '';
+          return `<div class="custom-option${isActive}" data-value="${id}" onclick="handleRegionChange('${id}')">${name}</div>`;
+        })
         .join('');
       regionSelect = `
-        <select class="topbar-region-select" onchange="handleRegionChange(this.value)" aria-label="Cambiar región">
-          ${regionOptions}
-        </select>
+        <div class="custom-select" id="topbarRegionDropdown">
+          <button class="custom-select-trigger" onclick="event.stopPropagation(); document.getElementById('topbarRegionDropdown').classList.toggle('open');" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12); color: #FAF5EB; border-radius: 20px; padding: 6px 14px; font-size: 11px;">
+            <span class="custom-select-value">${activeName}</span>
+            <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="custom-select-options" style="right: 0; left: auto; background: var(--verde-deep); border-color: rgba(255,255,255,0.15);">
+            ${optionsHtml}
+          </div>
+        </div>
       `;
       regionSelectMobile = `
-        <div class="topbar-mobile-select-wrap">
-          <span>Región:</span>
-          <select class="topbar-mobile-region-select" onchange="handleRegionChange(this.value); window.toggleMobileMenu();">
-            ${regionOptions}
-          </select>
+        <div class="topbar-mobile-select-wrap" style="display: flex; flex-direction: column; gap: 6px; padding: 10px 16px;">
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-dim);">Región</span>
+          <div class="custom-select" id="topbarRegionDropdownMobile" style="width: 100%;">
+            <button class="custom-select-trigger" onclick="event.stopPropagation(); document.getElementById('topbarRegionDropdownMobile').classList.toggle('open');" style="width: 100%; justify-content: space-between; background: var(--surface-2); border-color: var(--border-strong);">
+              <span class="custom-select-value" style="color: var(--text);">${activeName}</span>
+              <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="custom-select-options" style="width: 100%; left: 0;">
+              ${Object.entries(typeof REGION_NAME_MAP !== 'undefined' ? REGION_NAME_MAP : { 'GDL': 'Guadalajara', 'CDMX': 'CDMX' })
+                .map(([id, name]) => `<div class="custom-option${id === activeRegion ? ' active' : ''}" data-value="${id}" onclick="handleRegionChange('${id}'); window.toggleMobileMenu();">${name}</div>`)
+                .join('')}
+            </div>
+          </div>
         </div>
       `;
     }
@@ -232,6 +254,12 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
           if (hamburger) hamburger.classList.remove('active');
         }
       }
+      // Cerrar dropdowns de región al hacer clic fuera
+      document.querySelectorAll('.custom-select.open').forEach(ds => {
+        if (!ds.contains(e.target)) {
+          ds.classList.remove('open');
+        }
+      });
     });
   }
 

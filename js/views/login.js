@@ -229,7 +229,7 @@ const LoginView = {
         }
         .input-container input::placeholder {
           color: var(--text-dim);
-          opacity: 0.6;
+          opacity: 0.85;
         }
         .input-container input:focus {
           border-color: var(--oro);
