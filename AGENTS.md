@@ -182,3 +182,9 @@ En Windows PowerShell:
 ```powershell
 python -m http.server 8000
 ```
+
+## Reglas de Fórmulas en Google Sheets (Apps Script)
+
+Al inyectar fórmulas en celdas desde Google Apps Script mediante `.setFormula()` o `.setFormulas()`:
+- **Idioma**: Las fórmulas deben escribirse siempre en **inglés** (ej: `IFERROR`, `VLOOKUP`, `AND`, `OR`), incluso si el libro de cálculo del usuario está configurado en español.
+- **Separadores**: Los parámetros de las fórmulas deben estar separados obligatoriamente por **comas (`,`)**, nunca por puntos y comas (`;`), independientemente de la configuración regional del usuario.
