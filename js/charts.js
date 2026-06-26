@@ -726,5 +726,43 @@ const Charts = {
     });
     this.instances.push(chart);
     return chart;
+  },
+
+  heroTrend(ctx, labels, data) {
+    const isDark = typeof darkMode !== 'undefined' && darkMode;
+    
+    // Smooth area chart with zero borders, scales, grids, legends, or interactions.
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          borderColor: isDark ? 'rgba(122, 158, 138, 0.4)' : 'rgba(245, 239, 230, 0.25)',
+          backgroundColor: isDark ? 'rgba(122, 158, 138, 0.08)' : 'rgba(245, 239, 230, 0.06)',
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        },
+        scales: {
+          x: { display: false },
+          y: { display: false, min: 3.5, max: 5.1 }
+        },
+        interaction: { intersect: false },
+        events: []
+      }
+    });
+    this.instances.push(chart);
+    return chart;
   }
 };

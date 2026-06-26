@@ -160,7 +160,11 @@ const HomeView = {
       let hoverClass = ' stable-green';
       let statusClass = 'ok';
       let statusTitle = 'Estable';
-      if (s.alerta) {
+      if (s.curr.count === 0) {
+        hoverClass = ' no-activity';
+        statusClass = 'no-activity';
+        statusTitle = 'Sin actividad';
+      } else if (s.alerta) {
         if (s.curr.score >= KpiMeta.ratingMinimo) {
           hoverClass = ' alerta-orange';
           statusClass = 'warn-orange';
@@ -171,6 +175,11 @@ const HomeView = {
           statusTitle = 'Crítico';
         }
       }
+      
+      const cardMayoBlock = s.curr.count === 0
+        ? `<div class="bc-mayo" style="background: rgba(138, 135, 124, 0.08); color: var(--text-dim);"><span class="mono">${currMonthShort}</span> <span>Sin actividad</span></div>`
+        : mayoBlock;
+
       return `
       <a class="branch-card${hoverClass}" href="#/sucursal/${s.id}">
         ${svgIcon('fleur')}
@@ -186,7 +195,7 @@ const HomeView = {
           <span><strong>${s.curr.count}</strong> reseña${s.curr.count !== 1 ? 's' : ''} ${capitalizedCurrMonth.substring(0,3).toLowerCase()}</span>
           <span class="bc-delta ${dClass} num">${dStr} vs hist</span>
         </div>
-        ${mayoBlock}
+        ${cardMayoBlock}
       </a>`;
     }).join('');
 
@@ -295,8 +304,11 @@ const HomeView = {
     document.getElementById('app').innerHTML = `
       ${concludedBannerHtml}
       ${buildTopbar()}
-      <section class="hero">
-        <div class="hero-inner">
+      <section class="hero" style="position: relative;">
+        <div class="hero-chart-bg" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; opacity: 0.18; pointer-events: none;">
+          <canvas id="heroTrendChart" style="width: 100%; height: 100%;"></canvas>
+        </div>
+        <div class="hero-inner" style="position: relative; z-index: 2;">
           <div class="hero-left">
             ${welcomeBannerHtml}
             <div class="hero-label-row" style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:16px;">
@@ -441,6 +453,26 @@ const HomeView = {
           });
         });
       });
+
+      // Render absolute background trend chart in Hero
+      const heroChartCtx = document.getElementById('heroTrendChart')?.getContext('2d');
+      if (heroChartCtx && typeof Charts !== 'undefined') {
+        const trendLabels = [];
+        const trendData = [];
+        const sortedMonths = [...(DataLoader.manifest[currYear] || [])].sort((a, b) => a - b);
+        for (const m of sortedMonths) {
+          const mName = MONTH_NAMES[m - 1].substring(0, 3);
+          trendLabels.push(`${mName}`);
+          const d = DataLoader.getMonth(currYear, m);
+          if (d && d.reviews && d.reviews.length > 0) {
+            const avg = d.reviews.reduce((sum, r) => sum + r.stars, 0) / d.reviews.length;
+            trendData.push(avg);
+          } else {
+            trendData.push(null);
+          }
+        }
+        Charts.heroTrend(heroChartCtx, trendLabels, trendData);
+      }
 
       // Start Carousel Autoplay
       HomeView.initAutoplay();
@@ -659,7 +691,11 @@ const HomeView = {
       let hoverClass = ' stable-green';
       let statusClass = 'ok';
       let statusTitle = 'Estable';
-      if (s.alerta) {
+      if (s.curr.count === 0) {
+        hoverClass = ' no-activity';
+        statusClass = 'no-activity';
+        statusTitle = 'Sin actividad';
+      } else if (s.alerta) {
         if (s.curr.score >= KpiMeta.ratingMinimo) {
           hoverClass = ' alerta-orange';
           statusClass = 'warn-orange';
@@ -670,6 +706,11 @@ const HomeView = {
           statusTitle = 'Crítico';
         }
       }
+      
+      const cardMayoBlock = s.curr.count === 0
+        ? `<div class="bc-mayo" style="background: rgba(138, 135, 124, 0.08); color: var(--text-dim);"><span class="mono">${currMonthShort}</span> <span>Sin actividad</span></div>`
+        : mayoBlock;
+
       const isCinemex = s.isCinemex || false;
       return `
       <a class="branch-card${hoverClass}${isCinemex ? ' cinemex-card' : ''}" href="#/sucursal/${s.id}">
@@ -682,7 +723,7 @@ const HomeView = {
         </div>
         <div class="bc-score-row"><span class="bc-score num">${currScoreStr}</span></div>
         <div class="bc-meta"><span><strong>${s.curr.count}</strong> reseña${s.curr.count !== 1 ? 's' : ''} ${capitalizedCurrMonth.substring(0,3).toLowerCase()}</span><span class="bc-delta ${dClass} num">${dStr} vs hist</span></div>
-        ${mayoBlock}
+        ${cardMayoBlock}
       </a>`;
     }).join('');
 
