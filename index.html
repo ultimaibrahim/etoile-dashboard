@@ -33,9 +33,15 @@
                 </defs>
                 <!-- étoile en el centro -->
                 <text x="150" y="156" class="loader-logo-svg-text" text-anchor="middle">étoile</text>
-                <!-- Frase (comienza plana y luego se curva) -->
-                <text class="loader-phrase-svg-text">
-                    <textPath href="#flatPath" startOffset="50%" id="lcp-loader-text-path" text-anchor="middle">
+                <!-- Frase plana (activa durante la carga) -->
+                <text class="loader-phrase-svg-text loader-phrase-flat">
+                    <textPath href="#flatPath" startOffset="50%" text-anchor="middle">
+                        L'art de la crêpe, l'excellence du service
+                    </textPath>
+                </text>
+                <!-- Frase curvada (aparece y rota al finalizar) -->
+                <text class="loader-phrase-svg-text loader-phrase-curve">
+                    <textPath href="#curvePath" startOffset="50%" text-anchor="middle">
                         L'art de la crêpe, l'excellence du service
                     </textPath>
                 </text>
