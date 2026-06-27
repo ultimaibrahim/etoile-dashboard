@@ -44,6 +44,19 @@ const DataLoader = {
       }
     }
 
+    // Fallback: Si el manifest sigue vacío, cargar manifest.json local
+    if (!this.manifest || Object.keys(this.manifest).length === 0) {
+      try {
+        const res = await fetch('data/manifest.json');
+        if (res.ok) {
+          this.manifest = await res.json();
+          console.log("DataLoader: manifest local cargado con éxito como fallback.");
+        }
+      } catch (e) {
+        console.error("DataLoader: error cargando manifest.json local fallback:", e);
+      }
+    }
+
     this.setupCurrentPeriods();
   },
 
@@ -123,6 +136,33 @@ const DataLoader = {
       } catch (e) {
         console.error(`Error al consultar reseñas de Supabase para ${key}:`, e);
       }
+    }
+
+    // Fallback: Cargar desde archivo local data/YYYY/MM.json
+    try {
+      const fileName = `data/${year}/${String(month).padStart(2, '0')}.json`;
+      const res = await fetch(fileName);
+      if (res.ok) {
+        const data = await res.json();
+        // Mapear al formato esperado por la UI
+        const mappedReviews = (data.reviews || []).map((r, idx) => ({
+          id: r.id || `${key}-${idx}`,
+          globalId: `${key}-${idx}`,
+          sucursal: r.sucursal,
+          stars: r.stars,
+          text: r.text,
+          publishedAtDate: r.publishedAtDate || r.publishedAtDateDate || r.publishedAtDateStr || r.publishedAtDate || r.publishedAtDateDate,
+          isLocalGuide: r.isLocalGuide || false,
+          responseText: r.responseFromOwnerText || r.responseText || null,
+          responseFromOwnerText: r.responseFromOwnerText || r.responseText || null
+        }));
+        const result = { reviews: mappedReviews };
+        this.cache[key] = result;
+        console.log(`DataLoader: cargadas reseñas locales fallback desde ${fileName}`);
+        return result;
+      }
+    } catch (e) {
+      console.error(`DataLoader: error cargando reseñas locales fallback para ${key}:`, e);
     }
 
     return { reviews: [] };
@@ -321,9 +361,25 @@ const DataLoader = {
         for (const key in grouped) {
           this.cache[key] = grouped[key];
         }
+        return;
       } catch (e) {
         console.error("Error precargando reseñas globales de la región:", e);
       }
+    }
+
+    // Fallback: Cargar todas las reseñas de todos los meses del manifest local en paralelo
+    try {
+      const promises = [];
+      for (const y in this.manifest) {
+        const months = this.manifest[y] || [];
+        months.forEach(m => {
+          promises.push(this.loadMonth(Number(y), m));
+        });
+      }
+      await Promise.all(promises);
+      console.log("DataLoader: Precargadas todas las reseñas locales de manera exitosa para histórico.");
+    } catch (e) {
+      console.error("DataLoader: Error precargando reseñas locales:", e);
     }
   },
 

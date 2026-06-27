@@ -21,8 +21,10 @@
         <div class="loader-content">
             <svg class="loader-curve-svg" viewBox="0 0 300 300">
                 <defs>
-                    <!-- Trazado en arco inferior para la curvatura de la frase -->
-                    <path id="textCirclePath" d="M 50,150 A 100,100 0 0,0 250,150" />
+                    <!-- Camino plano recto horizontal para la fase de carga -->
+                    <path id="flatPath" d="M 20,230 L 280,230" />
+                    <!-- Camino curvado para la órbita/cierre al finalizar -->
+                    <path id="curvePath" d="M 50,150 A 100,100 0 0,0 250,150" />
                     <!-- Gradiente lineal para el rellenado horizontal del texto -->
                     <linearGradient id="loaderTextGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stop-color="var(--oro)" id="gradient-stop-1" />
@@ -31,9 +33,9 @@
                 </defs>
                 <!-- étoile en el centro -->
                 <text x="150" y="156" class="loader-logo-svg-text" text-anchor="middle">étoile</text>
-                <!-- Frase curvada debajo -->
+                <!-- Frase (comienza plana y luego se curva) -->
                 <text class="loader-phrase-svg-text">
-                    <textPath href="#textCirclePath" startOffset="50%" id="lcp-loader-text-path" text-anchor="middle">
+                    <textPath href="#flatPath" startOffset="50%" id="lcp-loader-text-path" text-anchor="middle">
                         L'art de la crêpe, l'excellence du service
                     </textPath>
                 </text>

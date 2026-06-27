@@ -3673,7 +3673,7 @@ html[data-ui-premium="true"] .ui-premium-toggle {
 .loader-logo-svg-text {
   font-family: var(--giaza);
   font-size: 52px;
-  color: var(--crema);
+  fill: var(--crema); /* Usar fill para pintar SVG */
   font-weight: 400;
   letter-spacing: 0.06em;
   transform-origin: 150px 150px;

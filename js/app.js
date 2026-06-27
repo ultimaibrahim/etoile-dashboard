@@ -216,16 +216,20 @@ window.showLcpLoader = function() {
 window.hideLcpLoader = function() {
   const loader = document.getElementById('lcp-loader');
   const appEl = document.getElementById('app');
+  const textPath = document.getElementById('lcp-loader-text-path');
 
   if (!loader) return;
 
   // 1. Asegurar progreso al 100% de la frase
   window.updateLcpLoader(100);
 
-  // 2. Iniciar órbita de frase alrededor de étoile y desaparición
+  // 2. Curvar el texto cambiando el path href a #curvePath e iniciar órbita
   setTimeout(() => {
+    if (textPath) {
+      textPath.setAttribute('href', '#curvePath');
+    }
     loader.classList.add('wrap-active');
-  }, 100);
+  }, 350); // Pequeña pausa dramática con el texto completo y plano antes de curvar
 
   // 3. Mostrar hilo de luz dorada en el centro (micras de segundo)
   setTimeout(() => {
