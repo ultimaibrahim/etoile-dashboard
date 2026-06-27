@@ -16,15 +16,28 @@
 </head>
 
 <body>
-    <!-- Cargador Cinematográfico Intensificado -->
+    <!-- Cargador Cinematográfico Intensificado con SVG Curvado -->
     <div id="lcp-loader">
         <div class="loader-content">
-            <div class="loader-logo-container" id="lcp-loader-logo-wrap">
-                <span class="loader-logo-text">étoile</span>
-            </div>
-            <div class="loader-phrase-container">
-                <span class="loader-phrase" id="lcp-loader-phrase">L'art de la crêpe, l'excellence du service</span>
-            </div>
+            <svg class="loader-curve-svg" viewBox="0 0 300 300">
+                <defs>
+                    <!-- Trazado en arco inferior para la curvatura de la frase -->
+                    <path id="textCirclePath" d="M 50,150 A 100,100 0 0,0 250,150" />
+                    <!-- Gradiente lineal para el rellenado horizontal del texto -->
+                    <linearGradient id="loaderTextGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="var(--oro)" id="gradient-stop-1" />
+                        <stop offset="0%" stop-color="rgba(245, 239, 230, 0.25)" id="gradient-stop-2" />
+                    </linearGradient>
+                </defs>
+                <!-- étoile en el centro -->
+                <text x="150" y="156" class="loader-logo-svg-text" text-anchor="middle">étoile</text>
+                <!-- Frase curvada debajo -->
+                <text class="loader-phrase-svg-text">
+                    <textPath href="#textCirclePath" startOffset="50%" id="lcp-loader-text-path" text-anchor="middle">
+                        L'art de la crêpe, l'excellence du service
+                    </textPath>
+                </text>
+            </svg>
             <div class="loader-plancha-line" id="lcp-loader-plancha"></div>
         </div>
     </div>

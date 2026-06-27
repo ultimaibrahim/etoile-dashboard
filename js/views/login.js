@@ -12,7 +12,13 @@ const LoginView = {
     const app = document.getElementById('app');
     if (!app) return;
 
-    // Detener cualquier animación en progreso
+    // Forzar restablecimiento de scroll del body y limpiar listeners previos
+    document.body.style.overflow = '';
+    
+    if (this._storyboardScrollHandler) {
+      window.removeEventListener('scroll', this._storyboardScrollHandler);
+      this._storyboardScrollHandler = null;
+    }
     if (this.canvasAnimationId) {
       cancelAnimationFrame(this.canvasAnimationId);
       this.canvasAnimationId = null;
@@ -207,9 +213,15 @@ const LoginView = {
     window.addEventListener('resize', resize, { passive: true });
 
     // Estado físico del scroll suavizado (spring LERP)
-    let currentScroll = window.scrollY;
-    let targetScroll = window.scrollY;
+    let currentScroll = 0;
+    let targetScroll = 0;
     const lerpFactor = 0.08; // Suave y con inercia
+
+    // Capturar scroll real después de que el router restablezca la página
+    setTimeout(() => {
+      currentScroll = window.scrollY;
+      targetScroll = window.scrollY;
+    }, 50);
 
     const handleScrollEvent = () => {
       targetScroll = window.scrollY;
@@ -306,8 +318,27 @@ const LoginView = {
 
     // Render loop principal
     const tick = () => {
-      // 1. Aplicar inercia física de scroll
-      currentScroll += (targetScroll - currentScroll) * lerpFactor;
+      // Guard de Auto-limpieza si salimos de la ruta (el canvas ya no está en el DOM)
+      const currentCanvas = document.getElementById('landingCanvasOverlay');
+      if (!currentCanvas) {
+        if (this._storyboardScrollHandler) {
+          window.removeEventListener('scroll', this._storyboardScrollHandler);
+          this._storyboardScrollHandler = null;
+        }
+        if (this.storyboardAnimationId) {
+          cancelAnimationFrame(this.storyboardAnimationId);
+          this.storyboardAnimationId = null;
+        }
+        return;
+      }
+
+      // 1. Aplicar inercia física de scroll (LERP)
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReducedMotion) {
+        currentScroll = targetScroll;
+      } else {
+        currentScroll += (targetScroll - currentScroll) * lerpFactor;
+      }
       
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
       const progress = docHeight > 0 ? Math.max(0, Math.min(1, currentScroll / docHeight)) : 0;

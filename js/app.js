@@ -186,20 +186,22 @@ const AppAuth = {
 
 /* ── LOADER HELPER ────────────────────────────────────── */
 window.updateLcpLoader = function(progress) {
-  const phrase = document.getElementById('lcp-loader-phrase');
-  if (phrase) phrase.style.backgroundSize = `${progress}% 100%`;
+  const stop1 = document.getElementById('gradient-stop-1');
+  const stop2 = document.getElementById('gradient-stop-2');
+  if (stop1 && stop2) {
+    stop1.setAttribute('offset', `${progress}%`);
+    stop2.setAttribute('offset', `${progress}%`);
+  }
 };
 
 window.showLcpLoader = function() {
   const loader = document.getElementById('lcp-loader');
-  const phrase = document.getElementById('lcp-loader-phrase');
   const plancha = document.getElementById('lcp-loader-plancha');
   const appEl = document.getElementById('app');
   
   if (loader) {
     window.updateLcpLoader(0);
     loader.className = '';
-    if (phrase) phrase.style.backgroundSize = '0% 100%';
     if (plancha) {
       plancha.removeAttribute('style');
     }
