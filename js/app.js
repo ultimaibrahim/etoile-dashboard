@@ -186,31 +186,8 @@ const AppAuth = {
 
 /* ── LOADER HELPER ────────────────────────────────────── */
 window.updateLcpLoader = function(progress) {
-  const fill = document.getElementById('lcp-loader-fill');
-  const rake = document.getElementById('lcp-loader-rake');
-  const batter = document.querySelector('.batter-circle');
   const phrase = document.getElementById('lcp-loader-phrase');
-  
-  if (fill) fill.style.width = `${progress}%`;
   if (phrase) phrase.style.backgroundSize = `${progress}% 100%`;
-  
-  if (rake) {
-    rake.style.transform = `rotate(${progress * 3.6}deg)`;
-    const rakePath = rake.querySelector('.rake-one-line');
-    if (rakePath) {
-      const D = 85 - (progress * 0.5); // radio de espiral que va de 85 a 35
-      const W = 25 - (progress * 0.13); // ancho del cabezal en T que se reduce de 25 a 12
-      const pathData = `M 97,100 L 97,${100 - D + 5} L ${100 - W},${100 - D + 5} L ${100 - W},${100 - D} L ${100 + W},${100 - D} L ${100 + W},${100 - D + 5} L 103,${100 - D + 5} L 103,100 A 3 3 0 0 1 97,100 Z`;
-      rakePath.setAttribute('d', pathData);
-    }
-  }
-  if (batter) {
-    // Medir dinámicamente la longitud total del path para sincronización perfecta
-    const totalLength = batter.getTotalLength ? batter.getTotalLength() : 710;
-    batter.style.strokeDasharray = totalLength;
-    const offset = totalLength - (totalLength * (progress / 100));
-    batter.style.strokeDashoffset = offset;
-  }
 };
 
 window.showLcpLoader = function() {
@@ -221,57 +198,59 @@ window.showLcpLoader = function() {
   
   if (loader) {
     window.updateLcpLoader(0);
+    loader.className = '';
     if (phrase) phrase.style.backgroundSize = '0% 100%';
-    if (plancha) plancha.style.width = '0%';
+    if (plancha) {
+      plancha.removeAttribute('style');
+    }
     if (appEl) {
       appEl.classList.remove('entrance-active');
       appEl.classList.add('loading-active');
     }
     loader.style.display = 'flex';
-    loader.classList.remove('fade-out');
   }
 };
 
 window.hideLcpLoader = function() {
   const loader = document.getElementById('lcp-loader');
-  const rake = document.getElementById('lcp-loader-rake');
-  const plancha = document.getElementById('lcp-loader-plancha');
   const appEl = document.getElementById('app');
 
   if (!loader) return;
 
-  // 1. Acelerar el rastrillo (giro cinematográfico final)
-  if (rake) {
-    rake.style.transition = 'transform 0.7s cubic-bezier(0.25, 1, 0.5, 1)';
-    rake.style.transform = 'rotate(1080deg)';
-  }
+  // 1. Asegurar progreso al 100% de la frase
+  window.updateLcpLoader(100);
 
-  // 2. Expandir la plancha horizontal
-  if (plancha) {
-    plancha.style.width = '80%';
-  }
-
-  // 3. Esperar un instante y comenzar el deslizamiento de cortina
+  // 2. Iniciar órbita de frase alrededor de étoile y desaparición
   setTimeout(() => {
-    loader.classList.add('fade-out');
+    loader.classList.add('wrap-active');
+  }, 100);
 
-    // 4. Parallax inverso en el contenedor de la aplicación
+  // 3. Mostrar hilo de luz dorada en el centro (micras de segundo)
+  setTimeout(() => {
+    loader.classList.add('line-visible');
+  }, 1300); // Sincronizado con la duración de la órbita (1.4s total, 1.3s para la línea)
+
+  // 4. Barrido de expansión total en crema y desvanecimiento
+  setTimeout(() => {
+    loader.classList.add('reveal-active');
+    
+    // Parallax inverso del contenedor de la aplicación
     setTimeout(() => {
       if (appEl) {
         appEl.classList.remove('loading-active');
         appEl.classList.add('entrance-active');
       }
-    }, 150); // Un pequeño retraso para sincronizar con el despegue de la cortina
+    }, 150);
 
-  }, 600); // Duración de la rotación y la línea plancha
+  }, 1600); // 1.3s + 300ms de espera en el centro
 
-  // 5. Ocultar del DOM al finalizar
+  // 5. Ocultar del DOM al finalizar por completo la animación
   setTimeout(() => {
     loader.style.display = 'none';
     if (appEl) {
       appEl.classList.remove('entrance-active');
     }
-  }, 1800); // 600ms + 1200ms (duración de la cortina)
+  }, 2600); // 1600ms + 1000ms de duración de transición final
 };
 
 /* ── INIT ──────────────────────────────────────────────── */
