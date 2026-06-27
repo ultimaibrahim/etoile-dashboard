@@ -189,7 +189,11 @@ window.updateLcpLoader = function(progress) {
   const fill = document.getElementById('lcp-loader-fill');
   const rake = document.getElementById('lcp-loader-rake');
   const batter = document.querySelector('.batter-circle');
+  const phrase = document.getElementById('lcp-loader-phrase');
+  
   if (fill) fill.style.width = `${progress}%`;
+  if (phrase) phrase.style.backgroundSize = `${progress}% 100%`;
+  
   if (rake) {
     rake.style.transform = `rotate(${progress * 3.6}deg)`;
     const rakePath = rake.querySelector('.rake-one-line');
@@ -211,8 +215,18 @@ window.updateLcpLoader = function(progress) {
 
 window.showLcpLoader = function() {
   const loader = document.getElementById('lcp-loader');
+  const phrase = document.getElementById('lcp-loader-phrase');
+  const plancha = document.getElementById('lcp-loader-plancha');
+  const appEl = document.getElementById('app');
+  
   if (loader) {
     window.updateLcpLoader(0);
+    if (phrase) phrase.style.backgroundSize = '0% 100%';
+    if (plancha) plancha.style.width = '0%';
+    if (appEl) {
+      appEl.classList.remove('entrance-active');
+      appEl.classList.add('loading-active');
+    }
     loader.style.display = 'flex';
     loader.classList.remove('fade-out');
   }
@@ -220,16 +234,50 @@ window.showLcpLoader = function() {
 
 window.hideLcpLoader = function() {
   const loader = document.getElementById('lcp-loader');
-  if (loader) {
-    loader.classList.add('fade-out');
-    setTimeout(() => {
-      loader.style.display = 'none';
-    }, 800); // coincide con la duración de la transición CSS
+  const rake = document.getElementById('lcp-loader-rake');
+  const plancha = document.getElementById('lcp-loader-plancha');
+  const appEl = document.getElementById('app');
+
+  if (!loader) return;
+
+  // 1. Acelerar el rastrillo (giro cinematográfico final)
+  if (rake) {
+    rake.style.transition = 'transform 0.7s cubic-bezier(0.25, 1, 0.5, 1)';
+    rake.style.transform = 'rotate(1080deg)';
   }
+
+  // 2. Expandir la plancha horizontal
+  if (plancha) {
+    plancha.style.width = '80%';
+  }
+
+  // 3. Esperar un instante y comenzar el deslizamiento de cortina
+  setTimeout(() => {
+    loader.classList.add('fade-out');
+
+    // 4. Parallax inverso en el contenedor de la aplicación
+    setTimeout(() => {
+      if (appEl) {
+        appEl.classList.remove('loading-active');
+        appEl.classList.add('entrance-active');
+      }
+    }, 150); // Un pequeño retraso para sincronizar con el despegue de la cortina
+
+  }, 600); // Duración de la rotación y la línea plancha
+
+  // 5. Ocultar del DOM al finalizar
+  setTimeout(() => {
+    loader.style.display = 'none';
+    if (appEl) {
+      appEl.classList.remove('entrance-active');
+    }
+  }, 1800); // 600ms + 1200ms (duración de la cortina)
 };
 
 /* ── INIT ──────────────────────────────────────────────── */
 async function initApp() {
+  const appEl = document.getElementById('app');
+  if (appEl) appEl.classList.add('loading-active');
   window.updateLcpLoader(10);
   // Obtener configuración pública de Supabase desde Netlify Serverless Function
   try {
