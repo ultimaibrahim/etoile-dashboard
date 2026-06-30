@@ -222,15 +222,15 @@ window.hideLcpLoader = function() {
   // 1. Asegurar progreso al 100% de la frase
   window.updateLcpLoader(100);
 
-  // 2. Iniciar órbita de frase alrededor de étoile y desaparición
+  // 2. Iniciar desaparición (fade/scale out) de textos
   setTimeout(() => {
     loader.classList.add('wrap-active');
-  }, 350); // Pequeña pausa dramática con el texto completo y plano antes de curvar y orbitar
+  }, 250);
 
-  // 3. Mostrar hilo de luz dorada en el centro (micras de segundo)
+  // 3. Mostrar hilo de luz dorada en el centro (plancha)
   setTimeout(() => {
     loader.classList.add('line-visible');
-  }, 1300); // Sincronizado con la duración de la órbita (1.4s total, 1.3s para la línea)
+  }, 550);
 
   // 4. Barrido de expansión total en crema y desvanecimiento
   setTimeout(() => {
@@ -244,7 +244,7 @@ window.hideLcpLoader = function() {
       }
     }, 150);
 
-  }, 1600); // 1.3s + 300ms de espera en el centro
+  }, 850);
 
   // 5. Ocultar del DOM al finalizar por completo la animación
   setTimeout(() => {
@@ -252,7 +252,7 @@ window.hideLcpLoader = function() {
     if (appEl) {
       appEl.classList.remove('entrance-active');
     }
-  }, 2600); // 1600ms + 1000ms de duración de transición final
+  }, 1750);
 };
 
 /* ── INIT ──────────────────────────────────────────────── */
