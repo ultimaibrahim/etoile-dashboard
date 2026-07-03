@@ -256,17 +256,17 @@ const SelectRegionView = {
         /* ── SILUETAS GEOGRÁFICAS DE FONDO ── */
         .srv-card-map-overlay {
           position: absolute;
-          bottom: -15px;
-          right: -15px;
-          width: 90px;
-          height: 90px;
+          bottom: 12px;
+          right: 12px;
+          width: 64px;
+          height: 64px;
           opacity: 0.08;
           color: var(--verde);
           pointer-events: none;
           transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
         }
         .srv-card:hover .srv-card-map-overlay {
-          transform: scale(1.1) rotate(-5deg);
+          transform: scale(1.08) rotate(-4deg);
           opacity: 0.15;
         }
         [data-theme="dark"] .srv-card-map-overlay {
@@ -843,17 +843,14 @@ const SelectRegionView = {
       <div class="srv-card" onclick="SelectRegionView.handleSelect('${r.id}')">
         ${SelectRegionView.getRegionMapSVG(r.id)}
         <div class="srv-card-top">
-          <span class="srv-card-code">${r.id}</span>
+          <span class="srv-card-code">${r.id} - ${r.count} SUC</span>
           <div class="srv-card-rating-container" data-region-rating="${r.id}">
             <span class="srv-rating-spinner"></span>
           </div>
         </div>
         <div class="srv-card-bottom">
-          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 4px;">
-            <h3 class="srv-card-name" style="margin:0;">${r.name}</h3>
-            <span class="srv-card-badge" style="font-size:10.5px; opacity:0.85;">${r.count} suc.</span>
-          </div>
-          <p class="srv-card-desc">${r.desc}</p>
+          <h3 class="srv-card-name" style="margin:0;">${r.name}</h3>
+          <p class="srv-card-desc">${r.count === 1 ? 'Sucursal única' : ''}</p>
         </div>
       </div>
     `).join('');
@@ -938,16 +935,16 @@ const SelectRegionView = {
 
   getRegionMapSVG(regionId) {
     const paths = {
-      'GDL': 'M 20,40 L 45,15 L 75,15 L 85,30 L 80,55 L 90,65 L 70,85 L 50,85 L 35,65 L 20,60 Z',
-      'CDMX': 'M 50,20 C 70,20 80,35 75,65 C 70,80 50,90 50,90 C 50,90 30,80 25,65 C 20,35 30,20 50,20 Z',
-      'MTY': 'M 25,30 L 45,15 L 65,30 L 55,50 L 75,70 L 65,90 L 45,85 L 35,60 L 25,45 Z',
-      'LEON': 'M 30,20 L 70,15 L 85,45 L 70,80 L 30,85 L 15,55 Z',
-      'SLP': 'M 20,35 L 50,15 L 80,30 L 85,55 L 70,75 L 55,65 L 45,85 L 25,75 Z',
-      'AGS': 'M 35,25 C 55,25 70,35 65,65 C 60,75 50,85 50,85 C 50,85 40,75 35,65 C 30,35 35,25 35,25 Z',
-      'TOL': 'M 15,30 L 45,20 L 70,35 L 60,60 L 80,65 L 75,85 L 45,90 L 35,65 L 20,60 Z',
-      'QRO': 'M 40,15 L 60,25 L 65,50 L 50,85 L 35,75 L 40,45 Z',
-      'CUN': 'M 45,15 L 70,18 L 75,45 L 55,90 L 35,85 L 40,55 Z',
-      'TJ': 'M 30,15 L 65,18 L 55,45 L 45,75 L 35,90 L 25,80 Z'
+      'GDL': 'M50 15 L65 30 L80 35 L75 55 L85 75 L60 85 L45 80 L25 85 L15 65 L20 45 L35 30 Z',
+      'CDMX': 'M35 15 L65 15 L75 30 L70 50 L60 65 L65 90 L45 90 L35 75 L30 55 L38 35 Z',
+      'MTY': 'M20 20 L55 15 L85 25 L80 50 L75 80 L45 85 L25 70 L30 45 L15 35 Z',
+      'LEON': 'M30 20 L70 15 L85 40 L75 70 L50 85 L20 70 L15 45 Z',
+      'SLP': 'M25 15 L50 25 L80 20 L75 45 L90 60 L70 85 L45 75 L30 80 L15 50 Z',
+      'AGS': 'M40 15 L65 20 L75 45 L60 85 L35 85 L25 55 L30 30 Z',
+      'TOL': 'M40 10 L65 15 L75 35 L70 60 L80 85 L50 90 L30 75 L20 50 L25 25 Z',
+      'QRO': 'M50 10 L65 25 L55 45 L75 60 L60 90 L40 85 L30 60 L45 40 Z',
+      'CUN': 'M20 15 L50 15 L55 35 L75 35 L75 75 L65 75 L65 45 L45 45 L40 85 L20 85 Z',
+      'TJ': 'M15 25 L85 25 L85 45 L65 55 L70 80 L45 80 L35 60 L15 50 Z'
     };
     
     const p = paths[regionId] || 'M 20,20 L 80,20 L 80,80 L 20,80 Z';
