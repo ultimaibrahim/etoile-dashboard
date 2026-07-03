@@ -100,8 +100,8 @@ async function runBackfill() {
         console.error(`   ❌ Error al procesar el lote ${batchNum}:`, batchErr.message);
       }
       
-      // Delay de 4 segundos entre lotes para respetar de forma segura el límite de 5 RPM (llamadas por minuto)
-      await sleep(4000);
+      // Delay de 13 segundos entre lotes para no exceder bajo ninguna circunstancia el límite de 5 RPM (llamadas por minuto)
+      await sleep(13000);
     }
   }
 
