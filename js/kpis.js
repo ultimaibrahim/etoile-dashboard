@@ -2,6 +2,15 @@
  * kpis.js — Cálculo de KPIs con cacheo inteligente en localStorage.
  */
 
+function computeReviewsHash(reviews) {
+  const str = reviews.map(r => `${r.stars}|${r.text?.length || 0}|${r.publishedAtDate}`).join(';');
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+  }
+  return hash;
+}
+
 const KpiStore = {
   prefix: 'lcp_kpis_v3_',
 
@@ -47,8 +56,9 @@ const Kpis = {
     const data = DataLoader.getMonth(year, month);
     const reviews = data ? data.reviews : [];
 
+    const currentHash = computeReviewsHash(reviews);
     const cached = KpiStore.get(year, month);
-    if (cached && cached.global && cached.global.totalReviews === reviews.length) {
+    if (cached && cached.global && cached.global.totalReviews === reviews.length && cached.global.reviewsHash === currentHash) {
       return cached;
     }
 
@@ -85,7 +95,7 @@ const Kpis = {
       ratingMinimo: { belowMin: belowMin.map(r => r.id), meta: KpiMeta.ratingMinimo },
       negativas: totalNegativas,
       tasaRespuesta: { value: tasaRespuesta, totalNegativas, conRespuesta: negativasConRespuesta.length },
-      global: { totalReviews: global.totalReviews, avgRating: global.avgRating }
+      global: { totalReviews: global.totalReviews, avgRating: global.avgRating, reviewsHash: currentHash }
     };
 
     KpiStore.set(year, month, result);

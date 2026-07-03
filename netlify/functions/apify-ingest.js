@@ -286,6 +286,20 @@ exports.handler = async (event, context) => {
 
       if (error) throw error;
       console.log("✅ Reseñas subidas con éxito.");
+
+      // 6. Clasificar las reseñas recién subidas
+      try {
+        const { classifyAndSave } = require('./classify-review');
+        console.log(`Iniciando clasificación para ${reviewsToUpsert.length} reseñas...`);
+        // Procesar en serie para respetar los límites de la API de Gemini
+        for (const rev of reviewsToUpsert) {
+          await classifyAndSave(supabase, rev.id, rev.text, rev.stars);
+        }
+        console.log("✅ Clasificación completada.");
+      } catch (classError) {
+        console.error("Error durante la clasificación en la ingesta:", classError.message);
+        // No bloqueamos el éxito de la ingesta si falla la clasificación
+      }
     }
 
     return {

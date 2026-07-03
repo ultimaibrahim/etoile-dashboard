@@ -1,6 +1,12 @@
-/**
- * utils.js — Helpers puros y utilidades visuales.
- */
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function starStr(n) {
   const num = Math.round(Number(n) || 0);
@@ -308,36 +314,6 @@ async function handleRegionChange(region) {
   }
 }
 
-/* ── INSIGHTS DINÁMICOS ───────────────────────────────── */
-function computeDynamicInsights(reviews) {
-  if (!reviews || reviews.length === 0) return { alertTheme: null, problemas: [] };
-
-  const negatives = reviews.filter(r => r.stars <= 3 && r.text && r.text.length > 5);
-  if (negatives.length === 0) return { alertTheme: null, problemas: [] };
-
-  let textBlock = negatives.map(r => r.text.toLowerCase()).join(' ');
-  const keywords = ['actitud', 'groser', 'servicio', 'atención', 'tiempo', 'tard', 'lento', 'frí', 'crudo', 'calidad', 'quemado', 'sucio', 'espera', 'cobro', 'ticket', 'fila'];
-  
-  const freqs = {};
-  keywords.forEach(kw => {
-    const matches = textBlock.split(kw).length - 1;
-    if (matches > 0) freqs[kw] = matches;
-  });
-
-  const sorted = Object.entries(freqs).sort((a,b) => b[1] - a[1]);
-  if (sorted.length === 0) return { alertTheme: 'Comentarios diversos', problemas: negatives.slice(0, 3).map(r => `"${r.text.substring(0, 60)}..."`) };
-
-  const topKw = sorted[0][0];
-  let theme = 'Atención y Servicio';
-  if (['tiempo', 'tard', 'lento', 'espera', 'fila'].includes(topKw)) theme = 'Tiempos de Espera';
-  if (['frí', 'crudo', 'calidad', 'quemado'].includes(topKw)) theme = 'Calidad del Producto';
-  if (['sucio'].includes(topKw)) theme = 'Limpieza';
-  if (['cobro', 'ticket'].includes(topKw)) theme = 'Errores en Cobro';
-
-  const problemas = negatives.filter(r => r.text.toLowerCase().includes(topKw)).slice(0, 3).map(r => `"${r.text.substring(0, 80)}..."`);
-  
-  return { alertTheme: theme, problemas };
-}
 
 function createSparklineSVG(data, width = 120, height = 36, color = '#6B907D') {
   if (!Array.isArray(data) || data.length < 2) {
@@ -880,10 +856,13 @@ const LcpWalkthrough = {
     }
   },
 
-  showWelcomeOnboarding(userName, userRole, sucursalName = '') {
+  showWelcomeOnboarding(rawUserName, userRole, rawSucursalName = '') {
     if (localStorage.getItem('lcp_walkthrough_seen') === 'true') {
       return;
     }
+
+    const userName = escapeHtml(rawUserName);
+    const sucursalName = escapeHtml(rawSucursalName);
 
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';

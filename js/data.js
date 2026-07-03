@@ -195,14 +195,14 @@ const Q1_DATA = {
     forum:     { q1Avg: 4.98, ene: {avg:4.98,count:53}, feb: {avg:5.00,count:2}, mar: {avg:5.00,count:4} },
     
     // CDMX (Placeholders iniciales)
-    roma:      { q1Avg: 4.50, ene: {avg:4.50,count:10}, feb: {avg:4.40,count:12}, mar: {avg:4.60,count:15} },
-    condesa:   { q1Avg: 4.60, ene: {avg:4.60,count:8},  feb: {avg:4.50,count:14}, mar: {avg:4.70,count:10} },
-    polanco:   { q1Avg: 4.40, ene: {avg:4.30,count:15}, feb: {avg:4.50,count:10}, mar: {avg:4.40,count:12} },
-    coyoacan:  { q1Avg: 4.70, ene: {avg:4.60,count:12}, feb: {avg:4.80,count:18}, mar: {avg:4.70,count:20} },
-    'santa-fe':{ q1Avg: 4.20, ene: {avg:4.10,count:14}, feb: {avg:4.30,count:11}, mar: {avg:4.20,count:16} },
-    interlomas:{ q1Avg: 4.50, ene: {avg:4.40,count:9},  feb: {avg:4.50,count:15}, mar: {avg:4.60,count:11} },
-    satelite:  { q1Avg: 4.30, ene: {avg:4.20,count:16}, feb: {avg:4.40,count:12}, mar: {avg:4.30,count:14} },
-    'del-valle':{ q1Avg: 4.60, ene: {avg:4.50,count:11}, feb: {avg:4.60,count:16}, mar: {avg:4.70,count:13} }
+    roma:      { q1Avg: 4.50, isPlaceholder: true, ene: {avg:4.50,count:10}, feb: {avg:4.40,count:12}, mar: {avg:4.60,count:15} },
+    condesa:   { q1Avg: 4.60, isPlaceholder: true, ene: {avg:4.60,count:8},  feb: {avg:4.50,count:14}, mar: {avg:4.70,count:10} },
+    polanco:   { q1Avg: 4.40, isPlaceholder: true, ene: {avg:4.30,count:15}, feb: {avg:4.50,count:10}, mar: {avg:4.40,count:12} },
+    coyoacan:  { q1Avg: 4.70, isPlaceholder: true, ene: {avg:4.60,count:12}, feb: {avg:4.80,count:18}, mar: {avg:4.70,count:20} },
+    'santa-fe':{ q1Avg: 4.20, isPlaceholder: true, ene: {avg:4.10,count:14}, feb: {avg:4.30,count:11}, mar: {avg:4.20,count:16} },
+    interlomas:{ q1Avg: 4.50, isPlaceholder: true, ene: {avg:4.40,count:9},  feb: {avg:4.50,count:15}, mar: {avg:4.60,count:11} },
+    satelite:  { q1Avg: 4.30, isPlaceholder: true, ene: {avg:4.20,count:16}, feb: {avg:4.40,count:12}, mar: {avg:4.30,count:14} },
+    'del-valle':{ q1Avg: 4.60, isPlaceholder: true, ene: {avg:4.50,count:11}, feb: {avg:4.60,count:16}, mar: {avg:4.70,count:13} }
   }
 };
 

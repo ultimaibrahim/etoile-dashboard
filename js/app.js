@@ -88,8 +88,13 @@ const AppAuth = {
       this.session = session;
       if (session) {
         await this.loadProfile(session.user.id);
+        if (!this.profile) {
+          console.warn("Sesión activa detectada pero sin perfil de usuario válido. Cerrando sesión...");
+          await this.logout();
+          return false;
+        }
       }
-      return !!this.session;
+      return this.isAuthenticated();
     } catch (e) {
       console.error("Error inicializando sesión:", e);
       return false;
@@ -108,12 +113,12 @@ const AppAuth = {
         this.profile = data;
         setRegionActiva(data.region); // Sincroniza la región en data.js
       } else {
-        // Perfil por defecto si no existe en la BD aún
-        this.profile = { nombre: "Usuario", rol: "gerente", region: "GDL", sucursal: null };
-        setRegionActiva("GDL");
+        console.warn("Perfil no encontrado en la base de datos.");
+        this.profile = null;
       }
     } catch (e) {
       console.error("Error cargando perfil:", e);
+      this.profile = null;
     }
   },
 
@@ -140,6 +145,11 @@ const AppAuth = {
 
     this.session = data.session;
     await this.loadProfile(data.user.id);
+
+    if (!this.profile) {
+      await this.logout();
+      throw new Error("No se encontró un perfil asociado a esta cuenta en la base de datos.");
+    }
     
     if (typeof DataLoader !== 'undefined') {
       DataLoader.cache = {};
@@ -168,7 +178,7 @@ const AppAuth = {
   },
 
   isAuthenticated() {
-    return !!this.session;
+    return !!this.session && !!this.profile;
   },
 
   getUserRole() {

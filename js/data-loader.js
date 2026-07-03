@@ -114,7 +114,8 @@ const DataLoader = {
           responseText: r.response_text,
           responseFromOwnerText: r.response_text,
           responseDate: r.response_date,
-          responseFromOwnerDate: r.response_date
+          responseFromOwnerDate: r.response_date,
+          classification: r.classification
         }));
 
         const result = { reviews: mappedReviews };
@@ -158,7 +159,8 @@ const DataLoader = {
           responseFromOwnerText: r.response_text,
           responseDate: r.response_date,
           responseFromOwnerDate: r.response_date,
-          region: r.region
+          region: r.region,
+          classification: r.classification
         }));
 
         this.cache[key] = mappedReviews;

@@ -802,7 +802,7 @@ const HomeView = {
             <span class="rc-date">${timeStr}</span>
           </div>
           <div class="rc-stars">${starsHtml}</div>
-          <p class="rc-text">"${r.text}"</p>
+          <p class="rc-text">"${escapeHtml(r.text)}"</p>
         </div>
       `;
     }).join('');
@@ -970,7 +970,7 @@ const HomeView = {
       
     // Reply/Owner response
     const responseHtml = r.responseFromOwnerText
-      ? `<div class="modal-owner-response"><strong>Respuesta del Propietario:</strong> "${r.responseFromOwnerText}"</div>`
+      ? `<div class="modal-owner-response"><strong>Respuesta del Propietario:</strong> "${escapeHtml(r.responseFromOwnerText)}"</div>`
       : '';
 
     const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
@@ -995,7 +995,7 @@ const HomeView = {
               ${localGuideBadge}
             </div>
             
-            <blockquote class="modal-quote">"${r.text}"</blockquote>
+            <blockquote class="modal-quote">"${escapeHtml(r.text)}"</blockquote>
             
             ${responseHtml}
           </div>
@@ -1083,8 +1083,8 @@ const HomeView = {
             <span class="src-date">${timeStr}</span>
           </div>
           <div class="src-stars">${starsHtml}</div>
-          <p class="src-text">"${r.text}"</p>
-          ${r.responseFromOwnerText ? `<div class="src-response"><strong>Respuesta:</strong> "${r.responseFromOwnerText}"</div>` : ''}
+          <p class="src-text">"${escapeHtml(r.text)}"</p>
+          ${r.responseFromOwnerText ? `<div class="src-response"><strong>Respuesta:</strong> "${escapeHtml(r.responseFromOwnerText)}"</div>` : ''}
         </div>
       `;
     }).join('');
@@ -1128,7 +1128,7 @@ const HomeView = {
                   <div class="ri-score" style="color: var(--alerta)">${starStr(r.stars)}</div>
                   <div class="ri-date">${formatDate(r.publishedAtDate)}</div>
                 </div>
-                <div class="ri-text">"${r.text}"</div>
+                <div class="ri-text">"${escapeHtml(r.text)}"</div>
               </div>
             `).join('')}
           </div>
@@ -1216,7 +1216,7 @@ const HomeView = {
                   <div class="ri-score" style="color: var(--alerta); font-size:11px;">${starStr(r.stars)}</div>
                   <div class="ri-date" style="font-size:11px; color:var(--text-muted);">${formatDate(r.publishedAtDate)}</div>
                 </div>
-                <div class="ri-text" style="font-size:13px; line-height:1.4; font-style:italic;">"${r.text}"</div>
+                <div class="ri-text" style="font-size:13px; line-height:1.4; font-style:italic;">"${escapeHtml(r.text)}"</div>
               </div>
             `).join('')}
           </div>

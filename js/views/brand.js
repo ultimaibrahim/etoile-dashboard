@@ -472,10 +472,21 @@ const BrandView = {
 
       const negativeReviews = brandReviews.filter(r => r.stars <= 2);
       negativeReviews.forEach(r => {
-        const text = r.text || '';
-        if (serviceRegex.test(text)) serviceAlerts++;
-        if (qualityRegex.test(text)) qualityAlerts++;
-        if (valueRegex.test(text)) valueAlerts++;
+        if (r.classification && typeof r.classification.es_queja === 'boolean') {
+          if (r.classification.es_queja) {
+            const cat = r.classification.categoria_queja;
+            if (cat) {
+              if (cat.servicio) serviceAlerts++;
+              if (cat.calidad) qualityAlerts++;
+              if (cat.valor) valueAlerts++;
+            }
+          }
+        } else {
+          const text = r.text || '';
+          if (serviceRegex.test(text)) serviceAlerts++;
+          if (qualityRegex.test(text)) qualityAlerts++;
+          if (valueRegex.test(text)) valueAlerts++;
+        }
       });
 
       const unrepliedList = brandReviews.filter(r => r.stars <= 2 && (!r.responseText || r.responseText.trim() === ''));
@@ -499,7 +510,7 @@ const BrandView = {
                 <span class="modal-rev-date">${dateStr}</span>
               </div>
             </div>
-            <div class="modal-rev-text">"${r.text || 'Sin comentario escrito.'}"</div>
+            <div class="modal-rev-text">"${escapeHtml(r.text || 'Sin comentario escrito.')}"</div>
           </div>
         `;
       }).join('') : `<div style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">100% de quejas respondidas. ¡Buen trabajo de operación!</div>`;
@@ -722,7 +733,7 @@ const BrandView = {
               <span class="modal-rev-date">${dateStr}</span>
             </div>
           </div>
-          <div class="modal-rev-text">"${r.text || 'Sin comentario escrito.'}"</div>
+          <div class="modal-rev-text">"${escapeHtml(r.text || 'Sin comentario escrito.')}"</div>
           ${replyBoxHtml}
         </div>
       `;
@@ -934,7 +945,7 @@ const BrandView = {
               <span class="modal-rev-date">${dateStr}</span>
             </div>
           </div>
-          <div class="modal-rev-text">"${r.text || 'Sin comentario escrito.'}"</div>
+          <div class="modal-rev-text">"${escapeHtml(r.text || 'Sin comentario escrito.')}"</div>
           ${replyBoxHtml}
         </div>
       `;
@@ -1083,10 +1094,21 @@ const BrandView = {
     const valueRegex = /caro|precio|porci[oó]n|costo|tama[ño]|car[ií]simo|cantidad/i;
 
     negatives.forEach(r => {
-      const text = r.text || '';
-      if (serviceRegex.test(text)) serviceCount++;
-      if (qualityRegex.test(text)) qualityCount++;
-      if (valueRegex.test(text)) valueCount++;
+      if (r.classification && typeof r.classification.es_queja === 'boolean') {
+        if (r.classification.es_queja) {
+          const cat = r.classification.categoria_queja;
+          if (cat) {
+            if (cat.servicio) serviceCount++;
+            if (cat.calidad) qualityCount++;
+            if (cat.valor) valueCount++;
+          }
+        }
+      } else {
+        const text = r.text || '';
+        if (serviceRegex.test(text)) serviceCount++;
+        if (qualityRegex.test(text)) qualityCount++;
+        if (valueRegex.test(text)) valueCount++;
+      }
     });
 
     const reviewsConTexto = branchReviews.filter(r => r.text && r.text.trim().length > 0);
@@ -1101,7 +1123,7 @@ const BrandView = {
             <span style="color:var(--oro);">${starsHtml}</span>
             <span style="color:var(--text-dim); font-family:var(--mono);">${dateStr}</span>
           </div>
-          <div style="font-size:12.5px; font-style:italic; color:var(--text); line-height:1.45;">"${r.text}"</div>
+          <div style="font-size:12.5px; font-style:italic; color:var(--text); line-height:1.45;">"${escapeHtml(r.text)}"</div>
         </div>
       `;
     }).join('') : '<div style="text-align:center; padding:10px; font-size:12px; color:var(--text-dim); font-style:italic;">Sin comentarios con opiniones este mes.</div>';

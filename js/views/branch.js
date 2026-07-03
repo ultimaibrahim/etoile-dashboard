@@ -180,14 +180,55 @@ const BranchView = {
         </div>
       </div>`;
 
-    // Dynamic Insights
-    const dynamic = computeDynamicInsights(reviews);
+    // Dynamic Insights based on LLM classifications
+    const negativeReviews = reviews.filter(r => r.stars <= 3 && r.text && r.text.trim().length > 0);
+    const categoryCounts = { servicio: 0, calidad: 0, valor: 0 };
+    const summaries = [];
+
+    negativeReviews.forEach(r => {
+      if (r.classification && typeof r.classification.es_queja === 'boolean') {
+        if (r.classification.es_queja) {
+          const cat = r.classification.categoria_queja;
+          if (cat) {
+            if (cat.servicio) categoryCounts.servicio++;
+            if (cat.calidad) categoryCounts.calidad++;
+            if (cat.valor) categoryCounts.valor++;
+          }
+          if (r.classification.resumen_tema) {
+            summaries.push(`"${r.classification.resumen_tema}"`);
+          } else {
+            summaries.push(`"${r.text.substring(0, 60)}..."`);
+          }
+        }
+      } else {
+        const txt = r.text.toLowerCase();
+        const serviceRegex = /mesero|lento|espera|atenci[oó]n|servicio|tade|tarde|tardaron|trato|amabilidad/i;
+        const qualityRegex = /sabor|fr[ií]o|sucio|malo|crudo|calidad|ingrediente|pelo/i;
+        const valueRegex = /caro|precio|porci[oó]n|costo|tama[ño]|car[ií]simo|cantidad/i;
+        
+        if (serviceRegex.test(txt)) categoryCounts.servicio++;
+        if (qualityRegex.test(txt)) categoryCounts.calidad++;
+        if (valueRegex.test(txt)) categoryCounts.valor++;
+        summaries.push(`"${r.text.substring(0, 60)}..."`);
+      }
+    });
+
+    let alertTheme = null;
+    const maxCat = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0];
+    if (negativeReviews.length > 0) {
+      if (maxCat && maxCat[1] > 0) {
+        alertTheme = maxCat[0] === 'servicio' ? 'Atención y Servicio' : maxCat[0] === 'calidad' ? 'Calidad del Producto' : 'Relación Valor/Precio';
+      } else {
+        alertTheme = 'Comentarios diversos';
+      }
+    }
+
     const insightsHtml = this._buildInsights(meta, reviews, stats);
-    const problemSection = dynamic.problemas.length > 0 ? `
+    const problemSection = negativeReviews.length > 0 ? `
       <div class="status-warn-box" style="margin-bottom:14px;">
-        <div class="topic">Alerta: ${dynamic.alertTheme}</div>
+        <div class="topic">Alerta: ${alertTheme}</div>
         <ul class="problem-list">
-          ${dynamic.problemas.map(p => `<li>${p}</li>`).join('')}
+          ${summaries.slice(0, 3).map(s => `<li>${s}</li>`).join('')}
         </ul>
       </div>` : `<div class="status-ok-box" style="margin-bottom:14px;">
         <div class="check" style="display:flex; align-items:center; justify-content:center; width:20px; height:20px; flex-shrink:0;">${svgIcon('check')}</div>
@@ -418,8 +459,25 @@ const BranchView = {
     if (/(rique?[aá]|delici|bueno|sabor|rico|exquisit)/.test(allText))
       items.push({ m: '02', label: 'Producto', val: 'Sabor y calidad mencionados positivamente' });
 
-    const names = [...new Set((allText.match(/\b(valentina|osvaldo|oswaldo|arely|vale|areli|daniela|ulises|ale|amanda|bryan|brayan|roman|sergio|jacqueline|valeria|gael|alejandra|brandon|dylan|iker|denisse|andy|paulina|victor|cesar|lizbeth)\b/g) || []))]
-      .map(n => n[0].toUpperCase() + n.slice(1));
+    const employeesMap = {};
+    reviews.forEach(r => {
+      if (r.classification && Array.isArray(r.classification.empleados_mencionados)) {
+        r.classification.empleados_mencionados.forEach(emp => {
+          if (emp && emp.nombre) {
+            const normalizedName = emp.nombre.trim().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+            const confidence = emp.confianza || 'media';
+            if (confidence === 'alta') {
+              employeesMap[normalizedName] = (employeesMap[normalizedName] || 0) + 1;
+            }
+          }
+        });
+      }
+    });
+    let names = Object.keys(employeesMap).sort((a, b) => employeesMap[b] - employeesMap[a]);
+    if (!names.length) {
+      names = [...new Set((allText.match(/\b(valentina|osvaldo|oswaldo|arely|vale|areli|daniela|ulises|ale|amanda|bryan|brayan|roman|sergio|jacqueline|valeria|gael|alejandra|brandon|dylan|iker|denisse|andy|paulina|victor|cesar|lizbeth)\b/g) || []))]
+        .map(n => n[0].toUpperCase() + n.slice(1));
+    }
     if (names.length) items.push({ m: '03', label: 'Personal destacado', val: names.join(' · ') });
 
     if (/(r[aá]pido|tiempo|eficiente|rapidez)/.test(allText))
@@ -451,10 +509,21 @@ const BranchView = {
     const valueRegex = /caro|precio|porci[oó]n|costo|tama[ñn]o|car[ií]simo|cantidad/i;
 
     negativeReviews.forEach(r => {
-      const txt = r.text || '';
-      if (serviceRegex.test(txt)) serviceCount++;
-      if (qualityRegex.test(txt)) qualityCount++;
-      if (valueRegex.test(txt)) valueCount++;
+      if (r.classification && typeof r.classification.es_queja === 'boolean') {
+        if (r.classification.es_queja) {
+          const cat = r.classification.categoria_queja;
+          if (cat) {
+            if (cat.servicio) serviceCount++;
+            if (cat.calidad) qualityCount++;
+            if (cat.valor) valueCount++;
+          }
+        }
+      } else {
+        const txt = r.text || '';
+        if (serviceRegex.test(txt)) serviceCount++;
+        if (qualityRegex.test(txt)) qualityCount++;
+        if (valueRegex.test(txt)) valueCount++;
+      }
     });
 
     const getSeverity = (count) => {
@@ -569,7 +638,7 @@ const BranchView = {
         </div>
         <span class="rev-stars${low ? ' low' : ''}" style="color: var(--oro); font-size: 13px; letter-spacing: 1px; display: inline-block; margin-bottom: 6px;">${starStr(r.stars)}</span>
         <div class="rev-meta" style="font-size: 11px; color: var(--text-dim); margin-bottom: 12px;">${formatDate(r.publishedAtDate)} · ${r.sucursal}</div>
-        <div class="rev-text" style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5; font-style: italic;">"${(r.text || '').replace(/\n/g, '<br>')}"</div>
+        <div class="rev-text" style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5; font-style: italic;">"${escapeHtml(r.text || '').replace(/\n/g, '<br>')}"</div>
       </div>`;
     }).join('');
   },
@@ -600,18 +669,28 @@ const BranchView = {
     
     let regex;
     let title;
+    let checkFn;
     if (category === 'servicio') {
       regex = /mesero|lento|espera|atenci[oó]n|servicio|tade|tarde|tardaron|trato|amabilidad/i;
       title = 'Opiniones sobre Servicio y Atención';
+      checkFn = (r) => r.classification?.categoria_queja?.servicio;
     } else if (category === 'calidad') {
       regex = /sabor|fr[ií]o|sucio|malo|crudo|calidad|ingrediente|pelo/i;
       title = 'Opiniones sobre Calidad y Limpieza';
+      checkFn = (r) => r.classification?.categoria_queja?.calidad;
     } else if (category === 'precio') {
       regex = /caro|precio|porci[oó]n|costo|tama[ñn]o|car[ií]simo|cantidad/i;
       title = 'Opiniones sobre Precio y Porción';
+      checkFn = (r) => r.classification?.categoria_queja?.valor;
     }
     
-    const matchedReviews = branchReviews.filter(r => r.text && regex.test(r.text));
+    const matchedReviews = branchReviews.filter(r => {
+      if (!r.text) return false;
+      if (r.classification && typeof r.classification.es_queja === 'boolean') {
+        return checkFn(r);
+      }
+      return regex.test(r.text);
+    });
     this.openProblemDetailModal(title, matchedReviews);
   },
 
@@ -630,8 +709,8 @@ const BranchView = {
             <span style="color:var(--oro); letter-spacing:1px;">${starsHtml}</span>
             <span style="color:var(--text-dim); font-family:var(--mono);">${dateStr}</span>
           </div>
-          <div style="font-size:13px; font-style:italic; line-height:1.4; color:var(--text);">"${r.text}"</div>
-          ${r.responseFromOwnerText ? `<div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px 12px; margin-top:8px; font-size:12px; color:var(--text-dim);"><strong>Respuesta:</strong> "${r.responseFromOwnerText}"</div>` : ''}
+          <div style="font-size:13px; font-style:italic; line-height:1.4; color:var(--text);">"${escapeHtml(r.text)}"</div>
+          ${r.responseFromOwnerText ? `<div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px 12px; margin-top:8px; font-size:12px; color:var(--text-dim);"><strong>Respuesta:</strong> "${escapeHtml(r.responseFromOwnerText)}"</div>` : ''}
         </div>
       `;
     }).join('') : '<div style="text-align:center; padding:30px; color:var(--text-dim); font-style:italic;">No hay opiniones en esta categoría.</div>';
