@@ -134,19 +134,11 @@ const SelectRegionView = {
           background: var(--surface-2);
           padding: 4px 8px;
           border-radius: 6px;
-        }
-        .srv-card-badge {
-          font-size: 11px;
-          font-weight: 600;
-          color: var(--verde);
-          background: rgba(61, 90, 71, 0.1);
-          padding: 4px 8px;
-          border-radius: 20px;
           transition: all 0.3s ease;
         }
-        .srv-card:hover .srv-card-badge {
+        .srv-card:hover .srv-card-code {
           background: var(--verde);
-          color: var(--crema);
+          color: #FAF5EB;
         }
         .srv-card-bottom {
           display: flex;
@@ -843,14 +835,13 @@ const SelectRegionView = {
       <div class="srv-card" onclick="SelectRegionView.handleSelect('${r.id}')">
         ${SelectRegionView.getRegionMapSVG(r.id)}
         <div class="srv-card-top">
-          <span class="srv-card-code">${r.id} - ${r.count} SUC</span>
+          <span class="srv-card-code">${r.count === 1 ? `${r.id} - UNICA` : `${r.id} - ${r.count} SUC`}</span>
           <div class="srv-card-rating-container" data-region-rating="${r.id}">
             <span class="srv-rating-spinner"></span>
           </div>
         </div>
         <div class="srv-card-bottom">
           <h3 class="srv-card-name" style="margin:0;">${r.name}</h3>
-          <p class="srv-card-desc">${r.count === 1 ? 'Sucursal única' : ''}</p>
         </div>
       </div>
     `).join('');
