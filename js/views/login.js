@@ -90,10 +90,6 @@ const LoginView = {
         .login-bg-video {
           width: 100%; height: 100%;
           object-fit: cover;
-          opacity: 0;
-          transition: opacity 1s ease-in-out;
-        }
-        .login-bg-video.visible {
           opacity: 0.35;
         }
         .login-video-overlay {
@@ -396,24 +392,15 @@ const LoginView = {
     if (!videoEl) return;
 
     const playNext = () => {
-      videoEl.classList.remove('visible');
-      setTimeout(() => {
-        videoEl.src = this._getNextVideo();
-        videoEl.load();
-        videoEl.play().catch(() => {});
-        requestAnimationFrame(() => {
-          videoEl.classList.add('visible');
-        });
-      }, 900);
+      videoEl.src = this._getNextVideo();
+      videoEl.load();
+      videoEl.play().catch(() => {});
     };
 
     // Primer video inmediato
     videoEl.src = this._getNextVideo();
     videoEl.load();
     videoEl.play().catch(() => {});
-    requestAnimationFrame(() => {
-      setTimeout(() => videoEl.classList.add('visible'), 300);
-    });
 
     videoEl.addEventListener('ended', playNext);
   }
