@@ -188,6 +188,234 @@ const SelectRegionView = {
           border-color: var(--border-strong);
         }
 
+        /* ── INDICADORES DE RATING EN TARJETAS ── */
+        .srv-card-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+        }
+        .srv-card-rating-container {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 4px;
+        }
+        .srv-rating-val {
+          font-family: var(--sans);
+          font-size: 15px;
+          font-weight: 800;
+          color: var(--text);
+          display: flex;
+          align-items: center;
+          gap: 2px;
+        }
+        .srv-rating-trend {
+          font-size: 10px;
+          font-weight: 700;
+          padding: 2px 6px;
+          border-radius: 20px;
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+        }
+        .srv-rating-trend.trend-up {
+          color: #2e7d32;
+          background: rgba(46, 125, 50, 0.08);
+        }
+        .srv-rating-trend.trend-down {
+          color: #c62828;
+          background: rgba(198, 40, 40, 0.08);
+        }
+        .srv-rating-trend.trend-equal {
+          color: #f57f17;
+          background: rgba(245, 127, 23, 0.08);
+        }
+        [data-theme="dark"] .srv-rating-trend.trend-up {
+          color: #7AD89A;
+          background: rgba(61, 138, 95, 0.18);
+        }
+        [data-theme="dark"] .srv-rating-trend.trend-down {
+          color: #F4A090;
+          background: rgba(178, 58, 43, 0.18);
+        }
+        [data-theme="dark"] .srv-rating-trend.trend-equal {
+          color: #E8C878;
+          background: rgba(232, 200, 120, 0.15);
+        }
+        .srv-rating-spinner {
+          display: inline-block;
+          width: 12px;
+          height: 12px;
+          border: 2px solid rgba(184, 144, 47, 0.25);
+          border-top-color: var(--oro);
+          border-radius: 50%;
+          animation: srvSpin 0.8s linear infinite;
+        }
+
+        /* ── SILUETAS GEOGRÁFICAS DE FONDO ── */
+        .srv-card-map-overlay {
+          position: absolute;
+          bottom: -15px;
+          right: -15px;
+          width: 90px;
+          height: 90px;
+          opacity: 0.08;
+          color: var(--verde);
+          pointer-events: none;
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        }
+        .srv-card:hover .srv-card-map-overlay {
+          transform: scale(1.1) rotate(-5deg);
+          opacity: 0.15;
+        }
+        [data-theme="dark"] .srv-card-map-overlay {
+          color: var(--oro);
+          opacity: 0.06;
+        }
+        [data-theme="dark"] .srv-card:hover .srv-card-map-overlay {
+          opacity: 0.12;
+        }
+
+        /* ── TABLA DE RANKINGS BISTRO ── */
+        .srv-ranking-table-placeholder-box {
+          margin-top: 30px;
+          width: 100%;
+        }
+        .ranking-table-card {
+          background: var(--surface);
+          border: 1.5px solid var(--border);
+          border-radius: var(--radius);
+          box-shadow: var(--sombra);
+          padding: 30px;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+          box-sizing: border-box;
+        }
+        .ranking-table-header {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .ranking-table-title {
+          font-family: var(--giaza);
+          font-size: 28px;
+          color: var(--text);
+          margin: 0;
+          font-weight: 400;
+        }
+        .ranking-table-subtitle {
+          font-size: 13px;
+          color: var(--text-dim);
+          margin: 0;
+        }
+        .ranking-table-wrapper {
+          overflow-x: auto;
+          width: 100%;
+        }
+        .ranking-table {
+          width: 100%;
+          border-collapse: collapse;
+          text-align: left;
+        }
+        .ranking-table th {
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: var(--text-muted);
+          padding: 12px 16px;
+          border-bottom: 1.5px solid var(--border);
+        }
+        .ranking-table td {
+          padding: 16px;
+          border-bottom: 1px solid var(--border);
+          font-size: 13.5px;
+          color: var(--text-muted);
+        }
+        .ranking-row:last-child td {
+          border-bottom: none;
+        }
+        .ranking-row:hover {
+          background: var(--surface-2);
+        }
+        .ranking-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          font-size: 12px;
+          font-weight: 800;
+          background: var(--border-strong);
+          color: var(--text);
+        }
+        .ranking-badge.rank-gold {
+          background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+          color: #1A1A1A;
+          box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+        }
+        .ranking-badge.rank-silver {
+          background: linear-gradient(135deg, #E0E0E0 0%, #B0B0B0 100%);
+          color: #1A1A1A;
+          box-shadow: 0 2px 8px rgba(176, 176, 176, 0.3);
+        }
+        .ranking-badge.rank-bronze {
+          background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
+          color: #FAF5EB;
+          box-shadow: 0 2px 8px rgba(205, 127, 50, 0.3);
+        }
+        .rank-shift {
+          font-size: 11px;
+          font-weight: 700;
+          padding: 2px 6px;
+          border-radius: 12px;
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+        }
+        .rank-shift.up {
+          color: #2e7d32;
+          background: rgba(46, 125, 50, 0.08);
+        }
+        .rank-shift.down {
+          color: #c62828;
+          background: rgba(198, 40, 40, 0.08);
+        }
+        .rank-shift.equal {
+          color: var(--text-dim);
+          background: transparent;
+          padding: 0;
+        }
+        .rank-shift.new {
+          color: var(--oro);
+          background: rgba(184, 144, 47, 0.08);
+          font-size: 9px;
+        }
+        [data-theme="dark"] .rank-shift.up {
+          color: #7AD89A;
+          background: rgba(61, 138, 95, 0.18);
+        }
+        [data-theme="dark"] .rank-shift.down {
+          color: #F4A090;
+          background: rgba(178, 58, 43, 0.18);
+        }
+        .srv-table-spinner {
+          display: block;
+          margin: 40px auto;
+          width: 24px;
+          height: 24px;
+          border: 3px solid rgba(184, 144, 47, 0.15);
+          border-top-color: var(--oro);
+          border-radius: 50%;
+          animation: srvSpin 0.8s linear infinite;
+        }
+        @keyframes srvSpin {
+          to { transform: rotate(360deg); }
+        }
+
         /* ── BRAND DASHBOARD PREMIUM STYLES ── */
         .brand-dash {
           background: var(--surface);
@@ -613,13 +841,18 @@ const SelectRegionView = {
 
     const cardsHtml = regionsList.map(r => `
       <div class="srv-card" onclick="SelectRegionView.handleSelect('${r.id}')">
-        <div class="srv-card-deco">${svgIcon('fleur')}</div>
+        ${SelectRegionView.getRegionMapSVG(r.id)}
         <div class="srv-card-top">
           <span class="srv-card-code">${r.id}</span>
-          <span class="srv-card-badge">${r.count} sucursal${r.count !== 1 ? 'es' : ''}</span>
+          <div class="srv-card-rating-container" data-region-rating="${r.id}">
+            <span class="srv-rating-spinner"></span>
+          </div>
         </div>
         <div class="srv-card-bottom">
-          <h3 class="srv-card-name">${r.name}</h3>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 4px;">
+            <h3 class="srv-card-name" style="margin:0;">${r.name}</h3>
+            <span class="srv-card-badge" style="font-size:10.5px; opacity:0.85;">${r.count} suc.</span>
+          </div>
           <p class="srv-card-desc">${r.desc}</p>
         </div>
       </div>
@@ -642,6 +875,11 @@ const SelectRegionView = {
           <div class="srv-grid">
             ${cardsHtml}
           </div>
+
+          <!-- Tabla de Rankings Bistro -->
+          <div id="srv-ranking-table-placeholder" class="srv-ranking-table-placeholder-box loading">
+            <div class="srv-table-spinner"></div>
+          </div>
           
           <div class="srv-header srv-footer">
             <button class="srv-back-login" onclick="AppAuth.logout()">
@@ -652,6 +890,9 @@ const SelectRegionView = {
         </div>
       </div>
     `;
+
+    // Disparar carga asíncrona de calificaciones y rankings
+    SelectRegionView.loadRatingsAndRankings();
   },
 
   async handleSelect(regionId) {
@@ -692,6 +933,217 @@ const SelectRegionView = {
       setTimeout(() => {
         Router.navigate('#/brand');
       }, 400);
+    }
+  },
+
+  getRegionMapSVG(regionId) {
+    const paths = {
+      'GDL': 'M 20,40 L 45,15 L 75,15 L 85,30 L 80,55 L 90,65 L 70,85 L 50,85 L 35,65 L 20,60 Z',
+      'CDMX': 'M 50,20 C 70,20 80,35 75,65 C 70,80 50,90 50,90 C 50,90 30,80 25,65 C 20,35 30,20 50,20 Z',
+      'MTY': 'M 25,30 L 45,15 L 65,30 L 55,50 L 75,70 L 65,90 L 45,85 L 35,60 L 25,45 Z',
+      'LEON': 'M 30,20 L 70,15 L 85,45 L 70,80 L 30,85 L 15,55 Z',
+      'SLP': 'M 20,35 L 50,15 L 80,30 L 85,55 L 70,75 L 55,65 L 45,85 L 25,75 Z',
+      'AGS': 'M 35,25 C 55,25 70,35 65,65 C 60,75 50,85 50,85 C 50,85 40,75 35,65 C 30,35 35,25 35,25 Z',
+      'TOL': 'M 15,30 L 45,20 L 70,35 L 60,60 L 80,65 L 75,85 L 45,90 L 35,65 L 20,60 Z',
+      'QRO': 'M 40,15 L 60,25 L 65,50 L 50,85 L 35,75 L 40,45 Z',
+      'CUN': 'M 45,15 L 70,18 L 75,45 L 55,90 L 35,85 L 40,55 Z',
+      'TJ': 'M 30,15 L 65,18 L 55,45 L 45,75 L 35,90 L 25,80 Z'
+    };
+    
+    const p = paths[regionId] || 'M 20,20 L 80,20 L 80,80 L 20,80 Z';
+    return `
+      <svg class="srv-card-map-overlay" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+        <path d="${p}" />
+      </svg>
+    `;
+  },
+
+  async loadRatingsAndRankings() {
+    try {
+      if (typeof DataLoader !== 'undefined') {
+        if (!DataLoader.currentYear) {
+          await DataLoader.init();
+        }
+        const currYear = DataLoader.currentYear;
+        const currMonth = DataLoader.currentMonth;
+        const prevYear = DataLoader.previousYear;
+        const prevMonth = DataLoader.previousMonth;
+
+        // Cargar datos globales asíncronamente
+        const [currReviews, prevReviews] = await Promise.all([
+          DataLoader.loadBrandData(currYear, currMonth),
+          DataLoader.loadBrandData(prevYear, prevMonth)
+        ]);
+
+        // Calcular métricas por región
+        const regionStats = {};
+        const prevRegionStats = {};
+
+        for (const [id, name] of Object.entries(REGION_NAME_MAP)) {
+          const regionBranches = SUCURSALES_META_ALL.filter(s => s.region === id);
+          
+          // Mes actual
+          const currRegReviews = currReviews.filter(r => r.region === id);
+          const currCount = currRegReviews.length;
+          const currAvg = currCount ? currRegReviews.reduce((sum, r) => sum + r.stars, 0) / currCount : 0;
+          const currBranchCount = regionBranches.length;
+          const currComplexity = currBranchCount > 0 ? (currBranchCount * 0.018) + (Math.log10(currCount + 1) * 0.008) : 0;
+          const currAdjusted = currAvg * (1 + currComplexity);
+
+          // Mes anterior
+          const prevRegReviews = prevReviews.filter(r => r.region === id);
+          const prevCount = prevRegReviews.length;
+          const prevAvg = prevCount ? prevRegReviews.reduce((sum, r) => sum + r.stars, 0) / prevCount : 0;
+          const prevBranchCount = regionBranches.length;
+          const prevComplexity = prevBranchCount > 0 ? (prevBranchCount * 0.018) + (Math.log10(prevCount + 1) * 0.008) : 0;
+          const prevAdjusted = prevAvg * (1 + prevComplexity);
+
+          regionStats[id] = {
+            id,
+            name,
+            avg: currAvg,
+            count: currCount,
+            adjusted: currAdjusted,
+            delta: currAvg - prevAvg
+          };
+
+          prevRegionStats[id] = {
+            id,
+            name,
+            avg: prevAvg,
+            count: prevCount,
+            adjusted: prevAdjusted
+          };
+        }
+
+        // Calcular rankings (ordenados por adjustedScore)
+        const rankedCurr = Object.values(regionStats)
+          .filter(s => s.count > 0)
+          .sort((a, b) => b.adjusted - a.adjusted);
+
+        const rankedPrev = Object.values(prevRegionStats)
+          .filter(s => s.count > 0)
+          .sort((a, b) => b.adjusted - a.adjusted);
+
+        const prevRankMap = {};
+        rankedPrev.forEach((s, idx) => {
+          prevRankMap[s.id] = idx + 1;
+        });
+
+        // Actualizar cada tarjeta en la interfaz
+        for (const [id, stats] of Object.entries(regionStats)) {
+          const container = document.querySelector(`[data-region-rating="${id}"]`);
+          if (container) {
+            if (stats.count > 0) {
+              let arrowHtml = '';
+              let badgeClass = '';
+              const deltaVal = stats.delta;
+              if (deltaVal > 0.01) {
+                arrowHtml = `<span class="trend-arrow up">▲ +${deltaVal.toFixed(2)}</span>`;
+                badgeClass = 'trend-up';
+              } else if (deltaVal < -0.01) {
+                arrowHtml = `<span class="trend-arrow down">▼ ${deltaVal.toFixed(2)}</span>`;
+                badgeClass = 'trend-down';
+              } else {
+                arrowHtml = `<span class="trend-arrow equal">● =</span>`;
+                badgeClass = 'trend-equal';
+              }
+
+              container.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                  <div class="srv-rating-val">${stats.avg.toFixed(2)} <span style="font-size:11px;color:var(--text-muted);margin-left:2px;">★</span></div>
+                  <div class="srv-rating-trend ${badgeClass}" style="margin-top:2px;">${arrowHtml}</div>
+                </div>
+              `;
+            } else {
+              container.innerHTML = `<span style="font-size:11px;color:var(--text-dim)">Sin reseñas</span>`;
+            }
+          }
+        }
+
+        // Generar la tabla de rankings
+        const tablePlaceholder = document.getElementById('srv-ranking-table-placeholder');
+        if (tablePlaceholder) {
+          if (rankedCurr.length > 0) {
+            const rowsHtml = rankedCurr.map((stats, idx) => {
+              const currentRank = idx + 1;
+              const prevRank = prevRankMap[stats.id];
+              let rankShiftHtml = '';
+              
+              if (prevRank) {
+                const shift = prevRank - currentRank;
+                if (shift > 0) {
+                  rankShiftHtml = `<span class="rank-shift up">▲ ${shift}</span>`;
+                } else if (shift < 0) {
+                  rankShiftHtml = `<span class="rank-shift down">▼ ${Math.abs(shift)}</span>`;
+                } else {
+                  rankShiftHtml = `<span class="rank-shift equal">=</span>`;
+                }
+              } else {
+                rankShiftHtml = `<span class="rank-shift new">NUEVO</span>`;
+              }
+
+              let medalClass = '';
+              if (currentRank === 1) medalClass = 'rank-gold';
+              else if (currentRank === 2) medalClass = 'rank-silver';
+              else if (currentRank === 3) medalClass = 'rank-bronze';
+
+              return `
+                <tr class="ranking-row">
+                  <td class="ranking-cell rank-col">
+                    <span class="ranking-badge ${medalClass}">${currentRank}</span>
+                  </td>
+                  <td class="ranking-cell region-col">
+                    <div style="font-family:var(--sans); font-size:14px; font-weight:700; color:var(--text)">${stats.name}</div>
+                  </td>
+                  <td class="ranking-cell shift-col">${rankShiftHtml}</td>
+                  <td class="ranking-cell reviews-col">${stats.count} reseñas</td>
+                  <td class="ranking-cell rating-col">${stats.avg.toFixed(2)} ★</td>
+                  <td class="ranking-cell score-col font-mono" style="font-weight:700;">${stats.adjusted.toFixed(2)} pts</td>
+                </tr>
+              `;
+            }).join('');
+
+            tablePlaceholder.innerHTML = `
+              <div class="ranking-table-card">
+                <div class="ranking-table-header">
+                  <h3 class="ranking-table-title">Standings & Rendimiento Regional</h3>
+                  <p class="ranking-table-subtitle">Ordenado por Score Ajustado (Complejidad de sucursales + volumen de reseñas vs promedio real)</p>
+                </div>
+                <div class="ranking-table-wrapper">
+                  <table class="ranking-table">
+                    <thead>
+                      <tr>
+                        <th>Puesto</th>
+                        <th>Región</th>
+                        <th>Cambio</th>
+                        <th>Reseñas</th>
+                        <th>Rating Real</th>
+                        <th>Score Ajustado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${rowsHtml}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+            tablePlaceholder.classList.remove('loading');
+          } else {
+            tablePlaceholder.innerHTML = `
+              <div class="ranking-empty" style="text-align:center;padding:40px;color:var(--text-dim);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">No se encontraron datos para calcular el ranking de este mes.</div>
+            `;
+            tablePlaceholder.classList.remove('loading');
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error al cargar ratings y rankings:', e);
+      const tablePlaceholder = document.getElementById('srv-ranking-table-placeholder');
+      if (tablePlaceholder) {
+        tablePlaceholder.innerHTML = `<div class="ranking-error" style="text-align:center;padding:40px;color:var(--alerta);background:rgba(178,58,43,0.06);border:1px solid rgba(178,58,43,0.2);border-radius:var(--radius);">Error al cargar datos desde Supabase. Reintente más tarde.</div>`;
+      }
     }
   },
 
