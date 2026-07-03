@@ -19,10 +19,16 @@ envContent.split('\n').forEach(line => {
 // Inject loaded variables into process.env for classify-review to find GEMINI_API_KEY
 Object.assign(process.env, env);
 
+if (process.argv.includes('--local')) {
+  process.env.USE_LOCAL_NLP = 'true';
+}
+
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey || !process.env.GEMINI_API_KEY) {
+const isLocalMode = process.env.USE_LOCAL_NLP === 'true';
+
+if (!supabaseUrl || !supabaseServiceKey || (!isLocalMode && !process.env.GEMINI_API_KEY)) {
   console.error("❌ Faltan configurar variables en tu archivo .env (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY o GEMINI_API_KEY).");
   process.exit(1);
 }
@@ -100,8 +106,8 @@ async function runBackfill() {
         console.error(`   ❌ Error al procesar el lote ${batchNum}:`, batchErr.message);
       }
       
-      // Delay de 13 segundos entre lotes para no exceder bajo ninguna circunstancia el límite de 5 RPM (llamadas por minuto)
-      await sleep(13000);
+      // Delay entre lotes: 100ms en modo local o 13 segundos para respetar el límite de la API de Gemini (5 RPM)
+      await sleep(isLocalMode ? 100 : 13000);
     }
   }
 

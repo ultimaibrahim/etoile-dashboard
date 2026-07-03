@@ -30,6 +30,92 @@ async function fetchWithRetry(url, options, maxRetries = 5) {
   return fetch(url, options); // Final fallback request
 }
 
+// Local NLP Heuristic Classifier for zero-API/fast fallback
+function classifyLocally(text, stars) {
+  const cleanText = (text || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const isLowRating = stars <= 3;
+  
+  // 1. Keywords definitions
+  const serviceKeywords = ["servicio", "atencion", "meser", "cajer", "tard", "esper", "demor", "trato", "groser", "actitud", "limp", "sucio", "fila", "caja", "personal", "mal servicio"];
+  const qualityKeywords = ["comida", "crepa", "ingrediente", "fria", "frio", "quema", "sabor", "malo", "rancio", "pelo", "mosca", "insipido", "calidad", "cruda", "crudo", "queso", "massa", "masa"];
+  const valueKeywords = ["caro", "precio", "costo", "porcion", "tamaño", "chico", "diminuto", "estafa", "robo", "carisimo", "abusivo"];
+
+  const hasService = serviceKeywords.some(kw => cleanText.includes(kw));
+  const hasQuality = qualityKeywords.some(kw => cleanText.includes(kw));
+  const hasValue = valueKeywords.some(kw => cleanText.includes(kw));
+
+  let es_queja = isLowRating && (hasService || hasQuality || hasValue);
+  let queja_servicio = isLowRating && hasService;
+  let queja_calidad = isLowRating && hasQuality;
+  let queja_valor = isLowRating && hasValue;
+
+  if (isLowRating && !es_queja) {
+    es_queja = true;
+    if (cleanText.includes("crep") || cleanText.includes("comida")) {
+      queja_calidad = true;
+    } else {
+      queja_servicio = true;
+    }
+  }
+
+  // 2. Name Extraction patterns
+  const namePatterns = [
+    /atendio\s+([A-Za-zÁ-ÿ]+)/i,
+    /atencion\s+de\s+([A-Za-zÁ-ÿ]+)/i,
+    /gracias\s+a\s+([A-Za-zÁ-ÿ]+)/i,
+    /servicio\s+de\s+([A-Za-zÁ-ÿ]+)/i,
+    /cajero\s+([A-Za-zÁ-ÿ]+)/i,
+    /mesero\s+([A-Za-zÁ-ÿ]+)/i,
+    /atencion\s+por\s+parte\s+de\s+([A-Za-zÁ-ÿ]+)/i,
+    /excelente\s+servicio\s+de\s+([A-Za-zÁ-ÿ]+)/i,
+    /nos\s+atendio\s+([A-Za-zÁ-ÿ]+)/i
+  ];
+
+  const empleados_mencionados = [];
+  const seenNames = new Set();
+  
+  for (const pattern of namePatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      const name = match[1].trim().charAt(0).toUpperCase() + match[1].trim().slice(1).toLowerCase();
+      const stopWords = ["El", "La", "Los", "Un", "Una", "Mi", "Su", "Excelente", "Muy", "Buena", "Buen", "Me", "Nos", "Se", "Por", "Para", "Tu", "Con"];
+      if (name.length > 2 && !stopWords.includes(name) && !seenNames.has(name)) {
+        seenNames.add(name);
+        empleados_mencionados.push({
+          nombre: name,
+          confianza: "alta",
+          evidencia: match[0]
+        });
+      }
+    }
+  }
+
+  // 3. Resumen tema
+  let resumen_tema = "Opinión positiva";
+  if (es_queja) {
+    if (queja_servicio && queja_calidad) resumen_tema = "Detalle en servicio y calidad";
+    else if (queja_servicio) resumen_tema = "Demora o detalle en servicio";
+    else if (queja_calidad) resumen_tema = "Detalle en calidad o sabor";
+    else if (queja_valor) resumen_tema = "Detalle en relación valor-precio";
+    else resumen_tema = "Detalle en la sucursal";
+  } else if (stars === 5) {
+    resumen_tema = "Excelente experiencia";
+  } else if (stars === 4) {
+    resumen_tema = "Buena experiencia";
+  }
+
+  return {
+    es_queja,
+    categoria_queja: {
+      servicio: queja_servicio,
+      calidad: queja_calidad,
+      valor: queja_valor
+    },
+    empleados_mencionados,
+    resumen_tema
+  };
+}
+
 // Helper function to call Gemini API
 async function callGeminiClassifier(text, stars) {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -147,6 +233,9 @@ async function classifyAndSave(supabase, reviewId, text, stars) {
       resumen_tema: "Sin texto"
     };
     status = 'done';
+  } else if (process.env.USE_LOCAL_NLP === 'true' || !process.env.GEMINI_API_KEY) {
+    classification = classifyLocally(text, stars);
+    status = 'done';
   } else {
     while (attempts > 0) {
       try {
@@ -167,16 +256,12 @@ async function classifyAndSave(supabase, reviewId, text, stars) {
           throw new Error("Estructura JSON inválida");
         }
       } catch (err) {
-        console.warn(`Intento fallido de clasificación para la reseña ${reviewId}:`, err.message);
+        console.warn(`Intento fallido de clasificación con Gemini para la reseña ${reviewId}:`, err.message);
         attempts--;
         if (attempts === 0) {
-          status = 'failed';
-          classification = {
-            es_queja: false,
-            categoria_queja: { servicio: false, calidad: false, valor: false },
-            empleados_mencionados: [],
-            resumen_tema: "Error clasificación"
-          };
+          console.warn(`Usando clasificador NLP local como fallback para la reseña ${reviewId}.`);
+          classification = classifyLocally(text, stars);
+          status = 'done'; // Marcamos como done porque el fallback local lo resolvió
         }
       }
     }
@@ -311,6 +396,29 @@ Responde con una lista JSON de objetos en este formato:
 // Function to classify a batch of reviews and save them in Supabase
 async function classifyBatchAndSave(supabase, reviewsBatch) {
   if (!reviewsBatch || reviewsBatch.length === 0) return [];
+
+  // Fallback local inmediato si no hay API Key o se fuerza NLP local
+  if (process.env.USE_LOCAL_NLP === 'true' || !process.env.GEMINI_API_KEY) {
+    const results = [];
+    for (const r of reviewsBatch) {
+      const classif = classifyLocally(r.text, r.stars);
+      const { error } = await supabase
+        .from('reviews')
+        .update({
+          classification: classif,
+          classification_status: 'done'
+        })
+        .eq('id', r.id);
+      
+      if (error) {
+        console.error(`Error guardando lote local en Supabase para ID ${r.id}:`, error.message);
+        results.push({ id: r.id, status: 'failed' });
+      } else {
+        results.push({ id: r.id, status: 'done', classification: classif });
+      }
+    }
+    return results;
+  }
 
   let attempts = 2;
   let classifications = null;
