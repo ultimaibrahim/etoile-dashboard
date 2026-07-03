@@ -79,24 +79,29 @@ async function runBackfill() {
     console.log("✅ Reseñas sin texto clasificadas.");
   }
 
-  // 3. Procesar reseñas con texto usando Gemini
+  // 3. Procesar reseñas con texto en lotes (batching) usando Gemini
   if (reviewsToClassify.length > 0) {
-    console.log(`🚀 Iniciando clasificación con Gemini para ${reviewsToClassify.length} reseñas...`);
-    let count = 0;
+    const BATCH_SIZE = 15;
+    console.log(`🚀 Iniciando clasificación por lotes (tamaño: ${BATCH_SIZE}) para ${reviewsToClassify.length} reseñas con texto...`);
     
-    for (const r of reviewsToClassify) {
-      count++;
-      console.log(`[${count}/${reviewsToClassify.length}] Clasificando reseña ID: ${r.id} (${r.stars}★) - "${r.text.substring(0, 40)}..."`);
+    const { classifyBatchAndSave } = require('./netlify/functions/classify-review');
+    
+    for (let i = 0; i < reviewsToClassify.length; i += BATCH_SIZE) {
+      const batch = reviewsToClassify.slice(i, i + BATCH_SIZE);
+      const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(reviewsToClassify.length / BATCH_SIZE);
       
+      console.log(`[Lote ${batchNum}/${totalBatches}] Clasificando ${batch.length} reseñas...`);
       try {
-        const result = await classifyAndSave(supabase, r.id, r.text, r.stars);
-        console.log(`   └─ Resultado: ${result.status.toUpperCase()} (${result.classification.resumen_tema})`);
-      } catch (err) {
-        console.error(`   ❌ Error en reseña ${r.id}:`, err.message);
+        const results = await classifyBatchAndSave(supabase, batch);
+        const successCount = results.filter(r => r.status === 'done').length;
+        console.log(`   └─ Éxito: ${successCount}/${batch.length} reseñas procesadas.`);
+      } catch (batchErr) {
+        console.error(`   ❌ Error al procesar el lote ${batchNum}:`, batchErr.message);
       }
       
-      // Delay de 1 segundo entre llamadas para no saturar la cuota gratuita (15 RPM en Gemini 1.5 Flash tier gratuito)
-      await sleep(1200);
+      // Delay de 4 segundos entre lotes para respetar de forma segura el límite de 5 RPM (llamadas por minuto)
+      await sleep(4000);
     }
   }
 

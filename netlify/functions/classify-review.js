@@ -198,6 +198,170 @@ async function classifyAndSave(supabase, reviewId, text, stars) {
   return { classification, status };
 }
 
+// Helper function to call Gemini API for a BATCH of reviews
+async function callGeminiBatchClassifier(reviewsList) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("Falta la variable de entorno GEMINI_API_KEY.");
+  }
+
+  const prompt = `Eres un clasificador de reseñas de Google Maps para una cadena de creperías (La Crêpe Parisienne).
+
+Analiza la siguiente lista de reseñas y clasifica cada una de ellas por su respectivo "id".
+
+Lista de reseñas a clasificar:
+${JSON.stringify(reviewsList)}
+
+Tareas para cada reseña en la lista:
+1. Clasifica si es una queja real sobre: servicio, calidad de producto, o valor/precio.
+   Si no es una queja (es neutra o elogiosa), márcalo como false en cada categoría.
+2. Identifica si se menciona a algún EMPLEADO del restaurante por nombre.
+   Un empleado es alguien que atendió, sirvió, cobró, preparó el pedido o trabaja ahí.
+   NO cuentes como empleado a: acompañantes del cliente, familiares, amigos,
+   ni nombres mencionados sin contexto de haber prestado servicio.
+   Evalúa el contexto: "me atendió Valentina" = empleado.
+   "fui con mi amiga Vale" = NO es empleado.
+   Si tienes duda razonable, márcalo como no-empleado (favorece precisión sobre cobertura).
+3. Escribe un resumen_tema de máximo 8 palabras.
+
+Responde con una lista JSON de objetos en este formato:
+[
+  {
+    "id": "string (el mismo id de la reseña)",
+    "es_queja": boolean,
+    "categoria_queja": {
+      "servicio": boolean,
+      "calidad": boolean,
+      "valor": boolean
+    },
+    "empleados_mencionados": [
+      { "nombre": "string", "confianza": "alta" | "media", "evidencia": "fragmento del texto que justifica la clasificación" }
+    ],
+    "resumen_tema": "string breve, máx 8 palabras"
+  }
+]`;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  
+  const response = await fetchWithRetry(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }]
+        }
+      ],
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'ARRAY',
+          items: {
+            type: 'OBJECT',
+            properties: {
+              id: { type: 'STRING' },
+              es_queja: { type: 'BOOLEAN' },
+              categoria_queja: {
+                type: 'OBJECT',
+                properties: {
+                  servicio: { type: 'BOOLEAN' },
+                  calidad: { type: 'BOOLEAN' },
+                  valor: { type: 'BOOLEAN' }
+                },
+                required: ['servicio', 'calidad', 'valor']
+              },
+              empleados_mencionados: {
+                type: 'ARRAY',
+                items: {
+                  type: 'OBJECT',
+                  properties: {
+                    nombre: { type: 'STRING' },
+                    confianza: { type: 'STRING', enum: ['alta', 'media'] },
+                    evidencia: { type: 'STRING' }
+                  },
+                  required: ['nombre', 'confianza', 'evidencia']
+                }
+              },
+              resumen_tema: { type: 'STRING' }
+            },
+            required: ['id', 'es_queja', 'categoria_queja', 'empleados_mencionados', 'resumen_tema']
+          }
+        }
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error en API de Gemini: ${response.status} ${response.statusText} - ${errorText}`);
+  }
+
+  const result = await response.json();
+  const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!textResponse) {
+    throw new Error("Respuesta vacía o incorrecta de Gemini API.");
+  }
+
+  return JSON.parse(textResponse);
+}
+
+// Function to classify a batch of reviews and save them in Supabase
+async function classifyBatchAndSave(supabase, reviewsBatch) {
+  if (!reviewsBatch || reviewsBatch.length === 0) return [];
+
+  let attempts = 2;
+  let classifications = null;
+
+  const inputList = reviewsBatch.map(r => ({ id: r.id, stars: r.stars, text: r.text }));
+
+  while (attempts > 0) {
+    try {
+      classifications = await callGeminiBatchClassifier(inputList);
+      if (Array.isArray(classifications) && classifications.length === reviewsBatch.length) {
+        break;
+      }
+      throw new Error("La cantidad de clasificaciones no coincide con la cantidad de reseñas de entrada.");
+    } catch (err) {
+      console.warn(`Intento fallido de clasificación por lote:`, err.message);
+      attempts--;
+      if (attempts === 0) {
+        console.warn("Lote fallido permanentemente. Cambiando a clasificación individual...");
+        const fallbackResults = [];
+        for (const rev of reviewsBatch) {
+          const res = await classifyAndSave(supabase, rev.id, rev.text, rev.stars);
+          fallbackResults.push({ id: rev.id, ...res });
+        }
+        return fallbackResults;
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+
+  // Guardar todas en Supabase
+  const results = [];
+  for (const classif of classifications) {
+    const { error } = await supabase
+      .from('reviews')
+      .update({
+        classification: classif,
+        classification_status: 'done'
+      })
+      .eq('id', classif.id);
+
+    if (error) {
+      console.error(`Error guardando lote en Supabase para ID ${classif.id}:`, error.message);
+      results.push({ id: classif.id, status: 'failed' });
+    } else {
+      results.push({ id: classif.id, status: 'done', classification: classif });
+    }
+  }
+
+  return results;
+}
+
 exports.handler = async (event, context) => {
   // Authorization: Bearer DIAG_SECRET o APIFY_WEBHOOK_SECRET
   const authHeader = event.headers['authorization'] || event.headers['Authorization'];
@@ -236,8 +400,10 @@ exports.handler = async (event, context) => {
   }
 };
 
-// Exportar funciones para uso directo en otros Netlify Functions sin llamadas HTTP
 module.exports = {
   callGeminiClassifier,
-  classifyAndSave
+  classifyAndSave,
+  callGeminiBatchClassifier,
+  classifyBatchAndSave
 };
+
