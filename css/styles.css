@@ -2670,7 +2670,7 @@ html[data-ui-premium="true"] {
   --sans: 'Plus Jakarta Sans', "Helvetica Neue", Arial, sans-serif;
   --serif: 'Playfair Display', "Instrument Serif", serif;
   --mono: 'JetBrains Mono', monospace;
-  --giaza: 'Playfair Display', serif;
+  --giaza: "Giaza", 'Playfair Display', serif;
 
   --radius: 20px;
   --radius-sm: 12px;
@@ -3701,16 +3701,15 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.6s cubic-bezier(0.85, 0, 0.15, 1) 0.2s, background-color 0.6s ease 0.2s, opacity 0.6s cubic-bezier(0.85, 0, 0.15, 1) 0.2s;
 }
 
-/* Orbit Wrapping Animation */
 #lcp-loader.wrap-active .loader-phrase-flat {
   opacity: 0;
-  transform: scale(0.95);
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transform: translateY(-8px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 #lcp-loader.wrap-active .loader-logo-svg-text {
-  transform: scale(0.95);
   opacity: 0;
-  transition: transform 0.4s ease, opacity 0.4s ease;
+  transform: translateY(8px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Line Activation & Expansion */
