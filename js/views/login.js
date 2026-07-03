@@ -11,7 +11,8 @@ const LoginView = {
     app.innerHTML = `
       <div class="login-wrapper">
         <div class="login-video-container">
-          <video id="login-bg-video" autoplay muted playsinline class="login-bg-video"></video>
+          <video id="login-bg-video-a" autoplay muted playsinline class="login-bg-video active"></video>
+          <video id="login-bg-video-b" muted playsinline class="login-bg-video"></video>
           <div class="login-video-overlay"></div>
         </div>
         <div class="login-bg-deco left">${svgIcon('fleur')}</div>
@@ -88,8 +89,14 @@ const LoginView = {
           overflow: hidden;
         }
         .login-bg-video {
+          position: absolute;
+          top: 0; left: 0;
           width: 100%; height: 100%;
           object-fit: cover;
+          opacity: 0;
+          transition: opacity 0.4s ease;
+        }
+        .login-bg-video.active {
           opacity: 0.35;
         }
         .login-video-overlay {
@@ -370,15 +377,13 @@ const LoginView = {
     'videos/crepa_recien_hecha.mp4',
     'videos/antojo_disfrutar.mp4',
     'videos/historias_antojo.mp4',
-    'videos/vinculos_simple.mp4',
-    'videos/sonrisas_crepa.mp4'
+    'videos/vinculos_simple.mp4'
   ],
   _activeQueue: [],
 
   _getNextVideo() {
     if (this._activeQueue.length === 0) {
       this._activeQueue = [...this._VIDEO_PLAYLIST];
-      // Fisher-Yates shuffle
       for (let i = this._activeQueue.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [this._activeQueue[i], this._activeQueue[j]] = [this._activeQueue[j], this._activeQueue[i]];
@@ -388,20 +393,43 @@ const LoginView = {
   },
 
   _initVideoBackground() {
-    const videoEl = document.getElementById('login-bg-video');
-    if (!videoEl) return;
+    const a = document.getElementById('login-bg-video-a');
+    const b = document.getElementById('login-bg-video-b');
+    if (!a || !b) return;
 
-    const playNext = () => {
-      videoEl.src = this._getNextVideo();
-      videoEl.load();
-      videoEl.play().catch(() => {});
+    let current = a;
+    let next = b;
+
+    // Precargar el siguiente video en el elemento oculto
+    const preloadNext = () => {
+      next.src = this._getNextVideo();
+      next.load();
     };
 
-    // Primer video inmediato
-    videoEl.src = this._getNextVideo();
-    videoEl.load();
-    videoEl.play().catch(() => {});
+    // Al terminar el video activo, intercambiar
+    const swap = () => {
+      next.play().catch(() => {});
+      next.classList.add('active');
+      current.classList.remove('active');
+      current.pause();
+      current.removeAttribute('src');
+      current.load();
 
-    videoEl.addEventListener('ended', playNext);
+      // Intercambiar referencias
+      [current, next] = [next, current];
+      preloadNext();
+    };
+
+    a.addEventListener('ended', swap);
+    b.addEventListener('ended', swap);
+
+    // Arrancar el primer video
+    a.src = this._getNextVideo();
+    a.load();
+    a.play().catch(() => {});
+    a.classList.add('active');
+
+    // Precargar el segundo
+    preloadNext();
   }
 };
