@@ -1,2 +1,23 @@
 [build.environment]
   SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
+
+# Headers globales para toda la app
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cross-Origin-Resource-Policy = "same-origin"
+    Cross-Origin-Opener-Policy = "same-origin"
+
+# Headers específicos para videos — permiten carga desde el mismo origen
+[[headers]]
+  for = "/videos/*"
+  [headers.values]
+    Cross-Origin-Resource-Policy = "same-site"
+    Cache-Control = "public, max-age=86400"
+
+# Headers para la función get-config
+[[headers]]
+  for = "/.netlify/functions/get-config"
+  [headers.values]
+    Access-Control-Allow-Origin = "same-origin"
+    Cache-Control = "no-cache, no-store, must-revalidate"
