@@ -4171,3 +4171,35 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   color: #FAF5EB;
 }
 
+/* ── BARRA DE SCROLL PERSONALIZADA PREMIUM ── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 10px;
+  border: 2px solid var(--bg);
+  transition: background 0.3s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--oro);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) var(--bg);
+}
+
+/* ── CONTROL DE DESBORDAMIENTO EN LOGIN ── */
+html.login-page-active,
+html.login-page-active body {
+  overflow: hidden !important;
+  height: 100% !important;
+  max-height: 100vh !important;
+}
+

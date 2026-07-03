@@ -89,9 +89,13 @@ const Router = {
         window.updateLcpLoader(60);
       }
       
+      document.documentElement.classList.remove('login-page-active');
       if (route.handler) {
         await route.handler(route.params);
         this.current = hash;
+      }
+      if (hash === '#/login') {
+        document.documentElement.classList.add('login-page-active');
       }
       
       if (isMainTransition) {
