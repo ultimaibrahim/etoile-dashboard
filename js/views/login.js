@@ -10,6 +10,10 @@ const LoginView = {
     // Clases del contenedor principal para dar la estética premium y centrar el login
     app.innerHTML = `
       <div class="login-wrapper">
+        <div class="login-video-container">
+          <video id="login-bg-video" autoplay muted playsinline class="login-bg-video"></video>
+          <div class="login-video-overlay"></div>
+        </div>
         <div class="login-bg-deco left">${svgIcon('fleur')}</div>
         <div class="login-bg-deco right">${svgIcon('fleur')}</div>
         
@@ -71,10 +75,36 @@ const LoginView = {
           align-items: center;
           justify-content: center;
           background: var(--bg);
-          background-image: radial-gradient(circle at center, var(--surface-2) 0%, var(--bg) 100%);
           padding: 20px;
           position: relative;
           overflow: hidden;
+        }
+        /* ── VIDEO DE FONDO ── */
+        .login-video-container {
+          position: absolute;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+          z-index: 0;
+          overflow: hidden;
+        }
+        .login-bg-video {
+          width: 100%; height: 100%;
+          object-fit: cover;
+          opacity: 0;
+          transition: opacity 1s ease-in-out;
+        }
+        .login-bg-video.visible {
+          opacity: 0.35;
+        }
+        .login-video-overlay {
+          position: absolute;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+          background: radial-gradient(ellipse at center, rgba(20,24,26,0.15) 0%, rgba(20,24,26,0.55) 100%);
+          z-index: 1;
+        }
+        [data-theme="dark"] .login-video-overlay {
+          background: radial-gradient(ellipse at center, rgba(10,12,14,0.25) 0%, rgba(10,12,14,0.7) 100%);
         }
         .login-bg-deco {
           position: absolute;
@@ -292,6 +322,9 @@ const LoginView = {
       `;
       document.head.appendChild(style);
     }
+
+    // ── Iniciar fondo de video ──
+    LoginView._initVideoBackground();
   },
 
   async handleSubmit(event) {
@@ -333,5 +366,55 @@ const LoginView = {
         `;
       }
     }
+  }
+,
+
+  // ── Playlist de Videos de Fondo ──
+  _VIDEO_PLAYLIST: [
+    'videos/crepa_recien_hecha.mp4',
+    'videos/antojo_disfrutar.mp4',
+    'videos/historias_antojo.mp4',
+    'videos/vinculos_simple.mp4',
+    'videos/sonrisas_crepa.mp4'
+  ],
+  _activeQueue: [],
+
+  _getNextVideo() {
+    if (this._activeQueue.length === 0) {
+      this._activeQueue = [...this._VIDEO_PLAYLIST];
+      // Fisher-Yates shuffle
+      for (let i = this._activeQueue.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [this._activeQueue[i], this._activeQueue[j]] = [this._activeQueue[j], this._activeQueue[i]];
+      }
+    }
+    return this._activeQueue.pop();
+  },
+
+  _initVideoBackground() {
+    const videoEl = document.getElementById('login-bg-video');
+    if (!videoEl) return;
+
+    const playNext = () => {
+      videoEl.classList.remove('visible');
+      setTimeout(() => {
+        videoEl.src = this._getNextVideo();
+        videoEl.load();
+        videoEl.play().catch(() => {});
+        requestAnimationFrame(() => {
+          videoEl.classList.add('visible');
+        });
+      }, 900);
+    };
+
+    // Primer video inmediato
+    videoEl.src = this._getNextVideo();
+    videoEl.load();
+    videoEl.play().catch(() => {});
+    requestAnimationFrame(() => {
+      setTimeout(() => videoEl.classList.add('visible'), 300);
+    });
+
+    videoEl.addEventListener('ended', playNext);
   }
 };
