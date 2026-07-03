@@ -1,5 +1,35 @@
 const { createClient } = require('@supabase/supabase-js');
 
+// Helper to fetch with retry and backoff on 429 errors
+async function fetchWithRetry(url, options, maxRetries = 5) {
+  let delay = 2000;
+  for (let i = 0; i < maxRetries; i++) {
+    const response = await fetch(url, options);
+    if (response.status === 429) {
+      let waitTime = delay;
+      try {
+        // Clone the response so we can read it and still return it if we run out of retries
+        const clone = response.clone();
+        const retryInfo = await clone.json();
+        if (retryInfo.error?.message?.includes("Please retry in")) {
+          const match = retryInfo.error.message.match(/Please retry in ([\d\.]+)s/);
+          if (match) {
+            waitTime = Math.ceil(parseFloat(match[1]) + 1.5) * 1000;
+          }
+        }
+      } catch (e) {
+        // Ignorar fallo en parseo de JSON de error
+      }
+      console.warn(`[429 Quota] Límite excedido. Reintentando en ${waitTime / 1000}s... (Intento ${i + 1}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      delay *= 2.5; // Exponential backoff factor
+      continue;
+    }
+    return response;
+  }
+  return fetch(url, options); // Final fallback request
+}
+
 // Helper function to call Gemini API
 async function callGeminiClassifier(text, stars) {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -41,7 +71,7 @@ Responde con este formato exacto:
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
   
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
