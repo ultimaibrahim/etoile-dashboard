@@ -583,7 +583,7 @@ const SelectRegionView = {
             <h2 class="brand-shortcut-title">étoile corporativo</h2>
             <p class="brand-shortcut-desc">Acceder al análisis detallado de la marca: KPIs consolidados, auditoría de quejas críticas y ranking de regiones ponderado por complejidad operativa.</p>
           </div>
-          <button class="brand-shortcut-btn" onclick="Router.navigate('#/brand')">
+          <button class="brand-shortcut-btn" onclick="SelectRegionView.handleSelectCorporate()">
             <span>Abrir Dashboard de Marca</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12,5 19,12 12,19"></polyline></svg>
           </button>
@@ -660,12 +660,39 @@ const SelectRegionView = {
       container.classList.add('exit-transition');
     }
 
-    setTimeout(async () => {
-      if (typeof DataLoader !== 'undefined') {
-        await DataLoader.switchRegion(regionId);
-      }
-      Router.navigate('#/');
-    }, 400);
+    const regionName = getRegionName(regionId);
+    if (typeof showRegionTransitionLoader !== 'undefined') {
+      showRegionTransitionLoader(regionName, 'Accediendo al panel regional...', async () => {
+        if (typeof DataLoader !== 'undefined') {
+          await DataLoader.switchRegion(regionId);
+        }
+        Router.navigate('#/');
+      });
+    } else {
+      setTimeout(async () => {
+        if (typeof DataLoader !== 'undefined') {
+          await DataLoader.switchRegion(regionId);
+        }
+        Router.navigate('#/');
+      }, 400);
+    }
+  },
+
+  handleSelectCorporate() {
+    const container = document.getElementById('srvContainer');
+    if (container) {
+      container.classList.add('exit-transition');
+    }
+
+    if (typeof showRegionTransitionLoader !== 'undefined') {
+      showRegionTransitionLoader('étoile corporativo', 'Accediendo al centro de mando...', () => {
+        Router.navigate('#/brand');
+      });
+    } else {
+      setTimeout(() => {
+        Router.navigate('#/brand');
+      }, 400);
+    }
   },
 
   handleMonthSelect(monthVal) {

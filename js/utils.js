@@ -307,10 +307,53 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
   return header;
 }
 
+function showRegionTransitionLoader(titleText, subtitleText, callback) {
+  let loader = document.getElementById('region-transition-loader');
+  if (!loader) {
+    loader = document.createElement('div');
+    loader.id = 'region-transition-loader';
+    loader.className = 'region-transition-loader';
+    loader.innerHTML = `
+      <div class="region-transition-content">
+        <h1 class="region-transition-title" id="region-transition-title"></h1>
+        <p class="region-transition-subtitle" id="region-transition-subtitle"></p>
+      </div>
+    `;
+    document.body.appendChild(loader);
+  }
+
+  document.getElementById('region-transition-title').textContent = titleText;
+  document.getElementById('region-transition-subtitle').textContent = subtitleText;
+
+  // Forzar reflow
+  loader.getBoundingClientRect();
+  loader.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  setTimeout(async () => {
+    if (callback) {
+      await callback();
+    }
+  }, 800);
+
+  setTimeout(() => {
+    loader.classList.remove('active');
+    setTimeout(() => {
+      if (loader && loader.parentNode) {
+        loader.parentNode.removeChild(loader);
+      }
+      document.body.style.overflow = '';
+    }, 300);
+  }, 1100);
+}
+
 async function handleRegionChange(region) {
   if (typeof DataLoader !== 'undefined') {
-    await DataLoader.switchRegion(region);
-    Router.resolve();
+    const regionName = getRegionName(region);
+    showRegionTransitionLoader(regionName, 'Accediendo al panel regional...', async () => {
+      await DataLoader.switchRegion(region);
+      Router.resolve();
+    });
   }
 }
 

@@ -4101,3 +4101,73 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   }
 }
 
+/* ─── PANTALLA DE TRANSICIÓN DE REGIONES Y CORPORATIVO ───────────── */
+.region-transition-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
+}
+.region-transition-loader.active {
+  opacity: 1;
+  visibility: visible;
+}
+.region-transition-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  transform: scale(0.92);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.region-transition-loader.active .region-transition-content {
+  transform: scale(1);
+}
+.region-transition-title {
+  font-family: var(--giaza);
+  font-size: 52px;
+  color: var(--verde);
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s;
+}
+.region-transition-loader.active .region-transition-title {
+  opacity: 1;
+  transform: translateY(0);
+}
+.region-transition-subtitle {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--oro);
+  margin: 0;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+}
+.region-transition-loader.active .region-transition-subtitle {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Modo oscuro adaptativo */
+[data-theme="dark"] .region-transition-title {
+  color: #FAF5EB;
+}
+
