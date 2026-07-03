@@ -33,17 +33,33 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function runBackfill() {
-  console.log("🔍 Buscando reseñas pendientes de clasificación...");
+  console.log("🔍 Buscando reseñas pendientes de clasificación en Supabase...");
 
-  // 1. Obtener reseñas sin clasificación o con estado pending
-  const { data: reviews, error } = await supabase
-    .from('reviews')
-    .select('id, text, stars')
-    .or('classification.is.null,classification_status.eq.pending');
+  let reviews = [];
+  let from = 0;
+  let to = 999;
+  let keepFetching = true;
 
-  if (error) {
-    console.error("❌ Error al obtener reseñas de Supabase:", error.message);
-    process.exit(1);
+  while (keepFetching) {
+    console.log(`   Obteniendo lote de rango ${from} a ${to}...`);
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('id, text, stars')
+      .or('classification.is.null,classification_status.eq.pending')
+      .range(from, to);
+
+    if (error) {
+      console.error("❌ Error al obtener reseñas de Supabase:", error.message);
+      process.exit(1);
+    }
+
+    reviews = reviews.concat(data);
+    if (data.length < 1000) {
+      keepFetching = false;
+    } else {
+      from += 1000;
+      to += 1000;
+    }
   }
 
   // Filtrar las que tienen texto real
