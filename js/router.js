@@ -66,9 +66,7 @@ const Router = {
 
     // Determinar si es una transición principal (Login, Select Region, o inicial)
     const isMainTransition = !this.current || 
-                             this.current === '#/login' || 
-                             this.current === '#/select-region' || 
-                             hash === '#/select-region' || 
+                             (this.current === '#/login' && hash === '#/select-region') ||
                              hash === '#/login';
 
     if (isMainTransition && window.showLcpLoader) {
