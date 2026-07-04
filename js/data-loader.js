@@ -55,6 +55,16 @@ const DataLoader = {
       this.previousMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
       return;
     }
+    
+    // Si hay un mes guardado y es válido, lo usamos
+    if (typeof ViewState !== 'undefined') {
+      const saved = ViewState.get('month');
+      if (saved && saved.y && saved.m && this.manifest[saved.y] && this.manifest[saved.y].includes(saved.m)) {
+        this.setMonth(saved.y, saved.m);
+        return;
+      }
+    }
+
     const years = Object.keys(this.manifest).map(Number).sort((a, b) => b - a);
     if (years.length > 0) {
       this.currentYear = years[0];
@@ -416,6 +426,9 @@ const DataLoader = {
   setMonth(year, month) {
     this.currentYear = year;
     this.currentMonth = month;
+    if (typeof ViewState !== 'undefined') {
+      ViewState.set('month', { y: year, m: month });
+    }
     const availableMonths = this.manifest[year] || [];
     const sortedMonths = [...availableMonths].sort((a, b) => a - b);
     const idx = sortedMonths.indexOf(month);

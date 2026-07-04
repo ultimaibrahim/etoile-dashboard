@@ -160,6 +160,9 @@ const AppAuth = {
   },
 
   async logout() {
+    if (typeof ViewState !== 'undefined') {
+      ViewState.clear();
+    }
     if (supabaseClient) {
       await supabaseClient.auth.signOut();
     }

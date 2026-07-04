@@ -41,11 +41,23 @@ const Router = {
   },
 
   navigate(hash) {
+    if ((window.location.hash === '#/' || window.location.hash === '') && hash.startsWith('#/sucursal/')) {
+      if (typeof ViewState !== 'undefined') {
+        ViewState.set('homeScroll', window.scrollY);
+      }
+    }
     window.location.hash = hash;
   },
 
   async resolve() {
     const hash = window.location.hash || '#/';
+
+    // Guardar scroll si navegamos desde Home a Sucursal
+    if ((this.current === '#/' || !this.current) && hash.startsWith('#/sucursal/')) {
+      if (typeof ViewState !== 'undefined') {
+        ViewState.set('homeScroll', window.scrollY);
+      }
+    }
 
     // Verificar sesión antes de permitir la navegación
     const authenticated = typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated();
@@ -83,6 +95,8 @@ const Router = {
       HomeView.clearAutoplay();
     }
 
+    const prevRoute = this.current;
+
     setTimeout(async () => {
       const route = this.match(hash);
       if (isMainTransition && window.updateLcpLoader) {
@@ -109,7 +123,12 @@ const Router = {
         }
       } else {
         app.classList.remove('fade-out');
-        window.scrollTo(0, 0);
+        if (hash === '#/' && prevRoute && prevRoute.startsWith('#/sucursal/')) {
+          const savedScroll = typeof ViewState !== 'undefined' ? ViewState.get('homeScroll', 0) : 0;
+          window.scrollTo(0, savedScroll);
+        } else {
+          window.scrollTo(0, 0);
+        }
         initReveal();
       }
     }, 150);

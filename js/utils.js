@@ -8,6 +8,193 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+/* ── VIEW STATE PERSISTENCE ────────────────────────────── */
+const ViewState = {
+  KEY: 'lcpViewState',
+  _read() {
+    try { return JSON.parse(sessionStorage.getItem(this.KEY)) || {}; }
+    catch (e) { return {}; }
+  },
+  get(k, fallback) { const s = this._read(); return (k in s) ? s[k] : fallback; },
+  set(k, v) {
+    const s = this._read(); s[k] = v;
+    try { sessionStorage.setItem(this.KEY, JSON.stringify(s)); } catch (e) {}
+  },
+  clear() { try { sessionStorage.removeItem(this.KEY); } catch (e) {} }
+};
+
+/* ── UNIFIED MODAL MANAGER ────────────────────────────── */
+const ModalManager = {
+  _stack: [],
+  _ignoreNextPop: false,
+  
+  open(el, onClose) {
+    if (!el) return;
+    const activeEl = document.activeElement;
+    
+    // Accesibilidad básica
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    
+    this._stack.push({ el, onClose, activeElement: activeEl });
+    
+    // Crear entrada en el historial
+    history.pushState({ lcpModal: true }, '');
+    
+    if (this._stack.length === 1) {
+      this._escHandlerBound = this._escHandler.bind(this);
+      this._popHandlerBound = this._popHandler.bind(this);
+      document.addEventListener('keydown', this._escHandlerBound);
+      window.addEventListener('popstate', this._popHandlerBound);
+    }
+    
+    // Mover foco a algún botón de cierre o al contenedor mismo
+    setTimeout(() => {
+      const closeBtn = el.querySelector('button[class*="close"], button[class*="cerrar"], .btn-close, .modal-close');
+      if (closeBtn) closeBtn.focus();
+      else el.focus();
+    }, 50);
+  },
+  
+  close(fromPop = false) {
+    const top = this._stack.pop();
+    if (!top) return;
+    
+    if (!fromPop) {
+      this._ignoreNextPop = true;
+      history.back();
+    }
+    
+    this._doClose(top);
+    if (this._stack.length === 0) this._teardown();
+  },
+  
+  _doClose(entry) {
+    if (entry.onClose) {
+      entry.onClose();
+    } else if (entry.el) {
+      entry.el.remove();
+    }
+    
+    // Restaurar foco
+    if (entry.activeElement && typeof entry.activeElement.focus === 'function') {
+      entry.activeElement.focus();
+    }
+    
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  },
+  
+  _escHandler(e) {
+    if (e.key === 'Escape') {
+      this.close(false);
+    }
+  },
+  
+  _popHandler() {
+    if (this._ignoreNextPop) {
+      this._ignoreNextPop = false;
+      return;
+    }
+    const top = this._stack.pop();
+    if (top) {
+      this._doClose(top);
+    }
+    if (this._stack.length === 0) this._teardown();
+  },
+  
+  _teardown() {
+    document.removeEventListener('keydown', this._escHandlerBound);
+    window.removeEventListener('popstate', this._popHandlerBound);
+    this._ignoreNextPop = false;
+  }
+};
+
+/* ── SKELETON RENDERER ─────────────────────────────────── */
+function renderSkeleton(container, type = 'card', count = 4) {
+  if (!container) return;
+  container.innerHTML = Array.from({ length: count }, () => `<div class="skeleton skeleton-${type}"></div>`).join('');
+}
+
+/* ── EMPTY STATE RENDERER ──────────────────────────────── */
+function emptyState({ icon = '—', title, hint = '', actionLabel = '', actionAttr = '' }) {
+  return `<div class="empty-state">
+    <span class="glyph">${icon}</span>
+    <p class="es-title">${title}</p>
+    ${hint ? `<p class="es-hint">${hint}</p>` : ''}
+    ${actionLabel ? `<button class="es-action" ${actionAttr}>${actionLabel}</button>` : ''}
+  </div>`;
+}
+
+/* ── TOAST MESSAGES ────────────────────────────────────── */
+const Toast = {
+  show(message, duration = 2500) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = 'lcp-toast';
+    toast.setAttribute('role', 'status');
+    toast.innerText = message;
+    
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('visible'), 50);
+    
+    setTimeout(() => {
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 400);
+    }, duration);
+  }
+};
+
+/* ── WHATSAPP SUMMARY SHARING ──────────────────────────── */
+function buildBranchSummary(branchMeta, stats) {
+  // stats: { avg, totalReviews, negatives, unreplied, topTheme, monthLabel }
+  const truncatedTheme = stats.topTheme ? (stats.topTheme.length > 80 ? stats.topTheme.substring(0, 77) + '...' : stats.topTheme) : '';
+  return [
+    `📊 étoile · ${branchMeta.nombre} · ${stats.monthLabel}`,
+    `⭐ Promedio: ${stats.avg.toFixed(2)} (${stats.totalReviews} reseñas)`,
+    `🔴 Quejas 1-2★: ${stats.negatives}${stats.unreplied ? ` (${stats.unreplied} sin responder)` : ''}`,
+    stats.topTheme ? `⚠️ Tema principal: ${truncatedTheme}` : null,
+    `— generado desde etoile-lcp.netlify.app`
+  ].filter(Boolean).join('\n');
+}
+
+async function shareSummary(text) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ text });
+      return 'shared';
+    } catch (e) {
+      if (e.name === 'AbortError') return 'cancelled';
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    return 'copied';
+  } catch (e) {
+    return 'failed';
+  }
+}
+
+/* ── SPARKLINE GENERATOR ───────────────────────────────── */
+function sparklineSvg(values, { w = 64, h = 20 } = {}) {
+  if (!values || values.length < 2) return '';
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = (max - min) || 1;
+  const pts = values.map((v, i) =>
+    `${(i / (values.length - 1)) * w},${h - ((v - min) / range) * (h - 4) - 2}`
+  ).join(' ');
+  const trendUp = values[values.length - 1] >= values[0];
+  
+  return `<svg class="sparkline ${trendUp ? 'up' : 'down'}" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+}
+
 function starStr(n) {
   const num = Math.round(Number(n) || 0);
   const safeN = Math.max(0, Math.min(5, num));

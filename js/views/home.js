@@ -17,14 +17,18 @@ const HomeView = {
   scrollAnimationActive: false,
 
   async render() {
+    if (typeof ViewState !== 'undefined') {
+      this.filter = ViewState.get('homeFilter', 'todas');
+    }
     if (typeof SUCURSALES_META !== 'undefined' && SUCURSALES_META.length === 1) {
       await BranchView.render({ id: SUCURSALES_META[0].id }, true);
       return;
     }
     Charts.destroyAll();
 
-    // Render skeleton loaders immediately while loading data
-    this.renderSkeleton();
+    const skeletonTimeout = setTimeout(() => {
+      this.renderSkeleton();
+    }, 250);
 
     const currYear = DataLoader.currentYear;
     const prevYear = DataLoader.previousYear;
@@ -41,7 +45,12 @@ const HomeView = {
     if (hasPrevMonth) {
       loadPromises.push(DataLoader.loadMonth(prevYear, prevMonth));
     }
-    await Promise.all(loadPromises);
+    
+    try {
+      await Promise.all(loadPromises);
+    } finally {
+      clearTimeout(skeletonTimeout);
+    }
 
     const prevStats = hasPrevMonth ? DataLoader.getAllBranchStats(prevYear, prevMonth) : {};
     const currStats = DataLoader.getAllBranchStats(currYear, currMonth);
@@ -396,7 +405,7 @@ const HomeView = {
           </div>
         </div>
 
-        <div class="branch-grid" id="branchGrid">${cards || '<div class="empty-state"><span class="glyph">—</span>Sin sucursales para este filtro</div>'}</div>
+        <div class="branch-grid" id="branchGrid">${cards || (typeof emptyState !== 'undefined' ? emptyState({ title: 'Sin sucursales con este filtro', hint: 'Prueba seleccionando otro estado en los chips superiores.', actionLabel: 'Ver todas', actionAttr: 'onclick="HomeView.setFilter(\'todas\')"' }) : '<div class="empty-state">Sin sucursales para este filtro</div>')}</div>
       </section>
 
       ${this._buildReviewFeed(activeReviews, countWithText)}
@@ -626,6 +635,9 @@ const HomeView = {
 
   async setFilter(f) {
     this.filter = f;
+    if (typeof ViewState !== 'undefined') {
+      ViewState.set('homeFilter', f);
+    }
     this.searchQuery = '';
     this.sortBy = 'default';
     await this.render();
@@ -683,6 +695,10 @@ const HomeView = {
 
     const currGlobal = DataLoader.getGlobalStats(currYear, currMonth);
     const avgRating = currGlobal.avgRating;
+    const ytdMonths = (DataLoader.manifest && DataLoader.manifest[currYear])
+      ? [...DataLoader.manifest[currYear]].filter(m => m <= currMonth).sort((a,b) => a - b)
+      : [currMonth];
+
     const cards = branches.map(s => {
       const delta = (s.curr.score - s.historico);
       const dClass = delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : 'flat';
@@ -715,6 +731,24 @@ const HomeView = {
         ? `<div class="bc-mayo" style="background: rgba(138, 135, 124, 0.08); color: var(--text-dim);"><span class="mono">${currMonthShort}</span> <span>Sin actividad</span></div>`
         : mayoBlock;
 
+      // Calcular tendencia histórica de los últimos 3-4 meses
+      const branchTrendScores = [];
+      const trendMonths = [...ytdMonths].sort((a, b) => b - a).slice(0, 4).reverse();
+      trendMonths.forEach(m => {
+        const bStats = DataLoader.computeBranchStats(currYear, m, s.id);
+        if (bStats && bStats.count > 0) {
+          branchTrendScores.push(bStats.avg);
+        } else {
+          branchTrendScores.push(s.historico || 4.0);
+        }
+      });
+
+      let sparklineHtml = '';
+      if (branchTrendScores.length >= 2 && typeof sparklineSvg === 'function') {
+        const svg = sparklineSvg(branchTrendScores, { w: 60, h: 20 });
+        sparklineHtml = `<div class="bc-sparkline" title="Tendencia últimos meses">${svg}</div>`;
+      }
+
       const isCinemex = s.isCinemex || false;
       return `
       <a class="branch-card${hoverClass}${isCinemex ? ' cinemex-card' : ''}" href="#/sucursal/${s.id}">
@@ -725,14 +759,17 @@ const HomeView = {
           <div class="bc-card-stars">${s.curr.score > 0 ? starStr(Math.round(s.curr.score)) : '—'}</div>
           <span class="bc-status ${statusClass}" title="${statusTitle}"></span>
         </div>
-        <div class="bc-score-row"><span class="bc-score num">${currScoreStr}</span></div>
+        <div class="bc-score-row" style="display: flex; align-items: flex-end; justify-content: space-between; width: 100%;">
+          <span class="bc-score num">${currScoreStr}</span>
+          ${sparklineHtml}
+        </div>
         <div class="bc-meta"><span><strong>${s.curr.count}</strong> reseña${s.curr.count !== 1 ? 's' : ''} ${capitalizedCurrMonth.substring(0,3).toLowerCase()}</span><span class="bc-delta ${dClass} num">${dStr} vs hist</span></div>
         ${cardMayoBlock}
       </a>`;
     }).join('');
 
     const grid = document.getElementById('branchGrid');
-    if (grid) grid.innerHTML = cards || '<div class="empty-state"><span class="glyph">—</span>Sin sucursales para este filtro</div>';
+    if (grid) grid.innerHTML = cards || (typeof emptyState !== 'undefined' ? emptyState({ title: 'Sin sucursales con este filtro', hint: 'Prueba seleccionando otro estado en los chips superiores.', actionLabel: 'Ver todas', actionAttr: 'onclick="HomeView.setFilter(\'todas\')"' }) : '<div class="empty-state">Sin sucursales para este filtro</div>');
   },
 
   changeMonth(direction) {
@@ -913,13 +950,15 @@ const HomeView = {
 
     this.filterSidebarReviews();
 
-    const _escSidebarHandler = (e) => {
-      if (e.key === 'Escape') {
-        HomeView.closeSidebar();
-        document.removeEventListener('keydown', _escSidebarHandler);
-      }
-    };
-    document.addEventListener('keydown', _escSidebarHandler);
+    if (typeof ModalManager !== 'undefined') {
+      ModalManager.open(overlay, () => {
+        const el = document.getElementById('feedSidebarOverlay');
+        if (el) {
+          el.classList.remove('active');
+          setTimeout(() => el.remove(), 300);
+        }
+      });
+    }
   },
 
   getSentimentLabel(val) {
@@ -937,7 +976,38 @@ const HomeView = {
     this.filterSidebarReviews();
   },
 
+  resetSidebarFilters() {
+    this.feedSentiment = 'todas';
+    this.feedBranch = 'todas';
+    this.feedOnlyUnreplied = false;
+    
+    // Reset custom dropdown labels
+    const sentimentLabel = document.getElementById('sidebarSentimentValLabel');
+    if (sentimentLabel) sentimentLabel.innerText = 'Todas las calificaciones';
+    const branchLabel = document.getElementById('sidebarBranchValLabel');
+    if (branchLabel) branchLabel.innerText = 'Todas las sucursales';
+    
+    // Clear active classes in dropdown options
+    document.querySelectorAll('#sidebarSentimentDropdown .custom-option').forEach(opt => {
+      if (opt.getAttribute('data-value') === 'todas') opt.classList.add('active');
+      else opt.classList.remove('active');
+    });
+    document.querySelectorAll('#sidebarBranchDropdown .custom-option').forEach(opt => {
+      if (opt.getAttribute('data-value') === 'todas') opt.classList.add('active');
+      else opt.classList.remove('active');
+    });
+
+    const unrepliedCheckbox = document.getElementById('sidebarUnrepliedCheckbox');
+    if (unrepliedCheckbox) unrepliedCheckbox.checked = false;
+    
+    this.filterSidebarReviews();
+  },
+
   closeSidebar() {
+    if (typeof ModalManager !== 'undefined' && ModalManager._stack.length > 0) {
+      ModalManager.close();
+      return;
+    }
     const overlay = document.getElementById('feedSidebarOverlay');
     if (overlay) {
       overlay.classList.remove('active');
@@ -1008,32 +1078,28 @@ const HomeView = {
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-    // Remove any stale handler first
-    if (window._escReviewDetailHandler) {
-      document.removeEventListener('keydown', window._escReviewDetailHandler);
+    const overlayEl = document.getElementById('reviewDetailModal');
+    if (typeof ModalManager !== 'undefined') {
+      ModalManager.open(overlayEl, () => {
+        const el = document.getElementById('reviewDetailModal');
+        if (el) el.remove();
+        HomeView.isPaused = false;
+      });
     }
-    
-    window._escReviewDetailHandler = (e) => {
-      if (e.key === 'Escape') {
-        HomeView.closeReviewDetailModal();
-      }
-    };
-    document.addEventListener('keydown', window._escReviewDetailHandler);
   },
 
 
 
   closeReviewDetailModal() {
+    if (typeof ModalManager !== 'undefined' && ModalManager._stack.length > 0) {
+      ModalManager.close();
+      return;
+    }
     const modal = document.getElementById('reviewDetailModal');
     if (modal) {
       modal.remove();
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
-    }
-    if (window._escReviewDetailHandler) {
-      document.removeEventListener('keydown', window._escReviewDetailHandler);
-      window._escReviewDetailHandler = null;
     }
     // Resume continuous scroll
     HomeView.isPaused = false;
@@ -1070,7 +1136,12 @@ const HomeView = {
     if (!container) return;
 
     if (filtered.length === 0) {
-      container.innerHTML = '<div class="empty-state">No se encontraron reseñas con estos filtros</div>';
+      container.innerHTML = typeof emptyState !== 'undefined' ? emptyState({
+        title: 'Sin reseñas con estos filtros',
+        hint: 'Prueba cambiando las selecciones o desactivando "Solo pendientes".',
+        actionLabel: 'Restaurar filtros',
+        actionAttr: 'onclick="HomeView.resetSidebarFilters()"'
+      }) : '<div class="empty-state">No se encontraron reseñas con estos filtros</div>';
       return;
     }
 
@@ -1112,11 +1183,11 @@ const HomeView = {
 
     const monthName = MONTH_NAMES[month - 1] || '';
     const modalHtml = `
-      <div class="modal-overlay active" id="alertModal" onclick="if(event.target === this) { this.remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = ''; }">
+      <div class="modal-overlay active" id="alertModal" onclick="if(event.target === this) HomeView.closeAlertModal()">
         <div class="modal-box">
           <div class="modal-header">
             <h2 class="modal-title">Alertas: ${branchMeta.abr}</h2>
-            <button class="modal-close" onclick="document.getElementById('alertModal').remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = '';">×</button>
+            <button class="modal-close" onclick="HomeView.closeAlertModal()">×</button>
           </div>
           <div class="modal-body">
             <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Las siguientes reseñas negativas requieren reporte a Marketing para su resolución.</p>
@@ -1141,18 +1212,13 @@ const HomeView = {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const _escHandler = (e) => {
-      if (e.key === 'Escape') {
-        const modal = document.getElementById('alertModal');
-        if (modal) {
-          modal.remove();
-          document.documentElement.style.overflow = '';
-          document.body.style.overflow = '';
-        }
-        document.removeEventListener('keydown', _escHandler);
-      }
-    };
-    document.addEventListener('keydown', _escHandler);
+    const overlayEl = document.getElementById('alertModal');
+    if (typeof ModalManager !== 'undefined') {
+      ModalManager.open(overlayEl, () => {
+        const el = document.getElementById('alertModal');
+        if (el) el.remove();
+      });
+    }
   },
 
   async copyAlertSummary(branchId) {
@@ -1229,11 +1295,11 @@ const HomeView = {
     });
 
     const modalHtml = `
-      <div class="modal-overlay active" id="alertModal" onclick="if(event.target === this) { this.remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = ''; }">
+      <div class="modal-overlay active" id="alertModal" onclick="if(event.target === this) HomeView.closeAlertModal()">
         <div class="modal-box" style="max-height: 85vh; display: flex; flex-direction: column;">
           <div class="modal-header" style="flex-shrink: 0;">
             <h2 class="modal-title">Todas las Alertas: ${monthName} ${year}</h2>
-            <button class="modal-close" onclick="document.getElementById('alertModal').remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = '';">×</button>
+            <button class="modal-close" onclick="HomeView.closeAlertModal()">×</button>
           </div>
           <div class="modal-body" style="overflow-y: auto; flex-grow: 1; padding-top: 14px;">
             <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Consolidado de reseñas críticas en la región durante el mes. Reportar a Marketing.</p>
@@ -1251,18 +1317,13 @@ const HomeView = {
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const _escHandler = (e) => {
-      if (e.key === 'Escape') {
-        const modal = document.getElementById('alertModal');
-        if (modal) {
-          modal.remove();
-          document.documentElement.style.overflow = '';
-          document.body.style.overflow = '';
-        }
-        document.removeEventListener('keydown', _escHandler);
-      }
-    };
-    document.addEventListener('keydown', _escHandler);
+    const overlayEl = document.getElementById('alertModal');
+    if (typeof ModalManager !== 'undefined') {
+      ModalManager.open(overlayEl, () => {
+        const el = document.getElementById('alertModal');
+        if (el) el.remove();
+      });
+    }
   },
 
   async copyAllAlertsSummary() {
@@ -1309,6 +1370,19 @@ const HomeView = {
       }
     } catch (e) {
       console.warn('Copy failed:', e);
+    }
+  },
+
+  closeAlertModal() {
+    if (typeof ModalManager !== 'undefined' && ModalManager._stack.length > 0) {
+      ModalManager.close();
+      return;
+    }
+    const modal = document.getElementById('alertModal');
+    if (modal) {
+      modal.remove();
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
     }
   },
 

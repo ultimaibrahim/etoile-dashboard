@@ -29,8 +29,9 @@ const BrandView = {
       this.activeTab = 'resumen';
     }
 
-    // Render skeleton immediately during data fetching
-    this.renderSkeleton();
+    const skeletonTimeout = setTimeout(() => {
+      this.renderSkeleton();
+    }, 250);
 
     // Inyectar estilos específicos para el dashboard corporativo interactivo
     this.injectStyles();
@@ -38,17 +39,23 @@ const BrandView = {
     const year = DataLoader.currentYear;
     const month = DataLoader.currentMonth;
 
-    // Cargar datos nacionales del mes actual
-    const brandReviews = await DataLoader.loadBrandData(year, month);
+    let brandReviews = [];
+    let prevBrandReviews = [];
+    try {
+      // Cargar datos nacionales del mes actual
+      brandReviews = await DataLoader.loadBrandData(year, month);
 
-    // Cargar datos nacionales del mes anterior para comparaciones
-    let prevYear = year;
-    let prevMonth = month - 1;
-    if (prevMonth === 0) {
-      prevMonth = 12;
-      prevYear = year - 1;
+      // Cargar datos nacionales del mes anterior para comparaciones
+      let prevYear = year;
+      let prevMonth = month - 1;
+      if (prevMonth === 0) {
+        prevMonth = 12;
+        prevYear = year - 1;
+      }
+      prevBrandReviews = await DataLoader.loadBrandData(prevYear, prevMonth);
+    } finally {
+      clearTimeout(skeletonTimeout);
     }
-    const prevBrandReviews = await DataLoader.loadBrandData(prevYear, prevMonth);
 
     // ── 2. CÁLCULO DE KPIs DE MARCA ──
     const totalReviews = brandReviews.length;
@@ -772,7 +779,20 @@ const BrandView = {
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    document.body.style.overflow = 'hidden';
+    const overlayEl = document.getElementById('brandDetailModal');
+    if (typeof ModalManager !== 'undefined') {
+      const top = ModalManager._stack[ModalManager._stack.length - 1];
+      if (top && top.el && top.el.id === 'brandDetailModal') {
+        top.el = overlayEl;
+      } else {
+        ModalManager.open(overlayEl, () => {
+          const el = document.getElementById('brandDetailModal');
+          if (el) el.remove();
+        });
+      }
+    } else {
+      document.body.style.overflow = 'hidden';
+    }
   },
 
   // ── 9. MODAL DE AUDITORÍA DE DÉFICITS (DRILL-DOWN) ──
@@ -827,7 +847,7 @@ const BrandView = {
           <span class="def-stat-sub">${b.alerts} quejas</span>
         </div>
       </div>
-    `).join('') : '<div class="def-empty-state">Sin sucursales críticas en este mes.</div>';
+    `).join('') : '<div class="def-empty-state empty-state-positive">Sin sucursales críticas en este mes. 🎉</div>';
 
     const belowTargetHtml = belowTargetBranches.length ? belowTargetBranches.map(b => `
       <div class="def-audit-card warning" role="button" tabindex="0" onclick="BrandView.drillDownDeficit('${b.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){BrandView.drillDownDeficit('${b.id}');event.preventDefault();}" title="Haz clic para diagnosticar">
@@ -840,7 +860,7 @@ const BrandView = {
           <span class="def-stat-sub">${b.count} opiniones</span>
         </div>
       </div>
-    `).join('') : `<div class="def-empty-state">Todas las sucursales estables cumplen la meta de ${THRESHOLDS.BAJO.toFixed(2)}★.</div>`;
+    `).join('') : `<div class="def-empty-state empty-state-positive">Todas las sucursales estables cumplen la meta de ${THRESHOLDS.BAJO.toFixed(2)}★. ✨</div>`;
 
     const unrepliedHtml = Object.keys(unrepliedAlertsMap).length ? Object.values(unrepliedAlertsMap).map(b => `
       <div class="def-audit-card alert-bg" role="button" tabindex="0" onclick="BrandView.drillDownDeficit('${b.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){BrandView.drillDownDeficit('${b.id}');event.preventDefault();}" title="Haz clic para diagnosticar">
@@ -853,7 +873,7 @@ const BrandView = {
           <span class="def-stat-sub">de ${b.totalAlerts} quejas</span>
         </div>
       </div>
-    `).join('') : '<div class="def-empty-state">100% de quejas respondidas.</div>';
+    `).join('') : '<div class="def-empty-state empty-state-positive">100% de quejas respondidas. ✅</div>';
 
     const modalHtml = `
       <div class="brand-modal-overlay" id="brandDetailModal" onclick="if(event.target === this) BrandView.closeModal()">
@@ -892,7 +912,20 @@ const BrandView = {
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    document.body.style.overflow = 'hidden';
+    const overlayEl = document.getElementById('brandDetailModal');
+    if (typeof ModalManager !== 'undefined') {
+      const top = ModalManager._stack[ModalManager._stack.length - 1];
+      if (top && top.el && top.el.id === 'brandDetailModal') {
+        top.el = overlayEl;
+      } else {
+        ModalManager.open(overlayEl, () => {
+          const el = document.getElementById('brandDetailModal');
+          if (el) el.remove();
+        });
+      }
+    } else {
+      document.body.style.overflow = 'hidden';
+    }
   },
 
   drillDownDeficit(branchId) {
@@ -997,8 +1030,18 @@ const BrandView = {
             </div>
           </div>
           
-          <div class="brand-modal-footer">
+          <div class="brand-modal-footer" style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
             <button class="modal-shortcut-btn" onclick="BrandView.navigateToBranch('${branchId}')">Ver Scorecard Completo</button>
+            <button class="modal-shortcut-btn share-btn" onclick="BrandView.shareBranchExecutiveSummary('${branchId}')" style="background:var(--verde); color:#FAF5EB; border-color:var(--verde-deep); display:inline-flex; align-items:center; gap:8px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              <span>Compartir Resumen</span>
+            </button>
             <button class="brand-modal-close-btn" onclick="BrandView.closeModal()">Cerrar</button>
           </div>
         </div>
@@ -1006,7 +1049,20 @@ const BrandView = {
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    document.body.style.overflow = 'hidden';
+    const overlayEl = document.getElementById('brandDetailModal');
+    if (typeof ModalManager !== 'undefined') {
+      const top = ModalManager._stack[ModalManager._stack.length - 1];
+      if (top && top.el && top.el.id === 'brandDetailModal') {
+        top.el = overlayEl;
+      } else {
+        ModalManager.open(overlayEl, () => {
+          const el = document.getElementById('brandDetailModal');
+          if (el) el.remove();
+        });
+      }
+    } else {
+      document.body.style.overflow = 'hidden';
+    }
   },
 
   // ── 10. MODAL EXPLICATIVO DE SCORE DE COMPLEJIDAD ──
@@ -1062,7 +1118,20 @@ const BrandView = {
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    document.body.style.overflow = 'hidden';
+    const overlayEl = document.getElementById('brandDetailModal');
+    if (typeof ModalManager !== 'undefined') {
+      const top = ModalManager._stack[ModalManager._stack.length - 1];
+      if (top && top.el && top.el.id === 'brandDetailModal') {
+        top.el = overlayEl;
+      } else {
+        ModalManager.open(overlayEl, () => {
+          const el = document.getElementById('brandDetailModal');
+          if (el) el.remove();
+        });
+      }
+    } else {
+      document.body.style.overflow = 'hidden';
+    }
   },
 
   // ── 11. DIAGNÓSTICO RÁPIDO DE SUCURSAL (QUICK AUDIT) ──
@@ -1194,10 +1263,27 @@ const BrandView = {
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    document.body.style.overflow = 'hidden';
+    const overlayEl = document.getElementById('brandDetailModal');
+    if (typeof ModalManager !== 'undefined') {
+      const top = ModalManager._stack[ModalManager._stack.length - 1];
+      if (top && top.el && top.el.id === 'brandDetailModal') {
+        top.el = overlayEl;
+      } else {
+        ModalManager.open(overlayEl, () => {
+          const el = document.getElementById('brandDetailModal');
+          if (el) el.remove();
+        });
+      }
+    } else {
+      document.body.style.overflow = 'hidden';
+    }
   },
 
-  closeModal() {
+  closeModal(force = false) {
+    if (!force && typeof ModalManager !== 'undefined' && ModalManager._stack.length > 0) {
+      ModalManager.close();
+      return;
+    }
     const el = document.getElementById('brandDetailModal');
     if (el) {
       el.remove();
@@ -2010,5 +2096,85 @@ const BrandView = {
     `;
     
     app.classList.remove('fade-out');
+  },
+
+  async shareBranchExecutiveSummary(branchId) {
+    const meta = SUCURSALES_META_ALL.find(s => s.id === branchId);
+    if (!meta) return;
+    const activeYear = DataLoader.currentYear;
+    const activeMonth = DataLoader.currentMonth;
+    const brandReviews = await DataLoader.loadBrandData(activeYear, activeMonth);
+    const reviews = brandReviews.filter(r => r.sucursal === branchId);
+    const stats = DataLoader.computeBranchStats(activeYear, activeMonth, branchId);
+
+    // Calcular quejas y pendientes
+    const negatives = reviews.filter(r => r.stars <= 3);
+    const unreplied = negatives.filter(r => !r.responseFromOwnerText || r.responseFromOwnerText.trim().length === 0).length;
+
+    // Calcular categorías de quejas heurísticas
+    let serviceCount = 0;
+    let qualityCount = 0;
+    let valueCount = 0;
+    const negativeReviews = reviews.filter(r => r.stars <= 3 && r.text && r.text.trim().length > 0);
+
+    negativeReviews.forEach(r => {
+      if (r.classification && typeof r.classification.es_queja === 'boolean') {
+        if (r.classification.es_queja) {
+          const cat = r.classification.categoria_queja;
+          if (cat) {
+            if (cat.servicio) serviceCount++;
+            if (cat.calidad) qualityCount++;
+            if (cat.valor) valueCount++;
+          }
+        }
+      } else {
+        const cleanText = (r.text || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const hasService = COMPLAINT_KEYWORDS.servicio.some(kw => cleanText.includes(kw));
+        const hasQuality = COMPLAINT_KEYWORDS.calidad.some(kw => cleanText.includes(kw));
+        const hasValue = COMPLAINT_KEYWORDS.valor.some(kw => cleanText.includes(kw));
+        if (hasService) serviceCount++;
+        if (hasQuality) qualityCount++;
+        if (hasValue) valueCount++;
+      }
+    });
+
+    let topTheme = '';
+    if (negativeReviews.length > 0) {
+      const themes = [];
+      if (serviceCount > 0) themes.push(`Servicio (${serviceCount})`);
+      if (qualityCount > 0) themes.push(`Calidad (${qualityCount})`);
+      if (valueCount > 0) themes.push(`Valor (${valueCount})`);
+      if (themes.length > 0) {
+        topTheme = themes.join(', ');
+      } else {
+        topTheme = 'Otros';
+      }
+    }
+
+    const monthName = new Date(activeYear, activeMonth - 1).toLocaleString('es-ES', { month: 'long' });
+    const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    
+    const statsObj = {
+      avg: stats.avg,
+      totalReviews: stats.count,
+      negatives: negatives.length,
+      unreplied: unreplied,
+      topTheme: topTheme,
+      monthLabel: `${capitalizedMonth} ${activeYear}`
+    };
+
+    if (typeof buildBranchSummary === 'function' && typeof shareSummary === 'function') {
+      const text = buildBranchSummary(meta, statsObj);
+      const shareResult = await shareSummary(text);
+      
+      if (shareResult === 'copied') {
+        if (typeof Toast !== 'undefined') Toast.show('Resumen copiado al portapapeles. ¡Listo para compartir!', 3000);
+      } else if (shareResult === 'shared') {
+        if (typeof Toast !== 'undefined') Toast.show('Resumen compartido con éxito', 2500);
+      } else {
+        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+      }
+    }
   }
 };

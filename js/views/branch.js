@@ -14,22 +14,30 @@ const BranchView = {
     const activeYear = DataLoader.currentYear;
     const activeMonth = DataLoader.currentMonth;
 
-    // Asegurar carga de los meses en paralelo para máxima velocidad de respuesta
-    const availableMonths = DataLoader.manifest[activeYear] || [];
-    await Promise.all(availableMonths.map(m => DataLoader.loadMonth(activeYear, m)));
+    const skeletonTimeout = setTimeout(() => {
+      this.renderSkeleton();
+    }, 250);
 
-    // Carga de mes anterior para comparativas
-    let prevMonth = activeMonth - 1;
-    let prevYear = activeYear;
-    if (prevMonth === 0) {
-      prevMonth = 12;
-      prevYear = activeYear - 1;
-    }
-    const hasPrevMonth = DataLoader.hasMonth(prevYear, prevMonth);
     let prevStats = null;
-    if (hasPrevMonth) {
-      await DataLoader.loadMonth(prevYear, prevMonth);
-      prevStats = DataLoader.computeBranchStats(prevYear, prevMonth, meta.id);
+    try {
+      // Asegurar carga de los meses en paralelo para máxima velocidad de respuesta
+      const availableMonths = DataLoader.manifest[activeYear] || [];
+      await Promise.all(availableMonths.map(m => DataLoader.loadMonth(activeYear, m)));
+
+      // Carga de mes anterior para comparativas
+      let prevMonth = activeMonth - 1;
+      let prevYear = activeYear;
+      if (prevMonth === 0) {
+        prevMonth = 12;
+        prevYear = activeYear - 1;
+      }
+      const hasPrevMonth = DataLoader.hasMonth(prevYear, prevMonth);
+      if (hasPrevMonth) {
+        await DataLoader.loadMonth(prevYear, prevMonth);
+        prevStats = DataLoader.computeBranchStats(prevYear, prevMonth, meta.id);
+      }
+    } finally {
+      clearTimeout(skeletonTimeout);
     }
 
     const reviews = DataLoader.getReviewsForBranch(activeYear, activeMonth, meta.id);
@@ -310,15 +318,28 @@ const BranchView = {
         <div class="bh-eyebrow">
           <span>${getRegionName(activeRegion)}</span>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
-          <h1 class="bh-name" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 4px;">
-            ${meta.nombre}
-            <span style="font-family: var(--mono); color: #E8A020; font-size: 20px; letter-spacing: 2px; font-weight: normal; margin-top: 6px;">
-              ${stats.avg > 0 ? starStr(Math.round(stats.avg)) : '—'}
-            </span>
-          </h1>
-          ${meta.isCinemex ? `<div style="margin-bottom: 4px;"><span class="bh-cinemex-badge">${svgIcon('cinema')} Cinemex</span></div>` : ''}
-          ${dropdownHtml}
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; gap: 16px; flex-wrap: wrap;">
+          <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+            <h1 class="bh-name" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 4px; margin-top: 0;">
+              ${meta.nombre}
+              <span style="font-family: var(--mono); color: #E8A020; font-size: 20px; letter-spacing: 2px; font-weight: normal; margin-top: 6px;">
+                ${stats.avg > 0 ? starStr(Math.round(stats.avg)) : '—'}
+              </span>
+            </h1>
+            ${meta.isCinemex ? `<div style="margin-bottom: 4px;"><span class="bh-cinemex-badge">${svgIcon('cinema')} Cinemex</span></div>` : ''}
+            ${dropdownHtml}
+          </div>
+          
+          <button class="btn-primary" onclick="BranchView.shareExecutiveSummary()" style="padding: 10px 18px; font-size: 13px; height: 40px; margin-top: 6px; border-radius: 12px; background: var(--verde); color: #FAF5EB; border: 1px solid rgba(255,255,255,0.08); font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            <span>Compartir</span>
+          </button>
         </div>
       </section>
 
@@ -626,7 +647,28 @@ const BranchView = {
 
   _buildRevList(reviews) {
     if (!reviews.length) {
-      return `<div class="empty-state"><span class="glyph">—</span>Sin reseñas para mostrar en este mes</div>`;
+      const activeYear = DataLoader.currentYear;
+      const activeMonth = DataLoader.currentMonth;
+      const availableMonths = DataLoader.manifest[activeYear] || [];
+      const sortedMonths = [...availableMonths].sort((a, b) => b - a);
+      const currentIdx = sortedMonths.indexOf(activeMonth);
+      let prevMonthInManifest = null;
+      if (currentIdx !== -1 && currentIdx < sortedMonths.length - 1) {
+        prevMonthInManifest = sortedMonths[currentIdx + 1];
+      }
+      
+      const monthName = new Date(activeYear, activeMonth - 1).toLocaleString('es-ES', { month: 'long' });
+      const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+      
+      const actionAttr = prevMonthInManifest ? `onclick="BranchView.selectMonthOption(${prevMonthInManifest})"` : '';
+      const actionLabel = prevMonthInManifest ? 'Ver mes anterior' : '';
+      
+      return typeof emptyState !== 'undefined' ? emptyState({
+        title: `Sin reseñas en ${capitalizedMonth}`,
+        hint: 'Las reseñas se sincronizan desde Google Maps de manera programada.',
+        actionLabel: actionLabel,
+        actionAttr: actionAttr
+      }) : `<div class="empty-state">Sin reseñas para mostrar en este mes</div>`;
     }
     return reviews.map(r => {
       const low = r.stars <= 3;
@@ -715,11 +757,11 @@ const BranchView = {
     }).join('') : '<div style="text-align:center; padding:30px; color:var(--text-dim); font-style:italic;">No hay opiniones en esta categoría.</div>';
 
     const modalHtml = `
-      <div class="brand-modal-overlay" id="problemDetailModal" onclick="if(event.target === this) { document.getElementById('problemDetailModal').remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = ''; }" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(10, 20, 15, 0.6); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; box-sizing: border-box;">
+      <div class="brand-modal-overlay" id="problemDetailModal" onclick="if(event.target === this) BranchView.closeProblemDetailModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(10, 20, 15, 0.6); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; box-sizing: border-box;">
         <div class="brand-modal-box" style="background: rgba(25, 38, 30, 0.9); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 24px; width: 100%; max-width: 580px; max-height: 80vh; display: flex; flex-direction: column; box-sizing: border-box; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4); animation: modalScaleUp 0.3s ease;">
           <div class="brand-modal-header" style="padding: 20px 24px 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;">
             <h2 class="brand-modal-title" style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text);">${title}</h2>
-            <button class="brand-modal-close" onclick="document.getElementById('problemDetailModal').remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = '';" style="background: none; border: none; color: var(--text-dim); font-size: 24px; cursor: pointer;">×</button>
+            <button class="brand-modal-close" onclick="BranchView.closeProblemDetailModal()" style="background: none; border: none; color: var(--text-dim); font-size: 24px; cursor: pointer;">×</button>
           </div>
           <div class="brand-modal-body" style="padding: 20px 24px; overflow-y: auto; flex: 1;">
             <div class="brand-modal-reviews-list">
@@ -727,12 +769,128 @@ const BranchView = {
             </div>
           </div>
           <div class="brand-modal-footer" style="padding: 14px 24px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: flex-end;">
-            <button class="brand-modal-close-btn" onclick="document.getElementById('problemDetailModal').remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = '';" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text); padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;">Cerrar</button>
+            <button class="brand-modal-close-btn" onclick="BranchView.closeProblemDetailModal()" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text); padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;">Cerrar</button>
           </div>
         </div>
       </div>
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const overlayEl = document.getElementById('problemDetailModal');
+    if (typeof ModalManager !== 'undefined') {
+      ModalManager.open(overlayEl, () => {
+        const el = document.getElementById('problemDetailModal');
+        if (el) el.remove();
+      });
+    } else {
+      document.body.style.overflow = 'hidden';
+    }
+  },
+
+  closeProblemDetailModal() {
+    if (typeof ModalManager !== 'undefined' && ModalManager._stack.length > 0) {
+      ModalManager.close();
+      return;
+    }
+    const el = document.getElementById('problemDetailModal');
+    if (el) el.remove();
+    document.body.style.overflow = '';
+  },
+
+  renderSkeleton() {
+    const app = document.getElementById('app');
+    if (!app) return;
+    app.innerHTML = `
+      ${buildTopbar(true, 'Cargando...')}
+      <div style="max-width:1200px; margin:0 auto; padding:24px; box-sizing:border-box; display:flex; flex-direction:column; gap:24px;">
+        <div class="skeleton" style="height: 120px; border-radius: 20px;"></div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+          <div class="skeleton" style="height: 110px; border-radius: 14px;"></div>
+          <div class="skeleton" style="height: 110px; border-radius: 14px;"></div>
+          <div class="skeleton" style="height: 110px; border-radius: 14px;"></div>
+          <div class="skeleton" style="height: 110px; border-radius: 14px;"></div>
+        </div>
+        <div class="skeleton" style="height: 300px; border-radius: 20px;"></div>
+      </div>
+    `;
+  },
+
+  async shareExecutiveSummary() {
+    const meta = getBranchById(this.activeParams.id);
+    if (!meta) return;
+    const activeYear = DataLoader.currentYear;
+    const activeMonth = DataLoader.currentMonth;
+    const reviews = DataLoader.getReviewsForBranch(activeYear, activeMonth, meta.id);
+    const stats = DataLoader.computeBranchStats(activeYear, activeMonth, meta.id);
+    
+    // Calcular quejas y pendientes
+    const negatives = reviews.filter(r => r.stars <= 3);
+    const unreplied = negatives.filter(r => !r.responseFromOwnerText || r.responseFromOwnerText.trim().length === 0).length;
+
+    // Calcular categorías de quejas heurísticas
+    let serviceCount = 0;
+    let qualityCount = 0;
+    let valueCount = 0;
+    const negativeReviews = reviews.filter(r => r.stars <= 3 && r.text && r.text.trim().length > 0);
+
+    negativeReviews.forEach(r => {
+      if (r.classification && typeof r.classification.es_queja === 'boolean') {
+        if (r.classification.es_queja) {
+          const cat = r.classification.categoria_queja;
+          if (cat) {
+            if (cat.servicio) serviceCount++;
+            if (cat.calidad) qualityCount++;
+            if (cat.valor) valueCount++;
+          }
+        }
+      } else {
+        const cleanText = (r.text || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const hasService = COMPLAINT_KEYWORDS.servicio.some(kw => cleanText.includes(kw));
+        const hasQuality = COMPLAINT_KEYWORDS.calidad.some(kw => cleanText.includes(kw));
+        const hasValue = COMPLAINT_KEYWORDS.valor.some(kw => cleanText.includes(kw));
+        if (hasService) serviceCount++;
+        if (hasQuality) qualityCount++;
+        if (hasValue) valueCount++;
+      }
+    });
+
+    let topTheme = '';
+    if (negativeReviews.length > 0) {
+      const themes = [];
+      if (serviceCount > 0) themes.push(`Servicio (${serviceCount})`);
+      if (qualityCount > 0) themes.push(`Calidad (${qualityCount})`);
+      if (valueCount > 0) themes.push(`Valor (${valueCount})`);
+      if (themes.length > 0) {
+        topTheme = themes.join(', ');
+      } else {
+        topTheme = 'Otros';
+      }
+    }
+
+    const monthName = new Date(activeYear, activeMonth - 1).toLocaleString('es-ES', { month: 'long' });
+    const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    
+    const statsObj = {
+      avg: stats.avg,
+      totalReviews: stats.count,
+      negatives: negatives.length,
+      unreplied: unreplied,
+      topTheme: topTheme,
+      monthLabel: `${capitalizedMonth} ${activeYear}`
+    };
+
+    if (typeof buildBranchSummary === 'function' && typeof shareSummary === 'function') {
+      const text = buildBranchSummary(meta, statsObj);
+      const shareResult = await shareSummary(text);
+      
+      if (shareResult === 'copied') {
+        if (typeof Toast !== 'undefined') Toast.show('Resumen copiado al portapapeles. ¡Listo para compartir!', 3000);
+      } else if (shareResult === 'shared') {
+        if (typeof Toast !== 'undefined') Toast.show('Resumen compartido con éxito', 2500);
+      } else {
+        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+      }
+    }
   }
 };

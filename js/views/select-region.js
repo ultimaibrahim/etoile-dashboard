@@ -947,6 +947,13 @@ const SelectRegionView = {
   },
 
   async loadRatingsAndRankings() {
+    const tablePlaceholder = document.getElementById('srv-ranking-table-placeholder');
+    const skeletonTimeout = setTimeout(() => {
+      if (tablePlaceholder && typeof renderSkeleton === 'function') {
+        renderSkeleton(tablePlaceholder, 'row', 6);
+      }
+    }, 250);
+
     try {
       if (typeof DataLoader !== 'undefined') {
         if (!DataLoader.currentYear) {
@@ -1132,6 +1139,8 @@ const SelectRegionView = {
       if (tablePlaceholder) {
         tablePlaceholder.innerHTML = `<div class="ranking-error" style="text-align:center;padding:40px;color:var(--alerta);background:rgba(178,58,43,0.06);border:1px solid rgba(178,58,43,0.2);border-radius:var(--radius);">Error al cargar datos desde Supabase. Reintente más tarde.</div>`;
       }
+    } finally {
+      clearTimeout(skeletonTimeout);
     }
   },
 

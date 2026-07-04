@@ -8,34 +8,43 @@ const DashboardsView = {
     const currYear = DataLoader.currentYear;
     const currMonth = DataLoader.currentMonth;
 
+    const skeletonTimeout = setTimeout(() => {
+      this.renderSkeleton();
+    }, 250);
+
     // Load YTD data for current year concurrently
     let ytdReviews = [];
-    if (DataLoader.manifest && DataLoader.manifest[currYear]) {
-      const months = DataLoader.manifest[currYear];
-      const monthDataList = await Promise.all(
-        months.map(m => DataLoader.loadMonth(currYear, m))
-      );
-      monthDataList.forEach(d => {
-        if (d && d.reviews) {
-          ytdReviews = ytdReviews.concat(d.reviews);
-        }
-      });
-    }
+    let quarterData = [];
+    try {
+      if (DataLoader.manifest && DataLoader.manifest[currYear]) {
+        const months = DataLoader.manifest[currYear];
+        const monthDataList = await Promise.all(
+          months.map(m => DataLoader.loadMonth(currYear, m))
+        );
+        monthDataList.forEach(d => {
+          if (d && d.reviews) {
+            ytdReviews = ytdReviews.concat(d.reviews);
+          }
+        });
+      }
 
-    // NUEVO: Cargar estadísticas de los trimestres concluidos en paralelo
-    const completedQuarters = getCompletedQuarters(currYear);
-    const quartersStats = await Promise.all(
-      completedQuarters.map(q => DataLoader.loadQuarterStats(currYear, q))
-    );
-    const quarterData = completedQuarters.map((q, idx) => {
-      const stats = quartersStats[idx] || [];
-      const totalReviews = stats.reduce((sum, s) => sum + s.totalReviews, 0);
-      const avgRating = totalReviews > 0 
-        ? stats.reduce((sum, s) => sum + s.avgRating * s.totalReviews, 0) / totalReviews 
-        : 0;
-      const negativeReviews = stats.reduce((sum, s) => sum + s.negativeReviews, 0);
-      return { quarter: q, totalReviews, avgRating, negativeReviews };
-    });
+      // NUEVO: Cargar estadísticas de los trimestres concluidos en paralelo
+      const completedQuarters = getCompletedQuarters(currYear);
+      const quartersStats = await Promise.all(
+        completedQuarters.map(q => DataLoader.loadQuarterStats(currYear, q))
+      );
+      quarterData = completedQuarters.map((q, idx) => {
+        const stats = quartersStats[idx] || [];
+        const totalReviews = stats.reduce((sum, s) => sum + s.totalReviews, 0);
+        const avgRating = totalReviews > 0 
+          ? stats.reduce((sum, s) => sum + s.avgRating * s.totalReviews, 0) / totalReviews 
+          : 0;
+        const negativeReviews = stats.reduce((sum, s) => sum + s.negativeReviews, 0);
+        return { quarter: q, totalReviews, avgRating, negativeReviews };
+      });
+    } finally {
+      clearTimeout(skeletonTimeout);
+    }
     const quarterAccordionHtml = this._buildQuarterAccordion(quarterData, currYear);
 
     const currStats = DataLoader.getAllBranchStats(currYear, currMonth);
@@ -580,5 +589,24 @@ const DashboardsView = {
       if (idx === index) card.classList.add('active');
       else card.classList.remove('active');
     });
+  },
+
+  renderSkeleton() {
+    const app = document.getElementById('app');
+    if (!app) return;
+    app.innerHTML = `
+      ${buildTopbar(false, '', true)}
+      <div style="max-width:1200px; margin:0 auto; padding:24px; box-sizing:border-box; display:flex; flex-direction:column; gap:24px;">
+        <div class="skeleton" style="height: 100px; border-radius: 20px;"></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div class="skeleton" style="height: 250px; border-radius: 20px;"></div>
+          <div class="skeleton" style="height: 250px; border-radius: 20px;"></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div class="skeleton" style="height: 250px; border-radius: 20px;"></div>
+          <div class="skeleton" style="height: 250px; border-radius: 20px;"></div>
+        </div>
+      </div>
+    `;
   }
 };
