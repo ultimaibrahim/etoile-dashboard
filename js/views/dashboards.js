@@ -210,6 +210,39 @@ const DashboardsView = {
         }
         .hero-right .quarter-accordion-card {
           height: 230px !important;
+          background: rgba(255, 255, 255, 0.04) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+        }
+        .hero-right .quarter-accordion-card.active {
+          background: rgba(255, 255, 255, 0.08) !important;
+          border-color: rgba(255, 255, 255, 0.25) !important;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+        }
+        .hero-right .qcard-collapsed-label {
+          border-right: 1px solid transparent !important;
+        }
+        .hero-right .quarter-accordion-card.active .qcard-collapsed-label {
+          border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+        }
+        .hero-right .qcard-collapsed-year {
+          color: rgba(245, 239, 230, 0.5) !important;
+        }
+        .hero-right .qcard-title {
+          color: #FAF5EB !important;
+        }
+        .hero-right .qcard-stat-label {
+          color: rgba(245, 239, 230, 0.55) !important;
+        }
+        .hero-right .qcard-stat-value {
+          color: #FAF5EB !important;
+        }
+        .hero-right .qcard-stat-value.gold {
+          color: var(--oro) !important;
+        }
+        .hero-right .qcard-stat-value.down {
+          color: var(--rojo-soft) !important;
         }
         .hero-right .quarter-accordion-wrapper {
           min-height: 230px !important;
