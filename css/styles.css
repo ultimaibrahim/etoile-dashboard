@@ -3512,8 +3512,8 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   border: 1px solid var(--oro);
   border-radius: 16px;
   box-shadow: var(--sombra-lg);
-  padding: 20px;
-  width: 320px;
+  padding: 24px;
+  width: min(440px, 90vw);
   z-index: 9002;
   box-sizing: border-box;
   opacity: 0;
@@ -3526,10 +3526,10 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   transform: translateY(0);
 }
 .walkthrough-tooltip-title {
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--text);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-family: var(--sans);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -3538,7 +3538,7 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   align-items: center;
 }
 .walkthrough-tooltip-step {
-  font-size: 10px;
+  font-size: 10.5px;
   font-family: var(--mono);
   color: var(--oro);
   font-weight: 700;
@@ -3547,10 +3547,10 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   border-radius: 4px;
 }
 .walkthrough-tooltip-body {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text);
-  line-height: 1.5;
-  margin-bottom: 16px;
+  line-height: 1.6;
+  margin-bottom: 20px;
 }
 .walkthrough-tooltip-actions {
   display: flex;

@@ -793,6 +793,11 @@ const LcpWalkthrough = {
     this.showStep();
   },
 
+  _animFrameId: null,
+  _currentRect: null,
+  _targetRect: null,
+  _listenersAttached: false,
+
   showStep() {
     this.cleanup();
 
@@ -821,8 +826,13 @@ const LcpWalkthrough = {
       }
     }
 
-    // Dibujar el canvas con recorte
-    this.redrawCanvas(targetEl);
+    // Calcular el target rect inicial/objetivo para el Lerp
+    this.updateTargetRect(targetEl);
+
+    // Iniciar bucle de animación si no está corriendo
+    if (!this._animFrameId) {
+      this.startAnimationLoop();
+    }
 
     // Adjuntar listeners de redibujado dinámico al scroll o resize
     if (!this._listenersAttached) {
@@ -830,26 +840,12 @@ const LcpWalkthrough = {
         const activeTarget = this.steps[this.currentStep]?.target 
           ? document.querySelector(this.steps[this.currentStep].target) 
           : null;
-        this.redrawCanvas(activeTarget);
+        this.updateTargetRect(activeTarget);
       };
       window.addEventListener('resize', this._resizeHandler);
       window.addEventListener('scroll', this._resizeHandler, { passive: true });
       this._listenersAttached = true;
     }
-
-    // Como scrollIntoView es suave y asíncrono, redibujamos repetidamente durante el scroll inicial
-    let scrollTicks = 0;
-    const animateScroll = () => {
-      const activeTarget = this.steps[this.currentStep]?.target 
-        ? document.querySelector(this.steps[this.currentStep].target) 
-        : null;
-      this.redrawCanvas(activeTarget);
-      if (scrollTicks < 45) {
-        scrollTicks++;
-        requestAnimationFrame(animateScroll);
-      }
-    };
-    requestAnimationFrame(animateScroll);
 
     const tooltip = document.createElement('div');
     tooltip.id = 'walkthroughTooltip';
@@ -871,13 +867,74 @@ const LcpWalkthrough = {
     `;
 
     document.body.appendChild(tooltip);
-    this.positionTooltip(targetEl, tooltip);
-    setTimeout(() => tooltip.classList.add('active'), 50);
+    
+    // Posicionamiento inmediato e inicial
+    setTimeout(() => {
+      this.positionTooltip(targetEl, tooltip);
+      tooltip.classList.add('active');
+    }, 50);
   },
 
-  redrawCanvas(targetEl) {
+  updateTargetRect(targetEl) {
+    if (targetEl) {
+      const rect = targetEl.getBoundingClientRect();
+      const padding = 12;
+      this._targetRect = {
+        x: rect.left - padding,
+        y: rect.top - padding,
+        w: rect.width + (padding * 2),
+        h: rect.height + (padding * 2)
+      };
+      
+      // Si es el primer elemento con spotlight, inicializamos el rect actual en su lugar
+      if (!this._currentRect) {
+        this._currentRect = { ...this._targetRect };
+      }
+    } else {
+      this._targetRect = null;
+    }
+  },
+
+  startAnimationLoop() {
+    const loop = () => {
+      this._animFrameId = requestAnimationFrame(loop);
+      this.tick();
+    };
+    loop();
+  },
+
+  tick() {
     const canvas = document.getElementById('walkthroughOverlay');
     if (!canvas) return;
+
+    // Actualizar coordenadas dinámicas en tiempo real del target actual para seguir el scroll/movimiento
+    const step = this.steps[this.currentStep];
+    const targetEl = (step && step.target) ? document.querySelector(step.target) : null;
+    this.updateTargetRect(targetEl);
+
+    // Lerp de animación entre rect actual y target
+    if (this._targetRect) {
+      if (!this._currentRect) {
+        this._currentRect = { ...this._targetRect };
+      } else {
+        const speed = 0.12; // Velocidad de interpolación fluida (lerp)
+        this._currentRect.x += (this._targetRect.x - this._currentRect.x) * speed;
+        this._currentRect.y += (this._targetRect.y - this._currentRect.y) * speed;
+        this._currentRect.w += (this._targetRect.w - this._currentRect.w) * speed;
+        this._currentRect.h += (this._targetRect.h - this._currentRect.h) * speed;
+      }
+    } else {
+      // Si no hay elemento (paso 1 de bienvenida), desvanecer el spotlight achicándolo o poniéndolo en null
+      if (this._currentRect) {
+        const speed = 0.15;
+        // Desvanecer el foco achicándolo suavemente
+        this._currentRect.w += (0 - this._currentRect.w) * speed;
+        this._currentRect.h += (0 - this._currentRect.h) * speed;
+        if (this._currentRect.w < 1) {
+          this._currentRect = null;
+        }
+      }
+    }
 
     const ctx = canvas.getContext('2d');
     const w = window.innerWidth;
@@ -891,58 +948,64 @@ const LcpWalkthrough = {
     ctx.clearRect(0, 0, w, h);
 
     // Dibujar el overlay oscuro
-    ctx.fillStyle = 'rgba(20, 24, 26, 0.82)'; // Gris/negro traslúcido muy elegante
+    ctx.fillStyle = 'rgba(20, 24, 26, 0.82)'; // Fondo oscuro de la marca
     ctx.fillRect(0, 0, w, h);
 
-    if (targetEl) {
-      const rect = targetEl.getBoundingClientRect();
-
-      // Recortar la máscara de forma redondeada usando destination-out
+    if (this._currentRect) {
+      // Recortar con destination-out
       ctx.globalCompositeOperation = 'destination-out';
       ctx.fillStyle = '#000';
 
-      const padding = 12;
-      const rx = rect.left - padding;
-      const ry = rect.top - padding;
-      const rw = rect.width + (padding * 2);
-      const rh = rect.height + (padding * 2);
-      const radius = 16; // Radio squircle elegante
+      const rx = this._currentRect.x;
+      const ry = this._currentRect.y;
+      const rw = this._currentRect.w;
+      const rh = this._currentRect.h;
+      const radius = Math.min(16, rw / 2, rh / 2); // Evitar radios mayores al elemento
 
-      ctx.beginPath();
-      ctx.moveTo(rx + radius, ry);
-      ctx.lineTo(rx + rw - radius, ry);
-      ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
-      ctx.lineTo(rx + rw, ry + rh - radius);
-      ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
-      ctx.lineTo(rx + radius, ry + rh);
-      ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
-      ctx.lineTo(rx, ry + radius);
-      ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
-      ctx.closePath();
-      ctx.fill();
+      if (rw > 0 && rh > 0) {
+        ctx.beginPath();
+        ctx.moveTo(rx + radius, ry);
+        ctx.lineTo(rx + rw - radius, ry);
+        ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
+        ctx.lineTo(rx + rw, ry + rh - radius);
+        ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
+        ctx.lineTo(rx + radius, ry + rh);
+        ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
+        ctx.lineTo(rx, ry + radius);
+        ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
+        ctx.closePath();
+        ctx.fill();
+      }
 
-      // Restaurar composición para dibujar el resplandor de contorno
+      // Dibujar borde dorado
       ctx.globalCompositeOperation = 'source-over';
-      ctx.strokeStyle = 'rgba(184, 144, 47, 0.75)'; // Color Oro LCP
+      ctx.strokeStyle = 'rgba(184, 144, 47, 0.8)'; // Oro LCP
       ctx.lineWidth = 2;
-      ctx.shadowColor = 'rgba(184, 144, 47, 0.4)';
+      ctx.shadowColor = 'rgba(184, 144, 47, 0.5)';
       ctx.shadowBlur = 12;
 
-      ctx.beginPath();
-      ctx.moveTo(rx + radius, ry);
-      ctx.lineTo(rx + rw - radius, ry);
-      ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
-      ctx.lineTo(rx + rw, ry + rh - radius);
-      ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
-      ctx.lineTo(rx + radius, ry + rh);
-      ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
-      ctx.lineTo(rx, ry + radius);
-      ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
-      ctx.closePath();
-      ctx.stroke();
+      if (rw > 0 && rh > 0) {
+        ctx.beginPath();
+        ctx.moveTo(rx + radius, ry);
+        ctx.lineTo(rx + rw - radius, ry);
+        ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
+        ctx.lineTo(rx + rw, ry + rh - radius);
+        ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
+        ctx.lineTo(rx + radius, ry + rh);
+        ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
+        ctx.lineTo(rx, ry + radius);
+        ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
+        ctx.closePath();
+        ctx.stroke();
+      }
 
-      // Limpiar sombra para evitar afectar a otros dibujos del navegador
       ctx.shadowBlur = 0;
+    }
+
+    // Reposicionar el tooltip en tiempo real para evitar brincos o desalineaciones en scroll
+    const tooltip = document.getElementById('walkthroughTooltip');
+    if (tooltip) {
+      this.positionTooltip(targetEl, tooltip);
     }
   },
 
@@ -954,30 +1017,53 @@ const LcpWalkthrough = {
       tooltip.style.transform = 'translate(-50%, -50%)';
       tooltip.style.bottom = 'auto';
       tooltip.style.right = 'auto';
-      tooltip.style.width = '340px';
+      tooltip.style.top = '50%';
       return;
     }
 
     if (window.innerWidth <= 576) {
+      // Estilo fijo inferior para mobile
+      tooltip.style.position = 'fixed';
+      tooltip.style.bottom = '80px';
+      tooltip.style.top = 'auto';
+      tooltip.style.left = '16px';
+      tooltip.style.right = '16px';
+      tooltip.style.transform = 'none';
+      tooltip.style.width = 'calc(100% - 32px)';
       return;
     }
 
     const rect = targetEl.getBoundingClientRect();
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+    const tooltipWidth = tooltip.offsetWidth || 400;
+    const tooltipHeight = tooltip.offsetHeight || 160;
+    const padding = 20; // Separación para evitar colisión de texto
 
-    let top = rect.bottom + scrollTop + 12;
-    let left = rect.left + scrollLeft + (rect.width / 2) - 160;
+    let top;
+    let left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
 
-    if (rect.bottom + 220 > window.innerHeight && rect.top > 220) {
-      top = rect.top + scrollTop - 180;
+    // ¿Cabe abajo del spotlight?
+    if (rect.bottom + tooltipHeight + padding < window.innerHeight) {
+      top = rect.bottom + padding;
+    } 
+    // ¿Cabe arriba del spotlight?
+    else if (rect.top - tooltipHeight - padding > 0) {
+      top = rect.top - tooltipHeight - padding;
+    } 
+    // Si no cabe en ningún lado (elemento muy grande), colocar abajo pero ajustado
+    else {
+      top = Math.max(15, rect.bottom + 12);
     }
 
-    if (left < 10) left = 10;
-    if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
+    // Ajustar límites horizontales
+    if (left < 15) left = 15;
+    if (left + tooltipWidth > window.innerWidth) left = window.innerWidth - tooltipWidth - 15;
 
-    tooltip.style.top = `${top}px`;
-    tooltip.style.left = `${left}px`;
+    tooltip.style.position = 'absolute';
+    tooltip.style.top = `${top + window.scrollY}px`;
+    tooltip.style.left = `${left + window.scrollX}px`;
+    tooltip.style.transform = 'none';
+    tooltip.style.bottom = 'auto';
+    tooltip.style.right = 'auto';
   },
 
   next() {
@@ -1089,6 +1175,13 @@ const LcpWalkthrough = {
 
   finish() {
     this.cleanup();
+    if (this._animFrameId) {
+      cancelAnimationFrame(this._animFrameId);
+      this._animFrameId = null;
+    }
+    this._currentRect = null;
+    this._targetRect = null;
+    
     const overlay = document.getElementById('walkthroughOverlay');
     if (overlay) {
       overlay.classList.remove('active');
