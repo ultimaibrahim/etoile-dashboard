@@ -918,28 +918,11 @@ const LcpWalkthrough = {
     const targetEl = (step && step.target) ? document.querySelector(step.target) : null;
     this.updateTargetRect(targetEl);
 
-    // Lerp de animación entre rect actual y target
+    // Posición instantánea — sin animación de movimiento
     if (this._targetRect) {
-      if (!this._currentRect) {
-        this._currentRect = { ...this._targetRect };
-      } else {
-        const speed = 0.12; // Velocidad de interpolación fluida (lerp)
-        this._currentRect.x += (this._targetRect.x - this._currentRect.x) * speed;
-        this._currentRect.y += (this._targetRect.y - this._currentRect.y) * speed;
-        this._currentRect.w += (this._targetRect.w - this._currentRect.w) * speed;
-        this._currentRect.h += (this._targetRect.h - this._currentRect.h) * speed;
-      }
+      this._currentRect = { ...this._targetRect };
     } else {
-      // Si no hay elemento (paso 1 de bienvenida), desvanecer el spotlight achicándolo o poniéndolo en null
-      if (this._currentRect) {
-        const speed = 0.15;
-        // Desvanecer el foco achicándolo suavemente
-        this._currentRect.w += (0 - this._currentRect.w) * speed;
-        this._currentRect.h += (0 - this._currentRect.h) * speed;
-        if (this._currentRect.w < 1) {
-          this._currentRect = null;
-        }
-      }
+      this._currentRect = null;
     }
 
     const ctx = canvas.getContext('2d');
@@ -954,7 +937,7 @@ const LcpWalkthrough = {
     ctx.clearRect(0, 0, w, h);
 
     // Dibujar el overlay oscuro
-    ctx.fillStyle = 'rgba(20, 24, 26, 0.82)'; // Fondo oscuro de la marca
+    ctx.fillStyle = 'rgba(20, 24, 26, 0.92)'; // Overlay oscuro al 92%
     ctx.fillRect(0, 0, w, h);
 
     if (this._currentRect) {
