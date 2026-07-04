@@ -4,6 +4,7 @@
 
 const QuarterView = {
   async render(params) {
+    try {
     const qParam = parseQuarterParam(params.q || '2026-Q1');
     if (!qParam) {
       Router.navigate('#/');
@@ -282,5 +283,22 @@ const QuarterView = {
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · Dashboard de Reseñas<br>
         Región ${getRegionName(activeRegion)}
       </footer>`;
+    } catch (err) {
+      console.error('Error al renderizar vista trimestral:', err);
+      document.getElementById('app').innerHTML = `
+        ${buildTopbar(true, 'Error')}
+        <section class="section" style="padding: 80px 24px; text-align: center;">
+          <div style="max-width: 480px; margin: 0 auto;">
+            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+            <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">No se pudo cargar el reporte trimestral</h2>
+            <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 24px;">
+              Puede que no haya datos suficientes para este trimestre en la región seleccionada, o que la conexión a la base de datos haya fallado.
+            </p>
+            <a href="#/" class="reporte-especial-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: var(--verde); color: #fff; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 13px;">
+              ← Volver al inicio
+            </a>
+          </div>
+        </section>`;
+    }
   }
 };

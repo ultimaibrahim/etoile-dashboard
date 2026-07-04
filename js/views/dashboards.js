@@ -190,12 +190,12 @@ const DashboardsView = {
             </h1>
           </div>
           <div class="hero-right">
-            <a href="#/trimestre/2026-Q1" class="reporte-especial-card">
+            <a href="#/trimestre/${currYear}-Q${this._latestQuarter(currYear, currMonth)}" class="reporte-especial-card">
               <div class="reporte-watermark">
                 ${svgIcon('calendar')}
               </div>
               <div class="card-tag">Reporte Especial</div>
-              <div class="card-title">Resumen Trimestral<br><span>Q1 2026</span></div>
+              <div class="card-title">Resumen Trimestral<br><span>Q${this._latestQuarter(currYear, currMonth)} ${currYear}</span></div>
               <span class="reporte-especial-btn">
                 Ver reporte completo
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -447,5 +447,10 @@ const DashboardsView = {
 
     await this.render();
     initReveal();
+  },
+
+  _latestQuarter(year, month) {
+    // Devuelve el trimestre actual basado en el mes
+    return Math.ceil(month / 3) || 1;
   }
 };
