@@ -26,10 +26,11 @@ const BranchView = {
       prevMonth = 12;
       prevYear = activeYear - 1;
     }
+    let availableMonths = [];
 
     try {
       // Asegurar carga de los meses en paralelo para máxima velocidad de respuesta
-      const availableMonths = DataLoader.manifest[activeYear] || [];
+      availableMonths = DataLoader.manifest[activeYear] || [];
       await Promise.all(availableMonths.map(m => DataLoader.loadMonth(activeYear, m)));
 
       // Carga de mes anterior para comparativas
