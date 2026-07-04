@@ -205,11 +205,25 @@ const DashboardsView = {
               Dashboards Analíticos
             </h1>
           </div>
-          <div class="hero-right" style="min-width: 320px; max-width: 480px; width: 100%;">
-            ${quarterAccordionHtml}
+          <div class="hero-right">
+            <a href="#/trimestre/${currYear}-Q${Math.ceil(currMonth / 3) || 1}" class="reporte-especial-card">
+              <div class="reporte-watermark">
+                ${svgIcon('calendar')}
+              </div>
+              <div class="card-tag">Reporte Especial</div>
+              <div class="card-title">Resumen Trimestral<br><span>Q${Math.ceil(currMonth / 3) || 1} ${currYear}</span></div>
+              <span class="reporte-especial-btn">
+                Ver reporte completo
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </a>
           </div>
         </div>
       </section>
+
+      ${quarterAccordionHtml}
 
       <div class="dashboard-controls-bar">
         <div class="controls-bar-left">
@@ -386,7 +400,7 @@ const DashboardsView = {
       initReveal();
 
       // Enlazar hover en las tarjetas de Dashboards
-      document.querySelectorAll('.hero-right .quarter-accordion-card').forEach((card, idx) => {
+      document.querySelectorAll('.quarter-accordion-card').forEach((card, idx) => {
         card.addEventListener('mouseenter', () => {
           DashboardsView.setActiveQuarterCard(idx);
         });
@@ -461,6 +475,7 @@ const DashboardsView = {
   },
 
   _buildQuarterAccordion(quarterData, currYear) {
+    const currentQuarter = Math.ceil(new Date().getMonth() / 3) || 1;
     const cardsHtml = quarterData.map((qd, index) => {
       const isActive = index === 0 ? ' active' : ''; // Q1 activo por defecto
       const avgStr = qd.totalReviews > 0 ? qd.avgRating.toFixed(2) : '—';
@@ -475,7 +490,7 @@ const DashboardsView = {
           <div class="qcard-expanded-content">
             <div class="qcard-expanded-header">
               <span class="eyebrow" style="color: var(--sage);">Resumen Q${qd.quarter} ${currYear}</span>
-              <span class="qcard-title">Resumen Trimestre Cerrado</span>
+              <span class="qcard-title">${qd.quarter === currentQuarter ? 'Resumen Trimestre Actual' : 'Resumen Trimestre Cerrado'}</span>
             </div>
             
             <div class="qcard-stats-grid">
@@ -501,17 +516,26 @@ const DashboardsView = {
         </div>
       `;
     }).join('');
+
     return `
-      <div class="quarter-accordion-container" style="margin-top: 0;">
-        <div class="quarter-accordion-wrapper" style="min-height: 180px;">
-          ${cardsHtml}
+      <section class="section r" style="margin-top: 24px; margin-bottom: 24px;">
+        <div class="section-head" style="margin-bottom: 16px;">
+          <div class="section-title">Evolución <span class="accent">Trimestral YTD</span></div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px; max-width: 600px;">
+            Monitoreo comparativo del desempeño por trimestres. Haz clic o pasa el cursor sobre cada trimestre para desplegar el resumen.
+          </p>
         </div>
-      </div>
+        <div class="quarter-accordion-container">
+          <div class="quarter-accordion-wrapper">
+            ${cardsHtml}
+          </div>
+        </div>
+      </section>
     `;
   },
 
   setActiveQuarterCard(index) {
-    const cards = document.querySelectorAll('.hero-right .quarter-accordion-card');
+    const cards = document.querySelectorAll('.quarter-accordion-card');
     cards.forEach((card, idx) => {
       if (idx === index) card.classList.add('active');
       else card.classList.remove('active');
