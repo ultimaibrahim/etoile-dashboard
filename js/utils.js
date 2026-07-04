@@ -103,6 +103,25 @@ function parseQuarterParam(param) {
   return { year: 2026, quarter: parseInt(m[1]) };
 }
 
+function getCompletedQuarters(year) {
+  const now = new Date();
+  const currentYearReal = now.getFullYear();
+  const currentMonthReal = now.getMonth() + 1; // 1-12
+  
+  const completed = [];
+  for (let q = 1; q <= 4; q++) {
+    const qEndMonth = q * 3; // 3, 6, 9, 12
+    if (year < currentYearReal) {
+      completed.push(q);
+    } else if (year === currentYearReal) {
+      if (currentMonthReal > qEndMonth) {
+        completed.push(q);
+      }
+    }
+  }
+  return completed.length > 0 ? completed : [1]; // Garantiza mostrar al menos Q1
+}
+
 /* ── TOPBAR ────────────────────────────────────────────── */
 function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
   const currentHash = window.location.hash;

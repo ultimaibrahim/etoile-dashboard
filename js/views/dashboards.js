@@ -22,6 +22,22 @@ const DashboardsView = {
       });
     }
 
+    // NUEVO: Cargar estadísticas de los trimestres concluidos en paralelo
+    const completedQuarters = getCompletedQuarters(currYear);
+    const quartersStats = await Promise.all(
+      completedQuarters.map(q => DataLoader.loadQuarterStats(currYear, q))
+    );
+    const quarterData = completedQuarters.map((q, idx) => {
+      const stats = quartersStats[idx] || [];
+      const totalReviews = stats.reduce((sum, s) => sum + s.totalReviews, 0);
+      const avgRating = totalReviews > 0 
+        ? stats.reduce((sum, s) => sum + s.avgRating * s.totalReviews, 0) / totalReviews 
+        : 0;
+      const negativeReviews = stats.reduce((sum, s) => sum + s.negativeReviews, 0);
+      return { quarter: q, totalReviews, avgRating, negativeReviews };
+    });
+    const quarterAccordionHtml = this._buildQuarterAccordion(quarterData, currYear);
+
     const currStats = DataLoader.getAllBranchStats(currYear, currMonth);
     const currGlobal = DataLoader.getGlobalStats(currYear, currMonth);
 
@@ -189,20 +205,8 @@ const DashboardsView = {
               Dashboards Analíticos
             </h1>
           </div>
-          <div class="hero-right">
-            <a href="#/trimestre/${currYear}-Q${this._latestQuarter(currYear, currMonth)}" class="reporte-especial-card">
-              <div class="reporte-watermark">
-                ${svgIcon('calendar')}
-              </div>
-              <div class="card-tag">Reporte Especial</div>
-              <div class="card-title">Resumen Trimestral<br><span>Q${this._latestQuarter(currYear, currMonth)} ${currYear}</span></div>
-              <span class="reporte-especial-btn">
-                Ver reporte completo
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </span>
-            </a>
+          <div class="hero-right" style="min-width: 320px; max-width: 480px; width: 100%;">
+            ${quarterAccordionHtml}
           </div>
         </div>
       </section>
@@ -380,6 +384,13 @@ const DashboardsView = {
 
     requestAnimationFrame(() => {
       initReveal();
+
+      // Enlazar hover en las tarjetas de Dashboards
+      document.querySelectorAll('.hero-right .quarter-accordion-card').forEach((card, idx) => {
+        card.addEventListener('mouseenter', () => {
+          DashboardsView.setActiveQuarterCard(idx);
+        });
+      });
     });
   },
 
@@ -449,8 +460,61 @@ const DashboardsView = {
     initReveal();
   },
 
-  _latestQuarter(year, month) {
-    // Devuelve el trimestre actual basado en el mes
-    return Math.ceil(month / 3) || 1;
+  _buildQuarterAccordion(quarterData, currYear) {
+    const cardsHtml = quarterData.map((qd, index) => {
+      const isActive = index === 0 ? ' active' : ''; // Q1 activo por defecto
+      const avgStr = qd.totalReviews > 0 ? qd.avgRating.toFixed(2) : '—';
+      const reviewsStr = qd.totalReviews > 0 ? `${qd.totalReviews} reseñas` : 'Sin reseñas';
+      const negStr = qd.totalReviews > 0 ? `${qd.negativeReviews} críticas` : '0 críticas';
+      return `
+        <div class="quarter-accordion-card${isActive}" data-index="${index}" onclick="DashboardsView.setActiveQuarterCard(${index})">
+          <div class="qcard-collapsed-label">
+            <span class="qcard-collapsed-year">${currYear}</span>
+            <span class="qcard-collapsed-q">Q${qd.quarter}</span>
+          </div>
+          <div class="qcard-expanded-content">
+            <div class="qcard-expanded-header">
+              <span class="eyebrow" style="color: var(--sage);">Resumen Q${qd.quarter} ${currYear}</span>
+              <span class="qcard-title">Resumen Trimestre Cerrado</span>
+            </div>
+            
+            <div class="qcard-stats-grid">
+              <div class="qcard-stat-item">
+                <span class="qcard-stat-label">Promedio Regional</span>
+                <span class="qcard-stat-value num ${qd.totalReviews > 0 && qd.avgRating >= 4.8 ? 'gold' : qd.totalReviews > 0 && qd.avgRating < 4.5 ? 'down' : ''}">${avgStr}★</span>
+              </div>
+              <div class="qcard-stat-item">
+                <span class="qcard-stat-label">Total Reseñas</span>
+                <span class="qcard-stat-value num">${reviewsStr}</span>
+              </div>
+              <div class="qcard-stat-item">
+                <span class="qcard-stat-label">Quejas Críticas</span>
+                <span class="qcard-stat-value num ${qd.negativeReviews > 0 ? 'down' : ''}">${negStr}</span>
+              </div>
+            </div>
+            <div class="qcard-expanded-footer">
+              <a href="#/trimestre/${currYear}-Q${qd.quarter}" class="qcard-btn-link">
+                Ver reporte completo →
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    return `
+      <div class="quarter-accordion-container" style="margin-top: 0;">
+        <div class="quarter-accordion-wrapper" style="min-height: 180px;">
+          ${cardsHtml}
+        </div>
+      </div>
+    `;
+  },
+
+  setActiveQuarterCard(index) {
+    const cards = document.querySelectorAll('.hero-right .quarter-accordion-card');
+    cards.forEach((card, idx) => {
+      if (idx === index) card.classList.add('active');
+      else card.classList.remove('active');
+    });
   }
 };

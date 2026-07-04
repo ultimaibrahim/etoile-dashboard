@@ -107,8 +107,7 @@ const HomeView = {
 
     const kpiSection = this._buildKpiSection(kpiData, currStats, prevKpi, capitalizedCurrMonth, currYear, capitalizedPrevMonth, hasPrevMonth, sparklines);
 
-    // Cargar estadísticas de los 4 trimestres del año en paralelo
-    const quartersToLoad = [1, 2, 3, 4];
+    const quartersToLoad = getCompletedQuarters(currYear);
     const quartersStats = await Promise.all(
       quartersToLoad.map(q => DataLoader.loadQuarterStats(currYear, q))
     );
