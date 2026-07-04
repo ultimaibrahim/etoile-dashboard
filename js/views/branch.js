@@ -19,19 +19,21 @@ const BranchView = {
     }, 250);
 
     let prevStats = null;
+    let hasPrevMonth = false;
+    let prevMonth = activeMonth - 1;
+    let prevYear = activeYear;
+    if (prevMonth === 0) {
+      prevMonth = 12;
+      prevYear = activeYear - 1;
+    }
+
     try {
       // Asegurar carga de los meses en paralelo para máxima velocidad de respuesta
       const availableMonths = DataLoader.manifest[activeYear] || [];
       await Promise.all(availableMonths.map(m => DataLoader.loadMonth(activeYear, m)));
 
       // Carga de mes anterior para comparativas
-      let prevMonth = activeMonth - 1;
-      let prevYear = activeYear;
-      if (prevMonth === 0) {
-        prevMonth = 12;
-        prevYear = activeYear - 1;
-      }
-      const hasPrevMonth = DataLoader.hasMonth(prevYear, prevMonth);
+      hasPrevMonth = DataLoader.hasMonth(prevYear, prevMonth);
       if (hasPrevMonth) {
         await DataLoader.loadMonth(prevYear, prevMonth);
         prevStats = DataLoader.computeBranchStats(prevYear, prevMonth, meta.id);
