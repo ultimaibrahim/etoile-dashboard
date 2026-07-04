@@ -739,7 +739,7 @@ const LcpWalkthrough = {
       body: "Utiliza estos controles para buscar sucursales específicas, filtrarlas por estado (en alerta o estables) y ordenarlas a tu conveniencia."
     },
     {
-      target: ".review-feed-section",
+      target: ".review-feed-carousel-outer",
       title: "Actividad Reciente",
       body: "El feed de opiniones te muestra en tiempo real lo que dicen tus clientes. Puedes hacer clic en cualquier reseña para ver el detalle."
     }
@@ -805,7 +805,7 @@ const LcpWalkthrough = {
     
     let overlay = document.getElementById('walkthroughOverlay');
     if (!overlay) {
-      overlay = document.createElement('div');
+      overlay = document.createElement('canvas');
       overlay.id = 'walkthroughOverlay';
       overlay.className = 'walkthrough-overlay';
       document.body.appendChild(overlay);
@@ -820,6 +820,36 @@ const LcpWalkthrough = {
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
+
+    // Dibujar el canvas con recorte
+    this.redrawCanvas(targetEl);
+
+    // Adjuntar listeners de redibujado dinámico al scroll o resize
+    if (!this._listenersAttached) {
+      this._resizeHandler = () => {
+        const activeTarget = this.steps[this.currentStep]?.target 
+          ? document.querySelector(this.steps[this.currentStep].target) 
+          : null;
+        this.redrawCanvas(activeTarget);
+      };
+      window.addEventListener('resize', this._resizeHandler);
+      window.addEventListener('scroll', this._resizeHandler, { passive: true });
+      this._listenersAttached = true;
+    }
+
+    // Como scrollIntoView es suave y asíncrono, redibujamos repetidamente durante el scroll inicial
+    let scrollTicks = 0;
+    const animateScroll = () => {
+      const activeTarget = this.steps[this.currentStep]?.target 
+        ? document.querySelector(this.steps[this.currentStep].target) 
+        : null;
+      this.redrawCanvas(activeTarget);
+      if (scrollTicks < 45) {
+        scrollTicks++;
+        requestAnimationFrame(animateScroll);
+      }
+    };
+    requestAnimationFrame(animateScroll);
 
     const tooltip = document.createElement('div');
     tooltip.id = 'walkthroughTooltip';
@@ -843,6 +873,77 @@ const LcpWalkthrough = {
     document.body.appendChild(tooltip);
     this.positionTooltip(targetEl, tooltip);
     setTimeout(() => tooltip.classList.add('active'), 50);
+  },
+
+  redrawCanvas(targetEl) {
+    const canvas = document.getElementById('walkthroughOverlay');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Dibujar el overlay oscuro
+    ctx.fillStyle = 'rgba(20, 24, 26, 0.82)'; // Gris/negro traslúcido muy elegante
+    ctx.fillRect(0, 0, w, h);
+
+    if (targetEl) {
+      const rect = targetEl.getBoundingClientRect();
+
+      // Recortar la máscara de forma redondeada usando destination-out
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = '#000';
+
+      const padding = 12;
+      const rx = rect.left - padding;
+      const ry = rect.top - padding;
+      const rw = rect.width + (padding * 2);
+      const rh = rect.height + (padding * 2);
+      const radius = 16; // Radio squircle elegante
+
+      ctx.beginPath();
+      ctx.moveTo(rx + radius, ry);
+      ctx.lineTo(rx + rw - radius, ry);
+      ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
+      ctx.lineTo(rx + rw, ry + rh - radius);
+      ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
+      ctx.lineTo(rx + radius, ry + rh);
+      ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
+      ctx.lineTo(rx, ry + radius);
+      ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
+      ctx.closePath();
+      ctx.fill();
+
+      // Restaurar composición para dibujar el resplandor de contorno
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = 'rgba(184, 144, 47, 0.75)'; // Color Oro LCP
+      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(184, 144, 47, 0.4)';
+      ctx.shadowBlur = 12;
+
+      ctx.beginPath();
+      ctx.moveTo(rx + radius, ry);
+      ctx.lineTo(rx + rw - radius, ry);
+      ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
+      ctx.lineTo(rx + rw, ry + rh - radius);
+      ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
+      ctx.lineTo(rx + radius, ry + rh);
+      ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
+      ctx.lineTo(rx, ry + radius);
+      ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Limpiar sombra para evitar afectar a otros dibujos del navegador
+      ctx.shadowBlur = 0;
+    }
   },
 
   positionTooltip(targetEl, tooltip) {
@@ -992,6 +1093,11 @@ const LcpWalkthrough = {
     if (overlay) {
       overlay.classList.remove('active');
       setTimeout(() => overlay.remove(), 300);
+    }
+    if (this._listenersAttached) {
+      window.removeEventListener('resize', this._resizeHandler);
+      window.removeEventListener('scroll', this._resizeHandler);
+      this._listenersAttached = false;
     }
     localStorage.setItem('lcp_walkthrough_seen', 'true');
   }

@@ -3503,13 +3503,7 @@ html[data-ui-premium="true"] .ui-premium-toggle {
 .walkthrough-highlight {
   position: relative !important;
   z-index: 9001 !important;
-  background-color: var(--surface) !important;
-  border-radius: var(--radius) !important;
-  padding: 8px !important;
-  margin: -8px !important;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), 0 0 30px rgba(184, 144, 47, 0.6) !important;
   pointer-events: none !important;
-  transition: all 0.3s ease !important;
 }
 
 .walkthrough-tooltip {
