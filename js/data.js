@@ -180,29 +180,5 @@ const MONTH_NAMES = [
   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
 ];
 
-/* Datos trimestrales YTD precalculados */
-const Q1_DATA = {
-  year: 2026, quarter: 1,
-  branches: {
-    // GDL
-    andares:   { q1Avg: 4.62, ene: {avg:5.00,count:2}, feb: {avg:5.00,count:1}, mar: {avg:4.40,count:5} },
-    patria:    { q1Avg: 4.95, ene: {avg:5.00,count:7}, feb: {avg:4.92,count:12}, mar: {avg:0,count:0} },
-    'gal-gdl': { q1Avg: 4.89, ene: {avg:4.20,count:5}, feb: {avg:4.88,count:16}, mar: {avg:5.00,count:35} },
-    midtown:   { q1Avg: 4.75, ene: {avg:5.00,count:28}, feb: {avg:3.00,count:1}, mar: {avg:4.27,count:11} },
-    'via-viva':{ q1Avg: 4.69, ene: {avg:0,count:0}, feb: {avg:5.00,count:4}, mar: {avg:4.56,count:9} },
-    'sta-anita':{ q1Avg: 4.88, ene: {avg:4.69,count:13}, feb: {avg:4.86,count:28}, mar: {avg:4.97,count:36} },
-    'la-perla':{ q1Avg: 4.95, ene: {avg:5.00,count:76}, feb: {avg:4.93,count:30}, mar: {avg:4.67,count:12} },
-    forum:     { q1Avg: 4.98, ene: {avg:4.98,count:53}, feb: {avg:5.00,count:2}, mar: {avg:5.00,count:4} },
-    
-    // CDMX (Placeholders iniciales)
-    roma:      { q1Avg: 4.50, isPlaceholder: true, ene: {avg:4.50,count:10}, feb: {avg:4.40,count:12}, mar: {avg:4.60,count:15} },
-    condesa:   { q1Avg: 4.60, isPlaceholder: true, ene: {avg:4.60,count:8},  feb: {avg:4.50,count:14}, mar: {avg:4.70,count:10} },
-    polanco:   { q1Avg: 4.40, isPlaceholder: true, ene: {avg:4.30,count:15}, feb: {avg:4.50,count:10}, mar: {avg:4.40,count:12} },
-    coyoacan:  { q1Avg: 4.70, isPlaceholder: true, ene: {avg:4.60,count:12}, feb: {avg:4.80,count:18}, mar: {avg:4.70,count:20} },
-    'santa-fe':{ q1Avg: 4.20, isPlaceholder: true, ene: {avg:4.10,count:14}, feb: {avg:4.30,count:11}, mar: {avg:4.20,count:16} },
-    interlomas:{ q1Avg: 4.50, isPlaceholder: true, ene: {avg:4.40,count:9},  feb: {avg:4.50,count:15}, mar: {avg:4.60,count:11} },
-    satelite:  { q1Avg: 4.30, isPlaceholder: true, ene: {avg:4.20,count:16}, feb: {avg:4.40,count:12}, mar: {avg:4.30,count:14} },
-    'del-valle':{ q1Avg: 4.60, isPlaceholder: true, ene: {avg:4.50,count:11}, feb: {avg:4.60,count:16}, mar: {avg:4.70,count:13} }
-  }
-};
+
 

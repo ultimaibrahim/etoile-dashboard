@@ -5,7 +5,7 @@
 const QuarterView = {
   async render(params) {
     try {
-    const qParam = parseQuarterParam(params.q || '2026-Q1');
+    const qParam = parseQuarterParam((params && params.q) || '2026-Q1');
     if (!qParam) {
       Router.navigate('#/');
       return;
