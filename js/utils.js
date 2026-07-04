@@ -917,7 +917,7 @@ const LcpWalkthrough = {
     let roleTextHtml = '';
     if (userRole === 'gerente') {
       roleTextHtml = `
-        <p style="font-size:13.5px; color:var(--text-dim); line-height:1.6; margin-bottom:20px;">
+        <p style="font-size:13.5px; color:var(--text); line-height:1.6; margin-bottom:20px;">
           Tu rol de <strong>Gerente de Sucursal</strong> te permite supervisar la reputación de tu tienda. En tu panel podrás medir el volumen de opiniones, la calidad de reseñas y dar seguimiento a alertas operativas.
         </p>
         <div style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.18); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--oro); line-height:1.5; text-align:left;">
@@ -926,7 +926,7 @@ const LcpWalkthrough = {
       `;
     } else if (userRole === 'zonal') {
       roleTextHtml = `
-        <p style="font-size:13.5px; color:var(--text-dim); line-height:1.6; margin-bottom:20px;">
+        <p style="font-size:13.5px; color:var(--text); line-height:1.6; margin-bottom:20px;">
           Tu rol de <strong>Gerente Zonal</strong> te permite auditar las sucursales de tu zona de control. Puedes navegar y alternar entre regiones desde el selector del menú superior para comparar desempeños de distintas zonas.
         </p>
         <div style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.18); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--oro); line-height:1.5; text-align:left;">
@@ -937,7 +937,7 @@ const LcpWalkthrough = {
       const roleMap = { admin: 'Administrador', director: 'Director', regional: 'Gerente Regional' };
       const roleLabel = roleMap[userRole] || userRole;
       roleTextHtml = `
-        <p style="font-size:13.5px; color:var(--text-dim); line-height:1.6; margin-bottom:20px;">
+        <p style="font-size:13.5px; color:var(--text); line-height:1.6; margin-bottom:20px;">
           Tu rol de <strong>${roleLabel}</strong> te otorga acceso al <strong>Dashboard Especial de Marca (étoile Corporate)</strong>. Desde ahí puedes analizar el rendimiento consolidado nacional de todas las regiones, Rankings de complejidad y alertas de incidencias.
         </p>
         <div style="background:rgba(61,138,95,0.06); border:1px solid rgba(61,138,95,0.15); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--ok); line-height:1.5; text-align:left;">
