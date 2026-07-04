@@ -13,7 +13,10 @@ const QuarterView = {
     const { year, quarter } = qParam;
     const months = getQuarterMonths(quarter);
 
-    // Cargar todos los meses del trimestre en paralelo
+    // Cargar estadísticas trimestrales agregadas
+    const qStats = await DataLoader.loadQuarterStats(year, quarter);
+
+    // Cargar todos los meses del trimestre en paralelo para detalles secundarios (acordeones/evolución)
     await Promise.all(months.map(m => DataLoader.loadMonth(year, m)));
 
     // Cargar trimestre anterior para comparativa en paralelo
@@ -27,23 +30,26 @@ const QuarterView = {
 
     // Ranking del trimestre
     const branchQStats = SUCURSALES_META.map(meta => {
-      let totalStars = 0, totalCount = 0, totalNeg = 0;
+      const dbStat = qStats.find(qs => qs.sucursalId === meta.id);
+      
+      const qAvg = dbStat ? dbStat.avgRating : 0;
+      const totalCount = dbStat ? dbStat.totalReviews : 0;
+      const totalNeg = dbStat ? dbStat.negativeReviews : 0;
+
       const monthVals = [];
       for (const m of months) {
         const stats = DataLoader.computeBranchStats(year, m, meta.id);
-        totalStars += stats.avg * stats.count;
-        totalCount += stats.count;
-        totalNeg += stats.negativeCount;
         monthVals.push({ month: m, avg: stats.avg, count: stats.count });
       }
-      const qAvg = totalCount > 0 ? totalStars / totalCount : 0;
-      // Get best and worst review of the quarter
+
+      // Obtener mejor y peor reseña del trimestre de los meses cargados
       let allRevs = [];
       for (const m of months) {
         allRevs = allRevs.concat(DataLoader.getReviewsForBranch(year, m, meta.id));
       }
       const best = allRevs.length ? allRevs.reduce((a, b) => a.stars >= b.stars ? a : b) : null;
       const worst = allRevs.length ? allRevs.reduce((a, b) => a.stars <= b.stars ? a : b) : null;
+
       return { ...meta, qAvg, totalCount, totalNeg, monthVals, best, worst };
     }).sort((a, b) => b.qAvg - a.qAvg);
 

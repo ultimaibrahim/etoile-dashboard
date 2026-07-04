@@ -4248,3 +4248,187 @@ html.login-page-active body {
   max-height: 100vh !important;
 }
 
+/* ── ACCORDION TRIMESTRAL PREMIUM (Skiper52 Adaptado) ── */
+.quarter-accordion-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  margin-top: 10px;
+}
+.quarter-accordion-wrapper {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+  min-height: 200px;
+}
+.quarter-accordion-card {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  transition: flex 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), background 0.3s ease, border-color 0.3s ease;
+  flex: 1; /* Collapsed state flex */
+  height: 220px;
+}
+.quarter-accordion-card.active {
+  flex: 4; /* Expanded state flex */
+  background: var(--surface);
+  border-color: var(--sage);
+  box-shadow: var(--sombra-lg);
+  cursor: default;
+}
+
+/* Collapsed state styling */
+.qcard-collapsed-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 100%;
+  flex-shrink: 0;
+  border-right: 1px solid transparent;
+  transition: border-color 0.3s;
+}
+.quarter-accordion-card.active .qcard-collapsed-label {
+  border-right: 1px solid var(--border);
+}
+.qcard-collapsed-year {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+.qcard-collapsed-q {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--oro);
+  line-height: 1;
+}
+
+/* Expanded state styling */
+.qcard-expanded-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  padding: 20px 24px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(10px);
+  transition: opacity 0.2s ease, transform 0.3s ease, visibility 0.2s;
+}
+.quarter-accordion-card.active .qcard-expanded-content {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  transition: opacity 0.3s ease 0.1s, transform 0.4s ease 0.1s, visibility 0.3s 0.1s;
+}
+.qcard-expanded-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.qcard-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+}
+.qcard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+.qcard-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.qcard-stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.qcard-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+.qcard-stat-value.gold {
+  color: var(--oro);
+}
+.qcard-stat-value.down {
+  color: var(--alerta);
+}
+.qcard-expanded-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+.qcard-btn-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--verde);
+  transition: color 0.2s;
+  padding: 6px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+[data-theme="dark"] .qcard-btn-link {
+  color: var(--sage);
+}
+.qcard-btn-link:hover {
+  border-color: var(--sage);
+  color: var(--oro);
+}
+
+/* Responsive adjustments */
+@media(max-width: 600px) {
+  .quarter-accordion-wrapper {
+    flex-direction: column;
+    min-height: auto;
+    gap: 8px;
+  }
+  .quarter-accordion-card {
+    height: 64px;
+    flex: none;
+    width: 100%;
+    transition: height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  .quarter-accordion-card.active {
+    height: 240px;
+    flex: none;
+  }
+  .qcard-collapsed-label {
+    width: 50px;
+    height: 100%;
+    border-right: 1px solid var(--border);
+    flex-direction: row;
+    gap: 8px;
+  }
+  .qcard-collapsed-q {
+    font-size: 22px;
+  }
+  .qcard-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .qcard-stat-value {
+    font-size: 16px;
+  }
+}
+

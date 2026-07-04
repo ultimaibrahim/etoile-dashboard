@@ -107,6 +107,29 @@ const HomeView = {
 
     const kpiSection = this._buildKpiSection(kpiData, currStats, prevKpi, capitalizedCurrMonth, currYear, capitalizedPrevMonth, hasPrevMonth, sparklines);
 
+    // Cargar estadísticas de los 4 trimestres del año en paralelo
+    const quartersToLoad = [1, 2, 3, 4];
+    const quartersStats = await Promise.all(
+      quartersToLoad.map(q => DataLoader.loadQuarterStats(currYear, q))
+    );
+
+    const quarterData = quartersToLoad.map((q, idx) => {
+      const stats = quartersStats[idx] || [];
+      const totalReviews = stats.reduce((sum, s) => sum + s.totalReviews, 0);
+      const avgRating = totalReviews > 0 
+        ? stats.reduce((sum, s) => sum + s.avgRating * s.totalReviews, 0) / totalReviews 
+        : 0;
+      const negativeReviews = stats.reduce((sum, s) => sum + s.negativeReviews, 0);
+      return {
+        quarter: q,
+        totalReviews,
+        avgRating,
+        negativeReviews
+      };
+    });
+
+    const quarterAccordionHtml = this._buildQuarterAccordion(quarterData, currYear);
+
     // Reviews data for Feed
     const currentData = DataLoader.getMonth(currYear, currMonth);
     const reviewsList = currentData ? currentData.reviews : [];
@@ -358,6 +381,8 @@ const HomeView = {
 
       ${kpiSection}
 
+      ${quarterAccordionHtml}
+
       <section class="section r">
         <div class="section-head" style="margin-bottom: 8px;">
           <div class="section-title">Evaluación <span class="accent">de sucursales</span></div>
@@ -407,6 +432,13 @@ const HomeView = {
     requestAnimationFrame(() => {
       document.getElementById('heroNum')?.classList.add('in');
       initReveal();
+
+      // Bind mouseenter event for hover expand on quarter cards
+      document.querySelectorAll('.quarter-accordion-card').forEach((card, idx) => {
+        card.addEventListener('mouseenter', () => {
+          HomeView.setActiveQuarterCard(idx);
+        });
+      });
 
       // Close custom selects on clicking outside
       const _clickOutsideHandler = (e) => {
@@ -1665,6 +1697,80 @@ const HomeView = {
       dropdown.classList.remove('open');
     }
     this.filterSidebarReviews();
+  },
+
+  _buildQuarterAccordion(quarterData, currYear) {
+    const cardsHtml = quarterData.map((qd, index) => {
+      const currentQuarter = Math.ceil(new Date().getMonth() / 3) || 1;
+      const isActive = qd.quarter === 1 ? ' active' : '';
+
+      const avgStr = qd.totalReviews > 0 ? qd.avgRating.toFixed(2) : '—';
+      const reviewsStr = qd.totalReviews > 0 ? `${qd.totalReviews} reseñas` : 'Sin reseñas';
+      const negStr = qd.totalReviews > 0 ? `${qd.negativeReviews} críticas` : '0 críticas';
+
+      return `
+        <div class="quarter-accordion-card${isActive}" data-index="${index}" onclick="HomeView.setActiveQuarterCard(${index})">
+          <div class="qcard-collapsed-label">
+            <span class="qcard-collapsed-year">${currYear}</span>
+            <span class="qcard-collapsed-q">Q${qd.quarter}</span>
+          </div>
+          <div class="qcard-expanded-content">
+            <div class="qcard-expanded-header">
+              <span class="eyebrow" style="color: var(--sage);">Resumen Q${qd.quarter} ${currYear}</span>
+              <span class="qcard-title">${qd.quarter === currentQuarter ? 'Resumen Trimestre Actual' : 'Resumen Trimestre Cerrado'}</span>
+            </div>
+            
+            <div class="qcard-stats-grid">
+              <div class="qcard-stat-item">
+                <span class="qcard-stat-label">Promedio Regional</span>
+                <span class="qcard-stat-value num ${qd.totalReviews > 0 && qd.avgRating >= 4.8 ? 'gold' : qd.totalReviews > 0 && qd.avgRating < 4.5 ? 'down' : ''}">${avgStr}★</span>
+              </div>
+              <div class="qcard-stat-item">
+                <span class="qcard-stat-label">Total Reseñas</span>
+                <span class="qcard-stat-value num">${reviewsStr}</span>
+              </div>
+              <div class="qcard-stat-item">
+                <span class="qcard-stat-label">Quejas Críticas</span>
+                <span class="qcard-stat-value num ${qd.negativeReviews > 0 ? 'down' : ''}">${negStr}</span>
+              </div>
+            </div>
+
+            <div class="qcard-expanded-footer">
+              <a href="#/trimestre/${currYear}-Q${qd.quarter}" class="qcard-btn-link">
+                Ver reporte completo →
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <section class="section r" style="margin-top: 24px; margin-bottom: 24px;">
+        <div class="section-head" style="margin-bottom: 16px;">
+          <div class="section-title">Evolución <span class="accent">Trimestral YTD</span></div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px; max-width: 600px;">
+            Monitoreo comparativo del desempeño por trimestres. Haz clic o pasa el cursor sobre cada trimestre para desplegar el resumen.
+          </p>
+        </div>
+        <div class="quarter-accordion-container">
+          <div class="quarter-accordion-wrapper">
+            ${cardsHtml}
+          </div>
+        </div>
+      </section>
+    `;
+  },
+
+  setActiveQuarterCard(index) {
+    const cards = document.querySelectorAll('.quarter-accordion-card');
+    cards.forEach((card, idx) => {
+      if (idx === index) {
+        card.classList.add('active');
+      } else {
+        card.classList.remove('active');
+      }
+    });
   },
 
   renderSkeleton() {

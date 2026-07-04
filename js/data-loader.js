@@ -83,6 +83,75 @@ const DataLoader = {
     return false;
   },
 
+  async loadQuarterStats(year, quarter) {
+    const key = `q-${year}-Q${quarter}`;
+    if (this.cache[key]) return this.cache[key];
+
+    // Cargar desde Supabase vista
+    if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
+      try {
+        const { data, error } = await supabaseClient
+          .from('quarterly_stats')
+          .select('*')
+          .eq('region', activeRegion)
+          .eq('year', year)
+          .eq('quarter', quarter);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const stats = data.map(r => ({
+            sucursalId: r.sucursal,
+            avgRating: r.avg_rating,
+            totalReviews: r.total_reviews,
+            negativeReviews: r.negative_reviews
+          }));
+          this.cache[key] = stats;
+          return stats;
+        }
+      } catch (e) {
+        console.error(`Error al consultar estadísticas trimestrales de Supabase para ${key}:`, e);
+      }
+    }
+
+    // Fallback: calcularlo dinámicamente a partir de los meses correspondientes
+    const months = [1, 2, 3].map(m => m + (quarter - 1) * 3);
+    const branchStats = [];
+
+    // Cargar los meses en paralelo
+    await Promise.all(
+      months
+        .filter(m => this.hasMonth(year, m))
+        .map(m => this.loadMonth(year, m))
+    );
+
+    for (const s of SUCURSALES_META) {
+      let totalStars = 0;
+      let totalCount = 0;
+      let totalNeg = 0;
+
+      for (const m of months) {
+        const monthData = this.getMonth(year, m);
+        if (monthData) {
+          const branchRevs = monthData.reviews.filter(r => r.sucursal === s.id);
+          totalStars += branchRevs.reduce((sum, r) => sum + r.stars, 0);
+          totalCount += branchRevs.length;
+          totalNeg += branchRevs.filter(r => r.stars <= 2).length;
+        }
+      }
+
+      branchStats.push({
+        sucursalId: s.id,
+        avgRating: totalCount > 0 ? Number((totalStars / totalCount).toFixed(2)) : 0,
+        totalReviews: totalCount,
+        negativeReviews: totalNeg
+      });
+    }
+
+    this.cache[key] = branchStats;
+    return branchStats;
+  },
+
   async loadMonth(year, month) {
     const key = `${year}-${String(month).padStart(2, '0')}`;
     if (this.cache[key]) return this.cache[key];
