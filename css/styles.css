@@ -3490,7 +3490,6 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
   z-index: 9000;
   opacity: 0;
   transition: opacity 0.3s ease;
