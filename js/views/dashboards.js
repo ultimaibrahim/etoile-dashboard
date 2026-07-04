@@ -195,8 +195,37 @@ const DashboardsView = {
     document.getElementById('app').innerHTML = `
       ${concludedBannerHtml}
       ${buildTopbar(false)}
+      <style>
+        .dashboards-hero-inner {
+          display: grid;
+          gap: 32px;
+          align-items: center;
+          grid-template-columns: 1fr;
+        }
+        @media (min-width: 992px) {
+          .dashboards-hero-inner {
+            grid-template-columns: 0.85fr 1.15fr !important;
+            gap: 48px !important;
+          }
+        }
+        .hero-right .quarter-accordion-card {
+          height: 230px !important;
+        }
+        .hero-right .quarter-accordion-wrapper {
+          min-height: 230px !important;
+        }
+        /* Garantizar que en pantallas estrechas del hero-right no se aplaste el contenido */
+        @media (min-width: 992px) and (max-width: 1200px) {
+          .qcard-expanded-content {
+            padding: 16px 18px !important;
+          }
+          .qcard-stats-grid {
+            gap: 8px !important;
+          }
+        }
+      </style>
       <section class="hero" style="padding:48px 22px;">
-        <div class="hero-inner">
+        <div class="hero-inner dashboards-hero-inner">
           <div class="hero-left">
             <div class="hero-label-row">
               <span class="eyebrow" style="color:rgba(245,239,230,.55);">Visualización de Datos</span>
@@ -205,25 +234,11 @@ const DashboardsView = {
               Dashboards Analíticos
             </h1>
           </div>
-          <div class="hero-right">
-            <a href="#/trimestre/${currYear}-Q${Math.ceil(currMonth / 3) || 1}" class="reporte-especial-card">
-              <div class="reporte-watermark">
-                ${svgIcon('calendar')}
-              </div>
-              <div class="card-tag">Reporte Especial</div>
-              <div class="card-title">Resumen Trimestral<br><span>Q${Math.ceil(currMonth / 3) || 1} ${currYear}</span></div>
-              <span class="reporte-especial-btn">
-                Ver reporte completo
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </span>
-            </a>
+          <div class="hero-right" style="width: 100%;">
+            ${quarterAccordionHtml}
           </div>
         </div>
       </section>
-
-      ${quarterAccordionHtml}
 
       <div class="dashboard-controls-bar">
         <div class="controls-bar-left">
@@ -518,19 +533,11 @@ const DashboardsView = {
     }).join('');
 
     return `
-      <section class="section r" style="margin-top: 24px; margin-bottom: 24px;">
-        <div class="section-head" style="margin-bottom: 16px;">
-          <div class="section-title">Evolución <span class="accent">Trimestral YTD</span></div>
-          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px; max-width: 600px;">
-            Monitoreo comparativo del desempeño por trimestres. Haz clic o pasa el cursor sobre cada trimestre para desplegar el resumen.
-          </p>
+      <div class="quarter-accordion-container" style="margin-top: 0;">
+        <div class="quarter-accordion-wrapper">
+          ${cardsHtml}
         </div>
-        <div class="quarter-accordion-container">
-          <div class="quarter-accordion-wrapper">
-            ${cardsHtml}
-          </div>
-        </div>
-      </section>
+      </div>
     `;
   },
 
