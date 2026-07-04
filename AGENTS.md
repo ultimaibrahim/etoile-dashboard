@@ -183,6 +183,13 @@ En Windows PowerShell:
 python -m http.server 8000
 ```
 
+## Reglas de seguridad y consistencia
+
+- **Escape de HTML**: Todo campo externo que provenga de `reviews`, de la salida del clasificador LLM (`classification.*`) o de cualquier input de usuario, DEBE pasar obligatoriamente por `escapeHtml()` antes de interpolarse en un template asignado a `innerHTML`.
+- **Centralización de Umbrales**: Los umbrales de rating para evaluar sucursales viven únicamente en `js/config.js` (`THRESHOLDS` y `NEGATIVE_STARS_MAX`). Queda estrictamente prohibido usar literales hardcodeados para evaluar cortes de calificación en las vistas.
+- **Seguridad en Endpoints**: No crear endpoints HTTP con operaciones destructivas de base de datos (por ejemplo, vaciar tablas). Cualquier cambio o limpieza destructiva debe realizarse de forma segura mediante scripts autorizados de administración local.
+- **Sincronización del Clasificador**: Las palabras clave de clasificación de quejas viven en `js/config.js` (`COMPLAINT_KEYWORDS`). La copia del clasificador heurístico serverless en `netlify/functions/classify-review.js` debe mantenerse en perfecta sincronía.
+
 ## Reglas de Fórmulas en Google Sheets (Apps Script)
 
 Al inyectar fórmulas en celdas desde Google Apps Script mediante `.setFormula()` o `.setFormulas()`:

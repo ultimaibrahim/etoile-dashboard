@@ -139,7 +139,7 @@ const BrandView = {
       .slice(0, 3);
 
     // ── 5. CÁLCULO DE ALERTAS OPERATIVAS Y DÉFICITS ──
-    const criticalBranchesCount = branchStats.filter(b => b.avg < 4.30 && b.alerts > 0).length;
+    const criticalBranchesCount = branchStats.filter(b => b.avg < THRESHOLDS.CRITICO && b.alerts > 0).length;
     const unansweredCriticalNegatives = brandReviews.filter(r => r.stars <= 2 && (!r.responseText || r.responseText.trim() === '')).length;
     const monthName = MONTH_NAMES[month - 1];
     const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
@@ -243,7 +243,7 @@ const BrandView = {
             <tbody>
               ${Object.entries(regionStats).map(([id, stats]) => {
                 const scoreVal = stats.adjustedScore;
-                const scoreClass = scoreVal >= 5.0 ? 'gold-score' : scoreVal >= 4.60 ? 'green-score' : scoreVal > 0 ? 'red-score' : '';
+                const scoreClass = scoreVal >= 5.0 ? 'gold-score' : scoreVal >= THRESHOLDS.BAJO ? 'green-score' : scoreVal > 0 ? 'red-score' : '';
                 const displayScore = scoreVal > 0 ? `${scoreVal.toFixed(2)} pts` : '—';
                 const rawRat = stats.avgRating;
                 const deltaStr = stats.reviewCount > 0 && stats.delta !== 0
@@ -717,7 +717,7 @@ const BrandView = {
       const localGuideHtml = r.isLocalGuide ? `<span class="guide-badge">Local Guide</span>` : '';
       const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
       const branchDisplay = branchMeta ? branchMeta.nombre : r.sucursal;
-      const replyBoxHtml = isReplied ? `<div class="modal-rev-reply"><strong>Respuesta del Propietario:</strong> "${r.responseText}"</div>` : '';
+      const replyBoxHtml = isReplied ? `<div class="modal-rev-reply"><strong>Respuesta del Propietario:</strong> "${escapeHtml(r.responseText)}"</div>` : '';
       const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : 'Reciente';
 
       return `
@@ -805,9 +805,9 @@ const BrandView = {
       const unreplied = bReviews.filter(r => r.stars <= 2 && (!r.responseText || r.responseText.trim() === '')).length;
 
       if (count > 0) {
-        if (avg < 4.30 && alerts > 0) {
+        if (avg < THRESHOLDS.CRITICO && alerts > 0) {
           criticalBranches.push({ ...s, avg, count, alerts });
-        } else if (avg < KpiMeta.ratingMinimo) {
+        } else if (avg < THRESHOLDS.BAJO) {
           belowTargetBranches.push({ ...s, avg, count, alerts });
         }
         if (unreplied > 0) {
@@ -817,7 +817,7 @@ const BrandView = {
     }
 
     const criticalHtml = criticalBranches.length ? criticalBranches.map(b => `
-      <div class="def-audit-card critical" onclick="BrandView.drillDownDeficit('${b.id}')" title="Haz clic para diagnosticar">
+      <div class="def-audit-card critical" role="button" tabindex="0" onclick="BrandView.drillDownDeficit('${b.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){BrandView.drillDownDeficit('${b.id}');event.preventDefault();}" title="Haz clic para diagnosticar">
         <div class="def-audit-card-info">
           <strong>${b.nombre}</strong>
           <span>${getRegionName(b.region)}</span>
@@ -830,7 +830,7 @@ const BrandView = {
     `).join('') : '<div class="def-empty-state">Sin sucursales críticas en este mes.</div>';
 
     const belowTargetHtml = belowTargetBranches.length ? belowTargetBranches.map(b => `
-      <div class="def-audit-card warning" onclick="BrandView.drillDownDeficit('${b.id}')" title="Haz clic para diagnosticar">
+      <div class="def-audit-card warning" role="button" tabindex="0" onclick="BrandView.drillDownDeficit('${b.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){BrandView.drillDownDeficit('${b.id}');event.preventDefault();}" title="Haz clic para diagnosticar">
         <div class="def-audit-card-info">
           <strong>${b.nombre}</strong>
           <span>${getRegionName(b.region)}</span>
@@ -840,10 +840,10 @@ const BrandView = {
           <span class="def-stat-sub">${b.count} opiniones</span>
         </div>
       </div>
-    `).join('') : '<div class="def-empty-state">Todas las sucursales estables cumplen la meta de 4.60★.</div>';
+    `).join('') : `<div class="def-empty-state">Todas las sucursales estables cumplen la meta de ${THRESHOLDS.BAJO.toFixed(2)}★.</div>`;
 
     const unrepliedHtml = Object.keys(unrepliedAlertsMap).length ? Object.values(unrepliedAlertsMap).map(b => `
-      <div class="def-audit-card alert-bg" onclick="BrandView.drillDownDeficit('${b.id}')" title="Haz clic para diagnosticar">
+      <div class="def-audit-card alert-bg" role="button" tabindex="0" onclick="BrandView.drillDownDeficit('${b.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){BrandView.drillDownDeficit('${b.id}');event.preventDefault();}" title="Haz clic para diagnosticar">
         <div class="def-audit-card-info">
           <strong>${b.nombre}</strong>
           <span>${getRegionName(b.region)}</span>
@@ -869,12 +869,12 @@ const BrandView = {
             </p>
             
             <div class="def-group-section">
-              <span class="def-group-title red">Sucursales Críticas (Calificación &lt; 4.30★ con alertas)</span>
+              <span class="def-group-title red">Sucursales Críticas (Calificación &lt; ${THRESHOLDS.CRITICO.toFixed(2)}★ con alertas)</span>
               <div class="def-group-grid">${criticalHtml}</div>
             </div>
             
             <div class="def-group-section" style="margin-top:24px;">
-              <span class="def-group-title gold">Bajo Meta Mínima (Calificación &lt; 4.60★)</span>
+              <span class="def-group-title gold">Bajo Meta Mínima (Calificación &lt; ${THRESHOLDS.BAJO.toFixed(2)}★)</span>
               <div class="def-group-grid">${belowTargetHtml}</div>
             </div>
             
@@ -911,10 +911,10 @@ const BrandView = {
     const unreplied = alerts.filter(r => !r.responseText || r.responseText.trim() === '').length;
 
     let reasons = [];
-    if (avg < 4.30) {
+    if (avg < THRESHOLDS.CRITICO) {
       reasons.push(`<span class="def-reason-badge red">Crítico</span> Su calificación de <strong>${avg.toFixed(2)}★</strong> está en estado crítico.`);
-    } else if (avg < KpiMeta.ratingMinimo) {
-      reasons.push(`<span class="def-reason-badge warning">Bajo Meta</span> Su promedio es de <strong>${avg.toFixed(2)}★</strong>, por debajo del objetivo nacional de ${KpiMeta.ratingMinimo.toFixed(2)}★.`);
+    } else if (avg < THRESHOLDS.BAJO) {
+      reasons.push(`<span class="def-reason-badge warning">Bajo Meta</span> Su promedio es de <strong>${avg.toFixed(2)}★</strong>, por debajo del objetivo nacional de ${THRESHOLDS.BAJO.toFixed(2)}★.`);
     }
     if (unreplied > 0) {
       reasons.push(`<span class="def-reason-badge red">Respuestas pendientes</span> Tiene <strong>${unreplied}</strong> quejas críticas (1-2★) sin contestar.`);
@@ -930,7 +930,7 @@ const BrandView = {
         : `<span class="reply-badge red">Sin Respuesta</span>`;
       
       const localGuideHtml = r.isLocalGuide ? `<span class="guide-badge">Local Guide</span>` : '';
-      const replyBoxHtml = isReplied ? `<div class="modal-rev-reply"><strong>Respuesta del Propietario:</strong> "${r.responseText}"</div>` : '';
+      const replyBoxHtml = isReplied ? `<div class="modal-rev-reply"><strong>Respuesta del Propietario:</strong> "${escapeHtml(r.responseText)}"</div>` : '';
       const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : 'Reciente';
 
       return `
@@ -969,7 +969,7 @@ const BrandView = {
             <div class="def-branch-header-stats" style="display:flex; gap:12px; margin-bottom:20px;">
               <div style="background:var(--surface); border:1px solid var(--border); padding:10px 16px; border-radius:12px; flex:1; text-align:center;">
                 <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Calificación</div>
-                <div style="font-size:20px; font-weight:700; color:${avg < 4.3 ? 'var(--alerta)' : avg < 4.6 ? 'var(--oro)' : 'var(--verde)'};">${avg.toFixed(2)}★</div>
+                <div style="font-size:20px; font-weight:700; color:${avg < THRESHOLDS.CRITICO ? 'var(--alerta)' : avg < THRESHOLDS.BAJO ? 'var(--oro)' : 'var(--verde)'};">${avg.toFixed(2)}★</div>
               </div>
               <div style="background:var(--surface); border:1px solid var(--border); padding:10px 16px; border-radius:12px; flex:1; text-align:center;">
                 <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Reseñas</div>
@@ -1145,7 +1145,7 @@ const BrandView = {
             <div style="display:flex; gap:12px; margin-bottom:20px;">
               <div style="background:var(--surface); border:1px solid var(--border); padding:10px 14px; border-radius:12px; flex:1; text-align:center;">
                 <div style="font-size:9px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Rating del Mes</div>
-                <div style="font-size:18px; font-weight:700; color:${avg < 4.3 ? 'var(--alerta)' : avg < 4.6 ? 'var(--oro)' : 'var(--verde)'};">${avg > 0 ? avg.toFixed(2) + '★' : '—'}</div>
+                <div style="font-size:18px; font-weight:700; color:${avg < THRESHOLDS.CRITICO ? 'var(--alerta)' : avg < THRESHOLDS.BAJO ? 'var(--oro)' : 'var(--verde)'};">${avg > 0 ? avg.toFixed(2) + '★' : '—'}</div>
               </div>
               <div style="background:var(--surface); border:1px solid var(--border); padding:10px 14px; border-radius:12px; flex:1; text-align:center;">
                 <div style="font-size:9px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Volumen Total</div>

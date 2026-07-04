@@ -2,8 +2,9 @@ const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async (event, context) => {
   // ── Auth: mismo patrón que apify-ingest.js ──
-  const authHeader = event.headers['authorization'];
+  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
   const diagSecret = process.env.DIAG_SECRET;
+  const queryParams = event.queryStringParameters || {};
 
   if (!diagSecret) {
     return { statusCode: 500, body: JSON.stringify({ error: "Falta DIAG_SECRET en variables de entorno." }) };
@@ -13,9 +14,11 @@ exports.handler = async (event, context) => {
     return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
 
+  // Auditoría mínima
+  console.log(`[AUDIT] Invocación diag-db - Fecha: ${new Date().toISOString()} - Acción: ${queryParams.action || 'diagnóstico_lectura'} - IP: ${event.headers['x-nf-client-connection-ip'] || 'desconocida'}`);
+
   // ── Acciones destructivas: requieren POST + confirmación explícita ──
-  const queryParams = event.queryStringParameters || {};
-  const destructiveActions = ['clean', 'clear_all', 'merge_slp'];
+  const destructiveActions = ['clean', 'merge_slp'];
   if (destructiveActions.includes(queryParams.action)) {
     if (event.httpMethod !== 'POST') {
       return { statusCode: 405, body: JSON.stringify({ error: 'Acciones destructivas requieren POST.' }) };
@@ -83,10 +86,6 @@ exports.handler = async (event, context) => {
       } else {
         cleanStatus = "No se encontraron reseñas con IDs antiguos/autogenerados.";
       }
-    } else if (queryParams.action === 'clear_all') {
-      const { error: delError } = await supabase.from('reviews').delete().neq('id', 'placeholder-non-existent');
-      if (delError) throw delError;
-      cleanStatus = "Base de datos reviews completamente vaciada.";
     } else if (queryParams.action === 'merge_slp') {
       const { error: updateError } = await supabase.from('reviews').update({ sucursal: 'the-park' }).eq('sucursal', 'san-luis');
       if (updateError) throw updateError;

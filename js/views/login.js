@@ -11,8 +11,8 @@ const LoginView = {
     app.innerHTML = `
       <div class="login-wrapper">
         <div class="login-video-container">
-          <video id="login-bg-video-a" autoplay muted playsinline class="login-bg-video active"></video>
-          <video id="login-bg-video-b" muted playsinline class="login-bg-video"></video>
+          <video id="login-bg-video-a" autoplay muted playsinline preload="none" poster="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%2314181a' viewBox='0 0 1 1'><rect width='1' height='1'/></svg>" class="login-bg-video active"></video>
+          <video id="login-bg-video-b" muted playsinline preload="none" poster="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%2314181a' viewBox='0 0 1 1'><rect width='1' height='1'/></svg>" class="login-bg-video"></video>
           <div class="login-video-overlay"></div>
         </div>
         <div class="login-bg-deco left">${svgIcon('fleur')}</div>

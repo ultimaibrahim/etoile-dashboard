@@ -841,7 +841,7 @@ const SelectRegionView = {
           </div>
         </div>
         <div class="srv-card-bottom">
-          <h3 class="srv-card-name" style="margin:0;">${r.name}</h3>
+          <h3 class="srv-card-name" style="margin:0;">${escapeHtml(r.name)}</h3>
         </div>
       </div>
     `).join('');

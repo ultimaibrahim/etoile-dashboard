@@ -101,15 +101,15 @@ const DashboardsView = {
         });
       }
 
-      // 2. Low Performer: currScore < 4.60
-      if (currCount > 0 && currScore < KpiMeta.ratingMinimo) {
+      // 2. Low Performer: currScore < THRESHOLDS.BAJO
+      if (currCount > 0 && currScore < THRESHOLDS.BAJO) {
         alerts.push({
           type: 'attention',
           title: 'Bajo la Meta Regional',
           tag: 'Atención',
           branch: b.nombre,
           icon: 'alert',
-          desc: `${b.nombre} promedió ${currScore.toFixed(2)} ★, quedando por debajo del estándar mínimo de ${KpiMeta.ratingMinimo.toFixed(2)} ★.`
+          desc: `${b.nombre} promedió ${currScore.toFixed(2)} ★, quedando por debajo del estándar mínimo de ${THRESHOLDS.BAJO.toFixed(2)} ★.`
         });
       }
 
@@ -544,7 +544,7 @@ const DashboardsView = {
             <div class="qcard-stats-grid">
               <div class="qcard-stat-item">
                 <span class="qcard-stat-label">Promedio Regional</span>
-                <span class="qcard-stat-value num ${qd.totalReviews > 0 && qd.avgRating >= 4.8 ? 'gold' : qd.totalReviews > 0 && qd.avgRating < 4.5 ? 'down' : ''}">${avgStr}★</span>
+                <span class="qcard-stat-value num ${qd.totalReviews > 0 && qd.avgRating >= THRESHOLDS.EXCELENTE ? 'gold' : qd.totalReviews > 0 && qd.avgRating < THRESHOLDS.DOWN ? 'down' : ''}">${avgStr}★</span>
               </div>
               <div class="qcard-stat-item">
                 <span class="qcard-stat-label">Total Reseñas</span>

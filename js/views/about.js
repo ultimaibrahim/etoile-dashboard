@@ -11,7 +11,7 @@ const CHANGELOG_EPOCAS = [
       </p>
       <ul style="margin:0 0 16px 0;padding-left:20px;font-size:13px;color:var(--text-muted);line-height:1.6;list-style-type:disc;">
         <li><strong>Controles Orgánicos:</strong> Búsqueda, filtrado y ordenación mediante dropdowns y chips personalizados fluidos.</li>
-        <li><strong>Evaluación de Desempeño:</strong> Gradiente interactivo y dinámico en hover según cumplimiento del umbral regional de 4.60.</li>
+        <li><strong>Evaluación de Desempeño:</strong> Gradiente interactivo y dinámico en hover según cumplimiento del umbral regional de ${THRESHOLDS.BAJO.toFixed(2)}.</li>
         <li><strong>Vectores SVG:</strong> Migración absoluta de iconografía decorativa a SVG nativo, optimizando la legibilidad en Dark Mode.</li>
         <li><strong>Consolidado de Alertas:</strong> Reportes integrales con feed de reseñas críticas y copia automatizada al portapapeles para Marketing.</li>
       </ul>

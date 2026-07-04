@@ -35,10 +35,10 @@ function classifyLocally(text, stars) {
   const cleanText = (text || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const isLowRating = stars <= 3;
   
-  // 1. Keywords definitions
-  const serviceKeywords = ["servicio", "atencion", "meser", "cajer", "tard", "esper", "demor", "trato", "groser", "actitud", "limp", "sucio", "fila", "caja", "personal", "mal servicio"];
-  const qualityKeywords = ["comida", "crepa", "ingrediente", "fria", "frio", "quema", "sabor", "malo", "rancio", "pelo", "mosca", "insipido", "calidad", "cruda", "crudo", "queso", "massa", "masa"];
-  const valueKeywords = ["caro", "precio", "costo", "porcion", "tamaño", "chico", "diminuto", "estafa", "robo", "carisimo", "abusivo"];
+  // 1. Keywords definitions (MANTENER SINCRONIZADO con COMPLAINT_KEYWORDS en js/config.js)
+  const serviceKeywords = ["servicio", "atencion", "mesero", "meser", "cajero", "cajer", "tarde", "tard", "espera", "esper", "demora", "demor", "trato", "grosero", "groser", "actitud", "limpieza", "limp", "sucio", "fila", "caja", "personal", "mal servicio", "lento", "tade", "tardaron", "amabilidad"];
+  const qualityKeywords = ["comida", "crepa", "ingrediente", "fria", "frio", "quema", "sabor", "malo", "rancio", "pelo", "mosca", "insipido", "calidad", "cruda", "crudo", "queso", "massa", "masa", "sucio"];
+  const valueKeywords = ["caro", "precio", "costo", "porcion", "tamaño", "chico", "diminuto", "estafa", "robo", "carisimo", "abusivo", "cantidad"];
 
   const hasService = serviceKeywords.some(kw => cleanText.includes(kw));
   const hasQuality = qualityKeywords.some(kw => cleanText.includes(kw));

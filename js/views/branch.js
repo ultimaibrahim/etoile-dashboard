@@ -195,21 +195,21 @@ const BranchView = {
             if (cat.valor) categoryCounts.valor++;
           }
           if (r.classification.resumen_tema) {
-            summaries.push(`"${r.classification.resumen_tema}"`);
+            summaries.push(`"${escapeHtml(r.classification.resumen_tema)}"`);
           } else {
-            summaries.push(`"${r.text.substring(0, 60)}..."`);
+            summaries.push(`"${escapeHtml(r.text.substring(0, 60))}..."`);
           }
         }
       } else {
-        const txt = r.text.toLowerCase();
-        const serviceRegex = /mesero|lento|espera|atenci[oó]n|servicio|tade|tarde|tardaron|trato|amabilidad/i;
-        const qualityRegex = /sabor|fr[ií]o|sucio|malo|crudo|calidad|ingrediente|pelo/i;
-        const valueRegex = /caro|precio|porci[oó]n|costo|tama[ño]|car[ií]simo|cantidad/i;
+        const cleanText = r.text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const hasService = COMPLAINT_KEYWORDS.servicio.some(kw => cleanText.includes(kw));
+        const hasQuality = COMPLAINT_KEYWORDS.calidad.some(kw => cleanText.includes(kw));
+        const hasValue = COMPLAINT_KEYWORDS.valor.some(kw => cleanText.includes(kw));
         
-        if (serviceRegex.test(txt)) categoryCounts.servicio++;
-        if (qualityRegex.test(txt)) categoryCounts.calidad++;
-        if (valueRegex.test(txt)) categoryCounts.valor++;
-        summaries.push(`"${r.text.substring(0, 60)}..."`);
+        if (hasService) categoryCounts.servicio++;
+        if (hasQuality) categoryCounts.calidad++;
+        if (hasValue) categoryCounts.valor++;
+        summaries.push(`"${escapeHtml(r.text.substring(0, 60))}..."`);
       }
     });
 
@@ -504,10 +504,6 @@ const BranchView = {
     let qualityCount = 0;
     let valueCount = 0;
 
-    const serviceRegex = /mesero|lento|espera|atenci[oó]n|servicio|tade|tarde|tardaron|trato|amabilidad/i;
-    const qualityRegex = /sabor|fr[ií]o|sucio|malo|crudo|calidad|ingrediente|pelo/i;
-    const valueRegex = /caro|precio|porci[oó]n|costo|tama[ñn]o|car[ií]simo|cantidad/i;
-
     negativeReviews.forEach(r => {
       if (r.classification && typeof r.classification.es_queja === 'boolean') {
         if (r.classification.es_queja) {
@@ -519,10 +515,13 @@ const BranchView = {
           }
         }
       } else {
-        const txt = r.text || '';
-        if (serviceRegex.test(txt)) serviceCount++;
-        if (qualityRegex.test(txt)) qualityCount++;
-        if (valueRegex.test(txt)) valueCount++;
+        const cleanText = (r.text || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const hasService = COMPLAINT_KEYWORDS.servicio.some(kw => cleanText.includes(kw));
+        const hasQuality = COMPLAINT_KEYWORDS.calidad.some(kw => cleanText.includes(kw));
+        const hasValue = COMPLAINT_KEYWORDS.valor.some(kw => cleanText.includes(kw));
+        if (hasService) serviceCount++;
+        if (hasQuality) qualityCount++;
+        if (hasValue) valueCount++;
       }
     });
 
