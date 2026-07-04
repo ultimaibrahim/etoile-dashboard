@@ -3507,12 +3507,12 @@ html[data-ui-premium="true"] .ui-premium-toggle {
 
 .walkthrough-tooltip {
   position: absolute;
-  background: var(--surface-2);
-  border: 1px solid var(--oro);
-  border-radius: 16px;
-  box-shadow: var(--sombra-lg);
-  padding: 24px;
-  width: min(440px, 90vw);
+  background: #FFFDF8;
+  border: 1.5px solid var(--oro);
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(184, 144, 47, 0.1);
+  padding: 26px 28px;
+  width: min(460px, 90vw);
   z-index: 9002;
   box-sizing: border-box;
   opacity: 0;
@@ -3520,14 +3520,18 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   transition: opacity 0.3s ease, transform 0.3s ease;
   pointer-events: auto;
 }
+[data-theme="dark"] .walkthrough-tooltip {
+  background: #1E2422;
+  border-color: rgba(184, 144, 47, 0.6);
+}
 .walkthrough-tooltip.active {
   opacity: 1;
   transform: translateY(0);
 }
 .walkthrough-tooltip-title {
-  font-size: 14.5px;
-  font-weight: 700;
-  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  color: #1A1A1A;
   margin-bottom: 10px;
   font-family: var(--sans);
   text-transform: uppercase;
@@ -3536,34 +3540,43 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   justify-content: space-between;
   align-items: center;
 }
+[data-theme="dark"] .walkthrough-tooltip-title {
+  color: #F5EFE6;
+}
 .walkthrough-tooltip-step {
   font-size: 10.5px;
   font-family: var(--mono);
   color: var(--oro);
   font-weight: 700;
-  background: rgba(212, 175, 55, 0.08);
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: rgba(212, 175, 55, 0.1);
+  padding: 3px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
 }
 .walkthrough-tooltip-body {
-  font-size: 14px;
-  color: var(--text);
-  line-height: 1.6;
-  margin-bottom: 20px;
+  font-size: 14.5px;
+  color: #333;
+  line-height: 1.65;
+  margin-bottom: 22px;
+}
+[data-theme="dark"] .walkthrough-tooltip-body {
+  color: #C8C4BC;
 }
 .walkthrough-tooltip-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 .walkthrough-btn {
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 12px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 12.5px;
   font-weight: 700;
   border: 1px solid transparent;
   transition: all 0.2s ease;
   cursor: pointer;
+  font-family: var(--sans);
 }
 .walkthrough-btn:active {
   transform: scale(0.95);
@@ -3577,18 +3590,43 @@ html[data-ui-premium="true"] .ui-premium-toggle {
 }
 .walkthrough-btn.skip {
   background: transparent;
-  border-color: var(--border-strong);
-  color: var(--text-muted);
+  border-color: #ccc;
+  color: #666;
+}
+[data-theme="dark"] .walkthrough-btn.skip {
+  border-color: #444;
+  color: #999;
 }
 .walkthrough-btn.skip:hover {
-  background: var(--border);
-  color: var(--text);
+  background: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+[data-theme="dark"] .walkthrough-btn.skip:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ccc;
+}
+.walkthrough-btn.back {
+  background: transparent;
+  border-color: #ccc;
+  color: #666;
+}
+[data-theme="dark"] .walkthrough-btn.back {
+  border-color: #444;
+  color: #999;
+}
+.walkthrough-btn.back:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+[data-theme="dark"] .walkthrough-btn.back:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ccc;
 }
 
 @media (max-width: 576px) {
   .walkthrough-tooltip {
     position: fixed !important;
-    bottom: 80px !important; /* Above bottom tab bar */
+    bottom: 80px !important;
     left: 16px !important;
     right: 16px !important;
     top: auto !important;

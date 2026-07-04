@@ -854,6 +854,9 @@ const LcpWalkthrough = {
     const isLast = this.currentStep === this.steps.length - 1;
     const stepIndicator = `Paso ${this.currentStep + 1} de ${this.steps.length}`;
     
+    const isFirst = this.currentStep === 0;
+    const backBtn = isFirst ? '' : '<button class="walkthrough-btn back" onclick="LcpWalkthrough.prev()">← Anterior</button>';
+    
     tooltip.innerHTML = `
       <div class="walkthrough-tooltip-title">
         <span>${step.title}</span>
@@ -862,7 +865,10 @@ const LcpWalkthrough = {
       <div class="walkthrough-tooltip-body">${step.body}</div>
       <div class="walkthrough-tooltip-actions">
         <button class="walkthrough-btn skip" onclick="LcpWalkthrough.skip()">${isLast ? 'Cerrar' : 'Saltar'}</button>
-        <button class="walkthrough-btn next" onclick="LcpWalkthrough.next()">${isLast ? 'Finalizar' : 'Siguiente'}</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          ${backBtn}
+          <button class="walkthrough-btn next" onclick="LcpWalkthrough.next()">${isLast ? 'Finalizar' : 'Siguiente'}</button>
+        </div>
       </div>
     `;
 
@@ -1069,6 +1075,13 @@ const LcpWalkthrough = {
   next() {
     this.currentStep++;
     this.showStep();
+  },
+
+  prev() {
+    if (this.currentStep > 0) {
+      this.currentStep--;
+      this.showStep();
+    }
   },
 
   skip() {
