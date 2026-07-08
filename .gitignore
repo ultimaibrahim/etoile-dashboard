@@ -15,6 +15,7 @@ node_modules/
 # ─── Archivos privados / no versionables ───────────────────
 # Carpeta .ignore donde el usuario guarda CSVs, Excels y PDFs de origen
 .ignore/
+ignoreArchives/
 
 # Extractos temporales
 pdf_extract.txt

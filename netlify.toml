@@ -1,9 +1,4 @@
 [build.environment]
   SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
 
-# Headers específicos para videos — permiten carga desde el mismo sitio
-[[headers]]
-  for = "/videos/*"
-  [headers.values]
-    Cross-Origin-Resource-Policy = "same-site"
-    Cache-Control = "public, max-age=86400"
+
