@@ -60,3 +60,20 @@ build/
 *.tmp
 *.temp
 *.bak
+
+# ─── Agente/herramientas autónomas (metadata de runs, puede tener paths y logs sensibles) ─
+.cave/
+
+# ─── Basura de macOS que vino en un zip ────────────────────
+**/__MACOSX/
+._*
+
+# ─── Fuente vectorial fuente (Illustrator), no se usa en producción ─
+*.ai
+
+# ─── Video pesado — no pertenece en git ────────────────────
+*.mp4
+
+# ─── Cache de Netlify CLI/build ────────────────────────────
+.netlify/
+
