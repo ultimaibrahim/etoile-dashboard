@@ -326,7 +326,7 @@ const Charts = {
           if (evt.native) evt.native.target.style.cursor = activeEls.length ? 'pointer' : 'default';
         },
         layout: {
-          padding: { right: 20, top: 15 }
+          padding: { right: 35, top: 15, left: 5, bottom: 5 }
         },
         plugins: {
           legend: { display: false },
@@ -445,13 +445,19 @@ const Charts = {
         indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
-        onClick: (evt, activeEls) => {
-          if (onSelect && activeEls.length > 0) {
-            onSelect(activeEls[0].index);
+        onClick: (evt, activeEls, chart) => {
+          const points = (chart && typeof chart.getElementsAtEventForMode === 'function') 
+            ? chart.getElementsAtEventForMode(evt, 'index', { intersect: false }, true) 
+            : activeEls;
+          if (onSelect && points && points.length > 0) {
+            onSelect(points[0].index);
           }
         },
-        onHover: (evt, activeEls) => {
-          if (evt.native) evt.native.target.style.cursor = activeEls.length ? 'pointer' : 'default';
+        onHover: (evt, activeEls, chart) => {
+          const points = (chart && typeof chart.getElementsAtEventForMode === 'function')
+            ? chart.getElementsAtEventForMode(evt, 'index', { intersect: false }, true)
+            : activeEls;
+          if (evt.native) evt.native.target.style.cursor = points.length ? 'pointer' : 'default';
         },
         layout: {
           padding: { right: window.innerWidth < 500 ? 38 : 60, top: 10 }
