@@ -405,8 +405,19 @@ const BranchView = {
           </div>
         </div>
         <div class="reviews-panel">
-          <div class="reviews-list" id="revList">${this._buildRevList(reviews.filter(r => r.text && r.text.trim().length > 0).slice(0, 5))}</div>
-          ${reviews.filter(r => r.text && r.text.trim().length > 0).length > 5 ? `<button class="show-all-btn" id="showAllBtn">Mostrar todas las ${reviews.filter(r => r.text && r.text.trim().length > 0).length} reseñas ↓</button>` : ''}
+          <div class="branch-feed-controls" style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            <div class="search-wrapper" style="max-width: 280px; width: 100%;">
+              <span class="search-icon-svg">${svgIcon('search')}</span>
+              <input type="text" id="branchFeedSearch" class="branch-search-input" placeholder="Buscar en esta tienda..." oninput="BranchView.filterBranchFeed(this.value)" value="${this.feedSearchQuery || ''}">
+            </div>
+            <div class="filter-row" style="margin: 0;">
+              <button class="chip ${(!this.feedStarFilter || this.feedStarFilter === 'all') ? 'active' : ''}" onclick="BranchView.filterBranchStars('all')">Todas (${reviews.filter(r => r.text && r.text.trim().length > 0).length})</button>
+              <button class="chip ${this.feedStarFilter === 'critical' ? 'active' : ''}" onclick="BranchView.filterBranchStars('critical')">Quejas ≤2★ (${reviews.filter(r => r.stars <= 2 && r.text && r.text.trim().length > 0).length})</button>
+              <button class="chip ${this.feedStarFilter === '5' ? 'active' : ''}" onclick="BranchView.filterBranchStars('5')">5 ★ (${reviews.filter(r => r.stars === 5 && r.text && r.text.trim().length > 0).length})</button>
+            </div>
+          </div>
+          <div class="reviews-list" id="revList">${this._buildRevList(this._getFilteredReviews(reviews))}</div>
+          ${reviews.filter(r => r.text && r.text.trim().length > 0).length > 5 && !this.feedSearchQuery && (!this.feedStarFilter || this.feedStarFilter === 'all') ? `<button class="show-all-btn" id="showAllBtn">Mostrar todas las ${reviews.filter(r => r.text && r.text.trim().length > 0).length} reseñas ↓</button>` : ''}
         </div>
       </section>
 
@@ -732,14 +743,51 @@ const BranchView = {
       checkFn = (r) => r.classification?.categoria_queja?.valor;
     }
     
+    const categoryKey = category === 'precio' ? 'valor' : category;
     const matchedReviews = branchReviews.filter(r => {
       if (!r.text) return false;
       if (r.classification && typeof r.classification.es_queja === 'boolean') {
         return checkFn(r);
       }
-      return regex.test(r.text);
+      return classifyReviewCategory(r.text, COMPLAINT_KEYWORDS[categoryKey] || []);
     });
     this.openProblemDetailModal(title, matchedReviews);
+  },
+
+  _getFilteredReviews(reviews) {
+    let list = reviews.filter(r => r.text && r.text.trim().length > 0);
+    if (this.feedStarFilter === 'critical') {
+      list = list.filter(r => r.stars <= 2);
+    } else if (this.feedStarFilter === '5') {
+      list = list.filter(r => r.stars === 5);
+    }
+    if (this.feedSearchQuery) {
+      const q = this.feedSearchQuery.toLowerCase();
+      list = list.filter(r => r.text.toLowerCase().includes(q));
+    }
+    return (this.feedSearchQuery || (this.feedStarFilter && this.feedStarFilter !== 'all')) ? list : list.slice(0, 5);
+  },
+
+  filterBranchFeed(query) {
+    this.feedSearchQuery = query;
+    this._updateRevListDOM();
+  },
+
+  filterBranchStars(filter) {
+    this.feedStarFilter = filter;
+    this._updateRevListDOM();
+  },
+
+  _updateRevListDOM() {
+    const activeYear = DataLoader.currentYear;
+    const activeMonth = DataLoader.currentMonth;
+    const meta = getBranchById(this.activeParams?.id);
+    if (!meta) return;
+    const reviews = DataLoader.getReviewsForBranch(activeYear, activeMonth, meta.id);
+    const container = document.getElementById('revList');
+    if (container) {
+      container.innerHTML = this._buildRevList(this._getFilteredReviews(reviews));
+    }
   },
 
   openProblemDetailModal(title, reviews) {
