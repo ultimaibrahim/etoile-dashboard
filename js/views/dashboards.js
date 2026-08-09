@@ -624,8 +624,10 @@ const DashboardsView = {
   },
 
   openStarReviewsModal(year, month, stars) {
-    const monthData = DataLoader.getMonth(year, month);
-    const allReviews = monthData ? monthData.reviews : [];
+    const activeRegion = typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated() ? AppAuth.getUserRegion() : 'GDL';
+    const allReviews = typeof DataLoader.getReviewsForRegion === 'function' 
+      ? DataLoader.getReviewsForRegion(year, month, activeRegion)
+      : ((DataLoader.getMonth(year, month) || {}).reviews || []);
     const filtered = allReviews.filter(r => r.stars === stars);
 
     const oldOverlay = document.getElementById('dashStarModalOverlay');
