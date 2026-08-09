@@ -212,10 +212,9 @@ const BranchView = {
           }
         }
       } else {
-        const cleanText = r.text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const hasService = COMPLAINT_KEYWORDS.servicio.some(kw => cleanText.includes(kw));
-        const hasQuality = COMPLAINT_KEYWORDS.calidad.some(kw => cleanText.includes(kw));
-        const hasValue = COMPLAINT_KEYWORDS.valor.some(kw => cleanText.includes(kw));
+        const hasService = classifyReviewCategory(r.text, COMPLAINT_KEYWORDS.servicio);
+        const hasQuality = classifyReviewCategory(r.text, COMPLAINT_KEYWORDS.calidad);
+        const hasValue = classifyReviewCategory(r.text, COMPLAINT_KEYWORDS.valor);
         
         if (hasService) categoryCounts.servicio++;
         if (hasQuality) categoryCounts.calidad++;
@@ -333,16 +332,22 @@ const BranchView = {
             ${dropdownHtml}
           </div>
           
-          <button class="btn-primary" onclick="BranchView.shareExecutiveSummary()" style="padding: 10px 18px; font-size: 13px; height: 40px; margin-top: 6px; border-radius: 12px; background: var(--verde); color: #FAF5EB; border: 1px solid rgba(255,255,255,0.08); font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="18" cy="5" r="3"></circle>
-              <circle cx="6" cy="12" r="3"></circle>
-              <circle cx="18" cy="19" r="3"></circle>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-            </svg>
-            <span>Compartir</span>
-          </button>
+          <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
+            <button class="print-btn-no-export" onclick="window.print()" style="padding: 10px 16px; font-size: 13px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.08); color: #FAF5EB; border: 1px solid rgba(255,255,255,0.12); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              <span>Exportar PDF</span>
+            </button>
+            <button class="btn-primary" onclick="BranchView.shareExecutiveSummary()" style="padding: 10px 18px; font-size: 13px; height: 40px; border-radius: 12px; background: var(--verde); color: #FAF5EB; border: 1px solid rgba(255,255,255,0.08); font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              <span>Compartir</span>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -539,10 +544,9 @@ const BranchView = {
           }
         }
       } else {
-        const cleanText = (r.text || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const hasService = COMPLAINT_KEYWORDS.servicio.some(kw => cleanText.includes(kw));
-        const hasQuality = COMPLAINT_KEYWORDS.calidad.some(kw => cleanText.includes(kw));
-        const hasValue = COMPLAINT_KEYWORDS.valor.some(kw => cleanText.includes(kw));
+        const hasService = classifyReviewCategory(r.text, COMPLAINT_KEYWORDS.servicio);
+        const hasQuality = classifyReviewCategory(r.text, COMPLAINT_KEYWORDS.calidad);
+        const hasValue = classifyReviewCategory(r.text, COMPLAINT_KEYWORDS.valor);
         if (hasService) serviceCount++;
         if (hasQuality) qualityCount++;
         if (hasValue) valueCount++;
@@ -847,10 +851,9 @@ const BranchView = {
           }
         }
       } else {
-        const cleanText = (r.text || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const hasService = COMPLAINT_KEYWORDS.servicio.some(kw => cleanText.includes(kw));
-        const hasQuality = COMPLAINT_KEYWORDS.calidad.some(kw => cleanText.includes(kw));
-        const hasValue = COMPLAINT_KEYWORDS.valor.some(kw => cleanText.includes(kw));
+        const hasService = classifyReviewCategory(r.text, COMPLAINT_KEYWORDS.servicio);
+        const hasQuality = classifyReviewCategory(r.text, COMPLAINT_KEYWORDS.calidad);
+        const hasValue = classifyReviewCategory(r.text, COMPLAINT_KEYWORDS.valor);
         if (hasService) serviceCount++;
         if (hasQuality) qualityCount++;
         if (hasValue) valueCount++;

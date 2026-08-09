@@ -2128,10 +2128,9 @@ const BrandView = {
           }
         }
       } else {
-        const cleanText = (r.text || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const hasService = COMPLAINT_KEYWORDS.servicio.some(kw => cleanText.includes(kw));
-        const hasQuality = COMPLAINT_KEYWORDS.calidad.some(kw => cleanText.includes(kw));
-        const hasValue = COMPLAINT_KEYWORDS.valor.some(kw => cleanText.includes(kw));
+        const hasService = classifyReviewCategory(r.text, COMPLAINT_KEYWORDS.servicio);
+        const hasQuality = classifyReviewCategory(r.text, COMPLAINT_KEYWORDS.calidad);
+        const hasValue = classifyReviewCategory(r.text, COMPLAINT_KEYWORDS.valor);
         if (hasService) serviceCount++;
         if (hasQuality) qualityCount++;
         if (hasValue) valueCount++;

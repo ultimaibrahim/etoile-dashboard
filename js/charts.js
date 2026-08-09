@@ -191,7 +191,7 @@ const Charts = {
     return chart;
   },
 
-  stackedVolume(ctx, labels, okData, neutralData, warnData) {
+  stackedVolume(ctx, labels, okData, neutralData, warnData, onSelect) {
     const fontSans = premiumUi ? 'Plus Jakarta Sans, sans-serif' : 'Helvetica Neue, Helvetica, Arial, sans-serif';
     const fontMono = premiumUi ? 'JetBrains Mono, monospace' : 'ui-monospace, SF Mono, Menlo, monospace';
 
@@ -226,6 +226,14 @@ const Charts = {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        onClick: (evt, activeEls) => {
+          if (onSelect && activeEls.length > 0) {
+            onSelect(activeEls[0].index, activeEls[0].datasetIndex);
+          }
+        },
+        onHover: (evt, activeEls) => {
+          if (evt.native) evt.native.target.style.cursor = activeEls.length ? 'pointer' : 'default';
+        },
         scales: {
           x: {
             stacked: true,
@@ -287,7 +295,7 @@ const Charts = {
     return chart;
   },
 
-  barRanking(ctx, labels, data, colors) {
+  barRanking(ctx, labels, data, colors, onSelect) {
     const fontSans = premiumUi ? 'Plus Jakarta Sans, sans-serif' : 'Helvetica Neue, Helvetica, Arial, sans-serif';
     const fontMono = premiumUi ? 'JetBrains Mono, monospace' : 'ui-monospace, SF Mono, Menlo, monospace';
 
@@ -309,6 +317,14 @@ const Charts = {
         indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
+        onClick: (evt, activeEls) => {
+          if (onSelect && activeEls.length > 0) {
+            onSelect(activeEls[0].index);
+          }
+        },
+        onHover: (evt, activeEls) => {
+          if (evt.native) evt.native.target.style.cursor = activeEls.length ? 'pointer' : 'default';
+        },
         layout: {
           padding: { right: 20, top: 15 }
         },
@@ -408,7 +424,7 @@ const Charts = {
     return chart;
   },
 
-  starDistributionBar(ctx, labels, data, colors) {
+  starDistributionBar(ctx, labels, data, colors, onSelect) {
     const fontSans = premiumUi ? 'Plus Jakarta Sans, sans-serif' : 'Helvetica Neue, Helvetica, Arial, sans-serif';
     const fontMono = premiumUi ? 'JetBrains Mono, monospace' : 'ui-monospace, SF Mono, Menlo, monospace';
 
@@ -429,6 +445,14 @@ const Charts = {
         indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
+        onClick: (evt, activeEls) => {
+          if (onSelect && activeEls.length > 0) {
+            onSelect(activeEls[0].index);
+          }
+        },
+        onHover: (evt, activeEls) => {
+          if (evt.native) evt.native.target.style.cursor = activeEls.length ? 'pointer' : 'default';
+        },
         layout: {
           padding: { right: window.innerWidth < 500 ? 38 : 60, top: 10 }
         },
