@@ -624,48 +624,100 @@ const DashboardsView = {
   },
 
   openStarReviewsModal(year, month, stars) {
+    this._modalYear = year;
+    this._modalMonth = month;
+    this._modalStars = stars;
+
     const activeRegion = typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated() ? AppAuth.getUserRegion() : 'GDL';
     const allReviews = typeof DataLoader.getReviewsForRegion === 'function' 
       ? DataLoader.getReviewsForRegion(year, month, activeRegion)
       : ((DataLoader.getMonth(year, month) || {}).reviews || []);
     const filtered = allReviews.filter(r => r.stars === stars);
 
+    const branchCountsMap = {};
+    filtered.forEach(r => {
+      const bName = r.sucursal || 'Sucursal';
+      branchCountsMap[bName] = (branchCountsMap[bName] || 0) + 1;
+    });
+
+    const branchOptionsHtml = Object.keys(branchCountsMap).sort().map(bName => {
+      return `<option value="${escapeHtml(bName)}">${escapeHtml(bName)} (${branchCountsMap[bName]})</option>`;
+    }).join('');
+
     const oldOverlay = document.getElementById('dashStarModalOverlay');
     if (oldOverlay) oldOverlay.remove();
 
     const overlay = document.createElement('div');
     overlay.id = 'dashStarModalOverlay';
-    overlay.className = 'feed-sidebar-overlay active';
-    overlay.style.zIndex = '99999';
+    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px;';
 
-    const cardsHtml = filtered.map(r => `
-      <div class="feed-sidebar-card" style="margin-bottom: 12px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;">
-        <div style="display:flex; justify-size:space-between; align-items:center; margin-bottom:6px;">
-          <span style="font-weight:700; font-size:13px; color:var(--text);">${escapeHtml(r.sucursal || 'Sucursal')}</span>
-          <span style="font-size:12px; color:var(--oro);">${'★'.repeat(r.stars)}</span>
-        </div>
-        <p style="font-size:13px; color:var(--text-muted); margin:0 0 6px 0; line-height:1.4;">${escapeHtml(r.text || '(Sin comentario escrito)')}</p>
-        <span style="font-size:11px; color:var(--text-muted); opacity:0.7;">${formatDate(r.publishedAtDate)}</span>
-      </div>
-    `).join('');
+    overlay.onclick = (e) => {
+      if (e.target === overlay) overlay.remove();
+    };
+
+    const monthName = MONTH_NAMES[month - 1];
 
     overlay.innerHTML = `
-      <div class="feed-sidebar-panel" style="max-width: 480px; width: 100%; height: 100%; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -8px 0 24px rgba(0,0,0,0.25); display: flex; flex-direction: column; float: right;">
-        <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-          <h3 style="margin: 0; font-family: var(--title); font-size: 18px; color: var(--text);">Reseñas de ${stars} ★ (${filtered.length})</h3>
-          <button onclick="ModalManager.close()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted);">&times;</button>
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); max-width:680px; width:100%; max-height:85vh; display:flex; flex-direction:column; box-shadow:var(--sombra-lg); overflow:hidden;">
+        <div style="padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; background:var(--surface-2);">
+          <div>
+            <h3 style="margin:0; font-family:var(--title); font-size:20px; color:var(--text); display:flex; align-items:center; gap:8px;">
+              <span>Reseñas de ${stars} ★</span>
+              <span style="font-size:12px; font-weight:700; background:rgba(184,144,47,0.14); color:var(--oro); padding:2px 10px; border-radius:12px;" id="starModalCountBadge">${filtered.length} totales</span>
+            </h3>
+            <span style="font-size:12px; color:var(--text-muted);">${monthName} ${year} · Región ${getRegionName(activeRegion)}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <select id="modalBranchFilterSelect" onchange="DashboardsView.filterStarModalByBranch(this.value, ${stars})" style="padding:7px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:12px; font-weight:600; cursor:pointer;">
+              <option value="all">Todas las sucursales (${filtered.length})</option>
+              ${branchOptionsHtml}
+            </select>
+            <button onclick="document.getElementById('dashStarModalOverlay').remove()" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted); line-height:1;">&times;</button>
+          </div>
         </div>
-        <div style="padding: 20px; overflow-y: auto; flex: 1;">
-          ${filtered.length > 0 ? cardsHtml : '<p style="color:var(--text-muted); font-size:13px; text-align:center;">No hay opiniones para esta calificación en este periodo.</p>'}
+        <div id="starModalCardsContainer" style="padding:20px 24px; overflow-y:auto; flex:1;">
+          ${this._buildStarModalCards(filtered)}
         </div>
       </div>
     `;
 
     document.body.appendChild(overlay);
-    if (typeof ModalManager !== 'undefined') {
-      ModalManager.open(overlay, () => {
-        overlay.remove();
-      });
+  },
+
+  _buildStarModalCards(reviews) {
+    if (!reviews.length) {
+      return '<p style="color:var(--text-muted); font-size:13px; text-align:center; padding:20px;">No se encontraron opiniones para los filtros seleccionados.</p>';
+    }
+    return reviews.map(r => `
+      <div style="margin-bottom:12px; padding:14px 18px; background:var(--surface-2); border:1px solid var(--border); border-radius:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-weight:700; font-size:13.5px; color:var(--text);">${escapeHtml(r.sucursal || 'Sucursal')}</span>
+          <span style="font-size:12px; color:var(--oro); letter-spacing:1px;">${'★'.repeat(r.stars)}</span>
+        </div>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 6px 0; line-height:1.45; font-style:italic;">"${escapeHtml(r.text || '(Sin comentario escrito)')}"</p>
+        <span style="font-size:11px; color:var(--text-muted); opacity:0.75;">${formatDate(r.publishedAtDate)}</span>
+      </div>
+    `).join('');
+  },
+
+  filterStarModalByBranch(branchName, stars) {
+    const activeRegion = typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated() ? AppAuth.getUserRegion() : 'GDL';
+    const allReviews = typeof DataLoader.getReviewsForRegion === 'function' 
+      ? DataLoader.getReviewsForRegion(this._modalYear || DataLoader.currentYear, this._modalMonth || DataLoader.currentMonth, activeRegion)
+      : [];
+    let filtered = allReviews.filter(r => r.stars === stars);
+
+    if (branchName && branchName !== 'all') {
+      filtered = filtered.filter(r => (r.sucursal || '').toLowerCase() === branchName.toLowerCase());
+    }
+
+    const container = document.getElementById('starModalCardsContainer');
+    const badge = document.getElementById('starModalCountBadge');
+    if (container) {
+      container.innerHTML = this._buildStarModalCards(filtered);
+    }
+    if (badge) {
+      badge.textContent = `${filtered.length} ${branchName === 'all' ? 'totales' : 'en sucursal'}`;
     }
   }
 };
