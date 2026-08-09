@@ -59,7 +59,7 @@ const Router = {
       }
     }
 
-    // Verificar sesión antes de permitir la navegación
+    // Verificar sesión y aplicar Guards de Rol antes de permitir navegación
     const authenticated = typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated();
     if (!authenticated) {
       if (hash !== '#/login' && hash !== '#/privacidad') {
@@ -68,6 +68,27 @@ const Router = {
       }
     } else {
       if (hash === '#/login') {
+        window.location.hash = '#/';
+        return;
+      }
+
+      // Guard por Rol
+      const userRole = AppAuth.getUserRole();
+      const userSucursal = AppAuth.getUserSucursal();
+
+      // 1. Gerente de Tienda solo puede ver la vista de su propia sucursal asignada
+      if (userRole === 'gerente' && userSucursal) {
+        const allowedHash = `#/sucursal/${userSucursal}`;
+        if (hash !== allowedHash && hash !== '#/privacidad') {
+          console.warn(`[Guard de Seguridad] El rol Gerente de Tienda solo tiene acceso a su propia tienda. Redirigiendo a ${allowedHash}`);
+          window.location.hash = allowedHash;
+          return;
+        }
+      }
+
+      // 2. Gerentes Zonales y Regionales no pueden acceder a la vista corporativa de marca (#/brand)
+      if (['zonal', 'regional'].includes(userRole) && hash === '#/brand') {
+        console.warn(`[Guard de Seguridad] Vista corporativa restringida para rol ${userRole}. Redirigiendo a Inicio.`);
         window.location.hash = '#/';
         return;
       }
