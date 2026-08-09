@@ -4576,3 +4576,70 @@ html.login-page-active body {
 .bc-sparkline svg.sparkline.down {
   color: var(--rojo-soft);
 }
+
+/* ─── ESTILOS DE IMPRESIÓN Y EXPORTACIÓN A PDF ─────────────────────── */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+    font-size: 11pt;
+  }
+
+  .topbar,
+  .nav-tabs,
+  .show-all-btn-link,
+  .welcome-banner-gerente,
+  .controls-right,
+  .filter-row,
+  .theme-toggle-btn,
+  .print-btn-no-export,
+  button,
+  .custom-select,
+  .feed-sidebar-overlay {
+    display: none !important;
+  }
+
+  .branch-hero,
+  .app-container,
+  .page-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .scorecard-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    page-break-inside: avoid;
+  }
+
+  .scorecard {
+    border: 1px solid #ccc !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+
+  .quote-block {
+    border-left: 3px solid #3D5A47 !important;
+    background: #f9f9f9 !important;
+    page-break-inside: avoid;
+  }
+
+  .branch-hero::before {
+    content: "La Crêpe Parisienne — Reporte Mensual de Desempeño";
+    display: block;
+    font-family: serif;
+    font-size: 16pt;
+    font-weight: bold;
+    color: #3D5A47;
+    margin-bottom: 12px;
+    border-bottom: 2px solid #3D5A47;
+    padding-bottom: 6px;
+  }
+}
+

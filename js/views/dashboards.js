@@ -394,7 +394,12 @@ const DashboardsView = {
           okData.push(positives);
         });
 
-        Charts.stackedVolume(ctxVol, labels, okData, neutralData, warnData);
+        Charts.stackedVolume(ctxVol, labels, okData, neutralData, warnData, (index, datasetIdx) => {
+          const branchObj = sortedBranches[index];
+          if (branchObj && typeof HomeView !== 'undefined' && HomeView.openFullFeedModal) {
+            HomeView.openFullFeedModal(datasetIdx === 0 ? 'negativas' : (datasetIdx === 1 ? 'neutras' : 'positivas'));
+          }
+        });
       }
 
       // 2. Ranking Chart
@@ -411,7 +416,12 @@ const DashboardsView = {
                 ? (darkMode ? 'rgba(244,201,130,0.85)' : 'rgba(201,125,16,0.85)') 
                 : (darkMode ? 'rgba(244,144,144,0.85)' : 'rgba(198,40,40,0.85)'));
         });
-        Charts.barRanking(ctxRanking, labels, data, colors);
+        Charts.barRanking(ctxRanking, labels, data, colors, (index) => {
+          const branchObj = sortedRating[index];
+          if (branchObj && branchObj.id) {
+            Router.navigate(`#/sucursal/${branchObj.id}`);
+          }
+        });
       }
 
       // 3. Distribution Chart
@@ -429,7 +439,10 @@ const DashboardsView = {
         const colors = darkMode 
           ? ['rgba(122,158,138,0.85)', 'rgba(137,173,152,0.7)', 'rgba(244,201,130,0.85)', 'rgba(244,160,144,0.85)', 'rgba(244,116,116,0.85)']
           : ['rgba(61,90,71,0.85)', 'rgba(122,158,138,0.7)', 'rgba(201,125,16,0.85)', 'rgba(178,58,43,0.85)', 'rgba(198,40,40,0.85)'];
-        Charts.starDistributionBar(ctxDist, labels, starCounts, colors);
+        Charts.starDistributionBar(ctxDist, labels, starCounts, colors, (index) => {
+          const targetStars = 5 - index;
+          DashboardsView.openStarReviewsModal(currYear, currMonth, targetStars);
+        });
       }
 
       // 4. Trend Chart
@@ -608,5 +621,49 @@ const DashboardsView = {
         </div>
       </div>
     `;
+  },
+
+  openStarReviewsModal(year, month, stars) {
+    const monthData = DataLoader.getMonth(year, month);
+    const allReviews = monthData ? monthData.reviews : [];
+    const filtered = allReviews.filter(r => r.stars === stars);
+
+    const oldOverlay = document.getElementById('dashStarModalOverlay');
+    if (oldOverlay) oldOverlay.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'dashStarModalOverlay';
+    overlay.className = 'feed-sidebar-overlay active';
+    overlay.style.zIndex = '99999';
+
+    const cardsHtml = filtered.map(r => `
+      <div class="feed-sidebar-card" style="margin-bottom: 12px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;">
+        <div style="display:flex; justify-size:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-weight:700; font-size:13px; color:var(--text);">${escapeHtml(r.sucursal || 'Sucursal')}</span>
+          <span style="font-size:12px; color:var(--oro);">${'★'.repeat(r.stars)}</span>
+        </div>
+        <p style="font-size:13px; color:var(--text-muted); margin:0 0 6px 0; line-height:1.4;">${escapeHtml(r.text || '(Sin comentario escrito)')}</p>
+        <span style="font-size:11px; color:var(--text-muted); opacity:0.7;">${formatDate(r.publishedAtDate)}</span>
+      </div>
+    `).join('');
+
+    overlay.innerHTML = `
+      <div class="feed-sidebar-panel" style="max-width: 480px; width: 100%; height: 100%; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -8px 0 24px rgba(0,0,0,0.25); display: flex; flex-direction: column; float: right;">
+        <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="margin: 0; font-family: var(--title); font-size: 18px; color: var(--text);">Reseñas de ${stars} ★ (${filtered.length})</h3>
+          <button onclick="ModalManager.close()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+        <div style="padding: 20px; overflow-y: auto; flex: 1;">
+          ${filtered.length > 0 ? cardsHtml : '<p style="color:var(--text-muted); font-size:13px; text-align:center;">No hay opiniones para esta calificación en este periodo.</p>'}
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    if (typeof ModalManager !== 'undefined') {
+      ModalManager.open(overlay, () => {
+        overlay.remove();
+      });
+    }
   }
 };
