@@ -10,7 +10,26 @@ const NEGATIVE_STARS_MAX = 2; // reseña cuenta como queja/alerta si stars <= es
 
 const COMPLAINT_KEYWORDS = {
   servicio: ["servicio", "atencion", "mesero", "meser", "cajero", "cajer", "tarde", "tard", "espera", "esper", "demora", "demor", "trato", "grosero", "groser", "actitud", "limpieza", "limp", "sucio", "fila", "caja", "personal", "mal servicio", "lento", "tade", "tardaron", "amabilidad"],
-  calidad: ["comida", "crepa", "ingrediente", "fria", "frio", "quema", "sabor", "malo", "rancio", "pelo", "mosca", "insipido", "calidad", "cruda", "crudo", "queso", "massa", "masa", "sucio"],
+  calidad: ["comida", "crepa", "ingrediente", "fria", "frio", "quema", "sabor", "malo", "rancio", "pelo", "mosca", "insipido", "calidad", "cruda", "crudo", "queso", "massa", "masa"],
   valor: ["caro", "precio", "costo", "porcion", "tamaño", "chico", "diminuto", "estafa", "robo", "carisimo", "abusivo", "cantidad"]
 };
+
+const NEGATION_WORDS = ["no", "nunca", "tampoco", "nada", "sin", "jamas", "ningun", "ninguna"];
+
+function classifyReviewCategory(text, categoryKeywords) {
+  if (!text || typeof text !== 'string') return false;
+  const clean = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  
+  return categoryKeywords.some(kw => {
+    const kwIndex = clean.indexOf(kw);
+    if (kwIndex === -1) return false;
+    
+    // Extraer las palabras inmediatamente anteriores a la palabra clave
+    const textBefore = clean.substring(Math.max(0, kwIndex - 30), kwIndex).trim().split(/\s+/);
+    const recentWords = textBefore.slice(-3);
+    const isNegated = recentWords.some(w => NEGATION_WORDS.includes(w));
+    return !isNegated;
+  });
+}
+
 

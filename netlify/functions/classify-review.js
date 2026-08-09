@@ -37,12 +37,24 @@ function classifyLocally(text, stars) {
   
   // 1. Keywords definitions (MANTENER SINCRONIZADO con COMPLAINT_KEYWORDS en js/config.js)
   const serviceKeywords = ["servicio", "atencion", "mesero", "meser", "cajero", "cajer", "tarde", "tard", "espera", "esper", "demora", "demor", "trato", "grosero", "groser", "actitud", "limpieza", "limp", "sucio", "fila", "caja", "personal", "mal servicio", "lento", "tade", "tardaron", "amabilidad"];
-  const qualityKeywords = ["comida", "crepa", "ingrediente", "fria", "frio", "quema", "sabor", "malo", "rancio", "pelo", "mosca", "insipido", "calidad", "cruda", "crudo", "queso", "massa", "masa", "sucio"];
+  const qualityKeywords = ["comida", "crepa", "ingrediente", "fria", "frio", "quema", "sabor", "malo", "rancio", "pelo", "mosca", "insipido", "calidad", "cruda", "crudo", "queso", "massa", "masa"];
   const valueKeywords = ["caro", "precio", "costo", "porcion", "tamaño", "chico", "diminuto", "estafa", "robo", "carisimo", "abusivo", "cantidad"];
+  const negationWords = ["no", "nunca", "tampoco", "nada", "sin", "jamas", "ningun", "ninguna"];
 
-  const hasService = serviceKeywords.some(kw => cleanText.includes(kw));
-  const hasQuality = qualityKeywords.some(kw => cleanText.includes(kw));
-  const hasValue = valueKeywords.some(kw => cleanText.includes(kw));
+  const checkCategory = (categoryKeywords) => {
+    return categoryKeywords.some(kw => {
+      const kwIndex = cleanText.indexOf(kw);
+      if (kwIndex === -1) return false;
+      const textBefore = cleanText.substring(Math.max(0, kwIndex - 30), kwIndex).trim().split(/\s+/);
+      const recentWords = textBefore.slice(-3);
+      const isNegated = recentWords.some(w => negationWords.includes(w));
+      return !isNegated;
+    });
+  };
+
+  const hasService = checkCategory(serviceKeywords);
+  const hasQuality = checkCategory(qualityKeywords);
+  const hasValue = checkCategory(valueKeywords);
 
   let es_queja = isLowRating && (hasService || hasQuality || hasValue);
   let queja_servicio = isLowRating && hasService;

@@ -19,6 +19,8 @@ const HomeView = {
   async render() {
     if (typeof ViewState !== 'undefined') {
       this.filter = ViewState.get('homeFilter', 'todas');
+      this.searchQuery = ViewState.get('homeSearch', '');
+      this.sortBy = ViewState.get('homeSort', 'default');
     }
     if (typeof SUCURSALES_META !== 'undefined' && SUCURSALES_META.length === 1) {
       await BranchView.render({ id: SUCURSALES_META[0].id }, true);
@@ -646,11 +648,17 @@ const HomeView = {
 
   handleBranchSearch(query) {
     this.searchQuery = query.toLowerCase();
+    if (typeof ViewState !== 'undefined') {
+      ViewState.set('homeSearch', this.searchQuery);
+    }
     this._updateBranchGrid();
   },
 
   handleBranchSort(value) {
     this.sortBy = value;
+    if (typeof ViewState !== 'undefined') {
+      ViewState.set('homeSort', this.sortBy);
+    }
     this._updateBranchGrid();
   },
 
