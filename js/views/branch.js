@@ -788,6 +788,19 @@ const BranchView = {
     if (container) {
       container.innerHTML = this._buildRevList(this._getFilteredReviews(reviews));
     }
+    const chipRow = document.querySelector('.branch-feed-controls .filter-row');
+    if (chipRow) {
+      const chips = chipRow.querySelectorAll('.chip');
+      const activeFilter = this.feedStarFilter || 'all';
+      chips.forEach(chip => {
+        const onClickAttr = chip.getAttribute('onclick') || '';
+        if (onClickAttr.includes(`'${activeFilter}'`)) {
+          chip.classList.add('active');
+        } else {
+          chip.classList.remove('active');
+        }
+      });
+    }
   },
 
   openProblemDetailModal(title, reviews) {
