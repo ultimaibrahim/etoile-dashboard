@@ -74,21 +74,29 @@ const Router = {
 
       // Guard por Rol
       const userRole = AppAuth.getUserRole();
-      const userSucursal = AppAuth.getUserSucursal();
+      const userRegion = AppAuth.getUserRegion();
 
-      // 1. Gerente de Tienda solo puede ver la vista de su propia sucursal asignada
-      if (userRole === 'gerente' && userSucursal) {
-        const allowedHash = `#/sucursal/${userSucursal}`;
-        if (hash !== allowedHash && hash !== '#/privacidad') {
-          console.warn(`[Guard de Seguridad] El rol Gerente de Tienda solo tiene acceso a su propia tienda. Redirigiendo a ${allowedHash}`);
-          window.location.hash = allowedHash;
+      // 1. Gerente de Tienda (gerente): puede ver todas las sucursales de su región, pero no otras regiones ni la vista nacional (#/brand)
+      if (userRole === 'gerente') {
+        if (hash === '#/brand' || hash === '#/select-region') {
+          console.warn(`[Guard de Seguridad] Gerente de Tienda no tiene acceso a ${hash}. Redirigiendo a Inicio.`);
+          window.location.hash = '#/';
           return;
+        }
+        if (hash.startsWith('#/sucursal/')) {
+          const targetBranchId = hash.replace('#/sucursal/', '');
+          const targetMeta = typeof getBranchById === 'function' ? getBranchById(targetBranchId) : null;
+          if (targetMeta && targetMeta.region && userRegion && targetMeta.region !== userRegion) {
+            console.warn(`[Guard de Seguridad] Gerente de Tienda (${userRegion}) intentó acceder a sucursal fuera de su región (${targetMeta.region}). Redirigiendo a Inicio.`);
+            window.location.hash = '#/';
+            return;
+          }
         }
       }
 
-      // 2. Gerentes Zonales y Regionales no pueden acceder a la vista corporativa de marca (#/brand)
-      if (['zonal', 'regional'].includes(userRole) && hash === '#/brand') {
-        console.warn(`[Guard de Seguridad] Vista corporativa restringida para rol ${userRole}. Redirigiendo a Inicio.`);
+      // 2. Gerente Zonal (zonal): sin acceso a la vista corporativa nacional (#/brand)
+      if (userRole === 'zonal' && hash === '#/brand') {
+        console.warn(`[Guard de Seguridad] Vista corporativa nacional restringida para Gerente Zonal. Redirigiendo a Inicio.`);
         window.location.hash = '#/';
         return;
       }
