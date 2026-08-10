@@ -17,6 +17,9 @@ node_modules/
 .ignore/
 ignoreArchives/
 
+# Agent Rulesets & Internal IA Documents (Stored in ibrahim-agent-core)
+AGENTS.md
+
 # Extractos temporales
 pdf_extract.txt
 
@@ -77,4 +80,3 @@ build/
 
 # ─── Cache de Netlify CLI/build ────────────────────────────
 .netlify/
-
