@@ -110,21 +110,20 @@ exports.handler = async (event, context) => {
 
     // Mapeador de sucursales a ID y Región
     function matchSucursalAndRegion(name) {
-      // Normalizar texto quitando acentos básicos para facilitar coincidencias
       const normalized = name.toLowerCase()
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // quita tildes, diéresis, circunflejos
-        .replace(/[^a-z0-9 ]/g, " ");   // deja solo letras y números
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]/g, "");
 
       // Guadalajara (GDL)
       if (normalized.includes("andares")) return { sucursalId: "andares", region: "GDL" };
       if (normalized.includes("patria")) return { sucursalId: "patria", region: "GDL" };
       if (normalized.includes("midtown")) return { sucursalId: "midtown", region: "GDL" };
-      if (normalized.includes("galerias guadalajara") || normalized.includes("galerias gdl")) return { sucursalId: "gal-gdl", region: "GDL" };
-      if (normalized.includes("via viva")) return { sucursalId: "via-viva", region: "GDL" };
-      if (normalized.includes("santa anita")) return { sucursalId: "sta-anita", region: "GDL" };
-      if (normalized.includes("la perla")) return { sucursalId: "la-perla", region: "GDL" };
-      if (normalized.includes("forum tlaquepaque") || normalized.includes("forum") || normalized.includes("tlaquepaque")) return { sucursalId: "forum", region: "GDL" };
+      if (normalized.includes("galeriasguadalajara") || normalized.includes("galeriasgdl") || normalized.includes("guadalajara")) return { sucursalId: "gal-gdl", region: "GDL" };
+      if (normalized.includes("viaviva")) return { sucursalId: "via-viva", region: "GDL" };
+      if (normalized.includes("santaanita") || normalized.includes("staanita")) return { sucursalId: "sta-anita", region: "GDL" };
+      if (normalized.includes("laperla") || normalized.includes("perla")) return { sucursalId: "la-perla", region: "GDL" };
+      if (normalized.includes("forumtlaquepaque") || normalized.includes("forum") || normalized.includes("tlaquepaque")) return { sucursalId: "forum", region: "GDL" };
 
       // CDMX / Valle de México (CDMX)
       if (normalized.includes("aztlan")) return { sucursalId: "aztlan", region: "CDMX" };
@@ -135,23 +134,23 @@ exports.handler = async (event, context) => {
       if (normalized.includes("polanquito")) return { sucursalId: "polanquito", region: "CDMX" };
       if (normalized.includes("oceania")) return { sucursalId: "oceania", region: "CDMX" };
       if (normalized.includes("artz") || normalized.includes("pedregal")) return { sucursalId: "artz", region: "CDMX" };
-      if (normalized.includes("arcos bosques") || normalized.includes("arcos")) return { sucursalId: "arcos", region: "CDMX" };
+      if (normalized.includes("arcosbosques") || normalized.includes("arcos")) return { sucursalId: "arcos", region: "CDMX" };
       if (normalized.includes("mitikah")) return { sucursalId: "mitikah", region: "CDMX" };
       if (normalized.includes("oasis") || normalized.includes("coyoacan")) return { sucursalId: "coyoacan", region: "CDMX" };
       if (normalized.includes("duraznos")) return { sucursalId: "duraznos", region: "CDMX" };
-      if (normalized.includes("santa fe") || normalized.includes("santafe")) return { sucursalId: "santa-fe", region: "CDMX" };
+      if (normalized.includes("santafe")) return { sucursalId: "santa-fe", region: "CDMX" };
       if (normalized.includes("satelite")) return { sucursalId: "satelite", region: "CDMX" };
 
       // Monterrey (MTY)
-      if (normalized.includes("valle oriente")) return { sucursalId: "valle-oriente", region: "MTY" };
-      if (normalized.includes("fashion drive")) return { sucursalId: "fashion-drive", region: "MTY" };
-      if (normalized.includes("monterrey")) return { sucursalId: "gal-mty", region: "MTY" }; // "Galerías Monterrey"
+      if (normalized.includes("valleoriente")) return { sucursalId: "valle-oriente", region: "MTY" };
+      if (normalized.includes("fashiondrive")) return { sucursalId: "fashion-drive", region: "MTY" };
+      if (normalized.includes("monterrey")) return { sucursalId: "gal-mty", region: "MTY" };
 
       // León (LEON)
-      if (normalized.includes("altacia")) return { sucursalId: "altacia", region: "LEON" };
+      if (normalized.includes("altacia") || normalized.includes("plazamayor")) return { sucursalId: "altacia", region: "LEON" };
 
       // San Luis Potosí (SLP)
-      if (normalized.includes("the park") || normalized.includes("san luis") || normalized.includes("slp")) {
+      if (normalized.includes("thepark") || normalized.includes("sanluis") || normalized.includes("slp")) {
         return { sucursalId: "the-park", region: "SLP" };
       }
 
@@ -161,14 +160,14 @@ exports.handler = async (event, context) => {
       }
 
       // Toluca / Metepec (TOL)
-      if (normalized.includes("town square") || normalized.includes("ts metepec")) return { sucursalId: "town-square", region: "TOL" };
-      if (normalized.includes("metepec") || normalized.includes("toluca")) return { sucursalId: "gal-metepec", region: "TOL" }; // "Galerías Metepec"
+      if (normalized.includes("townsquare") || normalized.includes("tsmetepec")) return { sucursalId: "town-square", region: "TOL" };
+      if (normalized.includes("metepec") || normalized.includes("toluca")) return { sucursalId: "gal-metepec", region: "TOL" };
 
       // Querétaro (QRO)
       if (normalized.includes("antea") || normalized.includes("queretaro")) return { sucursalId: "antea", region: "QRO" };
 
       // Cancún (CUN)
-      if (normalized.includes("cancun")) return { sucursalId: "cancun", region: "CUN" };
+      if (normalized.includes("cancun") || normalized.includes("puertocancun")) return { sucursalId: "cancun", region: "CUN" };
 
       // Tijuana (TJ)
       if (normalized.includes("peninsula") || normalized.includes("tijuana")) return { sucursalId: "peninsula", region: "TJ" };
@@ -218,7 +217,7 @@ exports.handler = async (event, context) => {
         continue;
       }
 
-      const rawTitle = item.googleSearchString || item.title || "";
+      const rawTitle = item.googleSearchString || item.title || item.name || "";
       const mapped = matchSucursalAndRegion(rawTitle);
 
       if (!mapped) {
@@ -277,28 +276,32 @@ exports.handler = async (event, context) => {
       console.warn(`[Ingesta] Se descartaron ${discardedCount} ítems por falta de mapeo o datos inválidos.`);
     }
 
-    // 5. Realizar el upsert en Supabase
+    // 5. Realizar el upsert en Supabase en lotes de 500
     if (reviewsToUpsert.length > 0) {
-      console.log(`Subiendo ${reviewsToUpsert.length} reseñas a Supabase...`);
-      const { error } = await supabase
-        .from('reviews')
-        .upsert(reviewsToUpsert, { onConflict: 'id' });
+      console.log(`Subiendo ${reviewsToUpsert.length} reseñas a Supabase en lotes...`);
+      const chunkSize = 500;
+      for (let i = 0; i < reviewsToUpsert.length; i += chunkSize) {
+        const chunk = reviewsToUpsert.slice(i, i + chunkSize);
+        const { error } = await supabase
+          .from('reviews')
+          .upsert(chunk, { onConflict: 'id' });
 
-      if (error) throw error;
+        if (error) throw error;
+      }
       console.log("✅ Reseñas subidas con éxito.");
 
-      // 6. Clasificar las reseñas recién subidas
+      // 6. Clasificar un lote prioritario de quejas (1-2 estrellas) de forma acotada para no exceder el timeout de 10s de Netlify
       try {
         const { classifyAndSave } = require('./classify-review');
-        console.log(`Iniciando clasificación para ${reviewsToUpsert.length} reseñas...`);
-        // Procesar en serie para respetar los límites de la API de Gemini
-        for (const rev of reviewsToUpsert) {
-          await classifyAndSave(supabase, rev.id, rev.text, rev.stars);
+        const toClassify = reviewsToUpsert.filter(r => r.stars <= 2 && r.text).slice(0, 5);
+        if (toClassify.length > 0) {
+          console.log(`Clasificando lote prioritario de ${toClassify.length} quejas...`);
+          for (const rev of toClassify) {
+            await classifyAndSave(supabase, rev.id, rev.text, rev.stars);
+          }
         }
-        console.log("✅ Clasificación completada.");
       } catch (classError) {
-        console.error("Error durante la clasificación en la ingesta:", classError.message);
-        // No bloqueamos el éxito de la ingesta si falla la clasificación
+        console.warn("Aviso durante la clasificación en la ingesta:", classError.message);
       }
     }
 

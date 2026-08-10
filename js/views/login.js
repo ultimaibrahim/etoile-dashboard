@@ -143,8 +143,7 @@ const LoginView = {
           width: 100%;
           max-width: 440px;
           background: var(--surface);
-          border: 1.5px solid var(--border);
-          border-top: 5px solid var(--oro);
+          border: 1px solid rgba(184, 144, 47, 0.25);
           border-radius: var(--radius);
           box-shadow: var(--sombra-lg);
           padding: 40px;

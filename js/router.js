@@ -145,6 +145,10 @@ const Router = {
         if (window.updateLcpLoader) window.updateLcpLoader(100);
         window.scrollTo(0, 0);
         initReveal();
+        if (typeof initSpotlightCards === 'function') initSpotlightCards();
+        if (typeof initBlurReveals === 'function') initBlurReveals();
+        if (typeof updateSlidingTabPill === 'function') updateSlidingTabPill();
+        if (typeof initSegmentedTabs === 'function') initSegmentedTabs();
         if (window.hideLcpLoader) {
           setTimeout(() => {
             window.hideLcpLoader();
@@ -159,6 +163,10 @@ const Router = {
           window.scrollTo(0, 0);
         }
         initReveal();
+        if (typeof initSpotlightCards === 'function') initSpotlightCards();
+        if (typeof initBlurReveals === 'function') initBlurReveals();
+        if (typeof updateSlidingTabPill === 'function') updateSlidingTabPill();
+        if (typeof initSegmentedTabs === 'function') initSegmentedTabs();
       }
     }, 150);
   },

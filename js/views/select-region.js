@@ -1,8 +1,16 @@
 /**
- * views/select-region.js — Vista de Selección de Región post-login con interfaz Premium y Brand Dashboard.
+ * views/select-region.js — Vista de Selección de Región post-login con interfaz Premium,
+ * Barra de Control Histórico (Año/Mes/Filtros) compacta integrada y Brand Dashboard.
  */
 
 const SelectRegionView = {
+  selectedYear: null,
+  selectedMonth: null,
+  filterStatus: 'all', // 'all' | 'critical' | 'optimal'
+  sortBy: 'adjusted',  // 'adjusted' | 'rating-desc' | 'rating-asc' | 'volume-desc' | 'delta-desc'
+  searchQuery: '',
+  _documentClickBound: false,
+
   async render() {
     const app = document.getElementById('app');
     if (!app) return;
@@ -18,6 +26,27 @@ const SelectRegionView = {
       return;
     }
 
+    // Inicializar año y mes de forma 100% dinámica usando Date() y manifest
+    if (!this.selectedYear || !this.selectedMonth) {
+      const def = this.getDefaultPeriod();
+      this.selectedYear = def.year;
+      this.selectedMonth = def.month;
+    }
+
+    if (typeof DataLoader !== 'undefined') {
+      DataLoader.setMonth(this.selectedYear, this.selectedMonth);
+    }
+
+    // Listener global para cerrar dropdowns al hacer clic fuera
+    if (!this._documentClickBound) {
+      this._documentClickBound = true;
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.custom-select')) {
+          document.querySelectorAll('.custom-select.open').forEach(d => d.classList.remove('open'));
+        }
+      });
+    }
+
     // Inyectar estilos para esta pantalla si no se han cargado
     if (!document.getElementById('select-region-styles')) {
       const style = document.createElement('style');
@@ -30,16 +59,16 @@ const SelectRegionView = {
           flex-direction: column;
           align-items: center;
           justify-content: flex-start;
-          padding: 40px 20px;
+          padding: 32px 20px 60px 20px;
           box-sizing: border-box;
           overflow-y: auto;
         }
         .srv-container {
           width: 100%;
-          max-width: 1100px;
+          max-width: 1120px;
           display: flex;
           flex-direction: column;
-          gap: 40px;
+          gap: 24px;
           animation: srvEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           transition: transform 0.4s cubic-bezier(0.76, 0, 0.24, 1), opacity 0.4s ease;
         }
@@ -48,46 +77,287 @@ const SelectRegionView = {
           opacity: 0;
         }
         @keyframes srvEntrance {
-          from { opacity: 0; transform: translateY(30px); }
+          from { opacity: 0; transform: translateY(24px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .srv-header {
+
+        /* ── SECCIÓN EXPLORAR REGIONES & TOOLBAR COMPACTO ── */
+        .srv-section-box {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          width: 100%;
+        }
+        .srv-header-row {
+          display: flex;
+          justify-content: center;
+          align-items: center;
           text-align: center;
+          width: 100%;
+        }
+        .srv-header-text {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 12px;
+          text-align: center;
+          gap: 6px;
         }
         .srv-title {
           font-family: var(--giaza);
-          font-size: 42px;
+          font-size: 38px;
           color: var(--text);
           margin: 0;
           font-weight: 400;
-          letter-spacing: 0.02em;
+          letter-spacing: 0.01em;
+          line-height: 1.1;
         }
         .srv-subtitle {
-          font-size: 15px;
+          font-size: 14px;
           color: var(--text-dim);
           max-width: 580px;
-          line-height: 1.5;
+          line-height: 1.4;
           margin: 0;
         }
+        .srv-filter-badge {
+          font-family: var(--mono);
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--oro);
+          background: rgba(184, 144, 47, 0.12);
+          border: 1px solid rgba(184, 144, 47, 0.25);
+          padding: 3px 10px;
+          border-radius: 20px;
+        }
+
+        /* ── TOOLBAR DE CONTROLES COMPACTO ── */
+        .srv-toolbar {
+          background: var(--surface);
+          border: 1.5px solid var(--border);
+          border-radius: var(--radius);
+          padding: 12px 16px;
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+          box-shadow: var(--sombra-card);
+          box-sizing: border-box;
+          width: 100%;
+        }
+
+        .srv-compact-select {
+          position: relative;
+          flex: 1 1 140px;
+          min-width: 130px;
+        }
+        .srv-compact-select .custom-select-trigger {
+          width: 100%;
+          padding: 8px 12px;
+          font-size: 12.5px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--border);
+          background: var(--surface-2);
+          color: var(--text);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          box-sizing: border-box;
+        }
+        .srv-compact-select .custom-select-trigger:hover {
+          border-color: var(--border-strong);
+          background: var(--surface);
+        }
+        .srv-compact-select.open .custom-select-trigger {
+          border-color: var(--oro);
+          box-shadow: 0 0 0 3px rgba(184, 144, 47, 0.15);
+        }
+        .srv-compact-select .custom-select-options {
+          position: absolute;
+          top: calc(100% + 6px);
+          left: 0;
+          width: 100%;
+          min-width: 190px;
+          max-height: 260px;
+          overflow-y: auto;
+          z-index: 2000;
+          background: #FAF6F0;
+          border: 1.5px solid var(--border-strong);
+          border-radius: var(--radius-sm);
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.08);
+          display: none;
+          padding: 6px;
+          box-sizing: border-box;
+        }
+        [data-theme="dark"] .srv-compact-select .custom-select-options {
+          background: #1C2220;
+          border-color: rgba(255, 255, 255, 0.15);
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+        }
+        .srv-compact-select.open .custom-select-options {
+          display: block;
+        }
+        .srv-compact-select .custom-option {
+          padding: 9px 12px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #2D3748;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          margin-bottom: 2px;
+        }
+        [data-theme="dark"] .srv-compact-select .custom-option {
+          color: #E2E8F0;
+        }
+        .srv-compact-select .custom-option:hover {
+          background: rgba(61, 90, 71, 0.1);
+          color: var(--verde-deep);
+        }
+        [data-theme="dark"] .srv-compact-select .custom-option:hover {
+          background: rgba(184, 144, 47, 0.15);
+          color: #FAF5EB;
+        }
+        .srv-compact-select .custom-option.active {
+          font-weight: 700;
+          color: #FFFFFF !important;
+          background: var(--verde) !important;
+          box-shadow: 0 2px 8px rgba(61, 90, 71, 0.25);
+        }
+        [data-theme="dark"] .srv-compact-select .custom-option.active {
+          background: var(--oro) !important;
+          color: #1A1A1A !important;
+        }
+
+        /* ── CONTROLES STEPPER 1-CLIC Y GRID DE MESES 4x3 ── */
+        .srv-stepper-wrap {
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          background: var(--surface-2);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-sm);
+          padding: 3px;
+          box-sizing: border-box;
+        }
+        .srv-stepper-btn {
+          background: transparent;
+          border: none;
+          color: var(--text);
+          width: 28px;
+          height: 28px;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          flex-shrink: 0;
+        }
+        .srv-stepper-btn:hover {
+          background: var(--surface);
+          color: var(--oro);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+        .srv-stepper-btn:active {
+          transform: scale(0.92);
+        }
+        .srv-stepper-wrap .srv-compact-select .custom-select-trigger {
+          border: none !important;
+          background: transparent !important;
+          padding: 4px 8px !important;
+          box-shadow: none !important;
+        }
+        .srv-popover-grid {
+          width: 250px !important;
+          min-width: 250px !important;
+          padding: 8px !important;
+        }
+        .srv-month-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 6px;
+          width: 100%;
+        }
+        .srv-month-pill {
+          background: var(--surface-2);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 8px 2px;
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--text);
+          cursor: pointer;
+          text-align: center;
+          transition: all 0.15s ease;
+          outline: none;
+        }
+        .srv-month-pill:hover {
+          background: rgba(61, 90, 71, 0.12);
+          border-color: var(--verde);
+          color: var(--verde-deep);
+        }
+        .srv-month-pill.active {
+          background: var(--verde) !important;
+          color: #FFFFFF !important;
+          border-color: var(--verde) !important;
+          font-weight: 700;
+          box-shadow: 0 2px 8px rgba(61, 90, 71, 0.25);
+        }
+        [data-theme="dark"] .srv-month-pill.active {
+          background: var(--oro) !important;
+          color: #1A1A1A !important;
+          border-color: var(--oro) !important;
+        }
+
+        .srv-search-box {
+          position: relative;
+          flex: 2 1 180px;
+          min-width: 160px;
+        }
+        .srv-search-input {
+          width: 100%;
+          background: var(--surface-2);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-sm);
+          padding: 8px 12px 8px 34px;
+          font-size: 12.5px;
+          color: var(--text);
+          outline: none;
+          transition: all 0.2s ease;
+          box-sizing: border-box;
+          font-family: var(--sans);
+        }
+        .srv-search-input:focus {
+          border-color: var(--oro);
+          background: var(--surface);
+          box-shadow: 0 0 0 3px rgba(184, 144, 47, 0.15);
+        }
+        .srv-search-icon {
+          position: absolute;
+          left: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: var(--text-muted);
+          pointer-events: none;
+        }
+
         .srv-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-          gap: 20px;
+          gap: 18px;
           width: 100%;
         }
         .srv-card {
           background: var(--surface);
           border: 1.5px solid var(--border);
           border-radius: var(--radius);
-          padding: 24px;
+          padding: 22px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          min-height: 150px;
+          min-height: 145px;
           cursor: pointer;
           position: relative;
           overflow: hidden;
@@ -122,14 +392,14 @@ const SelectRegionView = {
         .srv-card-top {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
+          align-items: center;
           width: 100%;
         }
         .srv-card-code {
           font-family: var(--mono);
           font-size: 11px;
           font-weight: 700;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           color: var(--text-muted);
           background: var(--surface-2);
           padding: 4px 8px;
@@ -144,19 +414,15 @@ const SelectRegionView = {
           display: flex;
           flex-direction: column;
           gap: 4px;
-          margin-top: 24px;
+          margin-top: 20px;
         }
         .srv-card-name {
-          font-size: 18px;
+          font-size: 17px;
           font-weight: 700;
           color: var(--text);
           margin: 0;
         }
-        .srv-card-desc {
-          font-size: 12px;
-          color: var(--text-dim);
-          margin: 0;
-        }
+
         .srv-footer {
           margin-top: 16px;
         }
@@ -181,12 +447,6 @@ const SelectRegionView = {
         }
 
         /* ── INDICADORES DE RATING EN TARJETAS ── */
-        .srv-card-top {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          width: 100%;
-        }
         .srv-card-rating-container {
           display: flex;
           flex-direction: column;
@@ -250,8 +510,8 @@ const SelectRegionView = {
           position: absolute;
           bottom: 12px;
           right: 12px;
-          width: 64px;
-          height: 64px;
+          width: 60px;
+          height: 60px;
           opacity: 0.08;
           color: var(--verde);
           pointer-events: none;
@@ -271,7 +531,7 @@ const SelectRegionView = {
 
         /* ── TABLA DE RANKINGS BISTRO ── */
         .srv-ranking-table-placeholder-box {
-          margin-top: 30px;
+          margin-top: 10px;
           width: 100%;
         }
         .ranking-table-card {
@@ -279,20 +539,22 @@ const SelectRegionView = {
           border: 1.5px solid var(--border);
           border-radius: var(--radius);
           box-shadow: var(--sombra);
-          padding: 30px;
+          padding: 26px;
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 20px;
           box-sizing: border-box;
         }
         .ranking-table-header {
           display: flex;
-          flex-direction: column;
-          gap: 6px;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 12px;
         }
         .ranking-table-title {
           font-family: var(--giaza);
-          font-size: 28px;
+          font-size: 26px;
           color: var(--text);
           margin: 0;
           font-weight: 400;
@@ -300,7 +562,7 @@ const SelectRegionView = {
         .ranking-table-subtitle {
           font-size: 13px;
           color: var(--text-dim);
-          margin: 0;
+          margin: 4px 0 0 0;
         }
         .ranking-table-wrapper {
           overflow-x: auto;
@@ -321,7 +583,7 @@ const SelectRegionView = {
           border-bottom: 1.5px solid var(--border);
         }
         .ranking-table td {
-          padding: 16px;
+          padding: 14px 16px;
           border-bottom: 1px solid var(--border);
           font-size: 13.5px;
           color: var(--text-muted);
@@ -386,14 +648,6 @@ const SelectRegionView = {
           background: rgba(184, 144, 47, 0.08);
           font-size: 9px;
         }
-        [data-theme="dark"] .rank-shift.up {
-          color: #7AD89A;
-          background: rgba(61, 138, 95, 0.18);
-        }
-        [data-theme="dark"] .rank-shift.down {
-          color: #F4A090;
-          background: rgba(178, 58, 43, 0.18);
-        }
         .srv-table-spinner {
           display: block;
           margin: 40px auto;
@@ -408,288 +662,18 @@ const SelectRegionView = {
           to { transform: rotate(360deg); }
         }
 
-        /* ── BRAND DASHBOARD PREMIUM STYLES ── */
-        .brand-dash {
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: var(--radius);
-          padding: 32px;
-          display: flex;
-          flex-direction: column;
-          gap: 28px;
-          box-shadow: var(--sombra-card);
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
-          box-sizing: border-box;
-          width: 100%;
-        }
-        .brand-dash-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 16px;
-          border-bottom: 1px solid var(--border);
-          padding-bottom: 16px;
-        }
-        .brand-period-selector {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .srv-month-select {
-          appearance: none;
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          color: #FAF5EB;
-          border-radius: 20px;
-          padding: 8px 36px 8px 16px;
-          font-family: var(--sans);
-          font-weight: 600;
-          font-size: 13px;
-          outline: none;
-          cursor: pointer;
-          background-image: url('data:image/svg+xml;utf8,<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%23FAF5EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><polyline points="6 9 12 15 18 9"></polyline></svg>');
-          background-repeat: no-repeat;
-          background-position: right 14px center;
-          background-size: 12px;
-          transition: all 0.2s ease;
-        }
-        .srv-month-select:hover {
-          background-color: rgba(255, 255, 255, 0.12);
-          border-color: rgba(255, 255, 255, 0.25);
-        }
-        .brand-kpi-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 16px;
-        }
-        .brand-kpi-card {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid var(--border);
-          border-radius: var(--radius-sm);
-          padding: 20px;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          min-height: 110px;
-          box-sizing: border-box;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        .brand-kpi-val {
-          font-family: var(--sans);
-          font-weight: 800;
-          font-size: 32px;
-          color: var(--text);
-          margin: 6px 0;
-          line-height: 1;
-        }
-        .brand-kpi-val.gold { color: var(--oro); }
-        .brand-kpi-val.green { color: #A7DBB9; }
-        .brand-kpi-val.red { color: #F4A090; }
-        .brand-kpi-label {
-          font-size: 11px;
-          font-weight: 700;
-          text-transform: uppercase;
-          color: var(--text-muted);
-          letter-spacing: 0.06em;
-        }
-        .brand-kpi-sub {
-          font-family: var(--mono);
-          font-size: 10px;
-          color: var(--text-dim);
-        }
-        
-        .brand-deficits-alert {
-          background: rgba(178, 58, 43, 0.06);
-          border: 1px solid rgba(178, 58, 43, 0.2);
-          border-left: 4px solid var(--alerta);
-          border-radius: var(--radius-sm);
-          padding: 20px;
-          box-sizing: border-box;
-        }
-        .brand-deficits-title {
-          font-weight: 700;
-          font-size: 12px;
-          color: #F4A090;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          margin-bottom: 8px;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .brand-deficits-list {
-          margin: 0;
-          padding-left: 18px;
-          font-size: 13.5px;
-          color: var(--text);
-          line-height: 1.6;
-        }
-        .brand-deficits-list li {
-          margin-bottom: 6px;
-        }
-        .brand-deficits-list li:last-child {
-          margin-bottom: 0;
-        }
-        
-        .brand-highlights-split {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 20px;
-        }
-        .brand-split-col {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .brand-split-title {
-          font-size: 11px;
-          font-weight: 700;
-          text-transform: uppercase;
-          color: var(--text-muted);
-          letter-spacing: 0.08em;
-          margin-bottom: 4px;
-        }
-        .brand-branch-item {
-          background: var(--surface-2);
-          border: 1px solid var(--border);
-          border-radius: var(--radius-sm);
-          padding: 14px 16px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          transition: all 0.2s ease;
-        }
-        .brand-branch-item:hover {
-          background: var(--surface);
-          border-color: var(--verde);
-        }
-        .brand-branch-info {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .brand-branch-name {
-          font-size: 14px;
-          font-weight: 700;
-          color: var(--text);
-        }
-        .brand-branch-region {
-          font-size: 11px;
-          color: var(--text-muted);
-        }
-        .brand-branch-stat {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 2px;
-        }
-        .brand-branch-rating {
-          font-family: var(--mono);
-          font-size: 14px;
-          font-weight: 700;
-          color: var(--oro);
-        }
-        .brand-branch-reviews {
-          font-size: 11px;
-          color: var(--text-muted);
-        }
-        
-        .brand-region-performance {
-          background: var(--surface-2);
-          border: 1px solid var(--border);
-          border-radius: var(--radius-sm);
-          padding: 20px;
-          box-sizing: border-box;
-          overflow-x: auto;
-        }
-        .brand-region-perf-title {
-          font-size: 11px;
-          font-weight: 700;
-          text-transform: uppercase;
-          color: var(--text-muted);
-          letter-spacing: 0.08em;
-          margin-bottom: 12px;
-        }
-        .brand-region-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 13px;
-        }
-        .brand-region-table th {
-          text-align: left;
-          padding: 8px 12px;
-          font-size: 10px;
-          text-transform: uppercase;
-          color: var(--text-muted);
-          border-bottom: 1px solid var(--border-strong);
-          font-weight: 700;
-          letter-spacing: 0.05em;
-        }
-        .brand-region-table td {
-          padding: 12px;
-          border-bottom: 1px solid var(--border);
-          color: var(--text);
-          vertical-align: middle;
-        }
-        .brand-region-table tr:last-child td {
-          border-bottom: none;
-        }
-        .brand-region-table tr:hover td {
-          background: var(--surface);
-        }
-        .brand-region-badge {
-          font-family: var(--mono);
-          font-size: 11px;
-          font-weight: 700;
-          background: var(--surface);
-          border: 1px solid var(--border);
-          padding: 2px 6px;
-          border-radius: 4px;
-          color: var(--text);
-        }
-        .brand-region-rating-num {
-          font-family: var(--mono);
-          font-weight: 700;
-        }
-        .brand-region-rating-num.green { color: var(--ok); }
-        .brand-region-rating-num.yellow { color: var(--oro); }
-        .brand-region-rating-num.red { color: var(--alerta); }
-        [data-theme="dark"] .brand-region-rating-num.green { color: #7AD89A; }
-        [data-theme="dark"] .brand-region-rating-num.red { color: #F4A090; }
-        
-        .brand-region-btn {
-          background: var(--surface);
-          border: 1px solid var(--border);
-          color: var(--text);
-          padding: 4px 10px;
-          border-radius: 12px;
-          font-size: 11px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .brand-region-btn:hover {
-          background: var(--verde);
-          border-color: var(--verde);
-          color: #fff;
-        }
-
-        /* ── BRAND DASHBOARD SHORTCUT PREMIUM BANNER ── */
+        /* ── BRAND DASHBOARD SHORTCUT BANNER ── */
         .brand-shortcut-card {
           background: var(--surface-2);
           border: 1px solid var(--border-strong);
-          border-radius: 24px;
-          padding: 32px;
+          border-radius: 20px;
+          padding: 22px 28px;
           display: flex;
           justify-content: space-between;
           align-items: center;
           flex-wrap: wrap;
-          gap: 24px;
+          gap: 20px;
           box-shadow: var(--sombra-lg);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
           box-sizing: border-box;
           width: 100%;
           transition: all 0.3s ease;
@@ -700,10 +684,10 @@ const SelectRegionView = {
         }
         .brand-shortcut-content {
           flex: 1;
-          min-width: 280px;
+          min-width: 260px;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 6px;
         }
         .brand-shortcut-header {
           display: flex;
@@ -733,7 +717,7 @@ const SelectRegionView = {
         }
         .brand-shortcut-title {
           font-family: var(--giaza);
-          font-size: 32px;
+          font-size: 28px;
           color: var(--text);
           margin: 0;
           font-weight: 400;
@@ -742,16 +726,16 @@ const SelectRegionView = {
           font-size: 13px;
           color: var(--text-dim);
           margin: 0;
-          line-height: 1.5;
+          line-height: 1.4;
           max-width: 650px;
         }
         .brand-shortcut-btn {
           background: var(--verde);
           border: 1px solid var(--verde);
           color: #fff;
-          padding: 14px 28px;
-          border-radius: 16px;
-          font-size: 14px;
+          padding: 12px 24px;
+          border-radius: 14px;
+          font-size: 13.5px;
           font-weight: 600;
           cursor: pointer;
           display: inline-flex;
@@ -766,23 +750,34 @@ const SelectRegionView = {
           box-shadow: 0 6px 20px rgba(61,90,71,0.35);
         }
 
+        @media (max-width: 768px) {
+          .srv-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .srv-compact-select, .srv-search-box {
+            width: 100%;
+            flex: 1 1 100%;
+          }
+        }
+
         @media (max-width: 600px) {
           .brand-shortcut-card {
-            padding: 20px !important;
+            padding: 18px !important;
             flex-direction: column !important;
             align-items: stretch !important;
-            gap: 16px !important;
+            gap: 14px !important;
           }
           .brand-shortcut-title {
-            font-size: 24px !important;
+            font-size: 22px !important;
           }
           .brand-shortcut-desc {
-            font-size: 12.5px !important;
+            font-size: 12px !important;
           }
           .brand-shortcut-btn {
             width: 100% !important;
             justify-content: center !important;
-            padding: 12px 20px !important;
+            padding: 11px 18px !important;
           }
         }
       `;
@@ -811,28 +806,65 @@ const SelectRegionView = {
       `;
     }
 
-    // Construir lista de regiones con cantidad de sucursales para el explorador
+    // Años disponibles desde manifest
+    const manifestYears = (typeof DataLoader !== 'undefined' && DataLoader.manifest) 
+      ? Object.keys(DataLoader.manifest).map(Number).sort((a, b) => b - a)
+      : [];
+    const availableYears = manifestYears.length > 0 ? manifestYears : [2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018];
+
+    // Opciones de Año
+    const yearOptionsHtml = availableYears.map(y => `
+      <div class="custom-option ${y === this.selectedYear ? 'active' : ''}" data-value="${y}" onclick="SelectRegionView.onYearOptionClick(${y}, event)">${y}</div>
+    `).join('');
+
+    // Opciones de Mes (Cuadrícula 4x3 de 0 Scroll)
+    const monthNames = MONTH_NAMES || ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const monthShortNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const monthOptionsHtml = `
+      <div class="srv-month-grid">
+        ${monthShortNames.map((mShort, idx) => {
+          const mNum = idx + 1;
+          return `<button type="button" class="srv-month-pill ${mNum === this.selectedMonth ? 'active' : ''}" data-value="${mNum}" onclick="SelectRegionView.onMonthOptionClick(${mNum}, event)">${mShort}</button>`;
+        }).join('')}
+      </div>
+    `;
+
+    // Opciones de Ordenamiento
+    const sortLabels = {
+      'adjusted': 'Score Ajustado',
+      'rating-desc': 'Rating (Alto a Bajo)',
+      'rating-asc': 'Rating (Alertas)',
+      'volume-desc': 'Volumen Reseñas',
+      'delta-desc': 'Mayor Crecimiento'
+    };
+    const sortOptionsHtml = Object.entries(sortLabels).map(([k, label]) => `
+      <div class="custom-option ${k === this.sortBy ? 'active' : ''}" data-value="${k}" onclick="SelectRegionView.onSortOptionClick('${k}', event)">${label}</div>
+    `).join('');
+
+    // Opciones de Estado
+    const statusLabels = {
+      'all': 'Todas las Regiones',
+      'critical': 'En Alerta (< 4.50 ★)',
+      'optimal': 'Óptimas (≥ 4.50 ★)'
+    };
+    const statusOptionsHtml = Object.entries(statusLabels).map(([k, label]) => `
+      <div class="custom-option ${k === this.filterStatus ? 'active' : ''}" data-value="${k}" onclick="SelectRegionView.onStatusOptionClick('${k}', event)">${label}</div>
+    `).join('');
+
+    // Lista de tarjetas de región
     const regionsList = Object.entries(REGION_NAME_MAP).map(([id, name]) => {
       const branches = SUCURSALES_META_ALL.filter(s => s.region === id);
       const count = branches.length;
-      
-      let desc = '';
-      if (id === 'GDL') desc = 'Jalisco · Regional';
-      else if (id === 'CDMX') desc = 'Ciudad de México';
-      else if (id === 'MTY') desc = 'Nuevo León';
-      else if (id === 'TJ') desc = 'Baja California';
-      else desc = 'Sucursal única';
 
       return {
         id,
         name,
-        count,
-        desc
+        count
       };
     });
 
     const cardsHtml = regionsList.map(r => `
-      <div class="srv-card" onclick="SelectRegionView.handleSelect('${r.id}')">
+      <div class="srv-card" id="srv-card-${r.id}" onclick="SelectRegionView.handleSelect('${r.id}')">
         ${SelectRegionView.getRegionMapSVG(r.id)}
         <div class="srv-card-top">
           <span class="srv-card-code">${r.count === 1 ? `${r.id} - UNICA` : `${r.id} - ${r.count} SUC`}</span>
@@ -850,18 +882,95 @@ const SelectRegionView = {
       <div class="srv-wrapper">
         <div class="srv-container" id="srvContainer">
           
-          <!-- Brand Dashboard -->
+          <!-- Brand Dashboard Shortcut Banner -->
           ${brandDashboardHtml}
-          
-          <!-- Region Explorer -->
-          <div class="srv-header" style="margin-top: 10px;">
-            <span class="eyebrow" style="color: var(--text-dim); font-weight:700; background: var(--surface-2); border: 1px solid var(--border-strong); padding:6px 16px; border-radius:20px; letter-spacing:0.08em;">Navegación Regional</span>
-            <h1 class="srv-title">Explorar Regiones</h1>
-            <p class="srv-subtitle">Elige el área operativa que deseas supervisar de manera individual.</p>
-          </div>
-          
-          <div class="srv-grid">
-            ${cardsHtml}
+
+          <!-- SECCIÓN EXPLORAR REGIONES CON CONTROLES INTEGRADOS -->
+          <div class="srv-section-box">
+            <div class="srv-header-row">
+              <div class="srv-header-text">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                  <span class="eyebrow" style="color: var(--text-dim); font-weight:700; background: var(--surface-2); border: 1px solid var(--border-strong); padding:4px 14px; border-radius:20px; letter-spacing:0.08em; font-size:11px;">Navegación Regional</span>
+                  <span class="srv-filter-badge" id="srvPeriodBadge">${monthNames[this.selectedMonth - 1]} ${this.selectedYear}</span>
+                </div>
+                <h1 class="srv-title">Explorar Regiones</h1>
+                <p class="srv-subtitle">Elige el área operativa que deseas supervisar de manera individual o filtra métricas por período y estado.</p>
+              </div>
+            </div>
+
+            <!-- TOOLBAR DE CONTROLES Y FILTROS INTEGRADOS COMPACTOS CON STEPPER 1-CLIC -->
+            <div class="srv-toolbar">
+              <!-- Stepper de Año -->
+              <div class="srv-stepper-wrap">
+                <button type="button" class="srv-stepper-btn" onclick="SelectRegionView.stepYear(-1, event)" title="Año anterior">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <div class="custom-select srv-compact-select" id="srvYearDropdown" style="min-width:85px;">
+                  <button class="custom-select-trigger" onclick="SelectRegionView.toggleDropdown('srvYearDropdown', event)">
+                    <span class="custom-select-value">${this.selectedYear}</span>
+                    <svg class="custom-select-arrow" width="9" height="5" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <div class="custom-select-options" style="min-width:110px;">
+                    ${yearOptionsHtml}
+                  </div>
+                </div>
+                <button type="button" class="srv-stepper-btn" onclick="SelectRegionView.stepYear(1, event)" title="Año siguiente">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+              </div>
+
+              <!-- Stepper de Mes (1-Clic y Cuadrícula 4x3) -->
+              <div class="srv-stepper-wrap">
+                <button type="button" class="srv-stepper-btn" onclick="SelectRegionView.stepMonth(-1, event)" title="Mes anterior">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <div class="custom-select srv-compact-select" id="srvMonthDropdown" style="min-width:115px;">
+                  <button class="custom-select-trigger" onclick="SelectRegionView.toggleDropdown('srvMonthDropdown', event)">
+                    <span class="custom-select-value">${monthNames[this.selectedMonth - 1]}</span>
+                    <svg class="custom-select-arrow" width="9" height="5" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <div class="custom-select-options srv-popover-grid">
+                    ${monthOptionsHtml}
+                  </div>
+                </div>
+                <button type="button" class="srv-stepper-btn" onclick="SelectRegionView.stepMonth(1, event)" title="Mes siguiente">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+              </div>
+
+              <!-- Selector de Ordenamiento -->
+              <div class="custom-select srv-compact-select" id="srvSortDropdown">
+                <button class="custom-select-trigger" onclick="SelectRegionView.toggleDropdown('srvSortDropdown', event)">
+                  <span class="custom-select-value">Orden: ${sortLabels[this.sortBy]}</span>
+                  <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="custom-select-options">
+                  ${sortOptionsHtml}
+                </div>
+              </div>
+
+              <!-- Selector de Estado -->
+              <div class="custom-select srv-compact-select" id="srvStatusDropdown">
+                <button class="custom-select-trigger" onclick="SelectRegionView.toggleDropdown('srvStatusDropdown', event)">
+                  <span class="custom-select-value">Estado: ${statusLabels[this.filterStatus]}</span>
+                  <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="custom-select-options">
+                  ${statusOptionsHtml}
+                </div>
+              </div>
+
+              <!-- Buscador Instantáneo -->
+              <div class="srv-search-box">
+                <svg class="srv-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" class="srv-search-input" id="srvSearchInput" placeholder="Buscar región..." value="${escapeHtml(this.searchQuery)}" oninput="SelectRegionView.handleSearch(this.value)">
+              </div>
+            </div>
+
+            <!-- GRID DE TARJETAS DE REGIÓN -->
+            <div class="srv-grid" id="srvRegionGrid">
+              ${cardsHtml}
+            </div>
           </div>
 
           <!-- Tabla de Rankings Bistro -->
@@ -883,6 +992,257 @@ const SelectRegionView = {
     SelectRegionView.loadRatingsAndRankings();
   },
 
+  getDefaultPeriod() {
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = now.getMonth() + 1; // 1-indexed (1-12)
+
+    // Por defecto en analítica de negocios, el mes de operación "cerrado" es el mes anterior al actual
+    let defaultYear = curMonth === 1 ? curYear - 1 : curYear;
+    let defaultMonth = curMonth === 1 ? 12 : curMonth - 1;
+
+    // Si DataLoader cuenta con manifest cargado de la base de datos, evaluar el período más reciente válido
+    if (typeof DataLoader !== 'undefined' && DataLoader.manifest) {
+      const manifestYears = Object.keys(DataLoader.manifest).map(Number).sort((a, b) => b - a);
+      if (manifestYears.length > 0) {
+        const latestYear = manifestYears[0];
+        const monthsInYear = [...DataLoader.manifest[latestYear]].sort((a, b) => a - b);
+        
+        if (monthsInYear.length > 0) {
+          defaultYear = latestYear;
+          const targetPrevMonth = curMonth === 1 ? 12 : curMonth - 1;
+          if (monthsInYear.includes(targetPrevMonth)) {
+            defaultMonth = targetPrevMonth;
+          } else {
+            defaultMonth = monthsInYear[monthsInYear.length - 1];
+          }
+        }
+      }
+    }
+
+    return { year: defaultYear, month: defaultMonth };
+  },
+
+  calculateAdjustedScore(avg, count, branchCount) {
+    if (!count || count === 0) return 0;
+
+    // 1. Suavizado Bayesiano por muestra de confianza (k = 15 reseñas, M = 4.50 promedio base de marca)
+    const k = 15;
+    const M = 4.50;
+    const bayesianRating = (count * avg + k * M) / (count + k);
+
+    // 2. Factor de complejidad por escala de tiendas y volumen logarítmico
+    const branchWeight = (branchCount || 1) * 0.022;
+    const volumeWeight = Math.log10(count + 1) * 0.020;
+    const complexity = 1 + branchWeight + volumeWeight;
+
+    return bayesianRating * complexity;
+  },
+
+  stepMonth(delta, event) {
+    if (event) event.stopPropagation();
+    let newM = (this.selectedMonth || 1) + delta;
+    let newY = this.selectedYear || new Date().getFullYear();
+
+    if (newM > 12) {
+      newM = 1;
+      newY += 1;
+    } else if (newM < 1) {
+      newM = 12;
+      newY -= 1;
+    }
+
+    this.selectedYear = newY;
+    this.onMonthOptionClick(newM, event);
+  },
+
+  stepYear(delta, event) {
+    if (event) event.stopPropagation();
+    const newY = (this.selectedYear || new Date().getFullYear()) + delta;
+    this.onYearOptionClick(newY, event);
+  },
+
+  toggleDropdown(id, event) {
+    if (event) event.stopPropagation();
+    const el = document.getElementById(id);
+    document.querySelectorAll('.custom-select.open').forEach(d => {
+      if (d !== el) d.classList.remove('open');
+    });
+    if (el) el.classList.toggle('open');
+  },
+
+  showCardSpinners() {
+    Object.keys(REGION_NAME_MAP).forEach(id => {
+      const container = document.querySelector(`[data-region-rating="${id}"]`);
+      if (container) {
+        container.innerHTML = `<span class="srv-rating-spinner"></span>`;
+      }
+    });
+    const tablePlaceholder = document.getElementById('srv-ranking-table-placeholder');
+    if (tablePlaceholder) {
+      tablePlaceholder.classList.add('loading');
+      tablePlaceholder.innerHTML = `<div class="srv-table-spinner"></div>`;
+    }
+  },
+
+  onYearOptionClick(yearNum, event) {
+    if (event) event.stopPropagation();
+    this.selectedYear = parseInt(yearNum);
+    
+    const valEl = document.querySelector('#srvYearDropdown .custom-select-value');
+    if (valEl) valEl.textContent = `Año: ${this.selectedYear}`;
+    
+    document.querySelectorAll('#srvYearDropdown .custom-option').forEach(opt => {
+      opt.classList.toggle('active', parseInt(opt.getAttribute('data-value')) === this.selectedYear);
+    });
+    
+    const dropdown = document.getElementById('srvYearDropdown');
+    if (dropdown) dropdown.classList.remove('open');
+
+    const monthNames = MONTH_NAMES || ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const badge = document.getElementById('srvPeriodBadge');
+    if (badge) badge.textContent = `${monthNames[this.selectedMonth - 1]} ${this.selectedYear}`;
+
+    if (typeof DataLoader !== 'undefined') {
+      DataLoader.setMonth(this.selectedYear, this.selectedMonth);
+    }
+    this.showCardSpinners();
+    this.loadRatingsAndRankings();
+  },
+
+  onMonthOptionClick(monthNum, event) {
+    if (event) event.stopPropagation();
+    this.selectedMonth = parseInt(monthNum);
+    
+    const monthNames = MONTH_NAMES || ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const monthName = monthNames[this.selectedMonth - 1];
+
+    const valEl = document.querySelector('#srvMonthDropdown .custom-select-value');
+    if (valEl) valEl.textContent = `Mes: ${monthName}`;
+    
+    document.querySelectorAll('#srvMonthDropdown .custom-option').forEach(opt => {
+      opt.classList.toggle('active', parseInt(opt.getAttribute('data-value')) === this.selectedMonth);
+    });
+
+    const dropdown = document.getElementById('srvMonthDropdown');
+    if (dropdown) dropdown.classList.remove('open');
+
+    const badge = document.getElementById('srvPeriodBadge');
+    if (badge) badge.textContent = `${monthName} ${this.selectedYear}`;
+
+    if (typeof DataLoader !== 'undefined') {
+      DataLoader.setMonth(this.selectedYear, this.selectedMonth);
+    }
+    this.showCardSpinners();
+    this.loadRatingsAndRankings();
+  },
+
+  onSortOptionClick(sortKey, event) {
+    if (event) event.stopPropagation();
+    this.sortBy = sortKey;
+    
+    const sortLabels = {
+      'adjusted': 'Score Ajustado',
+      'rating-desc': 'Rating (Alto a Bajo)',
+      'rating-asc': 'Rating (Alertas)',
+      'volume-desc': 'Volumen Reseñas',
+      'delta-desc': 'Mayor Crecimiento'
+    };
+
+    const valEl = document.querySelector('#srvSortDropdown .custom-select-value');
+    if (valEl) valEl.textContent = `Orden: ${sortLabels[sortKey] || sortKey}`;
+
+    document.querySelectorAll('#srvSortDropdown .custom-option').forEach(opt => {
+      opt.classList.toggle('active', opt.getAttribute('data-value') === sortKey);
+    });
+
+    const dropdown = document.getElementById('srvSortDropdown');
+    if (dropdown) dropdown.classList.remove('open');
+
+    this.applyFiltersAndSorting();
+  },
+
+  onStatusOptionClick(statusKey, event) {
+    if (event) event.stopPropagation();
+    this.filterStatus = statusKey;
+
+    const statusLabels = {
+      'all': 'Todas las Regiones',
+      'critical': 'En Alerta (< 4.50 ★)',
+      'optimal': 'Óptimas (≥ 4.50 ★)'
+    };
+
+    const valEl = document.querySelector('#srvStatusDropdown .custom-select-value');
+    if (valEl) valEl.textContent = `Estado: ${statusLabels[statusKey] || statusKey}`;
+
+    document.querySelectorAll('#srvStatusDropdown .custom-option').forEach(opt => {
+      opt.classList.toggle('active', opt.getAttribute('data-value') === statusKey);
+    });
+
+    const dropdown = document.getElementById('srvStatusDropdown');
+    if (dropdown) dropdown.classList.remove('open');
+
+    this.applyFiltersAndSorting();
+  },
+
+  handleSearch(val) {
+    this.searchQuery = (val || '').toLowerCase().trim();
+    this.applyFiltersAndSorting();
+  },
+
+  applyFiltersAndSorting() {
+    if (!this._cachedRegionStats) return;
+
+    let statsArray = Object.values(this._cachedRegionStats);
+
+    // 1. Filtrado por Estado (all | critical | optimal)
+    if (this.filterStatus === 'critical') {
+      statsArray = statsArray.filter(s => s.count > 0 && s.avg < 4.50);
+    } else if (this.filterStatus === 'optimal') {
+      statsArray = statsArray.filter(s => s.count > 0 && s.avg >= 4.50);
+    }
+
+    // 2. Búsqueda por texto libre
+    if (this.searchQuery) {
+      statsArray = statsArray.filter(s => {
+        const q = this.searchQuery;
+        return s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q);
+      });
+    }
+
+    // 3. Ordenamiento
+    statsArray.sort((a, b) => {
+      if (this.sortBy === 'rating-desc') return b.avg - a.avg;
+      if (this.sortBy === 'rating-asc') return a.avg - b.avg;
+      if (this.sortBy === 'volume-desc') return b.count - a.count;
+      if (this.sortBy === 'delta-desc') return b.delta - a.delta;
+      // Default: adjusted score
+      return b.adjusted - a.adjusted;
+    });
+
+    // Actualizar orden y visibilidad de las tarjetas de región en el DOM
+    const grid = document.getElementById('srvRegionGrid');
+    if (grid) {
+      const visibleIds = new Set(statsArray.map(s => s.id));
+      statsArray.forEach(s => {
+        const card = document.getElementById(`srv-card-${s.id}`);
+        if (card) {
+          card.style.display = '';
+          grid.appendChild(card);
+        }
+      });
+      Object.keys(REGION_NAME_MAP).forEach(id => {
+        if (!visibleIds.has(id)) {
+          const card = document.getElementById(`srv-card-${id}`);
+          if (card) card.style.display = 'none';
+        }
+      });
+    }
+
+    // Re-renderizar la tabla de rankings con los ítems filtrados y ordenados
+    this.renderRankingsTable(statsArray);
+  },
+
   async handleSelect(regionId) {
     const container = document.getElementById('srvContainer');
     if (container) {
@@ -893,6 +1253,7 @@ const SelectRegionView = {
     if (typeof showRegionTransitionLoader !== 'undefined') {
       showRegionTransitionLoader(regionName, 'Accediendo al panel regional...', async () => {
         if (typeof DataLoader !== 'undefined') {
+          DataLoader.setMonth(this.selectedYear, this.selectedMonth);
           await DataLoader.switchRegion(regionId);
         }
         Router.navigate('#/');
@@ -900,6 +1261,7 @@ const SelectRegionView = {
     } else {
       setTimeout(async () => {
         if (typeof DataLoader !== 'undefined') {
+          DataLoader.setMonth(this.selectedYear, this.selectedMonth);
           await DataLoader.switchRegion(regionId);
         }
         Router.navigate('#/');
@@ -959,10 +1321,13 @@ const SelectRegionView = {
         if (!DataLoader.currentYear) {
           await DataLoader.init();
         }
-        const currYear = DataLoader.currentYear;
-        const currMonth = DataLoader.currentMonth;
-        const prevYear = DataLoader.previousYear;
-        const prevMonth = DataLoader.previousMonth;
+
+        const currYear = this.selectedYear || DataLoader.currentYear;
+        const currMonth = this.selectedMonth || DataLoader.currentMonth;
+        const prevMonth = currMonth === 1 ? 12 : currMonth - 1;
+        const prevYear = currMonth === 1 ? currYear - 1 : currYear;
+
+        DataLoader.setMonth(currYear, currMonth);
 
         // Cargar datos globales asíncronamente
         const [currReviews, prevReviews] = await Promise.all([
@@ -982,16 +1347,14 @@ const SelectRegionView = {
           const currCount = currRegReviews.length;
           const currAvg = currCount ? currRegReviews.reduce((sum, r) => sum + r.stars, 0) / currCount : 0;
           const currBranchCount = regionBranches.length;
-          const currComplexity = currBranchCount > 0 ? (currBranchCount * 0.018) + (Math.log10(currCount + 1) * 0.008) : 0;
-          const currAdjusted = currAvg * (1 + currComplexity);
+          const currAdjusted = SelectRegionView.calculateAdjustedScore(currAvg, currCount, currBranchCount);
 
           // Mes anterior
           const prevRegReviews = prevReviews.filter(r => r.region === id);
           const prevCount = prevRegReviews.length;
           const prevAvg = prevCount ? prevRegReviews.reduce((sum, r) => sum + r.stars, 0) / prevCount : 0;
           const prevBranchCount = regionBranches.length;
-          const prevComplexity = prevBranchCount > 0 ? (prevBranchCount * 0.018) + (Math.log10(prevCount + 1) * 0.008) : 0;
-          const prevAdjusted = prevAvg * (1 + prevComplexity);
+          const prevAdjusted = SelectRegionView.calculateAdjustedScore(prevAvg, prevCount, prevBranchCount);
 
           regionStats[id] = {
             id,
@@ -1011,18 +1374,15 @@ const SelectRegionView = {
           };
         }
 
-        // Calcular rankings (ordenados por adjustedScore)
-        const rankedCurr = Object.values(regionStats)
-          .filter(s => s.count > 0)
-          .sort((a, b) => b.adjusted - a.adjusted);
+        this._cachedRegionStats = regionStats;
 
         const rankedPrev = Object.values(prevRegionStats)
           .filter(s => s.count > 0)
           .sort((a, b) => b.adjusted - a.adjusted);
 
-        const prevRankMap = {};
+        this._prevRankMap = {};
         rankedPrev.forEach((s, idx) => {
-          prevRankMap[s.id] = idx + 1;
+          this._prevRankMap[s.id] = idx + 1;
         });
 
         // Actualizar cada tarjeta en la interfaz
@@ -1056,82 +1416,8 @@ const SelectRegionView = {
           }
         }
 
-        // Generar la tabla de rankings
-        const tablePlaceholder = document.getElementById('srv-ranking-table-placeholder');
-        if (tablePlaceholder) {
-          if (rankedCurr.length > 0) {
-            const rowsHtml = rankedCurr.map((stats, idx) => {
-              const currentRank = idx + 1;
-              const prevRank = prevRankMap[stats.id];
-              let rankShiftHtml = '';
-              
-              if (prevRank) {
-                const shift = prevRank - currentRank;
-                if (shift > 0) {
-                  rankShiftHtml = `<span class="rank-shift up">▲ ${shift}</span>`;
-                } else if (shift < 0) {
-                  rankShiftHtml = `<span class="rank-shift down">▼ ${Math.abs(shift)}</span>`;
-                } else {
-                  rankShiftHtml = `<span class="rank-shift equal">=</span>`;
-                }
-              } else {
-                rankShiftHtml = `<span class="rank-shift new">NUEVO</span>`;
-              }
-
-              let medalClass = '';
-              if (currentRank === 1) medalClass = 'rank-gold';
-              else if (currentRank === 2) medalClass = 'rank-silver';
-              else if (currentRank === 3) medalClass = 'rank-bronze';
-
-              return `
-                <tr class="ranking-row">
-                  <td class="ranking-cell rank-col">
-                    <span class="ranking-badge ${medalClass}">${currentRank}</span>
-                  </td>
-                  <td class="ranking-cell region-col">
-                    <div style="font-family:var(--sans); font-size:14px; font-weight:700; color:var(--text)">${stats.name}</div>
-                  </td>
-                  <td class="ranking-cell shift-col">${rankShiftHtml}</td>
-                  <td class="ranking-cell reviews-col">${stats.count} reseñas</td>
-                  <td class="ranking-cell rating-col">${stats.avg.toFixed(2)} ★</td>
-                  <td class="ranking-cell score-col font-mono" style="font-weight:700;">${stats.adjusted.toFixed(2)} pts</td>
-                </tr>
-              `;
-            }).join('');
-
-            tablePlaceholder.innerHTML = `
-              <div class="ranking-table-card">
-                <div class="ranking-table-header">
-                  <h3 class="ranking-table-title">Standings & Rendimiento Regional</h3>
-                  <p class="ranking-table-subtitle">Ordenado por Score Ajustado (Complejidad de sucursales + volumen de reseñas vs promedio real)</p>
-                </div>
-                <div class="ranking-table-wrapper">
-                  <table class="ranking-table">
-                    <thead>
-                      <tr>
-                        <th>Puesto</th>
-                        <th>Región</th>
-                        <th>Cambio</th>
-                        <th>Reseñas</th>
-                        <th>Rating Real</th>
-                        <th>Score Ajustado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${rowsHtml}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            `;
-            tablePlaceholder.classList.remove('loading');
-          } else {
-            tablePlaceholder.innerHTML = `
-              <div class="ranking-empty" style="text-align:center;padding:40px;color:var(--text-dim);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">No se encontraron datos para calcular el ranking de este mes.</div>
-            `;
-            tablePlaceholder.classList.remove('loading');
-          }
-        }
+        // Aplicar filtros y construir tabla
+        this.applyFiltersAndSorting();
       }
     } catch (e) {
       console.error('Error al cargar ratings y rankings:', e);
@@ -1144,10 +1430,89 @@ const SelectRegionView = {
     }
   },
 
-  handleMonthSelect(monthVal) {
-    const month = parseInt(monthVal);
-    const currYear = DataLoader.currentYear;
-    DataLoader.setMonth(currYear, month);
-    this.render();
+  renderRankingsTable(statsArray) {
+    const tablePlaceholder = document.getElementById('srv-ranking-table-placeholder');
+    if (!tablePlaceholder) return;
+
+    if (statsArray && statsArray.length > 0) {
+      const prevRankMap = this._prevRankMap || {};
+      const rowsHtml = statsArray.map((stats, idx) => {
+        const currentRank = idx + 1;
+        const prevRank = prevRankMap[stats.id];
+        let rankShiftHtml = '';
+        
+        if (prevRank) {
+          const shift = prevRank - currentRank;
+          if (shift > 0) {
+            rankShiftHtml = `<span class="rank-shift up">▲ ${shift}</span>`;
+          } else if (shift < 0) {
+            rankShiftHtml = `<span class="rank-shift down">▼ ${Math.abs(shift)}</span>`;
+          } else {
+            rankShiftHtml = `<span class="rank-shift equal">=</span>`;
+          }
+        } else {
+          rankShiftHtml = `<span class="rank-shift new">NUEVO</span>`;
+        }
+
+        let medalClass = '';
+        if (currentRank === 1) medalClass = 'rank-gold';
+        else if (currentRank === 2) medalClass = 'rank-silver';
+        else if (currentRank === 3) medalClass = 'rank-bronze';
+
+        return `
+          <tr class="ranking-row">
+            <td class="ranking-cell rank-col">
+              <span class="ranking-badge ${medalClass}">${currentRank}</span>
+            </td>
+            <td class="ranking-cell region-col">
+              <div style="font-family:var(--sans); font-size:14px; font-weight:700; color:var(--text)">${stats.name}</div>
+            </td>
+            <td class="ranking-cell shift-col">${rankShiftHtml}</td>
+            <td class="ranking-cell reviews-col">${stats.count} reseñas</td>
+            <td class="ranking-cell rating-col">${stats.avg ? stats.avg.toFixed(2) + ' ★' : '0.00 ★'}</td>
+            <td class="ranking-cell score-col font-mono" style="font-weight:700;">${stats.adjusted ? stats.adjusted.toFixed(2) : '0.00'} pts</td>
+          </tr>
+        `;
+      }).join('');
+
+      const monthNames = MONTH_NAMES || ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+      tablePlaceholder.innerHTML = `
+        <div class="ranking-table-card">
+          <div class="ranking-table-header">
+            <div>
+              <h3 class="ranking-table-title">Standings & Rendimiento Regional</h3>
+              <p class="ranking-table-subtitle">Resultados consolidados para ${monthNames[this.selectedMonth - 1]} ${this.selectedYear}</p>
+            </div>
+            <span style="font-size:11px; font-weight:700; color:var(--text-muted); background:var(--surface-2); border:1px solid var(--border); padding:4px 12px; border-radius:12px;">
+              ${statsArray.length} regiones encontradas
+            </span>
+          </div>
+          <div class="ranking-table-wrapper">
+            <table class="ranking-table">
+              <thead>
+                <tr>
+                  <th>Puesto</th>
+                  <th>Región</th>
+                  <th>Cambio</th>
+                  <th>Reseñas</th>
+                  <th>Rating Real</th>
+                  <th>Score Ajustado</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      tablePlaceholder.classList.remove('loading');
+    } else {
+      tablePlaceholder.innerHTML = `
+        <div class="ranking-empty" style="text-align:center;padding:40px;color:var(--text-dim);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">No se encontraron regiones que coincidan con los filtros seleccionados para este período.</div>
+      `;
+      tablePlaceholder.classList.remove('loading');
+    }
   }
 };
