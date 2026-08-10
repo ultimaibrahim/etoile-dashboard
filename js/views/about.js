@@ -18,6 +18,16 @@ const CHANGELOG_EPOCAS = [
     `,
     versions: [
       {
+        v: 'v3.4.4.altair', date: 'Agosto 2026',
+        items: [
+          'Resolución de Truncamiento en Supabase: Implementación de consultas paginadas (.range) y filtrado directo por región en DataLoader, garantizando la carga completa de reseñas históricas sin límite de 1,000 filas.',
+          'Normalización de Sucursales: Incorporación de normalizeBranchToken para resolver coincidencia de sucursales insensible a tildes, mayúsculas y caracteres especiales en todas las vistas e ingesta serverless.',
+          'Panel de Control Histórico (Select Region): Adición de barra de exploración histórica por Año (2018–2026), Mes, Estado de Región (<4.50★ / ≥4.50★), Criterios de Ordenamiento y Buscador Instantáneo en #/select-region.',
+          'Algoritmo de Ranking Bayesiano (Standings): Incorporación de Suavizado Bayesiano (k=15, M=4.50★) y escala multitienda en select-region.js para eliminar sesgos por muestra pequeña y balancear equitativamente el ranking regional.',
+          'Ingesta e Indexación Masiva: Sincronización completa de 8,944 reseñas históricas de Apify hacia Supabase para las 33 sucursales del país.'
+        ]
+      },
+      {
         v: 'v3.4.3.altair', date: 'Junio 2026',
         items: [
           'Conexión Exclusiva a Supabase: Eliminación definitiva de fallbacks locales a manifest.json y data/*.json, asegurando que todos los datos provengan únicamente de la base de datos.',
@@ -447,7 +457,7 @@ const AboutView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
-        Dashboard de Reseñas · Región ${getRegionName(activeRegion)} · v3.4.3.altair · 2026
+        Dashboard de Reseñas · Región ${getRegionName(activeRegion)} · v3.4.4.altair · 2026
       </footer>`;
 
     requestAnimationFrame(() => {
