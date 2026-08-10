@@ -308,7 +308,7 @@ const DashboardsView = {
             <div class="section-title">Volumen de Reseñas <span class="accent">${capitalizedCurrMonth}</span></div>
             <span class="section-sub">${currGlobal.totalReviews} reseñas · Negativas vs Positivas/Neutrales</span>
           </div>
-          <div class="chart-card"><div class="chart-wrap"><canvas id="volChart"></canvas></div></div>
+          <div class="chart-card spotlight-card"><div class="chart-wrap"><canvas id="volChart"></canvas></div></div>
         </section>
 
         <section class="section r">
@@ -316,7 +316,7 @@ const DashboardsView = {
             <div class="section-title">Ranking de Calificación <span class="accent">${capitalizedCurrMonth}</span></div>
             <span class="section-sub">Calificación promedio por sucursal en el mes.</span>
           </div>
-          <div class="chart-card"><div class="chart-wrap"><canvas id="rankingChart"></canvas></div></div>
+          <div class="chart-card spotlight-card"><div class="chart-wrap"><canvas id="rankingChart"></canvas></div></div>
         </section>
 
         <section class="section r">
@@ -324,7 +324,7 @@ const DashboardsView = {
             <div class="section-title">Distribución de Estrellas <span class="accent">${capitalizedCurrMonth}</span></div>
             <span class="section-sub">Desglose de calificaciones de 1 a 5 estrellas.</span>
           </div>
-          <div class="chart-card"><div class="chart-wrap"><canvas id="distChart"></canvas></div></div>
+          <div class="chart-card spotlight-card"><div class="chart-wrap"><canvas id="distChart"></canvas></div></div>
         </section>
 
         <section class="section r">
@@ -632,51 +632,74 @@ const DashboardsView = {
     const allReviews = typeof DataLoader.getReviewsForRegion === 'function' 
       ? DataLoader.getReviewsForRegion(year, month, activeRegion)
       : ((DataLoader.getMonth(year, month) || {}).reviews || []);
-    const filtered = allReviews.filter(r => r.stars === stars);
 
+    // REGLA MANDATORIA: Filtrar EXCLUSIVAMENTE reseñas de la calificación actual que contengan texto real escrito
+    this._modalFiltered = allReviews.filter(r => r.stars === stars && r.text && r.text.trim().length > 0);
+
+    // Contar únicamente sucursales que tengan opiniones en esta calificación específica (sin mezclar otras estrellas)
     const branchCountsMap = {};
-    filtered.forEach(r => {
-      const bName = r.sucursal || 'Sucursal';
-      branchCountsMap[bName] = (branchCountsMap[bName] || 0) + 1;
+    this._modalFiltered.forEach(r => {
+      const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(r.sucursal) : null;
+      const rawKey = meta ? meta.id : (r.sucursal || 'sucursal').toLowerCase();
+      const displayName = meta ? meta.nombre : (r.sucursal || 'Sucursal');
+      if (!branchCountsMap[rawKey]) {
+        branchCountsMap[rawKey] = { name: displayName, count: 0 };
+      }
+      branchCountsMap[rawKey].count++;
     });
 
-    const branchOptionsHtml = Object.keys(branchCountsMap).sort().map(bName => {
-      return `<option value="${escapeHtml(bName)}">${escapeHtml(bName)} (${branchCountsMap[bName]})</option>`;
+    const branchOptionsHtml = Object.keys(branchCountsMap).sort((a, b) => branchCountsMap[a].name.localeCompare(branchCountsMap[b].name)).map(rawKey => {
+      const bInfo = branchCountsMap[rawKey];
+      return `<div class="custom-option" data-value="${escapeHtml(rawKey)}" data-label="${escapeHtml(bInfo.name)} (${bInfo.count})" onclick="DashboardsView.onStarModalOptionClick(this)" style="padding:10px 14px; font-size:12px; cursor:pointer;">${escapeHtml(bInfo.name)} (${bInfo.count})</div>`;
     }).join('');
 
-    const oldOverlay = document.getElementById('dashStarModalOverlay');
-    if (oldOverlay) oldOverlay.remove();
+    this.closeStarReviewsModal();
+
+    // INVARIANTE: Congelar scroll del documento al abrir modales
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
 
     const overlay = document.createElement('div');
     overlay.id = 'dashStarModalOverlay';
-    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px;';
+    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;';
 
     overlay.onclick = (e) => {
-      if (e.target === overlay) overlay.remove();
+      if (e.target === overlay) DashboardsView.closeStarReviewsModal();
     };
 
     const monthName = MONTH_NAMES[month - 1];
 
     overlay.innerHTML = `
-      <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); max-width:680px; width:100%; max-height:85vh; display:flex; flex-direction:column; box-shadow:var(--sombra-lg); overflow:hidden;">
-        <div style="padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; background:var(--surface-2);">
-          <div>
-            <h3 style="margin:0; font-family:var(--title); font-size:20px; color:var(--text); display:flex; align-items:center; gap:8px;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:18px; max-width:680px; width:100%; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 24px 60px rgba(0,0,0,0.4); overflow:hidden;">
+        <!-- Header con fondo sólido y dropdown de ancho fijo -->
+        <div style="padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px; background:var(--surface); flex-shrink:0;">
+          <div style="flex:1; min-width:0;">
+            <h3 style="margin:0 0 4px 0; font-family:var(--title); font-size:20px; color:var(--text); display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
               <span>Reseñas de ${stars} ★</span>
-              <span style="font-size:12px; font-weight:700; background:rgba(184,144,47,0.14); color:var(--oro); padding:2px 10px; border-radius:12px;" id="starModalCountBadge">${filtered.length} totales</span>
+              <span style="font-size:12px; font-weight:700; background:rgba(61,90,71,0.12); color:var(--verde); padding:3px 12px; border-radius:14px; border:1px solid rgba(61,90,71,0.2);" id="starModalCountBadge">${this._modalFiltered.length} verificadas</span>
             </h3>
             <span style="font-size:12px; color:var(--text-muted);">${monthName} ${year} · Región ${getRegionName(activeRegion)}</span>
           </div>
-          <div style="display:flex; align-items:center; gap:12px;">
-            <select id="modalBranchFilterSelect" onchange="DashboardsView.filterStarModalByBranch(this.value, ${stars})" style="padding:7px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:12px; font-weight:600; cursor:pointer;">
-              <option value="all">Todas las sucursales (${filtered.length})</option>
-              ${branchOptionsHtml}
-            </select>
-            <button onclick="document.getElementById('dashStarModalOverlay').remove()" style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted); line-height:1;">&times;</button>
+
+          <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+            <div class="custom-select" id="starModalBranchDropdown" style="width:230px; position:relative;">
+              <button class="custom-select-trigger" onclick="DashboardsView.toggleStarModalDropdown(event)" style="width:100%; padding:8px 14px; font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:space-between; border-radius:10px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); cursor:pointer;">
+                <span class="custom-select-value" id="starModalSelectedBranchLabel" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Todas las sucursales (${this._modalFiltered.length})</span>
+                <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" style="flex-shrink:0; margin-left:6px;"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="custom-select-options" style="position:absolute; top:calc(100% + 4px); right:0; width:100%; max-height:240px; overflow-y:auto; z-index:1000; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.25);">
+                <div class="custom-option active" data-value="all" data-label="Todas las sucursales (${this._modalFiltered.length})" onclick="DashboardsView.onStarModalOptionClick(this)" style="padding:10px 14px; font-size:12px; cursor:pointer;">Todas las sucursales (${this._modalFiltered.length})</div>
+                ${branchOptionsHtml}
+              </div>
+            </div>
+
+            <button onclick="DashboardsView.closeStarReviewsModal()" style="background:var(--surface-2); border:1px solid var(--border); width:34px; height:34px; border-radius:10px; font-size:20px; cursor:pointer; color:var(--text-muted); display:flex; align-items:center; justify-content:center; flex-shrink:0;" title="Cerrar modal">&times;</button>
           </div>
         </div>
-        <div id="starModalCardsContainer" style="padding:20px 24px; overflow-y:auto; flex:1;">
-          ${this._buildStarModalCards(filtered)}
+
+        <!-- Tarjetas sobre fondo sólido de máxima legibilidad -->
+        <div id="starModalCardsContainer" style="padding:20px 24px; overflow-y:auto; flex:1; background:var(--bg);">
+          ${this._buildStarModalCards(this._modalFiltered)}
         </div>
       </div>
     `;
@@ -684,40 +707,89 @@ const DashboardsView = {
     document.body.appendChild(overlay);
   },
 
-  _buildStarModalCards(reviews) {
-    if (!reviews.length) {
-      return '<p style="color:var(--text-muted); font-size:13px; text-align:center; padding:20px;">No se encontraron opiniones para los filtros seleccionados.</p>';
-    }
-    return reviews.map(r => `
-      <div style="margin-bottom:12px; padding:14px 18px; background:var(--surface-2); border:1px solid var(--border); border-radius:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <span style="font-weight:700; font-size:13.5px; color:var(--text);">${escapeHtml(r.sucursal || 'Sucursal')}</span>
-          <span style="font-size:12px; color:var(--oro); letter-spacing:1px;">${'★'.repeat(r.stars)}</span>
-        </div>
-        <p style="font-size:13px; color:var(--text-muted); margin:0 0 6px 0; line-height:1.45; font-style:italic;">"${escapeHtml(r.text || '(Sin comentario escrito)')}"</p>
-        <span style="font-size:11px; color:var(--text-muted); opacity:0.75;">${formatDate(r.publishedAtDate)}</span>
-      </div>
-    `).join('');
+  closeStarReviewsModal() {
+    const overlay = document.getElementById('dashStarModalOverlay');
+    if (overlay) overlay.remove();
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
   },
 
-  filterStarModalByBranch(branchName, stars) {
-    const activeRegion = typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated() ? AppAuth.getUserRegion() : 'GDL';
-    const allReviews = typeof DataLoader.getReviewsForRegion === 'function' 
-      ? DataLoader.getReviewsForRegion(this._modalYear || DataLoader.currentYear, this._modalMonth || DataLoader.currentMonth, activeRegion)
-      : [];
-    let filtered = allReviews.filter(r => r.stars === stars);
+  toggleStarModalDropdown(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById('starModalBranchDropdown');
+    if (dropdown) dropdown.classList.toggle('open');
+  },
 
-    if (branchName && branchName !== 'all') {
-      filtered = filtered.filter(r => (r.sucursal || '').toLowerCase() === branchName.toLowerCase());
+  onStarModalOptionClick(el) {
+    if (!el) return;
+    const rawKey = el.getAttribute('data-value');
+    const labelText = el.getAttribute('data-label') || el.textContent.trim();
+    this.selectStarModalBranch(rawKey, labelText);
+  },
+
+  selectStarModalBranch(branchKey, labelText) {
+    const dropdown = document.getElementById('starModalBranchDropdown');
+    if (dropdown) dropdown.classList.remove('open');
+
+    const label = document.getElementById('starModalSelectedBranchLabel');
+    if (label) label.textContent = labelText;
+
+    const options = dropdown ? dropdown.querySelectorAll('.custom-option') : [];
+    options.forEach(opt => {
+      if (opt.getAttribute('data-value') === branchKey) {
+        opt.classList.add('active');
+      } else {
+        opt.classList.remove('active');
+      }
+    });
+
+    this.filterStarModalByBranch(branchKey);
+  },
+
+  _buildStarModalCards(reviews) {
+    if (!reviews || !reviews.length) {
+      return '<div style="text-align:center; padding:40px 20px; color:var(--text-muted); font-size:13.5px; background:var(--surface); border:1px dashed var(--border); border-radius:14px; margin:10px 0;">No se encontraron opiniones escritas con texto en este filtro.</div>';
+    }
+    return reviews.map(r => {
+      const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(r.sucursal) : null;
+      const bName = meta ? meta.nombre : (r.sucursal || 'Sucursal');
+      return `
+        <div style="margin-bottom:12px; padding:16px 20px; background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-weight:700; font-size:14px; color:var(--text);">${escapeHtml(bName)}</span>
+            <span style="font-size:13px; color:var(--oro); letter-spacing:2px;">${'★'.repeat(r.stars)}</span>
+          </div>
+          <p style="font-size:13.5px; color:var(--text); margin:0 0 8px 0; line-height:1.5; font-style:italic;">"${escapeHtml(r.text || '')}"</p>
+          <span style="font-size:11.5px; color:var(--text-muted); opacity:0.8;">${formatDate(r.publishedAtDate)}</span>
+        </div>
+      `;
+    }).join('');
+  },
+
+  filterStarModalByBranch(branchKey) {
+    const list = this._modalFiltered || [];
+    let result = list;
+
+    if (branchKey && branchKey !== 'all') {
+      result = list.filter(r => {
+        const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(r.sucursal) : null;
+        const key = meta ? meta.id : (r.sucursal || '').toLowerCase();
+        return key === branchKey.toLowerCase();
+      });
     }
 
     const container = document.getElementById('starModalCardsContainer');
     const badge = document.getElementById('starModalCountBadge');
+    const label = document.getElementById('starModalSelectedBranchLabel');
+
     if (container) {
-      container.innerHTML = this._buildStarModalCards(filtered);
+      container.innerHTML = this._buildStarModalCards(result);
     }
     if (badge) {
-      badge.textContent = `${filtered.length} ${branchName === 'all' ? 'totales' : 'en sucursal'}`;
+      badge.textContent = `${result.length} ${branchKey === 'all' ? 'verificadas' : 'en sucursal'}`;
+    }
+    if (label && branchKey === 'all') {
+      label.textContent = `Todas las sucursales (${list.length})`;
     }
   }
 };

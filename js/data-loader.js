@@ -143,7 +143,7 @@ const DataLoader = {
       for (const m of months) {
         const monthData = this.getMonth(year, m);
         if (monthData) {
-          const branchRevs = monthData.reviews.filter(r => r.sucursal === s.id);
+          const branchRevs = monthData.reviews.filter(r => typeof isSameBranch === 'function' ? isSameBranch(r.sucursal, s.id) : r.sucursal === s.id);
           totalStars += branchRevs.reduce((sum, r) => sum + r.stars, 0);
           totalCount += branchRevs.length;
           totalNeg += branchRevs.filter(r => r.stars <= 2).length;
@@ -166,38 +166,68 @@ const DataLoader = {
     const key = `${year}-${String(month).padStart(2, '0')}`;
     if (this.cache[key]) return this.cache[key];
 
-    // Cargar desde Supabase
     if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
-        const startDate = new Date(year, month - 1, 1).toISOString();
-        const endDate = new Date(year, month, 1).toISOString(); // primer día del mes siguiente (exclusivo)
+        const startIso = `${year}-${String(month).padStart(2, '0')}-01T00:00:00.000Z`;
+        const nextM = month === 12 ? 1 : month + 1;
+        const nextY = month === 12 ? year + 1 : year;
+        const endIso = `${nextY}-${String(nextM).padStart(2, '0')}-01T00:00:00.000Z`;
 
-        const { data, error } = await supabaseClient
-          .from('reviews')
-          .select('*')
-          .eq('region', activeRegion)
-          .gte('published_at_date', startDate)
-          .lt('published_at_date', endDate);
+        let allData = [];
+        let page = 0;
+        const pageSize = 1000;
+        let hasMore = true;
 
-        if (error) throw error;
+        while (hasMore) {
+          let query = supabaseClient
+            .from('reviews')
+            .select('*')
+            .gte('published_at_date', startIso)
+            .lt('published_at_date', endIso);
 
-        // Mapear de base de datos relacional (snake_case) al formato camelCase de la UI
-        const mappedReviews = (data || []).map((r, idx) => ({
-          id: r.id,
-          globalId: `${key}-${idx}`,
-          sucursal: r.sucursal, // Mapeado directamente a su ID (ej. 'andares')
-          stars: r.stars,
-          text: r.text,
-          publishedAtDate: r.published_at_date,
-          isLocalGuide: r.is_local_guide,
-          responseText: r.response_text,
-          responseFromOwnerText: r.response_text,
-          responseDate: r.response_date,
-          responseFromOwnerDate: r.response_date,
-          classification: r.classification
-        }));
+          if (activeRegion && activeRegion !== 'BRAND') {
+            query = query.eq('region', activeRegion);
+          }
 
-        const result = { reviews: mappedReviews };
+          const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
+          if (error) throw error;
+
+          if (data && data.length > 0) {
+            allData = allData.concat(data);
+            if (data.length < pageSize) hasMore = false;
+            else page++;
+          } else {
+            hasMore = false;
+          }
+        }
+
+        const mappedReviews = allData.map((r, idx) => {
+          const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(r.sucursal) : null;
+          const canonicalId = meta ? meta.id : (r.sucursal || '').toLowerCase();
+          const canonicalRegion = meta ? meta.region : (r.region || '');
+
+          return {
+            id: r.id,
+            globalId: `${key}-${idx}`,
+            sucursal: canonicalId,
+            stars: r.stars,
+            text: r.text,
+            publishedAtDate: r.published_at_date,
+            isLocalGuide: r.is_local_guide,
+            responseText: r.response_text,
+            responseFromOwnerText: r.response_text,
+            responseDate: r.response_date,
+            responseFromOwnerDate: r.response_date,
+            region: canonicalRegion,
+            classification: r.classification
+          };
+        });
+
+        const filtered = (activeRegion && activeRegion !== 'BRAND')
+          ? mappedReviews.filter(r => r.region === activeRegion)
+          : mappedReviews;
+
+        const result = { reviews: filtered };
         this.cache[key] = result;
         return result;
       } catch (e) {
@@ -214,33 +244,56 @@ const DataLoader = {
 
     if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
-        const startDate = new Date(year, month - 1, 1).toISOString();
-        const endDate = new Date(year, month, 1).toISOString(); // primer día del mes siguiente (exclusivo)
+        const startIso = `${year}-${String(month).padStart(2, '0')}-01T00:00:00.000Z`;
+        const nextM = month === 12 ? 1 : month + 1;
+        const nextY = month === 12 ? year + 1 : year;
+        const endIso = `${nextY}-${String(nextM).padStart(2, '0')}-01T00:00:00.000Z`;
 
-        const { data, error } = await supabaseClient
-          .from('reviews')
-          .select('*')
-          .gte('published_at_date', startDate)
-          .lt('published_at_date', endDate);
+        let allData = [];
+        let page = 0;
+        const pageSize = 1000;
+        let hasMore = true;
 
-        if (error) throw error;
+        while (hasMore) {
+          const { data, error } = await supabaseClient
+            .from('reviews')
+            .select('*')
+            .gte('published_at_date', startIso)
+            .lt('published_at_date', endIso)
+            .range(page * pageSize, (page + 1) * pageSize - 1);
 
-        // Mapear de base de datos relacional (snake_case) al formato camelCase de la UI
-        const mappedReviews = (data || []).map((r, idx) => ({
-          id: r.id,
-          globalId: `${key}-${idx}`,
-          sucursal: r.sucursal, // Mapeado directamente a su ID (ej. 'andares')
-          stars: r.stars,
-          text: r.text,
-          publishedAtDate: r.published_at_date,
-          isLocalGuide: r.is_local_guide,
-          responseText: r.response_text,
-          responseFromOwnerText: r.response_text,
-          responseDate: r.response_date,
-          responseFromOwnerDate: r.response_date,
-          region: r.region,
-          classification: r.classification
-        }));
+          if (error) throw error;
+
+          if (data && data.length > 0) {
+            allData = allData.concat(data);
+            if (data.length < pageSize) hasMore = false;
+            else page++;
+          } else {
+            hasMore = false;
+          }
+        }
+
+        const mappedReviews = allData.map((r, idx) => {
+          const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(r.sucursal) : null;
+          const canonicalId = meta ? meta.id : (r.sucursal || '').toLowerCase();
+          const canonicalRegion = meta ? meta.region : (r.region || '');
+
+          return {
+            id: r.id,
+            globalId: `${key}-${idx}`,
+            sucursal: canonicalId,
+            stars: r.stars,
+            text: r.text,
+            publishedAtDate: r.published_at_date,
+            isLocalGuide: r.is_local_guide,
+            responseText: r.response_text,
+            responseFromOwnerText: r.response_text,
+            responseDate: r.response_date,
+            responseFromOwnerDate: r.response_date,
+            region: canonicalRegion,
+            classification: r.classification
+          };
+        });
 
         this.cache[key] = mappedReviews;
         return mappedReviews;
@@ -249,34 +302,7 @@ const DataLoader = {
       }
     }
 
-    // Fallback: Mock data if database query fails or is not configured
-    const mockReviews = [];
-    const seed = month + year;
-    for (const s of SUCURSALES_META_ALL) {
-      const hist = s.historico || 4.5;
-      const count = Math.floor(((seed * 7 + s.id.charCodeAt(0)) % 12) + 6);
-      for (let i = 0; i < count; i++) {
-        let stars = 5;
-        const rand = (seed * 11 + s.id.charCodeAt(0) + i) % 100;
-        if (rand < 6) stars = 1;
-        else if (rand < 14) stars = 2;
-        else if (rand < 28) stars = 3;
-        else if (rand < 48) stars = 4;
-        
-        mockReviews.push({
-          id: `${s.id}-${i}`,
-          globalId: `${key}-${s.id}-${i}`,
-          sucursal: s.id,
-          stars: stars,
-          text: stars <= 2 ? "El servicio fue deficiente y la comida fría." : "Excelente ambiente y deliciosas crepas.",
-          publishedAtDate: new Date(year, month - 1, Math.max(1, (i * 4) % 28)).toISOString(),
-          isLocalGuide: rand % 5 === 0,
-          region: s.region
-        });
-      }
-    }
-    this.cache[key] = mockReviews;
-    return mockReviews;
+    return [];
   },
 
   getMonth(year, month) {
@@ -305,12 +331,27 @@ const DataLoader = {
 
   getReviewsForBranch(year, month, branchId) {
     const data = this.getMonth(year, month);
-    if (!data) return [];
+    if (!data || !data.reviews) return [];
     
-    const meta = SUCURSALES_META_ALL.find(s => s.id === branchId);
+    const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(branchId) : SUCURSALES_META_ALL.find(s => s.id === branchId);
     if (!meta) return [];
 
-    return data.reviews.filter(r => r.sucursal === branchId);
+    return data.reviews.filter(r => typeof isSameBranch === 'function' ? isSameBranch(r.sucursal, branchId) : r.sucursal === branchId);
+  },
+
+  getAvailableMonthsForBranch(branchId, year = new Date().getFullYear()) {
+    const available = [];
+    const yearMonths = (this.manifest && this.manifest[year]) ? this.manifest[year] : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    for (const m of yearMonths) {
+      const monthData = this.getMonth(year, m);
+      if (monthData && monthData.reviews) {
+        const revs = monthData.reviews.filter(r => typeof isSameBranch === 'function' ? isSameBranch(r.sucursal, branchId) : r.sucursal === branchId);
+        if (revs.length > 0) {
+          available.push(m);
+        }
+      }
+    }
+    return available;
   },
 
   computeBranchStats(year, month, branchId) {
@@ -350,7 +391,7 @@ const DataLoader = {
       if (/^\d{4}-\d{2}$/.test(key)) {
         const data = this.cache[key];
         if (data && data.reviews) {
-          const branchReviews = data.reviews.filter(r => r.sucursal === branchId);
+          const branchReviews = data.reviews.filter(r => typeof isSameBranch === 'function' ? isSameBranch(r.sucursal, branchId) : r.sucursal === branchId);
           totalCount += branchReviews.length;
           totalStars += branchReviews.reduce((sum, r) => sum + r.stars, 0);
         }
@@ -363,21 +404,48 @@ const DataLoader = {
   async preloadAllReviews() {
     if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
-        const { data, error } = await supabaseClient
-          .from('reviews')
-          .select('*')
-          .eq('region', activeRegion);
+        let allData = [];
+        let page = 0;
+        const pageSize = 1000;
+        let hasMore = true;
 
-        if (error) throw error;
+        while (hasMore) {
+          let query = supabaseClient.from('reviews').select('*');
+          if (activeRegion && activeRegion !== 'BRAND') {
+            query = query.eq('region', activeRegion);
+          }
+          const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
+          if (error) throw error;
 
-        // Agrupar todas las reseñas en sus respectivos meses en una sola consulta
+          if (data && data.length > 0) {
+            allData = allData.concat(data);
+            if (data.length < pageSize) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          } else {
+            hasMore = false;
+          }
+        }
+
+        // Agrupar todas las reseñas en sus respectivos meses resolviendo la sucursal y región canónicas
         const grouped = {};
-        (data || []).forEach((r, idx) => {
+        allData.forEach((r, idx) => {
           if (!r.published_at_date) return;
+          const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(r.sucursal) : null;
+          const canonicalId = meta ? meta.id : (r.sucursal || '').toLowerCase();
+          const canonicalRegion = meta ? meta.region : (r.region || '');
+
+          if (activeRegion && activeRegion !== 'BRAND' && canonicalRegion && canonicalRegion !== activeRegion) {
+            return;
+          }
+
           const date = new Date(r.published_at_date);
-          const y = date.getUTCFullYear();
-          const m = String(date.getUTCMonth() + 1).padStart(2, '0');
-          const key = `${y}-${m}`;
+          const y = String(date.getUTCFullYear());
+          const m = date.getUTCMonth() + 1;
+          const mStr = String(m).padStart(2, '0');
+          const key = `${y}-${mStr}`;
 
           if (!grouped[key]) {
             grouped[key] = { reviews: [] };
@@ -386,7 +454,7 @@ const DataLoader = {
           grouped[key].reviews.push({
             id: r.id,
             globalId: `${key}-${idx}`,
-            sucursal: r.sucursal,
+            sucursal: canonicalId,
             stars: r.stars,
             text: r.text,
             publishedAtDate: r.published_at_date,
@@ -394,8 +462,18 @@ const DataLoader = {
             responseText: r.response_text,
             responseFromOwnerText: r.response_text,
             responseDate: r.response_date,
-            responseFromOwnerDate: r.response_date
+            responseFromOwnerDate: r.response_date,
+            region: canonicalRegion,
+            classification: r.classification
           });
+
+          // Actualizar manifest dinámico
+          if (!this.manifest) this.manifest = {};
+          if (!this.manifest[y]) this.manifest[y] = [];
+          if (!this.manifest[y].includes(m)) {
+            this.manifest[y].push(m);
+            this.manifest[y].sort((a, b) => a - b);
+          }
         });
 
         // Llenar el caché con las reseñas agrupadas

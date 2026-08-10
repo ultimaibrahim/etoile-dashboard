@@ -32,6 +32,10 @@ const ModalManager = {
     if (!el) return;
     const activeEl = document.activeElement;
     
+    // Congelar scroll de documento estricto (Mandatorio ibrahim-agent-core / reviews-lcp-gdl)
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    
     // Accesibilidad básica
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-modal', 'true');
@@ -266,11 +270,76 @@ function initReveal() {
 }
 
 function getBranchById(id) {
-  return SUCURSALES_META.find(s => s.id === id);
+  return SUCURSALES_META_ALL.find(s => s.id === id) || SUCURSALES_META.find(s => s.id === id);
 }
 
 function getBranchNameToId(name) {
   return SUCURSAL_NAME_MAP[name] || null;
+}
+
+function normalizeBranchToken(str) {
+  if (!str) return '';
+  return String(str)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function resolveBranchMeta(input) {
+  if (!input) return null;
+  const raw = String(input).trim();
+  const norm = normalizeBranchToken(raw);
+  if (!norm) return null;
+
+  // 1. Coincidencia directa por ID en SUCURSALES_META_ALL
+  let found = SUCURSALES_META_ALL.find(s => normalizeBranchToken(s.id) === norm);
+  if (found) return found;
+
+  // 2. Coincidencia directa por nombre o abreviatura
+  found = SUCURSALES_META_ALL.find(s => 
+    normalizeBranchToken(s.nombre) === norm || 
+    normalizeBranchToken(s.abr) === norm
+  );
+  if (found) return found;
+
+  // 3. Coincidencia via SUCURSAL_NAME_MAP
+  if (typeof SUCURSAL_NAME_MAP !== 'undefined') {
+    if (SUCURSAL_NAME_MAP[raw]) {
+      const targetId = SUCURSAL_NAME_MAP[raw];
+      found = SUCURSALES_META_ALL.find(s => s.id === targetId);
+      if (found) return found;
+    }
+    
+    for (const [key, targetId] of Object.entries(SUCURSAL_NAME_MAP)) {
+      if (normalizeBranchToken(key) === norm) {
+        found = SUCURSALES_META_ALL.find(s => s.id === targetId);
+        if (found) return found;
+      }
+    }
+  }
+
+  // 4. Coincidencia por subcadena/parcial para nombres extensos traídos del scraper
+  found = SUCURSALES_META_ALL.find(s => {
+    const sIdNorm = normalizeBranchToken(s.id);
+    const sNomNorm = normalizeBranchToken(s.nombre);
+    const sAbrNorm = normalizeBranchToken(s.abr);
+    return norm.includes(sIdNorm) || norm.includes(sNomNorm) || (sAbrNorm.length >= 4 && norm.includes(sAbrNorm));
+  });
+  if (found) return found;
+
+  return null;
+}
+
+function isSameBranch(a, b) {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const metaA = resolveBranchMeta(a);
+  const metaB = resolveBranchMeta(b);
+  if (metaA && metaB) return metaA.id === metaB.id;
+  const idA = metaA ? metaA.id : normalizeBranchToken(a);
+  const idB = metaB ? metaB.id : normalizeBranchToken(b);
+  return idA === idB;
 }
 
 /* ── QUARTER HELPERS ───────────────────────────────────── */
@@ -279,15 +348,18 @@ function getQuarterMonths(q) {
   return map[q] || [];
 }
 
-function quarterLabel(q) {
-  return `Q${q} 2026`;
+function quarterLabel(q, year) {
+  const y = year || new Date().getFullYear();
+  return `Q${q} ${y}`;
 }
 
 function parseQuarterParam(param) {
-  // param = "2026-Q1" or "Q1"
-  const m = param.match(/Q(\d)/i);
-  if (!m) return null;
-  return { year: 2026, quarter: parseInt(m[1]) };
+  if (!param) return { year: new Date().getFullYear(), quarter: 1 };
+  const qMatch = param.match(/Q(\d)/i);
+  if (!qMatch) return null;
+  const yearMatch = param.match(/(\d{4})/);
+  const year = yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear();
+  return { year, quarter: parseInt(qMatch[1]) };
 }
 
 function getCompletedQuarters(year) {
@@ -854,7 +926,7 @@ function showConcludedMonthModal(year, month) {
                 </p>
               </div>
             ` : `
-              <div class="proactive-alert-card optimal" style="margin:0; padding:16px; border-left: 4px solid var(--verde);">
+              <div class="proactive-alert-card optimal" style="margin:0; padding:16px;">
                 <div class="pac-header">
                   <div class="pac-title-wrap">
                     <span class="pac-icon" style="color: var(--verde);">${svgIcon('check')}</span>
@@ -1397,4 +1469,353 @@ const LcpWalkthrough = {
     localStorage.setItem('lcp_walkthrough_seen', 'true');
   }
 };
+
+/* ─── REACTBITS & UI/UX ENHANCEMENT UTILITIES ───────────── */
+
+/**
+ * Registra escuchadores de cursor en directo sobre tarjetas con .spotlight-card
+ * actualizando las variables CSS --mouse-x y --mouse-y para resplandor reactivo.
+ */
+function initSpotlightCards() {
+  const cards = document.querySelectorAll('.spotlight-card, .branch-card, .scorecard, .kpi-card, .chart-card, .topic-card');
+  cards.forEach(card => {
+    if (card.dataset.spotlightBound) return;
+    card.dataset.spotlightBound = 'true';
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
+    });
+  });
+}
+
+/**
+ * Anima contadores numéricos fluidos (CountUp Interpolation) usando RAF.
+ * @param {HTMLElement} el - Elemento objetivo
+ * @param {number} targetValue - Valor final objetivo
+ * @param {number} duration - Duración en ms
+ * @param {boolean} isFloat - Si es decimal (ej. rating 4.85)
+ */
+function animateCounter(el, targetValue, duration = 1200, isFloat = false) {
+  if (!el) return;
+  const start = 0;
+  const startTime = performance.now();
+  const target = parseFloat(targetValue);
+  if (isNaN(target)) return;
+
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // Exponential Ease Out: 1 - Math.pow(2, -10 * progress)
+    const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+    const currentValue = start + (target - start) * easeProgress;
+
+    if (isFloat) {
+      el.textContent = currentValue.toFixed(2);
+    } else {
+      el.textContent = Math.round(currentValue).toLocaleString();
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    } else {
+      el.textContent = isFloat ? target.toFixed(2) : target.toLocaleString();
+    }
+  }
+
+  requestAnimationFrame(update);
+}
+
+/**
+ * Revelado progresivo con desenfoque para títulos y secciones (.blur-reveal)
+ */
+function initBlurReveals() {
+  const reveals = document.querySelectorAll('.blur-reveal');
+  reveals.forEach((el, index) => {
+    setTimeout(() => {
+      el.classList.add('revealed');
+    }, index * 80 + 50);
+  });
+}
+
+/**
+ * Posiciona dinámicamente la pastilla indicadora flotante (sliding tab pill)
+ * persiguiendo suavemente la ruta o pestaña activa en el nav de escritorio.
+ */
+function updateSlidingTabPill() {
+  const nav = document.querySelector('.topbar-nav--desktop');
+  if (!nav) return;
+  
+  let pill = nav.querySelector('.sliding-tab-pill');
+  if (!pill) {
+    pill = document.createElement('div');
+    pill.className = 'sliding-tab-pill';
+    nav.appendChild(pill);
+  }
+
+  const activeLink = nav.querySelector('.topbar-link.active');
+  if (activeLink) {
+    const navRect = nav.getBoundingClientRect();
+    const linkRect = activeLink.getBoundingClientRect();
+    const left = linkRect.left - navRect.left;
+    const width = linkRect.width;
+    
+    pill.style.transform = `translateX(${left}px)`;
+    pill.style.width = `${width}px`;
+    pill.style.opacity = '1';
+  } else {
+    pill.style.opacity = '0';
+  }
+}
+
+/**
+ * ToastManager - Administrador de Notificaciones Flotantes en Cristal (Spring Physics)
+ */
+const ToastManager = {
+  _getContainer() {
+    let container = document.getElementById('globalToastContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'globalToastContainer';
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+    return container;
+  },
+
+  show({ type = 'info', message = '', icon = '', duration = 3200 }) {
+    const container = this._getContainer();
+    const pill = document.createElement('div');
+    pill.className = `toast-pill ${type}`;
+    
+    const iconSvg = icon || (type === 'success' ? svgIcon('check') : (type === 'warn' ? svgIcon('alert') : svgIcon('search')));
+    
+    pill.innerHTML = `
+      <span class="toast-icon">${iconSvg}</span>
+      <span class="toast-msg">${escapeHtml(message)}</span>
+    `;
+
+    container.appendChild(pill);
+    
+    // Activar animación con spring physics
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        pill.classList.add('active');
+      });
+    });
+
+    setTimeout(() => {
+      pill.classList.remove('active');
+      setTimeout(() => pill.remove(), 350);
+    }, duration);
+  }
+};
+
+/**
+ * CommandPaletteManager - Paleta de Comandos Cmd+K Global (Spotlight Search Glass)
+ */
+const CommandPaletteManager = {
+  _initialized: false,
+  _backdrop: null,
+
+  init() {
+    if (this._initialized) return;
+    this._initialized = true;
+
+    // Registrar atajo de teclado Cmd+K / Ctrl+K
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        this.toggle();
+      }
+    });
+  },
+
+  toggle() {
+    if (this._backdrop && this._backdrop.classList.contains('active')) {
+      this.close();
+    } else {
+      this.open();
+    }
+  },
+
+  open() {
+    this._render();
+    if (!this._backdrop) return;
+    
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    this._backdrop.classList.add('active');
+    const input = this._backdrop.querySelector('.cmd-k-input');
+    if (input) {
+      input.value = '';
+      input.focus();
+      this._filter('');
+    }
+  },
+
+  close() {
+    if (!this._backdrop) return;
+    this._backdrop.classList.remove('active');
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  },
+
+  _render() {
+    if (this._backdrop) return;
+
+    const branches = typeof SUCURSALES_META !== 'undefined' ? SUCURSALES_META : [];
+    
+    const backdrop = document.createElement('div');
+    backdrop.className = 'cmd-k-backdrop';
+    backdrop.innerHTML = `
+      <div class="cmd-k-dialog" role="dialog" aria-modal="true">
+        <div class="cmd-k-header">
+          <span class="cmd-k-search-icon">${svgIcon('search')}</span>
+          <input type="text" class="cmd-k-input" placeholder="Buscar sucursal, vista o comando (ej. Andares, Q1, Dashboards)..." />
+          <span class="cmd-k-badge">ESC para cerrar</span>
+        </div>
+        <div class="cmd-k-list" id="cmdKList">
+          <div class="cmd-k-group-title">Sucursales Regionales</div>
+          ${branches.map(b => `
+            <a href="#/sucursal/${b.id}" class="cmd-k-item" data-search="${b.nombre.toLowerCase()} ${b.abr.toLowerCase()} ${b.region.toLowerCase()}">
+              <div class="cmd-k-item-main">
+                <span class="cmd-k-item-icon">${svgIcon('chart')}</span>
+                <span>${escapeHtml(b.nombre)}</span>
+              </div>
+              <span class="cmd-k-item-meta">${escapeHtml(b.region)}</span>
+            </a>
+          `).join('')}
+          <div class="cmd-k-group-title">Vistas Analíticas</div>
+          <a href="#/" class="cmd-k-item" data-search="inicio home resumen principal">
+            <div class="cmd-k-item-main">
+              <span class="cmd-k-item-icon">${svgIcon('home')}</span>
+              <span>Inicio · Resumen Operativo</span>
+            </div>
+            <span class="cmd-k-item-meta">Vista Principal</span>
+          </a>
+          <a href="#/dashboards" class="cmd-k-item" data-search="dashboards graficas tendencias cuadro de mando">
+            <div class="cmd-k-item-main">
+              <span class="cmd-k-item-icon">${svgIcon('chart')}</span>
+              <span>Dashboards Executivos & Alertas</span>
+            </div>
+            <span class="cmd-k-item-meta">Gráficas integradas</span>
+          </a>
+          <a href="#/trimestre/2026-Q1" class="cmd-k-item" data-search="trimestre q1 ranking comparativa">
+            <div class="cmd-k-item-main">
+              <span class="cmd-k-item-icon">${svgIcon('calendar')}</span>
+              <span>Reporte Trimestral Q1 2026</span>
+            </div>
+            <span class="cmd-k-item-meta">Ranking regional</span>
+          </a>
+          <a href="#/acerca" class="cmd-k-item" data-search="acerca metodologia versiones changelog">
+            <div class="cmd-k-item-main">
+              <span class="cmd-k-item-icon">${svgIcon('info')}</span>
+              <span>Acerca de étoile · Metodología & Versiones</span>
+            </div>
+            <span class="cmd-k-item-meta">Documentación</span>
+          </a>
+        </div>
+      </div>
+    `;
+
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) this.close();
+    });
+
+    const input = backdrop.querySelector('.cmd-k-input');
+    if (input) {
+      input.addEventListener('input', (e) => this._filter(e.target.value));
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') this.close();
+      });
+    }
+
+    const items = backdrop.querySelectorAll('.cmd-k-item');
+    items.forEach(item => {
+      item.addEventListener('click', () => this.close());
+    });
+
+    document.body.appendChild(backdrop);
+    this._backdrop = backdrop;
+  },
+
+  _filter(query) {
+    if (!this._backdrop) return;
+    const q = query.trim().toLowerCase();
+    const items = this._backdrop.querySelectorAll('.cmd-k-item');
+    items.forEach(item => {
+      const searchData = item.getAttribute('data-search') || '';
+      if (!q || searchData.includes(q)) {
+        item.style.display = 'flex';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+};
+
+/**
+ * renderSparklineSVG - Dibuja una curva vectorial SVG de tendencia (3 meses)
+ */
+function renderSparklineSVG(history = [4.8, 4.5, 4.9]) {
+  if (!history || history.length < 2) return '';
+  const min = Math.min(...history) - 0.2;
+  const max = Math.max(...history) + 0.2;
+  const range = max - min || 1;
+  const w = 76;
+  const h = 26;
+  const points = history.map((val, idx) => {
+    const x = (idx / (history.length - 1)) * w;
+    const y = h - ((val - min) / range) * (h - 6) - 3;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const pathD = `M ${points.join(' L ')}`;
+  const delta = history[history.length - 1] - history[0];
+  const dirClass = delta > 0.05 ? 'up' : (delta < -0.05 ? 'down' : 'flat');
+
+  return `
+    <svg class="sparkline-svg" viewBox="0 0 76 26" aria-hidden="true">
+      <path class="sparkline-path ${dirClass}" d="${pathD}" />
+    </svg>
+  `;
+}
+
+/**
+ * Control Segmentado Elástico (Sliding Tab Pills)
+ */
+function initSegmentedTabs() {
+  const controls = document.querySelectorAll('.segmented-elastic-control');
+  controls.forEach(ctrl => {
+    let pill = ctrl.querySelector('.segmented-pill-bg');
+    if (!pill) {
+      pill = document.createElement('div');
+      pill.className = 'segmented-pill-bg';
+      ctrl.insertBefore(pill, ctrl.firstChild);
+    }
+    const updatePill = () => {
+      const activeBtn = ctrl.querySelector('.segmented-btn.active');
+      if (activeBtn) {
+        const ctrlRect = ctrl.getBoundingClientRect();
+        const btnRect = activeBtn.getBoundingClientRect();
+        const left = btnRect.left - ctrlRect.left;
+        pill.style.transform = `translateX(${left}px)`;
+        pill.style.width = `${btnRect.width}px`;
+      }
+    };
+    updatePill();
+    ctrl.querySelectorAll('.segmented-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        ctrl.querySelectorAll('.segmented-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updatePill();
+      });
+    });
+  });
+}
+
+
 
