@@ -245,38 +245,9 @@ async function classifyAndSave(supabase, reviewId, text, stars) {
       resumen_tema: "Sin texto"
     };
     status = 'done';
-  } else if (process.env.USE_LOCAL_NLP === 'true' || !process.env.GEMINI_API_KEY) {
+  } else {
     classification = classifyLocally(text, stars);
     status = 'done';
-  } else {
-    while (attempts > 0) {
-      try {
-        classification = await callGeminiClassifier(text, stars);
-        // Validar campos requeridos en el objeto retornado
-        if (
-          typeof classification.es_queja === 'boolean' &&
-          classification.categoria_queja &&
-          typeof classification.categoria_queja.servicio === 'boolean' &&
-          typeof classification.categoria_queja.calidad === 'boolean' &&
-          typeof classification.categoria_queja.valor === 'boolean' &&
-          Array.isArray(classification.empleados_mencionados) &&
-          typeof classification.resumen_tema === 'string'
-        ) {
-          status = 'done';
-          break;
-        } else {
-          throw new Error("Estructura JSON inválida");
-        }
-      } catch (err) {
-        console.warn(`Intento fallido de clasificación con Gemini para la reseña ${reviewId}:`, err.message);
-        attempts--;
-        if (attempts === 0) {
-          console.warn(`Usando clasificador NLP local como fallback para la reseña ${reviewId}.`);
-          classification = classifyLocally(text, stars);
-          status = 'done'; // Marcamos como done porque el fallback local lo resolvió
-        }
-      }
-    }
   }
 
   // Guardar en Supabase

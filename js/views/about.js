@@ -351,7 +351,7 @@ const AboutView = {
                 <div style="font-size:14px;color:var(--text-muted);line-height:1.5;margin-bottom:18px;">${group.description}</div>
                 <div style="display:flex;flex-direction:column;gap:16px;padding-left:8px;">
                   ${group.versions.map((entry, vIdx) => `
-                    <div class="chart-card" style="border-left:3px solid ${(group.name === 'Altair' && vIdx === 0) ? 'var(--verde)' : 'var(--border)'};">
+                    <div class="chart-card spotlight-card" style="border: 1px solid ${(group.name === 'Altair' && vIdx === 0) ? 'rgba(122,158,138,0.4)' : 'var(--border)'};">
                       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px;">
                         <span style="font-family:var(--mono);font-weight:700;font-size:14px;color:${(group.name === 'Altair' && vIdx === 0) ? 'var(--verde)' : 'var(--text-muted)'};">${entry.v}</span>
                         <span style="font-size:11px;color:var(--text-muted);letter-spacing:.06em;">${entry.date}</span>

@@ -183,10 +183,22 @@ En Windows PowerShell:
 python -m http.server 8000
 ```
 
-## Reglas de seguridad y consistencia
+## Reglas de seguridad, arquitectura y consistencia (Mandatorio `ibrahim-agent-core`)
 
+- **Protocolo Estricto de Commits (Regla de Oro)**: Queda **estrictamente prohibido ejecutar `git commit` o `git push` a GitHub** sin la confirmación explícita previa de Ibrahim.
+- **Invariante de Scroll en Modales**: Al abrir cualquier modal o pantalla superpuesta (overlay), es **obligatorio congelar el scroll del documento** (`document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'`) y restaurarlo limpiamente al cerrar (`''`).
+- **Componentes Orgánicos y Prohibición de Elementos Genéricos (Crystal & Squircle)**: Queda estrictamente prohibido usar controles o componentes genéricos predeterminados del navegador sin estilizar (ej. `<select>` HTML crudo, scrollbars nativos sin estilizar, modales o notificaciones `alert()`, o franjas asimétricas `border-left`/`border-top` de 2px-5px). Todo desarrollo futuro DEBE basarse estrictamente en la suite global reutilizable del sistema de diseño:
+  - **Dropdowns**: `.custom-select` (`.custom-select-trigger`, `.custom-select-options`)
+  - **Scrollbars**: `::-webkit-scrollbar` estilizado con thumb Sage y track Squircle
+  - **Notificaciones Flotantes**: `ToastManager.show({ type, message })`
+  - **Paleta de Comandos**: `CommandPaletteManager` (`Cmd + K`)
+  - **Gráficas Inline**: `renderSparklineSVG(historyArray)`
+  - **Controles Segmentados**: `.segmented-elastic-control` (`initSegmentedTabs()`)
+  - **Transición de Páginas**: `#app.fade-out` / `#app.page-entrance` (`fluidSilkEntrance`)
+- **Nomenclatura y Nombres Formales**: Jamás desplegar IDs internos en minúsculas (ej. `aztlan`, `duraznos`). Siempre formatear los nombres de las tiendas usando `getBranchName()` o `meta.nombre` (`Aztlán`, `Parque Duraznos`, `La Mexicana`, etc.).
+- **Tratamiento Mandatorio de Reseñas sin Texto**: Las reseñas sin comentario escrito (vacías) **únicamente cuentan para el promedio bruto de calificación y el SEO de Google**. Quedan **estrictamente excluidas** de los modales de lectura de opiniones, alertas proactivas, tópicos de incidencias y conteo de quejas.
 - **Escape de HTML**: Todo campo externo que provenga de `reviews`, de la salida del clasificador LLM (`classification.*`) o de cualquier input de usuario, DEBE pasar obligatoriamente por `escapeHtml()` antes de interpolarse en un template asignado a `innerHTML`.
-- **Centralización de Umbrales**: Los umbrales de rating para evaluar sucursales viven únicamente en `js/config.js` (`THRESHOLDS` y `NEGATIVE_STARS_MAX`). Queda estrictamente prohibido usar literales hardcodeados para evaluar cortes de calificación en las vistas.
+- **Centralización de Umbrales**: Los umbrales de rating para evaluar sucursales viven únicamente en `js/config.js` (`THRESHOLDS` y `NEGATIVE_STARS_MAX`). Queda strictly prohibido usar literales hardcodeados para evaluar cortes de calificación en las vistas.
 - **Seguridad en Endpoints**: No crear endpoints HTTP con operaciones destructivas de base de datos (por ejemplo, vaciar tablas). Cualquier cambio o limpieza destructiva debe realizarse de forma segura mediante scripts autorizados de administración local.
 - **Sincronización del Clasificador**: Las palabras clave de clasificación de quejas viven en `js/config.js` (`COMPLAINT_KEYWORDS`). La copia del clasificador heurístico serverless en `netlify/functions/classify-review.js` debe mantenerse en perfecta sincronía.
 - **Protocolo de Aprobación de Versionamiento**: Parches `x.x.1` tienen autonomía automática. Hotfixes iterativos en la misma sesión usan letras (`x.x.7a`, `x.x.7b`) para no inflar versiones ni saturar commits. Cambios `x.1.x` (MINOR) y `1.x.x` (MAJOR / Épocas) OBLIGATORIAMENTE requieren presentar justificación técnica a Ibrahim y recibir aprobación explícita antes de modificar la versión o realizar commits.

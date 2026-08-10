@@ -5,7 +5,8 @@
 const QuarterView = {
   async render(params) {
     try {
-    const qParam = parseQuarterParam((params && params.q) || '2026-Q1');
+    const defaultQParam = `${new Date().getFullYear()}-Q1`;
+    const qParam = parseQuarterParam((params && params.q) || defaultQParam);
     if (!qParam) {
       Router.navigate('#/');
       return;
@@ -193,14 +194,14 @@ const QuarterView = {
     }).join('');
 
     document.getElementById('app').innerHTML = `
-      ${buildTopbar(true, `Trimestre Q${quarter} 2026`)}
+      ${buildTopbar(true, `Trimestre Q${quarter} ${year}`)}
       <section class="hero" style="padding:48px 22px;">
         <div class="hero-inner">
           <div class="hero-left">
             <div class="hero-label-row">
               <span class="eyebrow" style="color:rgba(245,239,230,.55);">Comparativa Trimestral</span>
             </div>
-            <h1 class="display" style="font-size:clamp(48px,10vw,96px);color:#FAF5EB;line-height:1;">Q${quarter} 2026</h1>
+            <h1 class="display" style="font-size:clamp(48px,10vw,96px);color:#FAF5EB;line-height:1;">Q${quarter} ${year}</h1>
             <div style="display:flex;gap:18px;margin-top:18px;flex-wrap:wrap;">
               <div class="hero-stat" style="background:rgba(245,239,230,.06);border:1px solid rgba(245,239,230,.1);border-radius:12px;padding:14px 16px;">
                 <span class="hero-stat-val num">${currQAvg.toFixed(2)}</span>

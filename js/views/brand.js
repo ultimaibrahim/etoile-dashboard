@@ -1378,7 +1378,8 @@ const BrandView = {
         box-shadow: var(--sombra-card);
       }
       .brand-kpi-card.alert-card {
-        border-left: 4px solid var(--alerta);
+        border: 1px solid rgba(178, 58, 43, 0.3);
+        background: rgba(178, 58, 43, 0.04);
       }
       .brand-interactive-card {
         cursor: pointer;
@@ -1417,8 +1418,7 @@ const BrandView = {
       /* Alert/Deficit Panel */
       .brand-deficits-alert {
         background: var(--alerta-bg);
-        border: 1px solid rgba(178, 58, 43, 0.15);
-        border-left: 4px solid var(--alerta);
+        border: 1px solid rgba(178, 58, 43, 0.25);
         border-radius: 20px;
         padding: 24px;
         box-sizing: border-box;
@@ -1633,7 +1633,8 @@ const BrandView = {
         box-shadow: var(--sombra);
       }
       .brand-branch-item.alert-border {
-        border-left: 4px solid var(--alerta);
+        border: 1px solid rgba(178, 58, 43, 0.3);
+        background: rgba(178, 58, 43, 0.04);
       }
       .brand-branch-info {
         display: flex;
@@ -1776,7 +1777,7 @@ const BrandView = {
         box-sizing: border-box;
       }
       .modal-rev-card.critical {
-        border-left: 4px solid var(--alerta);
+        border: 1px solid rgba(178, 58, 43, 0.3);
         background: var(--alerta-bg);
       }
       .modal-rev-top {
@@ -1929,13 +1930,15 @@ const BrandView = {
         transform: translateY(-1px);
       }
       .def-audit-card.critical {
-        border-left: 4px solid var(--alerta);
+        border: 1px solid rgba(178, 58, 43, 0.3);
+        background: rgba(178, 58, 43, 0.04);
       }
       .def-audit-card.warning {
-        border-left: 4px solid var(--oro);
+        border: 1px solid rgba(184, 144, 47, 0.3);
+        background: rgba(184, 144, 47, 0.04);
       }
       .def-audit-card.alert-bg {
-        border-left: 4px solid var(--alerta);
+        border: 1px solid rgba(178, 58, 43, 0.3);
         background: var(--alerta-bg);
       }
       .def-audit-card.alert-bg:hover {

@@ -33,7 +33,24 @@ const BranchView = {
       availableMonths = DataLoader.manifest[activeYear] || [];
       await Promise.all(availableMonths.map(m => DataLoader.loadMonth(activeYear, m)));
 
+      // Si el mes seleccionado por defecto no tiene reseñas para esta sucursal,
+      // seleccionar automáticamente el mes con reseñas más reciente de esta tienda.
+      const branchMonthsWithData = typeof DataLoader.getAvailableMonthsForBranch === 'function'
+        ? DataLoader.getAvailableMonthsForBranch(meta.id, activeYear)
+        : [];
+      if (branchMonthsWithData.length > 0 && (!branchMonthsWithData.includes(activeMonth) || DataLoader.computeBranchStats(activeYear, activeMonth, meta.id).count === 0)) {
+        activeMonth = branchMonthsWithData[branchMonthsWithData.length - 1];
+        DataLoader.currentMonth = activeMonth;
+      }
+
       // Carga de mes anterior para comparativas
+      prevMonth = activeMonth - 1;
+      prevYear = activeYear;
+      if (prevMonth === 0) {
+        prevMonth = 12;
+        prevYear = activeYear - 1;
+      }
+
       hasPrevMonth = DataLoader.hasMonth(prevYear, prevMonth);
       if (hasPrevMonth) {
         await DataLoader.loadMonth(prevYear, prevMonth);
@@ -951,9 +968,17 @@ const BranchView = {
       const shareResult = await shareSummary(text);
       
       if (shareResult === 'copied') {
-        if (typeof Toast !== 'undefined') Toast.show('Resumen copiado al portapapeles. ¡Listo para compartir!', 3000);
+        if (typeof ToastManager !== 'undefined') {
+          ToastManager.show({ type: 'success', message: 'Resumen copiado al portapapeles. ¡Listo para compartir!' });
+        } else if (typeof Toast !== 'undefined') {
+          Toast.show('Resumen copiado al portapapeles. ¡Listo para compartir!', 3000);
+        }
       } else if (shareResult === 'shared') {
-        if (typeof Toast !== 'undefined') Toast.show('Resumen compartido con éxito', 2500);
+        if (typeof ToastManager !== 'undefined') {
+          ToastManager.show({ type: 'success', message: 'Resumen compartido con éxito' });
+        } else if (typeof Toast !== 'undefined') {
+          Toast.show('Resumen compartido con éxito', 2500);
+        }
       } else {
         const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
         window.open(url, '_blank');

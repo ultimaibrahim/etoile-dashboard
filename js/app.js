@@ -317,6 +317,11 @@ async function initApp() {
   Router.init();
   Router.resolve();
 
+  // Inicializar Paleta de Comandos Cmd+K Global
+  if (typeof CommandPaletteManager !== 'undefined') {
+    CommandPaletteManager.init();
+  }
+
   // Desvanecer la pantalla de carga tras inicialización completa
   setTimeout(() => {
     window.hideLcpLoader();
