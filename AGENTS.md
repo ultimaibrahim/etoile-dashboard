@@ -186,6 +186,9 @@ python -m http.server 8000
 ## Reglas de seguridad, arquitectura y consistencia (Mandatorio `ibrahim-agent-core`)
 
 - **Protocolo Estricto de Commits (Regla de Oro)**: Queda **estrictamente prohibido ejecutar `git commit` o `git push` a GitHub** sin la confirmación explícita previa de Ibrahim.
+- **Doble Versionado Obligatorio (Técnico vs. Público/User-Friendly)**: Al incrementar versiones o registrar cambios en el sistema, es **obligatorio actualizar siempre dos changelogs paralelos**:
+  - **Changelog Técnico Tradicional** (`CHANGELOG.md` / `js/views/about.js`): Con especificaciones de código, funciones, parámetros y arquitectura.
+  - **Changelog Público / Operativo** (`CHANGELOG_PUBLIC.md` / Trello Cards): En formato **Beneficio Operativo (User-Friendly)** sin jerga de desarrollo, enfocado en el impacto directo a tiendas, experiencia del usuario y gerencias regionales.
 - **Invariante de Scroll en Modales**: Al abrir cualquier modal o pantalla superpuesta (overlay), es **obligatorio congelar el scroll del documento** (`document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'`) y restaurarlo limpiamente al cerrar (`''`).
 - **Componentes Orgánicos y Prohibición de Elementos Genéricos (Crystal & Squircle)**: Queda estrictamente prohibido usar controles o componentes genéricos predeterminados del navegador sin estilizar (ej. `<select>` HTML crudo, scrollbars nativos sin estilizar, modales o notificaciones `alert()`, o franjas asimétricas `border-left`/`border-top` de 2px-5px). Todo desarrollo futuro DEBE basarse estrictamente en la suite global reutilizable del sistema de diseño:
   - **Dropdowns**: `.custom-select` (`.custom-select-trigger`, `.custom-select-options`)
