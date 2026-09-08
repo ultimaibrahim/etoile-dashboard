@@ -1,7 +1,7 @@
 {
-  "name": "reviews-lcp-gdl",
+  "name": "etoile-dashboard",
   "version": "1.0.2",
-  "description": "Dashboard de Reseñas LCP con integración full-stack",
+  "description": "Étoile Dashboard - Hospitality Operations & Customer Sentiment Intelligence Platform",
   "main": "index.html",
   "dependencies": {
     "@supabase/supabase-js": "^2.43.4"
