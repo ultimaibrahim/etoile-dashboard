@@ -3,7 +3,7 @@
 
 [![Status](https://img.shields.io/badge/status-production--ready-2E7D32.svg?style=flat-square)](#)
 [![Deployment](https://img.shields.io/badge/deployed%20on-Netlify%20Serverless-00C7B7.svg?style=flat-square&logo=netlify&logoColor=white)](#)
-[![Backend](https://img.shields.io/badge/database-Supabase%20(PostgreSQL)-3ECF8E.svg?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
+[![Backend](https://img.shields.io/badge/database-Supabase%20%28PostgreSQL%29-3ECF8E.svg?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
 [![Scraper](https://img.shields.io/badge/data%20pipeline-Apify%20Actor-00A699.svg?style=flat-square&logo=apify&logoColor=white)](https://apify.com)
 [![Design](https://img.shields.io/badge/design%20system-Crystal%20%26%20Squircle-6366F1.svg?style=flat-square)](#)
 
@@ -25,22 +25,22 @@ La arquitectura está concebida bajo un modelo **Zero-Secret Client / Jamstack S
 
 ```mermaid
 flowchart TD
-    subgraph Ingesta Asíncrona
-        GM[Google Maps Reviews] -->|Crawler| AP[Apify Webhook Engine]
-        AP -->|POST Ingest| NF_INGEST[Netlify: apify-ingest.js]
-        NF_INGEST -->|Procesamiento & Deduplicación| DB[(Supabase PostgreSQL)]
+    subgraph INGEST ["Ingesta Asíncrona"]
+        GM["Google Maps Reviews"] -->|Crawler| AP["Apify Webhook Engine"]
+        AP -->|POST Ingest| NF_INGEST["Netlify: apify-ingest.js"]
+        NF_INGEST -->|Procesamiento & Deduplicación| DB[("Supabase PostgreSQL")]
     end
 
-    subgraph Enriquecimiento & Diagnóstico
-        DB <-->|Clasificación Semántica| NF_CLASS[Netlify: classify-review.js]
-        NF_DIAG[Netlify: diag-db.js] -->|Auditoría Bearer Token| DB
+    subgraph ENRICH ["Enriquecimiento & Diagnóstico"]
+        DB <-->|Clasificación Semántica| NF_CLASS["Netlify: classify-review.js"]
+        NF_DIAG["Netlify: diag-db.js"] -->|Auditoría Bearer Token| DB
     end
 
-    subgraph Capa Cliente · Crystal & Squircle UI
-        CLI[Navegador / Dispositivo Gerencial] -->|GET config| NF_CONF[Netlify: get-config.js]
+    subgraph CLIENT_UI ["Capa Cliente: Crystal & Squircle UI"]
+        CLI["Navegador / Dispositivo Gerencial"] -->|GET config| NF_CONF["Netlify: get-config.js"]
         NF_CONF -->|URL & Anon Key| CLI
         CLI -->|Consultas Seguras RLS| DB
-        CLI -->|Render Reactivo Vanilla ES6+| UI[Dashboard / Drilldowns / Scorecards]
+        CLI -->|Render Reactivo Vanilla ES6+| UI["Dashboard / Drilldowns / Scorecards"]
     end
 ```
 
