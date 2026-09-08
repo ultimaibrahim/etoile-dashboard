@@ -6,6 +6,7 @@
 [![Backend](https://img.shields.io/badge/database-Supabase%20%28PostgreSQL%29-3ECF8E.svg?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
 [![Scraper](https://img.shields.io/badge/data%20pipeline-Apify%20Actor-00A699.svg?style=flat-square&logo=apify&logoColor=white)](https://apify.com)
 [![Design](https://img.shields.io/badge/design%20system-Crystal%20%26%20Squircle-6366F1.svg?style=flat-square)](#)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat-square)](LICENSE)
 
 ---
 
@@ -91,6 +92,10 @@ flowchart TD
    npm install -g netlify-cli
    netlify dev
    ```
+
+## 📄 Licencia
+
+Este proyecto está distribuido bajo los términos de la licencia **GNU Affero General Public License v3.0 (GNU AGPLv3)**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
 
 ---
 
