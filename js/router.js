@@ -37,7 +37,20 @@ const Router = {
     if (hash === '#/privacidad') {
       return { handler: this.routes['privacy'], params: {} };
     }
-    return { handler: this.routes['home'], params: {} };
+    if (hash === '#/404') {
+      return { handler: this.routes['not-found'], params: { type: 'not-found' } };
+    }
+    if (hash === '#/403') {
+      return { handler: this.routes['not-found'], params: { type: 'forbidden' } };
+    }
+
+    // Si el hash está vacío o es la raíz, resuelve home
+    if (!hash || hash === '#' || hash === '#/') {
+      return { handler: this.routes['home'], params: {} };
+    }
+
+    // Para cualquier otra ruta no reconocida, activar vista 404 SPA
+    return { handler: this.routes['not-found'], params: { type: 'not-found' } };
   },
 
   updateRouteMeta(hash, params = {}) {
@@ -72,6 +85,12 @@ const Router = {
     } else if (hash === '#/privacidad') {
       title = 'Aviso de Privacidad · étoile LCP';
       description = 'Aviso de privacidad y directivas de protección de datos personales de Grupo MYT y étoile.';
+    } else if (hash === '#/403' || (params && params.type === 'forbidden')) {
+      title = 'Acceso Restringido (403) · étoile LCP';
+      description = 'El rol operativo actual no cuenta con permisos para consultar este módulo o región.';
+    } else if (hash === '#/404' || (params && params.type === 'not-found')) {
+      title = 'Página no encontrada (404) · étoile LCP';
+      description = 'La ruta o sucursal solicitada no existe dentro del sistema.';
     } else {
       const reg = typeof activeRegion !== 'undefined' ? (typeof getRegionName === 'function' ? getRegionName(activeRegion) : activeRegion) : 'GDL';
       title = `Monitoreo Regional (${reg}) · étoile LCP`;
@@ -146,16 +165,16 @@ const Router = {
       // 1. Gerente de Tienda (gerente): puede ver todas las sucursales de su región, pero no otras regiones ni la vista nacional (#/brand)
       if (userRole === 'gerente') {
         if (hash === '#/brand' || hash === '#/select-region') {
-          console.warn(`[Guard de Seguridad] Gerente de Tienda no tiene acceso a ${hash}. Redirigiendo a Inicio.`);
-          window.location.hash = '#/';
+          console.warn(`[Guard de Seguridad] Gerente de Tienda no tiene acceso a ${hash}.`);
+          window.location.hash = '#/403';
           return;
         }
         if (hash.startsWith('#/sucursal/')) {
           const targetBranchId = hash.replace('#/sucursal/', '');
           const targetMeta = typeof getBranchById === 'function' ? getBranchById(targetBranchId) : null;
           if (targetMeta && targetMeta.region && userRegion && targetMeta.region !== userRegion) {
-            console.warn(`[Guard de Seguridad] Gerente de Tienda (${userRegion}) intentó acceder a sucursal fuera de su región (${targetMeta.region}). Redirigiendo a Inicio.`);
-            window.location.hash = '#/';
+            console.warn(`[Guard de Seguridad] Gerente de Tienda (${userRegion}) intentó acceder a sucursal fuera de su región (${targetMeta.region}).`);
+            window.location.hash = '#/403';
             return;
           }
         }
@@ -163,8 +182,8 @@ const Router = {
 
       // 2. Gerente Zonal (zonal): sin acceso a la vista corporativa nacional (#/brand)
       if (userRole === 'zonal' && hash === '#/brand') {
-        console.warn(`[Guard de Seguridad] Vista corporativa nacional restringida para Gerente Zonal. Redirigiendo a Inicio.`);
-        window.location.hash = '#/';
+        console.warn(`[Guard de Seguridad] Vista corporativa nacional restringida para Gerente Zonal.`);
+        window.location.hash = '#/403';
         return;
       }
     }

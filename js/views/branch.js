@@ -7,7 +7,7 @@ const BranchView = {
     this.activeParams = params;
     const meta = getBranchById(params.id);
     if (!meta) {
-      Router.navigate('#/');
+      window.location.hash = '#/404';
       return;
     }
 

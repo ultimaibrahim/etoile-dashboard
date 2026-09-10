@@ -313,6 +313,7 @@ async function initApp() {
   Router.register('about', () => AboutView.render());
   Router.register('dashboards', () => DashboardsView.render());
   Router.register('privacy', () => PrivacyView.render());
+  Router.register('not-found', params => NotFoundView.render(params));
 
   Router.init();
   Router.resolve();

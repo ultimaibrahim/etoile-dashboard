@@ -80,7 +80,8 @@ const jsFiles = [
   'js/views/quarter.js',
   'js/views/about.js',
   'js/views/dashboards.js',
-  'js/views/privacy.js'
+  'js/views/privacy.js',
+  'js/views/not-found.js'
 ];
 
 jsFiles.forEach(file => {
