@@ -1907,6 +1907,48 @@ function toggleFaqItem(index) {
   }
 }
 
+/* ── REALTIME OFFLINE CONNECTIVITY MANAGER ───────────────── */
+const OfflineManager = {
+  _bannerEl: null,
+
+  init() {
+    this._createBanner();
+    window.addEventListener('offline', () => this.show());
+    window.addEventListener('online', () => this.hide());
+    if (!navigator.onLine) {
+      this.show();
+    }
+  },
+
+  _createBanner() {
+    if (document.getElementById('offlineBannerFloating')) return;
+    const banner = document.createElement('div');
+    banner.id = 'offlineBannerFloating';
+    banner.className = 'offline-banner-floating';
+    banner.innerHTML = `
+      <div class="offline-pulse-dot"></div>
+      <span>Sin conexión a internet · Mostrando datos locales en caché</span>
+    `;
+    document.body.appendChild(banner);
+    this._bannerEl = banner;
+  },
+
+  show() {
+    if (!this._bannerEl) this._createBanner();
+    if (this._bannerEl) this._bannerEl.classList.add('active');
+  },
+
+  hide() {
+    if (this._bannerEl) {
+      this._bannerEl.classList.remove('active');
+      if (typeof ToastManager !== 'undefined') {
+        ToastManager.show({ type: 'success', message: 'Conexión restablecida con éxito' });
+      }
+    }
+  }
+};
+
+
 
 
 

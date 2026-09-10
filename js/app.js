@@ -322,6 +322,11 @@ async function initApp() {
     CommandPaletteManager.init();
   }
 
+  // Inicializar Detección de Red Offline en Tiempo Real
+  if (typeof OfflineManager !== 'undefined') {
+    OfflineManager.init();
+  }
+
   // Desvanecer la pantalla de carga tras inicialización completa
   setTimeout(() => {
     window.hideLcpLoader();

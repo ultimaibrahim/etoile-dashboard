@@ -17,12 +17,14 @@ Representa la era de la madurez operativa y refinamiento visual del Dashboard de
 * **Botón Nativo para Compartir (`ShareManager`)**: Integración con la **Web Share API** (`navigator.share`) para envío directo de scorecards por WhatsApp/Telegram con fallback automático a copia en portapapeles.
 * **Clusters Regionales Interlinkeados**: Inyección de `.cluster-nav-wrap` en la ficha de tienda para navegación rápida en un clic entre sucursales de la misma región.
 * **Preguntas Frecuentes y Schemas JSON-LD**: Sección interactiva de FAQ con microdatos `@type: "FAQPage"`, schema `@type: "Bakery"` / `"Restaurant"` en fichas de sucursal y `@type: "Organization"` en la raíz.
-* **Indexación y Visibilidad en Inteligencia Artificial (LLMO)**:
-  - Creación de `robots.txt` con directivas para buscadores y crawlers de IA (`GPTBot`, `ClaudeBot`, `Google-Extended`, `PerplexityBot`), desindexando preventivamente `/page/`.
-  - Creación de especificación oficial `llms.txt` y `.well-known/llms.txt`.
-  - Generación de `sitemap.xml` con URLs canónicas.
-  - Regla preventiva en `netlify.toml` inyectando cabecera `X-Robots-Tag: noindex, nofollow` para `/page/*`.
-  - Preparación de slot modular para Google Analytics 4 (`GA4_MEASUREMENT_ID`) y verificación de Google Search Console.
+* **Suite de Contingencia y Páginas de Error (`404.html`, `500.html`)**:
+  - `404.html`: Pantalla nativa de Netlify con estética Crystal & Squircle, branding LCP y temporizador de retorno asistido al Dashboard.
+  - `500.html`: Pantalla institucional serena para estados de mantenimiento de red o base de datos.
+  - `OfflineManager`: Detector reactivo de conectividad (`window.onoffline` / `window.ononline`) que alerta en tiempo real al usuario en tienda sin congelar la interfaz.
+* **Seguridad y Blindaje de Código Fuente**:
+  - `netlify.toml`: Bloqueo estricto con código 404 forzado y cabecera `X-Robots-Tag: noindex, nofollow` para cualquier archivo de mapa de desarrollo (`/*.map`).
+  - `index.html`: Inyección de `<noscript>` semántico rico en datos de cobertura para evitar el síntoma de *"viewsource empty"* en rastreadores antiguos o navegadores sin JS.
+
 
 ### Version 3.4.4 Izar - Paginación en Supabase, Normalización y Exploración Histórica (Agosto 2026)
 * **Resolución de Truncamiento en Supabase**: Implementación de consultas paginadas por bloques (`.range`) y filtrado directo por región (`.eq`) en `DataLoader`, garantizando la carga completa de reseñas históricas sin sufrir por el tope predeterminado de 1,000 filas de PostgREST.

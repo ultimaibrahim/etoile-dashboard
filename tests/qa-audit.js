@@ -105,7 +105,31 @@ if (fs.existsSync(path.join(rootDir, 'css/styles.css'))) {
   assert(css.includes('.faq-accordion-group'), 'styles.css contiene componente .faq-accordion-group');
   assert(css.includes('.mobile-sticky-bar'), 'styles.css contiene barra fija .mobile-sticky-bar');
   assert(css.includes('.cluster-nav-wrap'), 'styles.css contiene contenedor .cluster-nav-wrap');
+  assert(css.includes('.offline-banner-floating'), 'styles.css contiene componente .offline-banner-floating');
   assert(!css.includes('–-'), 'styles.css libre de guiones simples defectuosos en variables (-- estricto)');
+}
+
+// 9. Verificación de Páginas de Error (404.html, 500.html) y Blindaje Noscript
+assert(fs.existsSync(path.join(rootDir, '404.html')), '404.html existe y está configurado');
+if (fs.existsSync(path.join(rootDir, '404.html'))) {
+  const html404 = fs.readFileSync(path.join(rootDir, '404.html'), 'utf8');
+  assert(html404.includes('404') && html404.includes('Dashboard'), '404.html contiene branding y retorno al Dashboard');
+}
+
+assert(fs.existsSync(path.join(rootDir, '500.html')), '500.html existe y está configurado');
+if (fs.existsSync(path.join(rootDir, '500.html'))) {
+  const html500 = fs.readFileSync(path.join(rootDir, '500.html'), 'utf8');
+  assert(html500.includes('500') && html500.includes('Sincronización'), '500.html contiene mensaje de contingencia');
+}
+
+if (fs.existsSync(path.join(rootDir, 'index.html'))) {
+  const htmlIndex = fs.readFileSync(path.join(rootDir, 'index.html'), 'utf8');
+  assert(htmlIndex.includes('<noscript>') && htmlIndex.includes('Cobertura Nacional'), 'index.html contiene <noscript> semántico (evita viewsource empty)');
+}
+
+if (fs.existsSync(path.join(rootDir, 'netlify.toml'))) {
+  const toml = fs.readFileSync(path.join(rootDir, 'netlify.toml'), 'utf8');
+  assert(toml.includes('for = "/*.map"') && toml.includes('status = 404'), 'netlify.toml bloquea sourcemaps expuestos con código 404');
 }
 
 console.log('\n──────────────────────────────────────────────────────');
@@ -116,3 +140,4 @@ if (failures.length > 0) {
   console.log('✅ TODAS LAS PRUEBAS DE QA PASARON CON ÉXITO (0 ERRORES).');
   process.exit(0);
 }
+

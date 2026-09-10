@@ -4932,4 +4932,70 @@ html.login-page-active body {
   color: var(--text);
 }
 
+/* ── Offline Detection Floating Banner ── */
+.offline-banner-floating {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-30px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3000;
+  background: rgba(35, 42, 39, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--amber);
+  border-radius: 30px;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #FAF5EB;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.offline-banner-floating.active {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.offline-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+  animation: offlinePulse 1.8s infinite;
+}
+@keyframes offlinePulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 10px var(--amber); }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+/* ── 403 Forbidden Access Denied Card ── */
+.access-denied-wrapper {
+  max-width: 600px;
+  margin: 60px auto;
+  padding: 36px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  text-align: center;
+  box-shadow: var(--sombra-card);
+}
+.ad-icon-wrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(198, 40, 40, 0.12);
+  color: var(--rojo-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px auto;
+}
+
+
 

@@ -11,7 +11,9 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 * 📤 **Botón Compartir Nativo**: Ahora puedes enviar la tarjeta de desempeño y métricas de la sucursal directo por WhatsApp, Telegram o copiar el enlace en un solo toque.
 * 🔗 **Navegación por Zonas (Clusters)**: Enlaces directos para saltar con un clic entre tiendas vecinas de la misma región.
 * ❓ **Centro de Preguntas Frecuentes (FAQ)**: Respuestas claras a dudas frecuentes sobre cómo se calculan las calificaciones y el tratamiento de opiniones.
-* 🌐 **Visibilidad y Gobernanza Web**: Integración de estándares modernos para motores de búsqueda y herramientas de inteligencia artificial.
+* 🛡️ **Pantallas de Ayuda y Contingencia**: Diseño de nuevas pantallas amigables de error y mantenimiento para guiar al usuario sin frustración si una página no existe o si hay labores en el servidor.
+* 📶 **Detección Sin Conexión**: Aviso automático en pantalla si el teléfono se queda sin señal en bodega o almacén, permitiendo seguir consultando la información cargada.
+* 🔒 **Blindaje y Protección de Plataforma**: Protección reforzada de la información interna y optimización de velocidad de carga.
 
 ---
 
