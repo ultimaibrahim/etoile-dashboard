@@ -147,8 +147,15 @@ const Router = {
 
     // Verificar sesión y aplicar Guards de Rol antes de permitir navegación
     const authenticated = typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated();
+    const matchedRoute = this.match(hash);
+    const isPublicRoute = hash === '#/login' || 
+                          hash === '#/privacidad' || 
+                          hash === '#/404' || 
+                          hash === '#/403' || 
+                          matchedRoute.handler === this.routes['not-found'];
+
     if (!authenticated) {
-      if (hash !== '#/login' && hash !== '#/privacidad') {
+      if (!isPublicRoute) {
         window.location.hash = '#/login';
         return;
       }
