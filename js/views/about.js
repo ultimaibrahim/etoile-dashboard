@@ -321,9 +321,17 @@ const AboutView = {
             <h1 style="font-family:var(--serif);font-size:clamp(28px,6vw,48px);color:#FAF5EB;line-height:1.1;margin-bottom:14px;">
               Dashboard de <span style="font-style:italic;color:var(--sage);">Reseñas</span>
             </h1>
-            <p style="color:rgba(245,239,230,.75);font-size:15px;line-height:1.6;max-width:460px;">
+            <p style="color:rgba(245,239,230,.75);font-size:15px;line-height:1.6;max-width:460px;margin-bottom:18px;">
               Herramienta operativa para el seguimiento y análisis de reseñas de Google Maps de las sucursales de La Crêpe Parisienne en la región ${getRegionName(activeRegion)}.
             </p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a href="#/" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:12px;background:var(--oro);color:#FFFFFF;font-size:13px;font-weight:700;text-decoration:none;transition:all 0.2s;">
+                <span>Explorar Monitoreo Activo →</span>
+              </a>
+              <a href="#/dashboards" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#FAF5EB;font-size:13px;font-weight:600;text-decoration:none;">
+                <span>Ver Dashboards</span>
+              </a>
+            </div>
           </div>
           <div class="hero-right">
             <div style="display:grid;gap:12px;">
@@ -412,10 +420,98 @@ const AboutView = {
         </div>
       </section>
 
+      <!-- FAQ & METODOLOGÍA -->
+      <section class="section r">
+        <div class="section-head">
+          <h2 class="section-title" style="margin:0;">Preguntas Frecuentes <span class="accent">y Metodología (FAQ)</span></h2>
+          <span class="section-sub">Dudas comunes sobre el cálculo de métricas y gobernanza de datos</span>
+        </div>
+        <div class="faq-accordion-group">
+          <div class="faq-item active" id="faq-item-0">
+            <button class="faq-question-btn" onclick="toggleFaqItem(0)">
+              <span>¿Cómo se calcula el promedio de satisfacción (CSAT) regional y por tienda?</span>
+              <svg class="faq-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="faq-answer">
+              El promedio mensual se calcula aritméticamente con el 100% de las calificaciones de 1 a 5 estrellas recibidas en el periodo calendario. Para la comparativa de desempeño y standings multitienda, se aplica adicionalmente un Suavizado Bayesiano (k=15, M=4.50★) que previene distorsiones causadas por muestras pequeñas.
+            </div>
+          </div>
+          <div class="faq-item" id="faq-item-1">
+            <button class="faq-question-btn" onclick="toggleFaqItem(1)">
+              <span>¿Por qué las reseñas sin comentario escrito no aparecen en las listas de quejas?</span>
+              <svg class="faq-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="faq-answer">
+              Siguiendo las reglas mandatorias del sistema, las reseñas sin texto únicamente impactan el promedio numérico de estrellas y el algoritmo de Google Maps. Quedan estrictamente excluidas de los tópicos cualitativos y alertas de servicio porque no proporcionan información accionable para la operación en sucursal.
+            </div>
+          </div>
+          <div class="faq-item" id="faq-item-2">
+            <button class="faq-question-btn" onclick="toggleFaqItem(2)">
+              <span>¿Cómo se clasifican las problemáticas en Servicio, Calidad y Valor?</span>
+              <svg class="faq-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="faq-answer">
+              Se utiliza un clasificador híbrido serverless con soporte de modelos de lenguaje (LLM) que analiza la semántica del comentario en español, identificando menciones directas a tiempos de espera, atención al cliente, sabor o temperatura del producto y percepción del costo-beneficio.
+            </div>
+          </div>
+          <div class="faq-item" id="faq-item-3">
+            <button class="faq-question-btn" onclick="toggleFaqItem(3)">
+              <span>¿Con qué frecuencia se sincronizan los datos de Google Reviews?</span>
+              <svg class="faq-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="faq-answer">
+              Las opiniones se ingieren de forma continua vía webhooks de Apify directamente a la base de datos de Supabase, manteniendo los cuadros de mando actualizados de forma sub-segundo con soporte de reintentos seguros.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- JSON-LD FAQPage Schema -->
+      <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "¿Cómo se calcula el promedio de satisfacción (CSAT) regional y por tienda?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "El promedio mensual se calcula aritméticamente con el 100% de las calificaciones de 1 a 5 estrellas recibidas en el periodo calendario. Para la comparativa de desempeño y standings multitienda, se aplica adicionalmente un Suavizado Bayesiano (k=15, M=4.50★) que previene distorsiones por muestras pequeñas."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Por qué las reseñas sin comentario escrito no aparecen en las listas de quejas?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Las reseñas sin texto únicamente impactan el promedio numérico de estrellas y el algoritmo de Google Maps; quedan estrictamente excluidas de los tópicos cualitativos y alertas de servicio porque no proporcionan información accionable."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Cómo se clasifican las problemáticas en Servicio, Calidad y Valor?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Se utiliza un clasificador híbrido serverless con modelos de lenguaje (LLM) que analiza la semántica del comentario en español para identificar tiempos de espera, atención, calidad de preparación y valor."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Con qué frecuencia se sincronizan los datos de Google Reviews?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Las opiniones se ingieren de forma continua vía webhooks serverless hacia Supabase con soporte de reintentos seguros."
+            }
+          }
+        ]
+      }
+      </script>
+
       <!-- DESCARGAS -->
       <section class="section r">
         <div class="section-head">
-          <div class="section-title">Descargas <span class="accent">próximamente</span></div>
+          <h2 class="section-title" style="margin:0;">Descargas <span class="accent">próximamente</span></h2>
         </div>
         <div class="chart-card" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:48px 20px;">
           <div style="width:52px;height:52px;border-radius:14px;background:rgba(61,90,71,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">

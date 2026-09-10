@@ -330,7 +330,80 @@ const BranchView = {
       `;
     }
 
+    // Cluster de sucursales hermanas en la misma región
+    const sisterBranches = (typeof SUCURSALES_META_ALL !== 'undefined' ? SUCURSALES_META_ALL : SUCURSALES_META)
+      .filter(b => b.region === meta.region && b.id !== meta.id);
+    const clusterPillsHtml = sisterBranches.length > 0 ? `
+      <div class="cluster-nav-wrap">
+        <span class="cluster-label">Cluster ${meta.region}:</span>
+        ${sisterBranches.slice(0, 6).map(b => `<a href="#/sucursal/${b.id}" class="cluster-pill">${b.nombre}</a>`).join('')}
+      </div>
+    ` : '';
+
+    // Generar Key Takeaways ejecutivos (TL;DR)
+    const takeawayItems = [];
+    takeawayItems.push(`Calificación promedio de <strong>${stats.avg > 0 ? stats.avg.toFixed(2) : '—'}★</strong> en ${capitalizedMonth} (${stats.count} reseñas procesadas).`);
+    if (negativeReviews.length === 0) {
+      takeawayItems.push(`<strong>Cero incidencias críticas:</strong> 100% de comentarios positivos o neutrales durante este periodo.`);
+    } else {
+      takeawayItems.push(`<strong>Foco de atención:</strong> ${negativeReviews.length} reseña(s) crítica(s) detectada(s), con énfasis en <em>${alertTheme}</em>.`);
+    }
+    takeawayItems.push(`Volumen mensual de reseñas <strong>${volDiff >= 0 ? `subió (+${volDiff})` : `varió (${volDiff})`}</strong> respecto al mes previo.`);
+
+    const keyTakeawaysHtml = `
+      <div class="key-takeaways-card">
+        <div class="kt-header">
+          <div class="kt-title-wrap">
+            <div class="kt-icon-pill">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            </div>
+            <span class="kt-title">Resumen Ejecutivo · Key Takeaways</span>
+          </div>
+          <span class="kt-badge">${capitalizedMonth} ${activeYear}</span>
+        </div>
+        <ul class="kt-list">
+          ${takeawayItems.map(item => `
+            <li class="kt-item">
+              <span class="kt-bullet">✦</span>
+              <span>${item}</span>
+            </li>
+          `).join('')}
+        </ul>
+        <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+          <button onclick="BranchView.shareExecutiveSummary()" class="btn-primary" style="padding: 6px 14px; font-size: 12px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; background: var(--verde); color: #FAF5EB; border: none; font-weight: 700;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            <span>Compartir Resumen</span>
+          </button>
+          <button onclick="window.print()" style="padding: 6px 14px; font-size: 12px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); color: var(--text); border: 1px solid var(--border); font-weight: 600;">
+            <span>Descargar Scorecard PDF</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Schema JSON-LD de LocalBusiness / Bakery para la sucursal
+    const branchSchemaJson = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Bakery",
+      "name": `La Crêpe Parisienne · ${meta.nombre}`,
+      "branchOf": {
+        "@type": "Organization",
+        "name": "La Crêpe Parisienne",
+        "url": "https://www.lacrepeparisienne.com"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": stats.avg > 0 ? stats.avg.toFixed(2) : meta.historico.toFixed(2),
+        "reviewCount": stats.count > 0 ? stats.count : (meta.historicoCount || 10)
+      }
+    });
+
     document.getElementById('app').innerHTML = `
+      <script type="application/ld+json" id="branch-schema-ld">
+        ${branchSchemaJson}
+      </script>
       ${buildTopbar(!isHomeMode, isHomeMode ? '' : meta.nombre)}
       <section class="branch-hero">
         ${welcomeBannerHtml}
@@ -366,11 +439,14 @@ const BranchView = {
             </button>
           </div>
         </div>
+        ${clusterPillsHtml}
       </section>
+
+      ${keyTakeawaysHtml}
 
       <section class="section r">
         <div class="section-head">
-          <div class="section-title">Scorecard <span class="accent">${capitalizedMonth}</span></div>
+          <h2 class="section-title" style="margin:0;">Scorecard <span class="accent">${capitalizedMonth}</span></h2>
           <span class="section-sub">Evaluación de KPIs operativos</span>
         </div>
         ${scorecardSection}
@@ -465,6 +541,18 @@ const BranchView = {
           Charts.branchVolumeTrend(volumeCtx, trendLabels, volumeTrendData, color);
         }
       }, 100);
+
+      // Montar Sticky Action Bar para móviles (Mobile-First)
+      if (typeof MobileStickyBarManager !== 'undefined') {
+        MobileStickyBarManager.mount({
+          title: `${meta.nombre} · ${stats.avg > 0 ? `${stats.avg.toFixed(2)}★` : '—'}`,
+          subtitle: `${capitalizedMonth} ${activeYear} · ${stats.count} reseñas`,
+          primaryBtnText: 'Compartir',
+          onPrimaryClick: () => BranchView.shareExecutiveSummary(),
+          secondaryBtnText: 'PDF',
+          onSecondaryClick: () => window.print()
+        });
+      }
 
       // Check for welcome onboarding / walkthrough (Idea 3)
       if (localStorage.getItem('lcp_walkthrough_seen') !== 'true') {

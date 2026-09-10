@@ -5,7 +5,17 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 
 ---
 
-## Versión 3.4.4 Izar - Paginación, Normalización y Explorador Histórico (Agosto 2026) [ACTUAL]
+## Versión 3.4.5 Izar - Resúmenes Ejecutivos, Botón Compartir y Experiencia Celular (Septiembre 2026) [ACTUAL]
+* ⚡ **Resumen Ejecutivo Inmediato (Key Takeaways)**: Nuevas tarjetas Crystal al inicio de cada reporte con los 3 puntos más importantes del mes explicados de forma clara y directa.
+* 📲 **Barra Móvil Fija de Acceso Rápido**: Nueva barra inferior optimizada para celulares con acceso instantáneo a las acciones de reporte sin importar cuánto scroll hagas.
+* 📤 **Botón Compartir Nativo**: Ahora puedes enviar la tarjeta de desempeño y métricas de la sucursal directo por WhatsApp, Telegram o copiar el enlace en un solo toque.
+* 🔗 **Navegación por Zonas (Clusters)**: Enlaces directos para saltar con un clic entre tiendas vecinas de la misma región.
+* ❓ **Centro de Preguntas Frecuentes (FAQ)**: Respuestas claras a dudas frecuentes sobre cómo se calculan las calificaciones y el tratamiento de opiniones.
+* 🌐 **Visibilidad y Gobernanza Web**: Integración de estándares modernos para motores de búsqueda y herramientas de inteligencia artificial.
+
+---
+
+## Versión 3.4.4 Izar - Paginación, Normalización y Explorador Histórico (Agosto 2026)
 * 📊 **Lectura Completa de Opiniones**: Optimización del motor de datos para mostrar el 100% de las reseñas históricas de cada sucursal (como Andares) sin recortes.
 * 🗓️ **Explorador Histórico por Año y Mes**: Nueva barra de control en la pantalla principal para auditar resultados de años anteriores (2018 a 2026) por mes, región y sucursal.
 * ⚖️ **Ranking Regional Equitativo**: Incorporación de Suavizado Bayesiano ($k=15$, $M=4.50\star$) en el cálculo del score ajustado para evaluar con justicia a tiendas con pocas reseñas frente a grandes complejos multitienda.

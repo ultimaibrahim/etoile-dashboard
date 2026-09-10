@@ -1817,5 +1817,96 @@ function initSegmentedTabs() {
   });
 }
 
+/* ── NATIVE WEB SHARE API & SHARE MANAGER ───────────────── */
+const ShareManager = {
+  async shareReport({ title, text, url }) {
+    const shareUrl = url || window.location.href;
+    const fullText = text ? `${text}\n\n${shareUrl}` : shareUrl;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title || document.title,
+          text: text || '',
+          url: shareUrl
+        });
+        if (typeof ToastManager !== 'undefined') {
+          ToastManager.show({ type: 'success', message: 'Reporte compartido con éxito' });
+        }
+        return 'shared';
+      } catch (err) {
+        if (err.name === 'AbortError') return 'aborted';
+      }
+    }
+
+    // Fallback a Portapapeles
+    try {
+      await navigator.clipboard.writeText(fullText);
+      if (typeof ToastManager !== 'undefined') {
+        ToastManager.show({ type: 'success', message: 'Enlace copiado al portapapeles. ¡Listo para compartir!' });
+      }
+      return 'copied';
+    } catch (e) {
+      const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`;
+      window.open(waUrl, '_blank');
+      return 'whatsapp';
+    }
+  }
+};
+
+/* ── STICKY MOBILE ACTION BAR MANAGER ────────────────────── */
+const MobileStickyBarManager = {
+  mount({ title, subtitle, primaryBtnText, onPrimaryClick, secondaryBtnText, onSecondaryClick }) {
+    let bar = document.getElementById('mobileStickyBar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'mobileStickyBar';
+      bar.className = 'mobile-sticky-bar';
+      document.body.appendChild(bar);
+    }
+
+    bar.innerHTML = `
+      <div class="msb-info">
+        <span class="msb-title">${escapeHtml(title || '')}</span>
+        ${subtitle ? `<span class="msb-sub">${escapeHtml(subtitle)}</span>` : ''}
+      </div>
+      <div class="msb-actions">
+        ${secondaryBtnText ? `<button class="msb-btn msb-btn-secondary" id="msbSecondaryBtn">${escapeHtml(secondaryBtnText)}</button>` : ''}
+        ${primaryBtnText ? `<button class="msb-btn msb-btn-primary" id="msbPrimaryBtn">${escapeHtml(primaryBtnText)}</button>` : ''}
+      </div>
+    `;
+
+    if (primaryBtnText && onPrimaryClick) {
+      document.getElementById('msbPrimaryBtn')?.addEventListener('click', onPrimaryClick);
+    }
+    if (secondaryBtnText && onSecondaryClick) {
+      document.getElementById('msbSecondaryBtn')?.addEventListener('click', onSecondaryClick);
+    }
+
+    bar.classList.add('active');
+    document.body.classList.add('has-sticky-bar');
+  },
+
+  unmount() {
+    const bar = document.getElementById('mobileStickyBar');
+    if (bar) {
+      bar.classList.remove('active');
+    }
+    document.body.classList.remove('has-sticky-bar');
+  }
+};
+
+/* ── FAQ ACCORDION INTERACTION ───────────────────────────── */
+function toggleFaqItem(index) {
+  const item = document.getElementById(`faq-item-${index}`);
+  if (!item) return;
+  const wasActive = item.classList.contains('active');
+  document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('active'));
+  if (!wasActive) {
+    item.classList.add('active');
+  }
+}
+
+
 
 

@@ -201,6 +201,32 @@ const DashboardsView = {
       `;
     }
 
+    // Resumen ejecutivo de dashboards analíticos
+    const dashTakeaways = [
+      `Volumen total acumulado de <strong>${currGlobal.totalReviews} reseñas</strong> en ${capitalizedCurrMonth} ${currYear}.`,
+      `Calificación regional promedio de <strong>${currGlobal.avgRating.toFixed(2)}★</strong> para ${getRegionName(activeRegion)}.`,
+      `Se detectaron <strong>${activeAlertsCount} alertas operativas activas</strong> que requieren seguimiento de gerencias.`
+    ];
+
+    const dashTakeawaysHtml = `
+      <div class="key-takeaways-card" style="margin-top: 20px;">
+        <div class="kt-header">
+          <div class="kt-title-wrap">
+            <div class="kt-icon-pill">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            </div>
+            <span class="kt-title">Key Takeaways · Cuadro de Mando</span>
+          </div>
+          <span class="kt-badge">${capitalizedCurrMonth} ${currYear}</span>
+        </div>
+        <ul class="kt-list">
+          ${dashTakeaways.map(t => `<li class="kt-item"><span class="kt-bullet">✦</span><span>${t}</span></li>`).join('')}
+        </ul>
+      </div>
+    `;
+
     document.getElementById('app').innerHTML = `
       ${concludedBannerHtml}
       ${buildTopbar(false)}
@@ -302,10 +328,12 @@ const DashboardsView = {
         </div>
       </div>
 
+      ${dashTakeawaysHtml}
+
       <div class="home-grid-2">
         <section class="section r">
           <div class="section-head">
-            <div class="section-title">Volumen de Reseñas <span class="accent">${capitalizedCurrMonth}</span></div>
+            <h2 class="section-title" style="margin:0;">Volumen de Reseñas <span class="accent">${capitalizedCurrMonth}</span></h2>
             <span class="section-sub">${currGlobal.totalReviews} reseñas · Negativas vs Positivas/Neutrales</span>
           </div>
           <div class="chart-card spotlight-card"><div class="chart-wrap"><canvas id="volChart"></canvas></div></div>
@@ -313,7 +341,7 @@ const DashboardsView = {
 
         <section class="section r">
           <div class="section-head">
-            <div class="section-title">Ranking de Calificación <span class="accent">${capitalizedCurrMonth}</span></div>
+            <h2 class="section-title" style="margin:0;">Ranking de Calificación <span class="accent">${capitalizedCurrMonth}</span></h2>
             <span class="section-sub">Calificación promedio por sucursal en el mes.</span>
           </div>
           <div class="chart-card spotlight-card"><div class="chart-wrap"><canvas id="rankingChart"></canvas></div></div>

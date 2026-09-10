@@ -328,6 +328,9 @@ const HomeView = {
               <span class="eyebrow" style="color:rgba(245,239,230,.55);">Promedio Regional</span>
               ${dropdownHtml}
             </div>
+            <h1 class="hero-main-title" style="font-family:var(--serif); font-size:clamp(28px, 5vw, 42px); color:#FAF5EB; line-height:1.15; margin: 4px 0 14px 0; font-weight:normal;">
+              Monitoreo Regional <span style="font-style:italic; color:var(--sage);">${getRegionName(activeRegion)}</span>
+            </h1>
             <div class="hero-score">
               <span class="hero-score-num num" id="heroNum">${currGlobal.avgRating.toFixed(2)}</span>
               <div class="hero-score-side">

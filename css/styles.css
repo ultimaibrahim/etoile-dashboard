@@ -4681,3 +4681,255 @@ html.login-page-active body {
   }
 }
 
+/* ════════════════════════════════════════════════════════════════
+   CRYSTAL & SQUIRCLE · KEY TAKEAWAYS, FAQ & MOBILE STICKY BAR
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Key Takeaways (TL;DR) Card ── */
+.key-takeaways-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--sombra-card);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.key-takeaways-card:hover {
+  border-color: var(--sage);
+  box-shadow: var(--sombra);
+}
+.kt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.kt-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.kt-icon-pill {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(184, 144, 47, 0.12);
+  color: var(--oro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.kt-title {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.kt-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(61, 90, 71, 0.12);
+  color: var(--verde);
+  border: 1px solid rgba(61, 90, 71, 0.2);
+}
+[data-theme="dark"] .kt-badge {
+  background: rgba(122, 158, 138, 0.15);
+  color: var(--sage-light);
+  border-color: rgba(122, 158, 138, 0.3);
+}
+.kt-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.kt-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.kt-bullet {
+  color: var(--sage);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+/* ── FAQ Accordion Crystal ── */
+.faq-accordion-group {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.faq-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.2, 1, 0.3, 1);
+}
+.faq-item.active {
+  border-color: var(--sage);
+  box-shadow: var(--sombra);
+}
+.faq-question-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.faq-arrow {
+  transition: transform 0.25s cubic-bezier(0.2, 1, 0.3, 1);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.faq-item.active .faq-arrow {
+  transform: rotate(180deg);
+  color: var(--verde);
+}
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.2, 1, 0.3, 1), padding 0.25s ease;
+  padding: 0 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.faq-item.active .faq-answer {
+  max-height: 300px;
+  padding-bottom: 18px;
+}
+
+/* ── Sticky Mobile Action Bar (Mobile-First) ── */
+.mobile-sticky-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 990;
+  background: var(--nav-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border-strong);
+  padding: 10px 16px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+@media (max-width: 768px) {
+  .mobile-sticky-bar.active {
+    display: flex;
+  }
+  body.has-sticky-bar {
+    padding-bottom: 74px;
+  }
+}
+.msb-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.msb-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msb-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.msb-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.msb-btn {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-size: 12.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.msb-btn-primary {
+  background: var(--verde);
+  color: #FAF5EB;
+}
+.msb-btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+/* ── Cluster Pills para Sucursales Hermanas ── */
+.cluster-nav-wrap {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cluster-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+.cluster-pill {
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+.cluster-pill:hover, .cluster-pill.active {
+  background: var(--surface-2);
+  border-color: var(--sage);
+  color: var(--text);
+}
+
+

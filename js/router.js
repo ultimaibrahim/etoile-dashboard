@@ -40,6 +40,73 @@ const Router = {
     return { handler: this.routes['home'], params: {} };
   },
 
+  updateRouteMeta(hash, params = {}) {
+    let title = 'Dashboard Reseñas · étoile';
+    let description = 'Plataforma de inteligencia operativa y análisis de satisfacción del cliente de La Crêpe Parisienne (Grupo MYT).';
+
+    if (hash === '#/login') {
+      title = 'Iniciar Sesión · étoile LCP';
+      description = 'Acceso seguro al sistema de inteligencia operativa y monitoreo de reseñas de La Crêpe Parisienne.';
+    } else if (hash.startsWith('#/sucursal/')) {
+      const meta = typeof getBranchById === 'function' ? getBranchById(params.id) : null;
+      const branchName = meta ? meta.nombre : (params.id || 'Sucursal');
+      const region = meta && meta.region ? meta.region : '';
+      title = `${branchName} ${region ? `(${region})` : ''} · Métricas y Reseñas | étoile`;
+      description = `Análisis de satisfacción del cliente, CSAT, incidencias y evolución de opiniones de Google Maps para la sucursal ${branchName}.`;
+    } else if (hash.startsWith('#/trimestre/')) {
+      const q = (params.q || '').toUpperCase();
+      title = `Reporte Ejecutivo ${q} · étoile LCP`;
+      description = `Consolidado trimestral de satisfacción del cliente, ranking regional y auditoría de calidad de La Crêpe Parisienne para ${q}.`;
+    } else if (hash === '#/dashboards') {
+      title = 'Dashboards Analíticos y Alertas · étoile LCP';
+      description = 'Cuadro de mando con distribución de volumen, ranking multitienda y alertas operativas proactivas.';
+    } else if (hash === '#/brand') {
+      title = 'Brand Dashboard Nacional · étoile LCP';
+      description = 'Monitoreo consolidado a nivel nacional de satisfacción del cliente de La Crêpe Parisienne (33 sucursales).';
+    } else if (hash === '#/select-region') {
+      title = 'Explorador de Regiones · étoile LCP';
+      description = 'Exploración regional histórica, ranking bayesiano y monitoreo de sucursales en México.';
+    } else if (hash === '#/acerca') {
+      title = 'Metodología y Arquitectura · étoile LCP';
+      description = 'Metodología de cálculo CSAT, tratamiento de opiniones sin texto, gobernanza y preguntas frecuentes (FAQ).';
+    } else if (hash === '#/privacidad') {
+      title = 'Aviso de Privacidad · étoile LCP';
+      description = 'Aviso de privacidad y directivas de protección de datos personales de Grupo MYT y étoile.';
+    } else {
+      const reg = typeof activeRegion !== 'undefined' ? (typeof getRegionName === 'function' ? getRegionName(activeRegion) : activeRegion) : 'GDL';
+      title = `Monitoreo Regional (${reg}) · étoile LCP`;
+      description = `Resumen operativo mensual, promedio regional y alertas de desempeño de La Crêpe Parisienne para la región ${reg}.`;
+    }
+
+    document.title = title;
+
+    // Actualizar o inyectar meta description
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.name = 'description';
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', description);
+
+    // Actualizar OpenGraph
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', title);
+    const ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogDesc) ogDesc.setAttribute('content', description);
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) ogUrl.setAttribute('content', window.location.href);
+
+    // Notificar a GA4 evento page_view en cambio SPA si está activo
+    if (typeof window.gtag === 'function' && window.GA4_MEASUREMENT_ID) {
+      window.gtag('event', 'page_view', {
+        page_title: title,
+        page_location: window.location.href,
+        page_path: window.location.hash || '#/'
+      });
+    }
+  },
+
   navigate(hash) {
     if ((window.location.hash === '#/' || window.location.hash === '') && hash.startsWith('#/sucursal/')) {
       if (typeof ViewState !== 'undefined') {
@@ -123,6 +190,9 @@ const Router = {
     if (window.HomeView && typeof HomeView.clearAutoplay === 'function') {
       HomeView.clearAutoplay();
     }
+    if (typeof MobileStickyBarManager !== 'undefined') {
+      MobileStickyBarManager.unmount();
+    }
 
     const prevRoute = this.current;
 
@@ -136,6 +206,7 @@ const Router = {
       if (route.handler) {
         await route.handler(route.params);
         this.current = hash;
+        this.updateRouteMeta(hash, route.params);
       }
       if (hash === '#/login') {
         document.documentElement.classList.add('login-page-active');

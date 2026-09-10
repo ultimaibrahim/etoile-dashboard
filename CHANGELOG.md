@@ -9,7 +9,22 @@ Este documento contiene el historial técnico completo de versiones de Étoile D
 
 Representa la era de la madurez operativa y refinamiento visual del Dashboard de Reseñas, enfocada en consolidar el control regional de incidencias, la unificación estética Crystal & Squircle y la conexión directa a base de datos en la nube.
 
-### Version 3.4.4 Izar - Paginación en Supabase, Normalización y Exploración Histórica (Agosto 2026) [ACTUAL]
+### Version 3.4.5 Izar - Suite SEO, UX Móvil, Web Share y LLMO (Septiembre 2026) [ACTUAL]
+* **Metatítulos y Metadescripciones Reactivos**: Integración de `updateRouteMeta` en `Router.resolve()`, actualizando dinámicamente `document.title`, `<meta name="description">` y Open Graph en cada transición de pantalla SPA según la sucursal o vista activa.
+* **Semántica HTML5 y Único H1 por Pantalla**: Estandarización de jerarquía con exactamente un solo `<h1>` semántico por vista (`home`, `branch`, `dashboards`, `about`, `login`, `privacy`), seguido de secciones `<h2>` y tarjetas `<h3>`.
+* **Cápsula Crystal Squircle de Key Takeaways (TL;DR)**: Componente interactivo `.key-takeaways-card` ubicado al inicio de las vistas ejecutivas y de sucursal con los 3 hallazgos críticos del periodo.
+* **Barra de Acción Móvil Fija (`MobileStickyBarManager`)**: Barra inferior flotante (`.mobile-sticky-bar`) con backdrop blur, soporte para Safe Area en iOS y botones directos de acción rápida.
+* **Botón Nativo para Compartir (`ShareManager`)**: Integración con la **Web Share API** (`navigator.share`) para envío directo de scorecards por WhatsApp/Telegram con fallback automático a copia en portapapeles.
+* **Clusters Regionales Interlinkeados**: Inyección de `.cluster-nav-wrap` en la ficha de tienda para navegación rápida en un clic entre sucursales de la misma región.
+* **Preguntas Frecuentes y Schemas JSON-LD**: Sección interactiva de FAQ con microdatos `@type: "FAQPage"`, schema `@type: "Bakery"` / `"Restaurant"` en fichas de sucursal y `@type: "Organization"` en la raíz.
+* **Indexación y Visibilidad en Inteligencia Artificial (LLMO)**:
+  - Creación de `robots.txt` con directivas para buscadores y crawlers de IA (`GPTBot`, `ClaudeBot`, `Google-Extended`, `PerplexityBot`), desindexando preventivamente `/page/`.
+  - Creación de especificación oficial `llms.txt` y `.well-known/llms.txt`.
+  - Generación de `sitemap.xml` con URLs canónicas.
+  - Regla preventiva en `netlify.toml` inyectando cabecera `X-Robots-Tag: noindex, nofollow` para `/page/*`.
+  - Preparación de slot modular para Google Analytics 4 (`GA4_MEASUREMENT_ID`) y verificación de Google Search Console.
+
+### Version 3.4.4 Izar - Paginación en Supabase, Normalización y Exploración Histórica (Agosto 2026)
 * **Resolución de Truncamiento en Supabase**: Implementación de consultas paginadas por bloques (`.range`) y filtrado directo por región (`.eq`) en `DataLoader`, garantizando la carga completa de reseñas históricas sin sufrir por el tope predeterminado de 1,000 filas de PostgREST.
 * **Normalización de Sucursales**: Incorporación de `normalizeBranchToken` para resolver coincidencia de sucursales insensible a tildes, mayúsculas y caracteres especiales en todas las vistas e ingesta serverless.
 * **Panel de Control Histórico (`#/select-region`)**: Adición de la barra de exploración histórica por **Año (2018–2026)**, **Mes**, **Estado de Región** (`< 4.50 ★` / `≥ 4.50 ★`), **Criterios de Ordenamiento** (Rating, Volumen, Crecimiento) y **Buscador Instantáneo** por texto libre.
