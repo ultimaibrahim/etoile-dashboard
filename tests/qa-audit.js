@@ -69,6 +69,7 @@ const jsFiles = [
   'js/utils.js',
   'js/charts.js',
   'js/kpis.js',
+  'js/etoile-cache.js',
   'js/data-loader.js',
   'js/router.js',
   'js/app.js',

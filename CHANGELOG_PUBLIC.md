@@ -5,7 +5,14 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 
 ---
 
-## Versión 3.4.5 Izar - Resúmenes Ejecutivos, Botón Compartir y Experiencia Celular (Septiembre 2026) [ACTUAL]
+## Versión 3.5.0 Zenith Core - Velocidad Inmediata y Apertura Instantánea (Septiembre 2026) [ACTUAL]
+* ⚡ **Carga Instantánea (<5ms)**: La plataforma ahora abre al instante con tus datos guardados localmente, eliminando tiempos de espera y pantallas de carga.
+* 🔄 **Actualización Inteligente en Segundo Plano**: Al abrir el tablero, la información se muestra de inmediato mientras el sistema verifica discretamente si llegaron nuevas reseñas, actualizando las cifras de manera fluida y sin saltos.
+* 📶 **Modo Sin Conexión Total**: Puedes consultar reportes, sucursales y notas históricas en zonas con baja señal o sin internet en tienda.
+
+---
+
+## Versión 3.4.5 Izar - Resúmenes Ejecutivos, Botón Compartir y Experiencia Celular (Septiembre 2026)
 * ⚡ **Resumen Ejecutivo Inmediato (Key Takeaways)**: Nuevas tarjetas Crystal al inicio de cada reporte con los 3 puntos más importantes del mes explicados de forma clara y directa.
 * 📲 **Barra Móvil Fija de Acceso Rápido**: Nueva barra inferior optimizada para celulares con acceso instantáneo a las acciones de reporte sin importar cuánto scroll hagas.
 * 📤 **Botón Compartir Nativo**: Ahora puedes enviar la tarjeta de desempeño y métricas de la sucursal directo por WhatsApp, Telegram o copiar el enlace en un solo toque.

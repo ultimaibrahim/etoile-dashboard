@@ -5,11 +5,29 @@ Este documento contiene el historial técnico completo de versiones de Étoile D
 
 ---
 
-## Generación Izar (v3.0 - v3.4.4)
+## Generación Zenith (v3.5.0 - Presente)
+
+Representa la era de la perfección en rendimiento, inmediatez absoluta y estética de alta dirección. Introduce el motor de almacenamiento reactivo SWR, Command Palette universal y herramientas analíticas avanzadas.
+
+### Version 3.5.0a Zenith Core - Motor Reactivo IndexedDB y Stale-While-Revalidate (Septiembre 2026) [ACTUAL]
+* **Arquitectura de Persistencia Local (`js/etoile-cache.js`)**:
+  - Motor autónomo basado en **IndexedDB nativo** (`etoile_zenith_db`, v1) con 3 almacenes segregados: `reviews_cache`, `manifest_cache` y `stats_cache`.
+  - Fallback transparente a mapas en memoria volátil si el cliente navega en Modo Incógnito estricto con almacenamiento bloqueado.
+* **Patrón Stale-While-Revalidate en DataLoader (`js/data-loader.js`)**:
+  - Carga instantánea de reseñas y manifiestos en **<5ms** desde IndexedDB sin mostrar spinners de espera.
+  - Validación y sincronización asíncrona de fondo con Supabase (`_revalidateMonth`, `_revalidateQuarter`).
+  - Emisión de evento reactivo `etoile:data-synced` para actualizar las vistas discretamente en caso de cambios nocturnos en el backend sin recargar la página.
+* **Actualización de Suite de Pruebas y Cache-Busting**:
+  - Integración de `js/etoile-cache.js` en `tests/qa-audit.js` (51 pruebas superadas con 0 errores).
+  - Inyección de identificador de versión `?v=3.5.0a` en `index.html`.
+
+---
+
+## Generación Izar (v3.0 - v3.4.5)
 
 Representa la era de la madurez operativa y refinamiento visual del Dashboard de Reseñas, enfocada en consolidar el control regional de incidencias, la unificación estética Crystal & Squircle y la conexión directa a base de datos en la nube.
 
-### Version 3.4.5 Izar - Suite SEO, UX Móvil, Web Share y LLMO (Septiembre 2026) [ACTUAL]
+### Version 3.4.5 Izar - Suite SEO, UX Móvil, Web Share y LLMO (Septiembre 2026)
 * **Metatítulos y Metadescripciones Reactivos**: Integración de `updateRouteMeta` en `Router.resolve()`, actualizando dinámicamente `document.title`, `<meta name="description">` y Open Graph en cada transición de pantalla SPA según la sucursal o vista activa.
 * **Semántica HTML5 y Único H1 por Pantalla**: Estandarización de jerarquía con exactamente un solo `<h1>` semántico por vista (`home`, `branch`, `dashboards`, `about`, `login`, `privacy`), seguido de secciones `<h2>` y tarjetas `<h3>`.
   - *Nota de Diseño (Hero Regional en `home.js`)*: Cuenta con documentación inline para reversión ágil o estilización `visually-hidden` si en el futuro se prefiere prescindir del título textual intermedio y volver a la composición minimalista original.

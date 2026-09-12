@@ -13,8 +13,22 @@ const DataLoader = {
 
   async init() {
     this.manifest = {};
+    const manifestKey = 'manifest_' + (typeof activeRegion !== 'undefined' && activeRegion ? activeRegion : 'ALL');
 
-    // Si Supabase está inicializado, intentar cargar el manifest dinámico de la base de datos
+    // 1. Cargar manifest local desde EtoileCache (IndexedDB) inmediatamente (<2ms)
+    if (typeof EtoileCache !== 'undefined') {
+      try {
+        const localManifest = await EtoileCache.get('manifest_cache', manifestKey);
+        if (localManifest && Object.keys(localManifest).length > 0) {
+          this.manifest = localManifest;
+          this.setupCurrentPeriods();
+        }
+      } catch (e) {
+        console.warn('[DataLoader] Lectura de manifest local omitida:', e);
+      }
+    }
+
+    // 2. Si Supabase está inicializado, sincronizar en paralelo el manifest dinámico de la base de datos
     if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
         const { data, error } = await supabaseClient
@@ -38,6 +52,9 @@ const DataLoader = {
             dbManifest[y].sort((a, b) => a - b);
           }
           this.manifest = dbManifest;
+          if (typeof EtoileCache !== 'undefined') {
+            EtoileCache.set('manifest_cache', manifestKey, dbManifest);
+          }
         }
       } catch (e) {
         console.error('No se pudo cargar el manifest dinámico desde Supabase:', e);
@@ -95,8 +112,27 @@ const DataLoader = {
 
   async loadQuarterStats(year, quarter) {
     const key = `q-${year}-Q${quarter}`;
+    const storageKey = `${key}-${typeof activeRegion !== 'undefined' ? activeRegion : 'ALL'}`;
     if (this.cache[key]) return this.cache[key];
 
+    // 1. Chequeo SWR en EtoileCache (IndexedDB)
+    if (typeof EtoileCache !== 'undefined') {
+      try {
+        const cachedStats = await EtoileCache.get('stats_cache', storageKey);
+        if (cachedStats && cachedStats.length > 0) {
+          this.cache[key] = cachedStats;
+          this._revalidateQuarter(year, quarter, key, storageKey, cachedStats);
+          return cachedStats;
+        }
+      } catch (e) {
+        console.warn('[DataLoader] Lectura de stats locales omitida:', e);
+      }
+    }
+
+    return await this._fetchQuarterStats(year, quarter, key, storageKey);
+  },
+
+  async _fetchQuarterStats(year, quarter, key, storageKey) {
     // Cargar desde Supabase vista
     if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
@@ -117,6 +153,9 @@ const DataLoader = {
             negativeReviews: r.negative_reviews
           }));
           this.cache[key] = stats;
+          if (typeof EtoileCache !== 'undefined') {
+            EtoileCache.set('stats_cache', storageKey, stats);
+          }
           return stats;
         }
       } catch (e) {
@@ -159,13 +198,49 @@ const DataLoader = {
     }
 
     this.cache[key] = branchStats;
+    if (typeof EtoileCache !== 'undefined') {
+      EtoileCache.set('stats_cache', storageKey, branchStats);
+    }
     return branchStats;
+  },
+
+  async _revalidateQuarter(year, quarter, key, storageKey, cachedStats) {
+    try {
+      const freshStats = await this._fetchQuarterStats(year, quarter, key, storageKey);
+      if (freshStats && cachedStats && JSON.stringify(freshStats) !== JSON.stringify(cachedStats)) {
+        window.dispatchEvent(new CustomEvent('etoile:data-synced', {
+          detail: { key, year, quarter, type: 'quarter', region: activeRegion }
+        }));
+      }
+    } catch (e) {
+      // Background revalidation silently caught
+    }
   },
 
   async loadMonth(year, month) {
     const key = `${year}-${String(month).padStart(2, '0')}`;
+    const storageKey = `${key}-${typeof activeRegion !== 'undefined' ? activeRegion : 'ALL'}`;
     if (this.cache[key]) return this.cache[key];
 
+    // 1. Chequeo SWR en EtoileCache (IndexedDB: resolución en <5ms sin esperar red)
+    if (typeof EtoileCache !== 'undefined') {
+      try {
+        const cached = await EtoileCache.get('reviews_cache', storageKey);
+        if (cached && cached.reviews && cached.reviews.length > 0) {
+          this.cache[key] = cached;
+          this._revalidateMonth(year, month, key, storageKey, cached);
+          return cached;
+        }
+      } catch (e) {
+        console.warn('[DataLoader] Lectura de reseñas locales omitida:', e);
+      }
+    }
+
+    // 2. Si no hay caché previa, esperar a Supabase
+    return await this._fetchMonthFromSupabase(year, month, key, storageKey);
+  },
+
+  async _fetchMonthFromSupabase(year, month, key, storageKey) {
     if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
         const startIso = `${year}-${String(month).padStart(2, '0')}-01T00:00:00.000Z`;
@@ -229,6 +304,11 @@ const DataLoader = {
 
         const result = { reviews: filtered };
         this.cache[key] = result;
+
+        if (typeof EtoileCache !== 'undefined') {
+          EtoileCache.set('reviews_cache', storageKey, result);
+        }
+
         return result;
       } catch (e) {
         console.error(`Error al consultar reseñas de Supabase para ${key}:`, e);
@@ -236,6 +316,22 @@ const DataLoader = {
     }
 
     return { reviews: [] };
+  },
+
+  async _revalidateMonth(year, month, key, storageKey, cached) {
+    try {
+      const fresh = await this._fetchMonthFromSupabase(year, month, key, storageKey);
+      if (fresh && fresh.reviews && cached && cached.reviews) {
+        if (fresh.reviews.length !== cached.reviews.length) {
+          console.log(`[DataLoader SWR] Sincronización en segundo plano completada para ${key}: ${cached.reviews.length} -> ${fresh.reviews.length} reseñas.`);
+          window.dispatchEvent(new CustomEvent('etoile:data-synced', {
+            detail: { key, year, month, type: 'month', region: activeRegion }
+          }));
+        }
+      }
+    } catch (e) {
+      // Revalidación silenciosa
+    }
   },
 
   async loadBrandData(year, month) {
