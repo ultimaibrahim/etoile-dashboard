@@ -71,6 +71,7 @@ const jsFiles = [
   'js/kpis.js',
   'js/etoile-cache.js',
   'js/data-loader.js',
+  'js/components/command-palette.js',
   'js/router.js',
   'js/app.js',
   'js/views/login.js',
@@ -108,6 +109,10 @@ if (fs.existsSync(path.join(rootDir, 'css/styles.css'))) {
   assert(css.includes('.mobile-sticky-bar'), 'styles.css contiene barra fija .mobile-sticky-bar');
   assert(css.includes('.cluster-nav-wrap'), 'styles.css contiene contenedor .cluster-nav-wrap');
   assert(css.includes('.offline-banner-floating'), 'styles.css contiene componente .offline-banner-floating');
+  assert(css.includes('.grain-overlay'), 'styles.css contiene textura de grano .grain-overlay');
+  assert(css.includes('.spotlight-card'), 'styles.css contiene efecto halo .spotlight-card');
+  assert(css.includes('.crystal-tooltip-float'), 'styles.css contiene tooltips flotantes .crystal-tooltip-float');
+  assert(css.includes('.cmd-palette-dialog'), 'styles.css contiene modal .cmd-palette-dialog');
   assert(!css.includes('–-'), 'styles.css libre de guiones simples defectuosos en variables (-- estricto)');
 }
 

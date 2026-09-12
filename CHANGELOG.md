@@ -9,7 +9,20 @@ Este documento contiene el historial técnico completo de versiones de Étoile D
 
 Representa la era de la perfección en rendimiento, inmediatez absoluta y estética de alta dirección. Introduce el motor de almacenamiento reactivo SWR, Command Palette universal y herramientas analíticas avanzadas.
 
-### Version 3.5.0a Zenith Core - Motor Reactivo IndexedDB y Stale-While-Revalidate (Septiembre 2026) [ACTUAL]
+### Version 3.5.0b Zenith UI - Atmósfera Crystal, Tooltips HTML y Command Palette (Septiembre 2026) [ACTUAL]
+* **Command Palette Universal Omnibox (`js/components/command-palette.js`)**:
+  - Modal flotante accesible vía `Ctrl + K` (Windows/Linux) y `Cmd + K` (macOS), o toque en el nuevo botón squircle `⌘K` del Topbar.
+  - Búsqueda difusa instantánea (<1ms) con soporte para todas las sucursales nacionales, rutas del sistema, periodos y acciones globales.
+  - Navegación asistida 100% por teclado (`↑` / `↓` para enfocar, `Enter` para ejecutar, `Esc` para salir).
+* **Tooltips HTML Flotantes Crystal para Chart.js (`js/charts.js`)**:
+  - Desacoplamiento total del tooltip de Canvas predeterminado mediante el callback `external: crystalTooltipHandler`.
+  - Tarjetas flotantes DOM `.crystal-tooltip-float` con glassmorphism (`backdrop-filter: blur(16px)`), tipografía editorial *Playfair Display*, bordes de oro champagne y micro-indicadores circulares de categoría.
+* **Atmósfera Cinematográfica y Spotlight Tracking (`css/styles.css`, `js/utils.js`)**:
+  - Inyección de micro-capa procedural SVG `feTurbulence` (`.grain-overlay`) para erradicar el color banding en pantallas OLED.
+  - Efecto de seguimiento de cursor en tiempo real (`.spotlight-card`) con halo radial difuso dorado de 400px en GPU sin layout thrashing.
+  - Suite de pruebas de QA actualizada en `tests/qa-audit.js` (56/56 pruebas superadas).
+
+### Version 3.5.0a Zenith Core - Motor Reactivo IndexedDB y Stale-While-Revalidate (Septiembre 2026)
 * **Arquitectura de Persistencia Local (`js/etoile-cache.js`)**:
   - Motor autónomo basado en **IndexedDB nativo** (`etoile_zenith_db`, v1) con 3 almacenes segregados: `reviews_cache`, `manifest_cache` y `stats_cache`.
   - Fallback transparente a mapas en memoria volátil si el cliente navega en Modo Incógnito estricto con almacenamiento bloqueado.

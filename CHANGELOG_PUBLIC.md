@@ -5,8 +5,11 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 
 ---
 
-## Versión 3.5.0 Zenith Core - Velocidad Inmediata y Apertura Instantánea (Septiembre 2026) [ACTUAL]
+## Versión 3.5.0 Zenith — Interacción Élite y Apertura Instantánea (Septiembre 2026) [ACTUAL]
 * ⚡ **Carga Instantánea (<5ms)**: La plataforma ahora abre al instante con tus datos guardados localmente, eliminando tiempos de espera y pantallas de carga.
+* 🔍 **Buscador Global Instantáneo (`Ctrl + K` / `Cmd + K`)**: Nuevo acceso rápido universal para saltar a cualquier sucursal del país, periodo o tablero en milisegundos usando el teclado o el botón `⌘K` de la barra superior.
+* 📊 **Tarjetas Flotantes de Gráficas de Alta Definición**: Gráficos con etiquetas interactivas de cristal, tipografía editorial y micro-indicadores visuales que reemplazan los recuadros planos anteriores.
+* 🌌 **Atmósfera Visual y Brillo Interactivo**: Textura táctil cinematográfica suave y halos de luz dorada que reaccionan elegantemente al movimiento del cursor en los tableros.
 * 🔄 **Actualización Inteligente en Segundo Plano**: Al abrir el tablero, la información se muestra de inmediato mientras el sistema verifica discretamente si llegaron nuevas reseñas, actualizando las cifras de manera fluida y sin saltos.
 * 📶 **Modo Sin Conexión Total**: Puedes consultar reportes, sucursales y notas históricas en zonas con baja señal o sin internet en tienda.
 
