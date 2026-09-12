@@ -34,7 +34,7 @@ Representa la era de la madurez operativa y refinamiento visual del Dashboard de
   - `index.html`: Inyección de identificador de versión `?v=3.4.5b` en todas las etiquetas `<script>` para forzar a navegadores locales y clientes móviles a descartar cachés obsoletas.
   - `404.html`: Remoción de la cuenta regresiva de redirección automática forzada a los 8 segundos, preservando la pantalla estática sin saltos bruscos.
 * **Seguridad y Blindaje de Código Fuente**:
-  - `netlify.toml`: Bloqueo estricto con código 404 forzado y cabecera `X-Robots-Tag: noindex, nofollow` para cualquier archivo de mapa de desarrollo (`/*.map`).
+  - `netlify.toml`: Bloqueo estricto con código 404 forzado y cabecera `X-Robots-Tag: noindex, nofollow` para cualquier archivo de mapa de desarrollo (`/*.map`), así como inyección de cabeceras HTTP de grado industrial (`Content-Security-Policy` estricta y `Permissions-Policy`) para alcanzar la máxima postura de seguridad.
   - `index.html`: Inyección de `<noscript>` semántico rico en datos de cobertura para evitar el síntoma de *"viewsource empty"* en rastreadores antiguos o navegadores sin JS.
 
 
