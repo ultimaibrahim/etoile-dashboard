@@ -328,6 +328,9 @@ const HomeView = {
               <span class="eyebrow" style="color:rgba(245,239,230,.55);">Promedio Regional</span>
               ${dropdownHtml}
             </div>
+            <!-- NOTA DE DISEÑO (Ibrahim): Encabezado semántico H1 añadido en v3.4.5 Izar para SEO/accesibilidad.
+                 Si en el futuro se prefiere recuperar el Hero minimalista original (solo dropdown y score grande),
+                 comentar este bloque <h1 class="hero-main-title"> o asignarle la clase 'visually-hidden'. -->
             <h1 class="hero-main-title" style="font-family:var(--serif); font-size:clamp(28px, 5vw, 42px); color:#FAF5EB; line-height:1.15; margin: 4px 0 14px 0; font-weight:normal;">
               Monitoreo Regional <span style="font-style:italic; color:var(--sage);">${getRegionName(activeRegion)}</span>
             </h1>

@@ -12,6 +12,7 @@ Representa la era de la madurez operativa y refinamiento visual del Dashboard de
 ### Version 3.4.5 Izar - Suite SEO, UX Móvil, Web Share y LLMO (Septiembre 2026) [ACTUAL]
 * **Metatítulos y Metadescripciones Reactivos**: Integración de `updateRouteMeta` en `Router.resolve()`, actualizando dinámicamente `document.title`, `<meta name="description">` y Open Graph en cada transición de pantalla SPA según la sucursal o vista activa.
 * **Semántica HTML5 y Único H1 por Pantalla**: Estandarización de jerarquía con exactamente un solo `<h1>` semántico por vista (`home`, `branch`, `dashboards`, `about`, `login`, `privacy`), seguido de secciones `<h2>` y tarjetas `<h3>`.
+  - *Nota de Diseño (Hero Regional en `home.js`)*: Cuenta con documentación inline para reversión ágil o estilización `visually-hidden` si en el futuro se prefiere prescindir del título textual intermedio y volver a la composición minimalista original.
 * **Cápsula Crystal Squircle de Key Takeaways (TL;DR)**: Componente interactivo `.key-takeaways-card` ubicado al inicio de las vistas ejecutivas y de sucursal con los 3 hallazgos críticos del periodo.
 * **Barra de Acción Móvil Fija (`MobileStickyBarManager`)**: Barra inferior flotante (`.mobile-sticky-bar`) con backdrop blur, soporte para Safe Area en iOS y botones directos de acción rápida.
 * **Botón Nativo para Compartir (`ShareManager`)**: Integración con la **Web Share API** (`navigator.share`) para envío directo de scorecards por WhatsApp/Telegram con fallback automático a copia en portapapeles.
