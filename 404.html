@@ -156,22 +156,6 @@
                 <span>Metodología y Ayuda</span>
             </a>
         </div>
-        <div class="countdown-text">
-            Redireccionando al inicio en <strong id="timer">8</strong> segundos...
-        </div>
     </div>
-
-    <script>
-        let seconds = 8;
-        const timerEl = document.getElementById('timer');
-        const interval = setInterval(() => {
-            seconds--;
-            if (timerEl) timerEl.textContent = seconds;
-            if (seconds <= 0) {
-                clearInterval(interval);
-                window.location.href = '/';
-            }
-        }, 1000);
-    </script>
 </body>
 </html>

@@ -298,9 +298,11 @@ async function initApp() {
   await AppAuth.init();
   window.updateLcpLoader(70);
   
-  await DataLoader.init();
-  window.updateLcpLoader(85);
-  await DataLoader.computeHistoricalRatings();
+  if (AppAuth.isAuthenticated()) {
+    await DataLoader.init();
+    window.updateLcpLoader(85);
+    await DataLoader.computeHistoricalRatings();
+  }
   window.updateLcpLoader(100);
 
   // Registrar vistas en el Router

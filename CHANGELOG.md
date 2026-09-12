@@ -21,6 +21,18 @@ Representa la era de la madurez operativa y refinamiento visual del Dashboard de
   - `404.html`: Pantalla nativa de Netlify con estética Crystal & Squircle, branding LCP y temporizador de retorno asistido al Dashboard.
   - `500.html`: Pantalla institucional serena para estados de mantenimiento de red o base de datos.
   - `OfflineManager`: Detector reactivo de conectividad (`window.onoffline` / `window.ononline`) que alerta en tiempo real al usuario en tienda sin congelar la interfaz.
+* **Blindaje de Vistas de Contingencia 404 y 403 SPA (`views/not-found.js`)**:
+  - Supresión de fuga de arquitectura: Cuando el usuario no está autenticado, la barra de navegación omite todos los accesos directos a módulos privados (`Inicio`, `Dashboards`, `Acerca de`) desplegando una cabecera minimalista.
+  - Mensajería adaptativa: Detección inteligente del estado de sesión en pantallas 403 (solicitud de credenciales operativas vs. permisos insuficientes por rol).
+  - Erradicación de rebotes ciegos: Botones de acción contextualizados (`Iniciar Sesión` y `Aviso de Privacidad` en estados no autenticados, y retorno asistido al Dashboard para usuarios autenticados).
+  - Eliminación de dependencia de scroll reveal `.r` para visibilidad inmediata con opacidad al 100%.
+* **Router Dinámico y Validación de Catálogo (`js/router.js`)**:
+  - Despacho 404 instantáneo para sucursales no registradas en `SUCURSALES_META_ALL` y trimestres inválidos (`q < 1` o `q > 4`), evitando rebotes a login o navegación errónea a home.
+  - Soporte para resolución dinámica de rutas registradas vía `Router.register()`.
+  - Normalización de URLs con limpieza automática de parámetros de consulta y barras finales (`/`).
+* **Cache-Busting y Eliminación de Auto-Redirección**:
+  - `index.html`: Inyección de identificador de versión `?v=3.4.5b` en todas las etiquetas `<script>` para forzar a navegadores locales y clientes móviles a descartar cachés obsoletas.
+  - `404.html`: Remoción de la cuenta regresiva de redirección automática forzada a los 8 segundos, preservando la pantalla estática sin saltos bruscos.
 * **Seguridad y Blindaje de Código Fuente**:
   - `netlify.toml`: Bloqueo estricto con código 404 forzado y cabecera `X-Robots-Tag: noindex, nofollow` para cualquier archivo de mapa de desarrollo (`/*.map`).
   - `index.html`: Inyección de `<noscript>` semántico rico en datos de cobertura para evitar el síntoma de *"viewsource empty"* en rastreadores antiguos o navegadores sin JS.

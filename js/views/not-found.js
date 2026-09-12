@@ -7,16 +7,63 @@ const NotFoundView = {
     Charts.destroyAll();
     const hash = window.location.hash || '';
     const isForbidden = params.type === 'forbidden';
+    const authenticated = typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated();
 
     const title = isForbidden ? 'Acceso Restringido' : 'Página no encontrada';
-    const subtitle = isForbidden ? '403 · Permisos Insuficientes' : '404 · Ruta no disponible';
+    const subtitle = isForbidden 
+      ? (authenticated ? '403 · Permisos Insuficientes' : '403 · Requiere Inicio de Sesión')
+      : '404 · Ruta no disponible';
+      
     const description = isForbidden
-      ? (params.message || 'Tu rol operativo actual no cuenta con permisos para consultar la información de esta región o módulo.')
-      : `La dirección <code>${escapeHtml(hash)}</code> no existe o fue movida dentro del Dashboard.`;
+      ? (authenticated
+          ? (params.message || 'Tu rol operativo actual no cuenta con permisos para consultar la información de esta región o módulo.')
+          : 'Esta sección está reservada para personal autorizado de Grupo MYT. Inicia sesión con tus credenciales operativas para acceder.')
+      : (authenticated
+          ? `La dirección <code>${escapeHtml(hash)}</code> no existe o fue movida dentro del Dashboard.`
+          : `La dirección solicitada no existe dentro del sistema o requiere credenciales de acceso activas.`);
+
+    // Topbar condicional: Si no está autenticado, no expone enlaces a módulos privados
+    const topbarHtml = authenticated && typeof buildTopbar === 'function'
+      ? buildTopbar(false)
+      : `
+        <header class="topbar">
+          <div class="topbar-left">
+            <a href="${authenticated ? '#/' : '#/login'}" class="topbar-brand"><span class="accent">étoile</span></a>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-actions">
+              <button class="dark-toggle" onclick="toggleDark()" aria-label="Cambiar tema">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+              </button>
+            </div>
+          </div>
+        </header>
+      `;
+
+    // Botones de acción según estado de sesión
+    const actionButtons = authenticated
+      ? `
+        <a href="#/" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; background: var(--verde); color: #FAF5EB; font-size: 13px; font-weight: 700; text-decoration: none;">
+          <span>← Volver al Inicio</span>
+        </a>
+        ${isForbidden ? '' : `
+          <a href="#/acerca" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none;">
+            <span>Ayuda y Metodología</span>
+          </a>
+        `}
+      `
+      : `
+        <a href="#/login" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; background: var(--verde); color: #FAF5EB; font-size: 13px; font-weight: 700; text-decoration: none;">
+          <span>Iniciar Sesión</span>
+        </a>
+        <a href="#/privacidad" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none;">
+          <span>Aviso de Privacidad</span>
+        </a>
+      `;
 
     document.getElementById('app').innerHTML = `
-      ${typeof buildTopbar === 'function' ? buildTopbar(false) : ''}
-      <section class="section r" style="max-width: 640px; margin: 40px auto; padding: 0 20px;">
+      ${topbarHtml}
+      <section class="section" style="max-width: 640px; margin: 40px auto; padding: 0 20px;">
         <div class="access-denied-wrapper" style="padding: 44px 32px;">
           <div class="ad-icon-wrap" style="background: ${isForbidden ? 'rgba(198, 40, 40, 0.12)' : 'rgba(184, 144, 47, 0.12)'}; color: ${isForbidden ? 'var(--rojo-soft)' : 'var(--oro)'};">
             ${isForbidden ? `
@@ -42,14 +89,7 @@ const NotFoundView = {
             ${description}
           </p>
           <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-            <a href="#/" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; background: var(--verde); color: #FAF5EB; font-size: 13px; font-weight: 700; text-decoration: none;">
-              <span>← Volver al Inicio</span>
-            </a>
-            ${isForbidden ? '' : `
-              <a href="#/acerca" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none;">
-                <span>Ayuda y Metodología</span>
-              </a>
-            `}
+            ${actionButtons}
           </div>
         </div>
       </section>

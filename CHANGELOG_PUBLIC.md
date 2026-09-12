@@ -14,6 +14,7 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 * 🛡️ **Pantallas de Ayuda y Contingencia**: Diseño de nuevas pantallas amigables de error y mantenimiento para guiar al usuario sin frustración si una página no existe o si hay labores en el servidor.
 * 📶 **Detección Sin Conexión**: Aviso automático en pantalla si el teléfono se queda sin señal en bodega o almacén, permitiendo seguir consultando la información cargada.
 * 🔒 **Blindaje y Protección de Plataforma**: Protección reforzada de la información interna y optimización de velocidad de carga.
+* 🔐 **Privacidad y Navegación Inteligente en Pantallas de Acceso**: Si se abre un enlace a una sección restringida o inexistente sin haber iniciado sesión, la pantalla protege la estructura interna del portal mostrando únicamente el acceso a iniciar sesión o consultar el aviso de privacidad, sin menús confusos ni redirecciones repentinas.
 
 ---
 

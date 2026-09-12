@@ -11,46 +11,49 @@ const Router = {
   },
 
   match(hash) {
-    if (hash === '#/login') return { handler: this.routes['login'], params: {} };
-    if (hash === '#/') return { handler: this.routes['home'], params: {} };
-    if (hash.startsWith('#/sucursal/')) {
-      const id = hash.replace('#/sucursal/', '');
-      return { handler: this.routes['branch'], params: { id } };
-    }
-    if (hash.startsWith('#/trimestre/')) {
-      const q = hash.replace('#/trimestre/', '');
-      return { handler: this.routes['quarter'], params: { q } };
-    }
-    if (hash === '#/acerca') {
-      return { handler: this.routes['about'], params: {} };
-    }
-
-    if (hash === '#/select-region') {
-      return { handler: this.routes['select-region'], params: {} };
-    }
-    if (hash === '#/brand') {
-      return { handler: this.routes['brand'], params: {} };
-    }
-    if (hash === '#/dashboards') {
-      return { handler: this.routes['dashboards'], params: {} };
-    }
-    if (hash === '#/privacidad') {
-      return { handler: this.routes['privacy'], params: {} };
-    }
-    if (hash === '#/404') {
-      return { handler: this.routes['not-found'], params: { type: 'not-found' } };
-    }
-    if (hash === '#/403') {
-      return { handler: this.routes['not-found'], params: { type: 'forbidden' } };
-    }
-
-    // Si el hash está vacío o es la raíz, resuelve home
     if (!hash || hash === '#' || hash === '#/') {
       return { handler: this.routes['home'], params: {} };
     }
 
+    // Normalizar hash: remover query params y slashes finales
+    const rawPath = hash.split('?')[0].replace(/\/+$/, '') || '#/';
+
+    if (rawPath === '#/login') return { handler: this.routes['login'], params: {} };
+    if (rawPath === '#/404') return { handler: this.routes['not-found'], params: { type: 'not-found' } };
+    if (rawPath === '#/403') return { handler: this.routes['not-found'], params: { type: 'forbidden' } };
+    if (rawPath === '#/acerca' || rawPath === '#/about') return { handler: this.routes['about'], params: {} };
+    if (rawPath === '#/privacidad' || rawPath === '#/privacy') return { handler: this.routes['privacy'], params: {} };
+    if (rawPath === '#/select-region') return { handler: this.routes['select-region'], params: {} };
+    if (rawPath === '#/brand') return { handler: this.routes['brand'], params: {} };
+    if (rawPath === '#/dashboards') return { handler: this.routes['dashboards'], params: {} };
+
+    if (rawPath.startsWith('#/sucursal/')) {
+      const id = rawPath.replace('#/sucursal/', '');
+      // Si el ID no existe en el catálogo de sucursales, activar 404 SPA
+      const meta = typeof getBranchById === 'function' ? getBranchById(id) : null;
+      if (!meta && typeof SUCURSALES_META_ALL !== 'undefined') {
+        return { handler: this.routes['not-found'], params: { type: 'not-found', requestedBranch: id } };
+      }
+      return { handler: this.routes['branch'], params: { id } };
+    }
+
+    if (rawPath.startsWith('#/trimestre/')) {
+      const q = rawPath.replace('#/trimestre/', '');
+      const qParsed = typeof parseQuarterParam === 'function' ? parseQuarterParam(q) : null;
+      if (!qParsed || qParsed.quarter < 1 || qParsed.quarter > 4) {
+        return { handler: this.routes['not-found'], params: { type: 'not-found', requestedQuarter: q } };
+      }
+      return { handler: this.routes['quarter'], params: { q } };
+    }
+
+    // Rutas dinámicas registradas directamente con Router.register()
+    const routeKey = rawPath.replace(/^#\/?/, '');
+    if (this.routes[routeKey]) {
+      return { handler: this.routes[routeKey], params: {} };
+    }
+
     // Para cualquier otra ruta no reconocida, activar vista 404 SPA
-    return { handler: this.routes['not-found'], params: { type: 'not-found' } };
+    return { handler: this.routes['not-found'], params: { type: 'not-found', requestedPath: hash } };
   },
 
   updateRouteMeta(hash, params = {}) {
