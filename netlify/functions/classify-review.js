@@ -252,10 +252,9 @@ async function classifyAndSave(supabase, reviewId, text, stars) {
 
   // Guardar en Supabase
   const { error } = await supabase
-    .from('reviews')
+    .from('reviews_core')
     .update({
-      classification: classification,
-      classification_status: status
+      classification: classification
     })
     .eq('id', reviewId);
 
@@ -386,10 +385,9 @@ async function classifyBatchAndSave(supabase, reviewsBatch) {
     for (const r of reviewsBatch) {
       const classif = classifyLocally(r.text, r.stars);
       const { error } = await supabase
-        .from('reviews')
+        .from('reviews_core')
         .update({
-          classification: classif,
-          classification_status: 'done'
+          classification: classif
         })
         .eq('id', r.id);
       
@@ -435,10 +433,9 @@ async function classifyBatchAndSave(supabase, reviewsBatch) {
   const results = [];
   for (const classif of classifications) {
     const { error } = await supabase
-      .from('reviews')
+      .from('reviews_core')
       .update({
-        classification: classif,
-        classification_status: 'done'
+        classification: classif
       })
       .eq('id', classif.id);
 

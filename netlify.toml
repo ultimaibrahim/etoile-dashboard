@@ -1,6 +1,9 @@
 [build.environment]
   SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
 
+[functions."gbp-sync-cron"]
+  schedule = "*/30 * * * *"
+
 [[headers]]
   for = "/page/*"
   [headers.values]
