@@ -26,6 +26,17 @@ const Router = {
     if (rawPath === '#/select-region') return { handler: this.routes['select-region'], params: {} };
     if (rawPath === '#/brand') return { handler: this.routes['brand'], params: {} };
     if (rawPath === '#/dashboards') return { handler: this.routes['dashboards'], params: {} };
+    if (rawPath === '#/comparar' || rawPath === '#/compare') {
+      const queryString = hash.includes('?') ? hash.split('?')[1] : '';
+      const searchParams = new URLSearchParams(queryString);
+      return {
+        handler: this.routes['compare'],
+        params: {
+          a: searchParams.get('a'),
+          b: searchParams.get('b')
+        }
+      };
+    }
 
     if (rawPath.startsWith('#/sucursal/')) {
       const id = rawPath.replace('#/sucursal/', '');
@@ -73,6 +84,9 @@ const Router = {
       const q = (params.q || '').toUpperCase();
       title = `Reporte Ejecutivo ${q} · étoile LCP`;
       description = `Consolidado trimestral de satisfacción del cliente, ranking regional y auditoría de calidad de La Crêpe Parisienne para ${q}.`;
+    } else if (hash.startsWith('#/comparar') || hash.startsWith('#/compare')) {
+      title = 'Comparador Head-to-Head de Sucursales · étoile LCP';
+      description = 'Análisis comparativo directo entre dos sucursales de La Crêpe Parisienne con Radar Operativo de 5 dimensiones.';
     } else if (hash === '#/dashboards') {
       title = 'Dashboards Analíticos y Alertas · étoile LCP';
       description = 'Cuadro de mando con distribución de volumen, ranking multitienda y alertas operativas proactivas.';

@@ -15,13 +15,18 @@ const targetLinePlugin = {
     if (!scale) return;
 
     const pixel = scale.getPixelForValue(opts.value);
+    const isDark = typeof darkMode !== 'undefined' && darkMode;
+
     ctx.save();
     ctx.beginPath();
     ctx.lineWidth = opts.lineWidth || 1.5;
-    ctx.strokeStyle = opts.borderColor || 'rgba(184, 144, 47, 0.75)'; // `--oro`
+    ctx.strokeStyle = opts.borderColor || (isDark ? '#E5B842' : '#B8902F');
     ctx.setLineDash(opts.borderDash || [5, 5]);
 
-    const isDark = typeof darkMode !== 'undefined' && darkMode;
+    if (isDark) {
+      ctx.shadowBlur = 5;
+      ctx.shadowColor = 'rgba(229, 184, 66, 0.35)';
+    }
 
     if (scale.isHorizontal()) {
       // Línea de meta vertical (e.g. en el eje X)
@@ -35,7 +40,8 @@ const targetLinePlugin = {
     ctx.stroke();
 
     if (opts.label) {
-      ctx.fillStyle = opts.color || (isDark ? '#B8902F' : '#c97d10');
+      ctx.shadowBlur = 0; // Desactivar sombra para nitidez del texto
+      ctx.fillStyle = opts.color || (isDark ? '#E5B842' : '#B8902F');
       ctx.font = opts.font || 'bold 10px Plus Jakarta Sans, sans-serif';
       ctx.textAlign = scale.isHorizontal() ? 'center' : 'right';
       ctx.textBaseline = 'bottom';
@@ -403,7 +409,7 @@ const Charts = {
             scale: 'x',
             value: typeof KpiMeta !== 'undefined' ? KpiMeta.ratingMinimo : 4.60,
             label: 'Meta 4.60',
-            borderColor: '#c97d10',
+            borderColor: '#E5B842',
             lineWidth: 2,
             borderDash: [4, 4]
           },
@@ -422,7 +428,7 @@ const Charts = {
           x: {
             min: 1.0,
             max: 5.0,
-            grid: { color: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' },
+            grid: { color: darkMode ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)' },
             ticks: {
               font: { size: 10, family: fontMono },
               color: darkMode ? '#8A9E94' : '#8A877C'
@@ -787,7 +793,7 @@ const Charts = {
             scale: 'y',
             value: typeof KpiMeta !== 'undefined' ? KpiMeta.volumenMeta : 15,
             label: `Meta ${typeof KpiMeta !== 'undefined' ? KpiMeta.volumenMeta : 15}`,
-            borderColor: '#c97d10',
+            borderColor: '#E5B842',
             lineWidth: 1.5,
             borderDash: [5, 5]
           },

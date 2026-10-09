@@ -270,24 +270,6 @@ function initReveal() {
   initSpotlightCards();
 }
 
-/**
- * Inicializador pasivo de Spotlight Cursor Tracking para tarjetas Crystal
- */
-function initSpotlightCards() {
-  if (typeof window === 'undefined') return;
-  document.querySelectorAll('.spotlight-card').forEach(card => {
-    if (card._hasSpotlight) return;
-    card._hasSpotlight = true;
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      card.style.setProperty('--mouse-x', `${x}px`);
-      card.style.setProperty('--mouse-y', `${y}px`);
-    }, { passive: true });
-  });
-}
-
 function getBranchById(id) {
   return SUCURSALES_META_ALL.find(s => s.id === id) || SUCURSALES_META.find(s => s.id === id);
 }
@@ -405,6 +387,7 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
   const currentHash = window.location.hash;
   const isHome = currentHash === '#/' || currentHash === '';
   const isDash = currentHash === '#/dashboards';
+  const isCompare = currentHash.startsWith('#/comparar') || currentHash.startsWith('#/compare');
   const isAbout = currentHash.startsWith('#/acerca');
 
   const back = showBack
@@ -437,6 +420,7 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
     nav = `<nav class="topbar-nav" id="mainNav">
       <a href="#/" class="topbar-link ${isHome ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
       ${showDashboards ? `<a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>` : ''}
+      <a href="#/comparar" class="topbar-link ${isCompare ? 'active' : ''}" title="Comparar">${svgIcon('chart')} <span>Comparar</span></a>
       <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
     </nav>`;
 
@@ -444,6 +428,7 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
       <div class="topbar-nav topbar-nav--desktop" id="mainNavDesktop">
         <a href="#/" class="topbar-link ${isHome ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
         ${showDashboards ? `<a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>` : ''}
+        <a href="#/comparar" class="topbar-link ${isCompare ? 'active' : ''}" title="Comparar">${svgIcon('chart')} <span>Comparar</span></a>
         <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
       </div>
     `;
@@ -574,10 +559,6 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
         <div class="topbar-actions">
           ${backToSelectBtn}
           ${regionSelect}
-          <button class="topbar-cmd-btn" onclick="if (typeof CommandPalette !== 'undefined') CommandPalette.open();" aria-label="Buscar (Ctrl+K)" title="Buscar sucursales, métricas o comandos (Ctrl+K)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <span class="cmd-kbd">⌘K</span>
-          </button>
           <button class="dark-toggle" onclick="toggleDark()" aria-label="Cambiar tema">${darkMode ? svgIcon('sun') : svgIcon('moon')}</button>
           ${logoutBtn}
         </div>
@@ -594,10 +575,10 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
 
       <!-- Menú desplegable móvil colapsable -->
       <div class="topbar-mobile-dropdown" id="topbarMobileDropdown">
-        <button class="topbar-mobile-link" onclick="if (typeof CommandPalette !== 'undefined') CommandPalette.open(); window.toggleMobileMenu();" style="border:none; background:none; text-align:left; width:100%; cursor:pointer; color:inherit;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <span>Buscar (⌘K)</span>
-        </button>
+        <a href="#/comparar" class="topbar-mobile-link" onclick="window.toggleMobileMenu();">
+          ${svgIcon('chart')}
+          <span>Comparar Tiendas</span>
+        </a>
         ${backToSelectBtnMobile}
         ${regionSelectMobile}
         <button class="topbar-mobile-link" onclick="toggleDark(); window.toggleMobileMenu();" style="border:none; background:none; text-align:left; width:100%; cursor:pointer;">
@@ -1651,13 +1632,13 @@ const CommandPaletteManager = {
     if (this._initialized) return;
     this._initialized = true;
 
-    // Registrar atajo de teclado Cmd+K / Ctrl+K
-    document.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        this.toggle();
-      }
-    });
+    // Registrar atajo de teclado Cmd+K / Ctrl+K (desactivado a petición de Ibrahim)
+    // document.addEventListener('keydown', (e) => {
+    //   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+    //     e.preventDefault();
+    //     this.toggle();
+    //   }
+    // });
   },
 
   toggle() {

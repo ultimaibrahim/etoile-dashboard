@@ -1459,6 +1459,10 @@ const SelectRegionView = {
         else if (currentRank === 2) medalClass = 'rank-silver';
         else if (currentRank === 3) medalClass = 'rank-bronze';
 
+        const k = 15;
+        const certPct = stats.count > 0 ? Math.min(100, Math.round((stats.count / (stats.count + k)) * 100)) : 0;
+        const uncertaintyTooltip = `Credibilidad Bayesiana: ${certPct}% certidumbre muestral (k=15, M=4.50★)`;
+
         return `
           <tr class="ranking-row">
             <td class="ranking-cell rank-col">
@@ -1470,7 +1474,14 @@ const SelectRegionView = {
             <td class="ranking-cell shift-col">${rankShiftHtml}</td>
             <td class="ranking-cell reviews-col">${stats.count} reseñas</td>
             <td class="ranking-cell rating-col">${stats.avg ? stats.avg.toFixed(2) + ' ★' : '0.00 ★'}</td>
-            <td class="ranking-cell score-col font-mono" style="font-weight:700;">${stats.adjusted ? stats.adjusted.toFixed(2) : '0.00'} pts</td>
+            <td class="ranking-cell score-col font-mono" style="font-weight:700;">
+              <div class="bayes-uncertainty-wrap" title="${uncertaintyTooltip}">
+                <div class="bayes-uncertainty-bar" aria-label="${uncertaintyTooltip}">
+                  <div class="bayes-uncertainty-fill" style="width:${certPct}%;"></div>
+                </div>
+                <span>${stats.adjusted ? stats.adjusted.toFixed(2) : '0.00'} pts</span>
+              </div>
+            </td>
           </tr>
         `;
       }).join('');

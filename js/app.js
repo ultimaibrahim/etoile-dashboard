@@ -311,6 +311,7 @@ async function initApp() {
   Router.register('brand', () => BrandView.render());
   Router.register('home', () => HomeView.render());
   Router.register('branch', params => BranchView.render(params));
+  Router.register('compare', params => CompareView.render(params));
   Router.register('quarter', params => QuarterView.render(params));
   Router.register('about', () => AboutView.render());
   Router.register('dashboards', () => DashboardsView.render());
@@ -320,10 +321,10 @@ async function initApp() {
   Router.init();
   Router.resolve();
 
-  // Inicializar Paleta de Comandos Cmd+K Global
-  if (typeof CommandPaletteManager !== 'undefined') {
-    CommandPaletteManager.init();
-  }
+  // Paleta de Comandos Cmd+K (desactivada temporalmente a petición de Ibrahim)
+  // if (typeof CommandPaletteManager !== 'undefined') {
+  //   CommandPaletteManager.init();
+  // }
 
   // Inicializar Detección de Red Offline en Tiempo Real
   if (typeof OfflineManager !== 'undefined') {

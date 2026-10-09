@@ -3,8 +3,10 @@
  */
 
 const BranchView = {
+  feedShiftFilter: null,
   async render(params, isHomeMode = false) {
     this.activeParams = params;
+    this.feedShiftFilter = null;
     const meta = getBranchById(params.id);
     if (!meta) {
       window.location.hash = '#/404';
@@ -423,6 +425,14 @@ const BranchView = {
           </div>
           
           <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
+            <a href="#/comparar?a=${meta.id}" class="btn-compare-link" style="padding: 10px 16px; font-size: 13px; height: 40px; border-radius: 12px; background: rgba(184, 144, 47, 0.16); color: var(--oro); border: 1px solid rgba(184, 144, 47, 0.35); font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; transition: all 0.2s ease;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+              <span>Comparar Tienda</span>
+            </a>
             <button class="print-btn-no-export" onclick="window.print()" style="padding: 10px 16px; font-size: 13px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.08); color: #FAF5EB; border: 1px solid rgba(255,255,255,0.12); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
               <span>Exportar PDF</span>
@@ -491,6 +501,14 @@ const BranchView = {
       </section>
 
       <section class="section r">
+        <div class="section-head">
+          <div class="section-title">Heatmap Operativo de Fricciones por Turno <span class="accent">${capitalizedMonth}</span></div>
+          <span class="section-sub">Matriz de 7 días × 4 turnos. Identifica turnos con mayores quejas (haz clic en cualquier celda para auditar sus reseñas)</span>
+        </div>
+        ${this._buildShiftHeatmap(reviews)}
+      </section>
+
+      <section class="section r" id="reviewsSection">
         <div class="section-head" style="display: flex; justify-content: space-between; align-items: flex-end;">
           <div>
             <div class="section-title">Reseñas</div>
@@ -498,6 +516,7 @@ const BranchView = {
           </div>
         </div>
         <div class="reviews-panel">
+          <div id="shiftFilterBannerWrap">${this._buildShiftFilterBanner()}</div>
           <div class="branch-feed-controls" style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">
             <div class="search-wrapper" style="max-width: 280px; width: 100%;">
               <span class="search-icon-svg">${svgIcon('search')}</span>
@@ -870,7 +889,20 @@ const BranchView = {
       const q = this.feedSearchQuery.toLowerCase();
       list = list.filter(r => r.text.toLowerCase().includes(q));
     }
-    return (this.feedSearchQuery || (this.feedStarFilter && this.feedStarFilter !== 'all')) ? list : list.slice(0, 5);
+    if (this.feedShiftFilter) {
+      const { day, shift } = this.feedShiftFilter;
+      list = list.filter(r => {
+        if (!r.publishedAtDate) return false;
+        const d = new Date(r.publishedAtDate);
+        if (d.getDay() !== day) return false;
+        const h = d.getHours();
+        if (shift === 0) return h < 13;
+        if (shift === 1) return h >= 13 && h < 17;
+        if (shift === 2) return h >= 17;
+        return true;
+      });
+    }
+    return (this.feedSearchQuery || (this.feedStarFilter && this.feedStarFilter !== 'all') || this.feedShiftFilter) ? list : list.slice(0, 5);
   },
 
   filterBranchFeed(query) {
@@ -893,6 +925,10 @@ const BranchView = {
     if (container) {
       container.innerHTML = this._buildRevList(this._getFilteredReviews(reviews));
     }
+    const bannerContainer = document.getElementById('shiftFilterBannerWrap');
+    if (bannerContainer) {
+      bannerContainer.innerHTML = this._buildShiftFilterBanner();
+    }
     const chipRow = document.querySelector('.branch-feed-controls .filter-row');
     if (chipRow) {
       const chips = chipRow.querySelectorAll('.chip');
@@ -906,6 +942,235 @@ const BranchView = {
         }
       });
     }
+  },
+
+  _buildShiftHeatmap(reviews) {
+    const DAYS = [
+      { key: 1, label: 'Lun', name: 'Lunes' },
+      { key: 2, label: 'Mar', name: 'Martes' },
+      { key: 3, label: 'Mié', name: 'Miércoles' },
+      { key: 4, label: 'Jue', name: 'Jueves' },
+      { key: 5, label: 'Vie', name: 'Viernes' },
+      { key: 6, label: 'Sáb', name: 'Sábado' },
+      { key: 0, label: 'Dom', name: 'Domingo' }
+    ];
+
+    const SHIFTS = [
+      { id: 0, label: 'Desayuno', hours: '09-13h', time: '09:00 - 12:59' },
+      { id: 1, label: 'Comida', hours: '13-17h', time: '13:00 - 16:59' },
+      { id: 2, label: 'Cena', hours: '17-22h+', time: '17:00 - 22:00+' }
+    ];
+
+    const matrix = {};
+    DAYS.forEach(d => {
+      matrix[d.key] = {};
+      SHIFTS.forEach(s => {
+        matrix[d.key][s.id] = { total: 0, negatives: 0, sumStars: 0, reviews: [] };
+      });
+    });
+
+    // Regla Inamovible LCP: Omitir estrictamente reseñas sin texto en analítica operativa/cualitativa
+    const reviewsWithText = reviews.filter(r => r.text && r.text.trim().length > 0);
+
+    reviewsWithText.forEach(r => {
+      if (!r.publishedAtDate) return;
+      const d = new Date(r.publishedAtDate);
+      const day = d.getDay();
+      const hour = d.getHours();
+
+      let shiftId = 2; // Cena (17:00+)
+      if (hour < 13) shiftId = 0; // Desayuno (09:00 - 12:59 y horas previas)
+      else if (hour >= 13 && hour < 17) shiftId = 1; // Comida (13:00 - 16:59)
+      else shiftId = 2; // Cena (17:00 - 22:00+)
+
+      if (matrix[day] && matrix[day][shiftId]) {
+        const cell = matrix[day][shiftId];
+        cell.total++;
+        cell.sumStars += (r.stars || 0);
+        if (r.stars <= 2) cell.negatives++;
+        cell.reviews.push(r);
+      }
+    });
+
+    const headerCols = DAYS.map(d => `<div class="heatmap-col-header">${d.label}</div>`).join('') + 
+                       `<div class="heatmap-col-header heatmap-col-marginal">Total Turno</div>`;
+
+    const rowsHtml = SHIFTS.map(s => {
+      let shiftTotal = 0;
+      let shiftNegatives = 0;
+      let shiftSumStars = 0;
+
+      const cellsHtml = DAYS.map(d => {
+        const cell = matrix[d.key][s.id];
+        shiftTotal += cell.total;
+        shiftNegatives += cell.negatives;
+        shiftSumStars += cell.sumStars;
+
+        const isSelected = this.feedShiftFilter && 
+                           this.feedShiftFilter.day === d.key && 
+                           this.feedShiftFilter.shift === s.id;
+        
+        let severityCls = 'hm-empty';
+        let badgeHtml = '';
+
+        if (cell.total > 0) {
+          const avg = (cell.sumStars / cell.total).toFixed(1);
+          if (cell.negatives >= 2) {
+            severityCls = 'hm-critical';
+            badgeHtml = `<span class="hm-badge">${cell.negatives} ⚠️</span>`;
+          } else if (cell.negatives === 1 || Number(avg) < 4.2) {
+            severityCls = 'hm-warning';
+            badgeHtml = `<span class="hm-badge">${cell.negatives > 0 ? '1 ⚠️' : `${avg}★`}</span>`;
+          } else {
+            severityCls = 'hm-optimal';
+            badgeHtml = `<span class="hm-badge">${avg}★</span>`;
+          }
+        }
+
+        const tooltip = `${d.name} (${s.label}, ${s.time}): ${cell.total} opiniones, ${cell.negatives} quejas`;
+
+        return `
+          <button 
+            type="button"
+            class="heatmap-cell ${severityCls} ${isSelected ? 'selected' : ''}" 
+            onclick="BranchView.filterShift(${d.key}, ${s.id}, '${d.name}', '${s.label}')"
+            title="${tooltip}"
+            aria-label="${tooltip}">
+            <span class="hm-count">${cell.total > 0 ? cell.total : '—'}</span>
+            ${badgeHtml}
+          </button>
+        `;
+      }).join('');
+
+      const shiftAvg = shiftTotal > 0 ? (shiftSumStars / shiftTotal).toFixed(1) : '—';
+      const shiftMarginalCell = `
+        <div class="heatmap-cell heatmap-cell-marginal" title="Total ${s.label}: ${shiftTotal} opiniones, ${shiftNegatives} quejas">
+          <span class="hm-count">${shiftTotal > 0 ? shiftTotal : '—'}</span>
+          <span class="hm-badge badge-marginal">${shiftNegatives > 0 ? `${shiftNegatives} ⚠️` : (shiftTotal > 0 ? `${shiftAvg}★` : '—')}</span>
+        </div>
+      `;
+
+      return `
+        <div class="heatmap-row">
+          <div class="heatmap-row-label">
+            <span class="hrl-shift">${s.label}</span>
+            <span class="hrl-hours">${s.hours}</span>
+          </div>
+          <div class="heatmap-cells-grid">
+            ${cellsHtml}
+            ${shiftMarginalCell}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Fila Marginal Inferior: Totales por Día de la Semana
+    let grandTotal = 0;
+    let grandNegatives = 0;
+    let grandSumStars = 0;
+
+    const dayCellsHtml = DAYS.map(d => {
+      let dt = 0;
+      let dn = 0;
+      let ds = 0;
+      SHIFTS.forEach(s => {
+        dt += matrix[d.key][s.id].total;
+        dn += matrix[d.key][s.id].negatives;
+        ds += matrix[d.key][s.id].sumStars;
+      });
+      grandTotal += dt;
+      grandNegatives += dn;
+      grandSumStars += ds;
+      const dAvg = dt > 0 ? (ds / dt).toFixed(1) : '—';
+      return `
+        <div class="heatmap-cell heatmap-cell-marginal" title="Total ${d.name}: ${dt} opiniones, ${dn} quejas">
+          <span class="hm-count">${dt > 0 ? dt : '—'}</span>
+          <span class="hm-badge badge-marginal">${dn > 0 ? `${dn} ⚠️` : (dt > 0 ? `${dAvg}★` : '—')}</span>
+        </div>
+      `;
+    }).join('');
+
+    const grandAvg = grandTotal > 0 ? (grandSumStars / grandTotal).toFixed(1) : '—';
+    const grandCellHtml = `
+      <div class="heatmap-cell heatmap-cell-marginal" style="border-left:2px solid var(--oro); background:rgba(184,144,47,0.08);" title="Total Semanal: ${grandTotal} opiniones con texto, ${grandNegatives} quejas">
+        <span class="hm-count" style="color:var(--oro);">${grandTotal > 0 ? grandTotal : '—'}</span>
+        <span class="hm-badge badge-marginal" style="background:var(--oro); color:#14181A; font-weight:800;">${grandNegatives > 0 ? `${grandNegatives} ⚠️` : `${grandAvg}★`}</span>
+      </div>
+    `;
+
+    const marginalRowHtml = `
+      <div class="heatmap-row heatmap-row-marginal">
+        <div class="heatmap-row-label">
+          <span class="hm-marginal-label">Total Día</span>
+        </div>
+        <div class="heatmap-cells-grid">
+          ${dayCellsHtml}
+          ${grandCellHtml}
+        </div>
+      </div>
+    `;
+
+    return `
+      <div class="heatmap-card">
+        <div class="heatmap-scroll-wrap">
+          <div class="heatmap-grid-container">
+            <div class="heatmap-header-row">
+              <div class="heatmap-corner-label">Turno / Día</div>
+              <div class="heatmap-days-grid">
+                ${headerCols}
+              </div>
+            </div>
+            ${rowsHtml}
+            ${marginalRowHtml}
+          </div>
+        </div>
+
+        <div class="heatmap-footer-legend">
+          <div class="hfl-item"><span class="hfl-dot hm-optimal"></span> Óptimo / Sin quejas</div>
+          <div class="hfl-item"><span class="hfl-dot hm-warning"></span> Atención (1 queja / &lt;4.2★)</div>
+          <div class="hfl-item"><span class="hfl-dot hm-critical"></span> Crítico (≥2 quejas ≤2★)</div>
+          <div class="hfl-hint">💡 Clic en cualquier turno para filtrar las opiniones inferiores</div>
+        </div>
+      </div>
+    `;
+  },
+
+  _buildShiftFilterBanner() {
+    if (!this.feedShiftFilter) return '';
+    const { dayName, shiftName } = this.feedShiftFilter;
+    return `
+      <div class="shift-filter-banner">
+        <div class="sfb-left">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--oro);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span>Turno Activo: <strong>${escapeHtml(dayName)} · ${escapeHtml(shiftName)}</strong></span>
+        </div>
+        <button class="sfb-reset-btn" onclick="BranchView.clearShiftFilter()">✕ Restablecer a todas las reseñas</button>
+      </div>
+    `;
+  },
+
+  filterShift(dayKey, shiftId, dayName, shiftName) {
+    if (this.feedShiftFilter && this.feedShiftFilter.day === dayKey && this.feedShiftFilter.shift === shiftId) {
+      this.clearShiftFilter();
+      return;
+    }
+    this.feedShiftFilter = { day: dayKey, shift: shiftId, dayName, shiftName };
+    this._updateRevListDOM();
+    
+    document.querySelectorAll('.heatmap-cell').forEach(cell => cell.classList.remove('selected'));
+    const targetCell = document.querySelector(`.heatmap-cell[onclick*="${dayKey}, ${shiftId}"]`);
+    if (targetCell) targetCell.classList.add('selected');
+
+    const reviewsSec = document.getElementById('reviewsSection');
+    if (reviewsSec) {
+      reviewsSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  },
+
+  clearShiftFilter() {
+    this.feedShiftFilter = null;
+    this._updateRevListDOM();
+    document.querySelectorAll('.heatmap-cell').forEach(cell => cell.classList.remove('selected'));
   },
 
   openProblemDetailModal(title, reviews) {

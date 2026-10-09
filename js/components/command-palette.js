@@ -216,16 +216,18 @@ const CommandPalette = (function() {
       return;
     }
 
+    const esc = typeof escapeHtml === 'function' ? escapeHtml : (s => String(s || ''));
+
     listEl.innerHTML = filteredItems.map((item, idx) => {
       const isSelected = idx === selectedIndex;
-      const badgeHtml = item.badge ? `<span class="cmd-item-badge">${item.badge}</span>` : '';
+      const badgeHtml = item.badge ? `<span class="cmd-item-badge">${esc(item.badge)}</span>` : '';
 
       return `
         <div class="cmd-item ${isSelected ? 'selected' : ''}" data-index="${idx}" role="option" aria-selected="${isSelected}">
           <div class="cmd-item-left">
-            <span class="cmd-item-category">${item.category}</span>
-            <span class="cmd-item-title">${item.title}</span>
-            <span class="cmd-item-sub">${item.subtitle}</span>
+            <span class="cmd-item-category">${esc(item.category)}</span>
+            <span class="cmd-item-title">${esc(item.title)}</span>
+            <span class="cmd-item-sub">${esc(item.subtitle)}</span>
           </div>
           <div class="cmd-item-right">
             ${badgeHtml}
@@ -347,10 +349,10 @@ const CommandPalette = (function() {
     });
   }
 
-  // Inicializar atajos al cargar
-  if (typeof window !== 'undefined') {
-    initGlobalShortcut();
-  }
+  // Atajo desactivado temporalmente a petición de Ibrahim para evitar interferencias
+  // if (typeof window !== 'undefined') {
+  //   initGlobalShortcut();
+  // }
 
   return {
     open: open,
