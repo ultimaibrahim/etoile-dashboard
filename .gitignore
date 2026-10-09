@@ -81,3 +81,5 @@ build/
 # ─── Cache de Netlify CLI/build ────────────────────────────
 .netlify/
 backups/
+# Generado por scripts/gbp-setup.js --sync-mappings (contiene IDs de cuenta de Google)
+supabase_gbp_mappings.sql

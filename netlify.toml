@@ -1,5 +1,5 @@
 [build.environment]
-  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,GBP_ACCOUNT_ID"
 
 [functions."gbp-sync-cron"]
   schedule = "*/30 * * * *"

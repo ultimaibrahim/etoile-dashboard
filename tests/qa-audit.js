@@ -248,6 +248,29 @@ assert(!classifySrc.includes(".from('reviews')") && !classifySrc.includes('class
     }
   })(rootDir);
   assert(hits.length === 0, `Sin secretos en archivos versionables${hits.length ? ': ' + hits.join(', ') : ''}`);
+  // Réplica del escaneo de secretos de Netlify: ningún valor de .env (salvo los omitidos) debe aparecer en archivos versionables
+  const envFile = path.join(rootDir, '.env');
+  if (fs.existsSync(envFile)) {
+    const omit = new Set(['SUPABASE_URL', 'GBP_ACCOUNT_ID']);
+    const values = fs.readFileSync(envFile, 'utf8').split('\n')
+      .map(l => l.trim()).filter(l => l && !l.startsWith('#') && l.includes('='))
+      .map(l => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()])
+      .filter(([k, v]) => v.length >= 8 && !omit.has(k));
+    const ignored = fs.readFileSync(path.join(rootDir, '.gitignore'), 'utf8').split('\n').map(l => l.trim().replace(/\/$/, '')).filter(l => l && !l.startsWith('#'));
+    const leaks = [];
+    (function walk(d) {
+      for (const n of fs.readdirSync(d, { withFileTypes: true })) {
+        if (skip.has(n.name) || n.name === '.env' || ignored.includes(n.name)) continue;
+        const fp = path.join(d, n.name);
+        if (n.isDirectory()) walk(fp);
+        else if (fs.statSync(fp).size < 2e6) {
+          let txt; try { txt = fs.readFileSync(fp, 'utf8'); } catch (e) { continue; }
+          for (const [k, v] of values) if (txt.includes(v)) leaks.push(`${k} en ${path.relative(rootDir, fp)}`);
+        }
+      }
+    })(rootDir);
+    assert(leaks.length === 0, `Ningún valor de .env aparece en archivos versionables (el build de Netlify fallaría)${leaks.length ? ': ' + leaks.join('; ') : ''}`);
+  }
   assert(/^\.env$/m.test(fs.readFileSync(path.join(rootDir, '.gitignore'), 'utf8')), '.env está en .gitignore');
   assert(/^backups\/$/m.test(fs.readFileSync(path.join(rootDir, '.gitignore'), 'utf8')), 'backups/ está en .gitignore');
 }
