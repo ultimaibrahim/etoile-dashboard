@@ -9,7 +9,73 @@ Este documento contiene el historial técnico completo de versiones de Étoile D
 
 Representa la era de la perfección en rendimiento, inmediatez absoluta y estética de alta dirección. Introduce el motor de almacenamiento reactivo SWR, Command Palette universal y herramientas analíticas avanzadas.
 
-### Version 3.5.0b Zenith UI - Atmósfera Crystal, Tooltips HTML y Command Palette (Septiembre 2026) [ACTUAL]
+### Version 3.5.0f Zenith - Ingesta en Producción desde Google Business Profile, Conciliación de Historial y Sync Programado (Octubre 2026) [ACTUAL]
+* **Acceso a la API oficial verificado de punta a punta**: token OAuth renovado (`scripts/gbp-auth.js`), cuenta `accounts/100721914121037298352`, 45 ubicaciones listadas y reseñas leídas con éxito en las 45 (Google My Business API v4 habilitada en el proyecto de Cloud).
+* **Vinculación de sucursales (`scripts/gbp-setup.js --sync-mappings`)**: empata por nombre normalizado las 33 sucursales de `locations` con su `gbp_location_id`, descartando fichas duplicadas (`metadata.duplicateLocation`), cerradas permanentemente y sin acceso. Genera `supabase_gbp_mappings.sql` para auditoría. Alias: `Plaza Península Tijuana → peninsula`, `The Park San Luis Potosí → the-park` (la ficha "San Luis" es una ficha vieja y no se sincroniza).
+* **Conciliación con el historial de Apify (`netlify/functions/gbp-reconcile.js`)**: los IDs de Apify (`Ci9D…`) no coinciden con los `reviewId` de Google (`AbFvOq…`), por lo que un upsert directo duplicaba ~10 mil filas y perdía las clasificaciones. La conciliación empata cada reseña, en orden de confianza, por: (1) `raw_gbp_payload.reviewId` ya vinculado, (2) estrellas + marca de tiempo ±2 s, (3) estrellas + texto normalizado, (4) sin texto + estrellas + ±1 día, (5) mismo texto aunque cambien las estrellas (reseña editada). Conserva el `id` histórico y no envía `classification`, por lo que el upsert no la pisa.
+* **Carga inicial ejecutada**: 10,398 reseñas leídas de Google; 9,485 empatadas con el historial, 914 nuevas insertadas; 0 filas viejas perdidas; 5,232 clasificaciones intactas; 0 IDs duplicados. Respaldo previo en `backups/` (ignorado por git).
+* **Fechas exactas**: las filas empatadas adoptan el `createTime` oficial de Google. 927 reseñas cambiaron de fecha (Apify aproximaba las antiguas con fechas relativas); 115 cruzaron de trimestre, por lo que los acumulados trimestrales históricos pueden variar ligeramente.
+* **Endurecimiento de `gbp-sync.js`**: paginación con `nextPageToken` (`?full=true` historial completo, por defecto las 50 más recientes por `updateTime`), estrellas desconocidas se omiten en lugar de inventarse como 5★, `is_local_guide` ya no se infiere (la API no lo expone), limpieza de la traducción automática de Google anexada al comentario (77% de los textos), texto vacío guardado como `NULL`, pausa entre llamadas para respetar la cuota.
+* **Sync programado (`netlify/functions/gbp-sync-cron.js`)**: cada 30 min procesa 1/6 de las sucursales (`?slot=&slots=`), refrescando cada sucursal cada 3 h dentro del límite de tiempo de Netlify. Protegido con `GBP_SYNC_SECRET`.
+* **Clasificación (`classify-review.js`)**: escribía en la vista `reviews` una columna inexistente (`classification_status`); ahora escribe en `reviews_core`. El sync solo clasifica quejas (≤2★ con texto) nuevas o sin clasificar, con el clasificador local (sin LLM), y nunca re-clasifica el historial.
+* **Reparaciones SQL (`supabase_gbp_fixes.sql`)**: `review_months` apuntaba a la tabla vieja renombrada y terminaba en agosto 2026, por lo que el calendario del frontend no mostraría septiembre ni octubre. Incluye además, comentado, el endurecimiento de lectura anónima de `reviews`/`reviews_core` (`security_invoker`).
+* **QA**: `tests/gbp-sync.test.js` (17 pruebas unitarias de conciliación, limpieza y parseo) integrado a `tests/qa-audit.js`, junto con verificación de sintaxis del pipeline, del cron en `netlify.toml` y escaneo de secretos en archivos versionables.
+
+### Version 3.5.0e Zenith - Arquitectura Oficial Google Business Profile (GBP API) y Reestructuración de Supabase (Septiembre 2026)
+* **Deshabilitación Definitiva de Scraping vía Apify (`netlify/functions/apify-ingest.js`)**:
+  - Endpoint legado retirado formalmente respondiendo HTTP `410 Gone`, cancelando consumo de scrapers externos y migrando el pipeline hacia la API oficial de Google Business Profile.
+* **Reestructuración de Base de Datos en Supabase (`supabase_gbp_migration.sql`)**:
+  - Creación de tabla relacional normalizada `locations` con catálogo de las 33 sucursales de La Crêpe Parisienne, vinculación a regiones y slots para `gbp_account_id`, `gbp_location_id` y `google_place_id`.
+  - Creación de tabla `reviews_core` con tipado estricto (`SMALLINT`, `TIMESTAMPTZ`, llaves foráneas a `locations.id` y payload crudo `raw_gbp_payload` para auditoría).
+  - Migración idempotente de todo el histórico de reseñas preexistentes en `reviews` a `reviews_core`.
+  - Capa de retrocompatibilidad absoluta mediante vista `CREATE VIEW reviews AS ...` y `quarterly_stats` para garantizar 0 roturas en `DataLoader` y en las vistas del frontend.
+  - Blindaje con Row Level Security (RLS) habilitando `SELECT` público e `INSERT/UPDATE` reservado a `service_role`.
+* **Módulo Oficial de Ingestión GBP (`netlify/functions/gbp-sync.js`)**:
+  - Pipeline de sincronización directa con Google OAuth2 (`GBP_REFRESH_TOKEN`), paginación nativa de Google Business Profile API y mapeo atómico hacia `reviews_core`.
+  - Detección e ingestión de respuestas del propietario en tiempo real (`reviewReply`) y clasificación semántica de quejas (1-2★).
+* **Herramienta CLI de Inicialización y Diagnóstico GBP (`scripts/gbp-setup.js`)**:
+  - Script administrativo para listar cuentas, consultar ubicaciones de Google y diagnosticar el estado de vinculación de las sucursales con Supabase.
+* **Suite de QA Reforzada (`tests/qa-audit.js`)**:
+  - Validación sintáctica y estructural de los nuevos artefactos de base de datos y backend (77/77 pruebas aprobadas con 0 errores).
+
+### Version 3.5.0d Zenith - Totales Marginales en Heatmap, Contraste AAA y Óptica Ejecutiva (Septiembre 2026)
+* **Claridad Visual Absoluta y Erradicación de Gráficos Confusos (`js/views/compare.js`)**:
+  - Eliminación de gráficos abstractos o sobrepuestos en la vista comparativa; enfoque estricto en el **Radar de 5 Ejes** con paleta contrastada (Oro Champagne `#E5B842` vs Salvia Esmeralda `#5CE1A6`) y la **Tabla de Contraste Directo con Insignias de Ganador**, garantizando legibilidad instantánea sin requerir conocimientos técnicos.
+* **Totales Marginales en Heatmap Operativo ("Show the Totals" de Chartosaur) (`js/views/branch.js`)**:
+  - Incorporación de columna marginal derecha (`Total Turno`) para identificar el turno más conflictivo de toda la semana y fila marginal inferior (`Total Día`) para auditar la carga diaria.
+  - Celda de Gran Total semanal consolidado en esquina inferior derecha.
+  - Apego estricto a la Regla Inamovible LCP #11: todos los marginales excluyen rigurosamente reseñas sin texto.
+* **Micro-Intervalo de Incertidumbre Bayesiana (`js/views/select-region.js`)**:
+  - Incorporación de micro-indicador visual de certidumbre muestral ($w = \text{count} / (\text{count} + 15)$) en la columna de puntajes ajustados de la tabla de Standings regionales.
+  - Proporciona transparencia estadística inmediata sobre tiendas con pocas reseñas frente a grandes complejos.
+* **Refinamiento Cromático y Óptica de Alto Contraste AAA (`css/styles.css`, `js/charts.js`)**:
+  - Elevación de contraste de texto secundario en modo oscuro `--text-dim: #8E9D93` (ratio 5.4:1 WCAG AAA).
+  - Incorporación de tokens `--dv-oro` y `--dv-sage` para visualizaciones de alta fidelidad.
+  - Resplandor luminoso difuso (`shadowBlur: 5`) en líneas de meta regional (`TargetLinePlugin`).
+  - Atenuación de gridlines redundantes (anti-distracción) en gráficos de ranking y volumen.
+  - Suite de pruebas de QA ampliada en `tests/qa-audit.js` (69/69 pruebas aprobadas con 0 errores).
+
+### Version 3.5.0c Zenith Intelligence - Heatmap Operativo (3 Turnos), Comparador Head-to-Head y Exclusión Estricta de Reseñas Sin Texto (Septiembre 2026)
+* **Heatmap Operativo de Fricciones por Turnos Reales (`js/views/branch.js`)**:
+  - Matriz visual e interactiva de 7 días de la semana × 3 turnos operativos oficiales de restaurante (Desayuno `09:00 - 12:59`, Comida `13:00 - 16:59` y Cena `17:00 - 22:00+`), eliminando la franja obsoleta de merienda.
+  - Algoritmo de ponderación de criticidad por turno basado en incidencias de ≤2★ y cálculo de promedio por celda.
+  - Filtrado reactivo en 1 clic: al pulsar una celda, la tabla de opiniones inferior filtra instantáneamente las reseñas correspondientes a ese turno específico, con pill banner y botón de restablecimiento.
+* **Regla Inamovible LCP: Exclusión Estricta de Reseñas Sin Texto (`branch.js`, `compare.js`)**:
+  - Las opiniones sin texto descriptivo (`!r.text || r.text.trim().length === 0`) se contabilizan estrictamente para volumen bruto (`count`) y promedio global (`avg`).
+  - Quedan 100% omitidas del Heatmap Operativo, quejas críticas, tasa de fricción y análisis temático (servicio, calidad, precio) para garantizar diagnósticos procesables sin ruido ni quejas vacías.
+* **Comparador Head-to-Head de Sucursales (`js/views/compare.js`, ruta `#/comparar`)**:
+  - Módulo analítico split-screen con selectores squircle para contrastar libremente dos sucursales (soporta precarga mediante hash `#/comparar?a=andares&b=gal-gdl`).
+  - Gráfico de **Radar Operativo de 5 Dimensiones** en Chart.js (CSAT General, Servicio, Calidad, Valor y Tasa de Respuesta).
+  - Píldora flotante con cálculo automatizado de deltas en rating y volumen mensual.
+  - Tabla matriz directa parámetro por parámetro con insignias dinámicas de tienda líder.
+  - Generador automatizado de Veredicto Ejecutivo de Desempeño.
+* **Blindaje de Estabilidad y Desactivación de Atajo Global**:
+  - Desactivación de atajos conflictivos de teclado para garantizar 100% de estabilidad y rendimiento óptimo en todas las vistas.
+  - Integración de ruta `#/comparar` en `Router.match` y `Router.updateRouteMeta` con metadatos reactivos.
+  - Enlaces de navegación incorporados en la Topbar, menú móvil y acceso rápido en la cabecera de cada sucursal.
+  - Suite de pruebas de QA actualizada en `tests/qa-audit.js` (61/61 pruebas aprobadas con 0 errores).
+
+### Version 3.5.0b Zenith UI - Atmósfera Crystal, Tooltips HTML y Command Palette (Septiembre 2026)
 * **Command Palette Universal Omnibox (`js/components/command-palette.js`)**:
   - Modal flotante accesible vía `Ctrl + K` (Windows/Linux) y `Cmd + K` (macOS), o toque en el nuevo botón squircle `⌘K` del Topbar.
   - Búsqueda difusa instantánea (<1ms) con soporte para todas las sucursales nacionales, rutas del sistema, periodos y acciones globales.

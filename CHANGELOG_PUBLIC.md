@@ -5,13 +5,21 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 
 ---
 
-## Versión 3.5.0 Zenith — Interacción Élite y Apertura Instantánea (Septiembre 2026) [ACTUAL]
-* ⚡ **Carga Instantánea (<5ms)**: La plataforma ahora abre al instante con tus datos guardados localmente, eliminando tiempos de espera y pantallas de carga.
-* 🔍 **Buscador Global Instantáneo (`Ctrl + K` / `Cmd + K`)**: Nuevo acceso rápido universal para saltar a cualquier sucursal del país, periodo o tablero en milisegundos usando el teclado o el botón `⌘K` de la barra superior.
+## Versión 3.5.0 Zenith — Inteligencia Operativa, Heatmaps y Comparador (Septiembre 2026) [ACTUAL]
+* ⚖️ **Comparador Directo y Radar Operativo (`#/comparar`)**: Visualización intuitiva con Radar de 5 Dimensiones y Matriz Directa con badges de tienda líder. Diseñado para que cualquier colaborador entienda al primer golpe de vista las fortalezas y áreas de oportunidad sin gráficas confusas ni sobreingeniería.
+* 🔢 **Totales Marginales en el Heatmap Semanal ("Show the Totals")**: El mapa de calor de turnos ahora incluye una columna de **Total Turno** a la derecha y una fila de **Total Día** en la parte inferior. De un vistazo, cualquier gerente puede saber cuál es el turno con más quejas de toda la semana sin tener que sumar casilla por casilla.
+* 🎯 **Auditoría de Calidad Real (Exclusión de Reseñas Sin Texto)**: Los análisis de fricciones, quejas críticas y turnos operativos ahora procesan exclusivamente opiniones que contienen comentarios escritos. Las calificaciones vacías o sin texto únicamente se consideran para el volumen total y la nota promedio, asegurando que los reportes de servicio reflejen situaciones 100% reales y auditables.
+* 👁️ **Transparencia Estadística en Standings**: En la tabla de posiciones regionales, cada puntaje ahora cuenta con un micro-indicador de certidumbre muestral, distinguiendo con honestidad a sucursales con cientos de opiniones de aquellas recién abiertas con pocas valoraciones.
+* 🔌 **Reseñas directo desde Google, sin intermediarios**: Étoile ya lee las opiniones de las 33 sucursales desde la cuenta oficial de Google Business Profile. Se acabó la extracción manual y el costo de herramientas externas. Se importaron todas las reseñas nuevas (914) sin duplicar ni perder el historial ni las clasificaciones de quejas.
+* 🔄 **Actualización automática**: las opiniones se refrescan solas cada pocas horas, sucursal por sucursal.
+* 📅 **Fechas más exactas**: las reseñas antiguas ahora usan la fecha real que registra Google. Algunas pasaron a otro mes o trimestre, así que cifras históricas por trimestre pueden variar un poco respecto a reportes anteriores.
+* 🧹 **Textos limpios**: se elimina la traducción automática al inglés que Google agrega a muchos comentarios, para que las palabras clave y las quejas se midan solo sobre lo que escribió el cliente.
+* 👁️‍🗨️ **Mayor Nitidez y Contraste Visual**: Refinamiento en la paleta de colores del modo oscuro con textos secundarios más legibles y líneas de meta más brillantes que facilitan la lectura en cualquier iluminación.
+* ⚖️ **Comparador Head-to-Head de Sucursales (`#/comparar`)**: Herramienta ejecutiva split-screen para enfrentar dos tiendas frente a frente (*ej. Andares vs Galerías*), con gráfico de **Radar Operativo de 5 Dimensiones**, tabla de contraste numérico directo y veredicto ejecutivo automatizado.
+* ⚡ **Carga Instantánea (<5ms)**: La plataforma abre al instante con datos guardados localmente, eliminando tiempos de espera y pantallas de carga.
 * 📊 **Tarjetas Flotantes de Gráficas de Alta Definición**: Gráficos con etiquetas interactivas de cristal, tipografía editorial y micro-indicadores visuales que reemplazan los recuadros planos anteriores.
-* 🌌 **Atmósfera Visual y Brillo Interactivo**: Textura táctil cinematográfica suave y halos de luz dorada que reaccionan elegantemente al movimiento del cursor en los tableros.
-* 🔄 **Actualización Inteligente en Segundo Plano**: Al abrir el tablero, la información se muestra de inmediato mientras el sistema verifica discretamente si llegaron nuevas reseñas, actualizando las cifras de manera fluida y sin saltos.
-* 📶 **Modo Sin Conexión Total**: Puedes consultar reportes, sucursales y notas históricas en zonas con baja señal o sin internet en tienda.
+* 🔄 **Actualización Inteligente en Segundo Plano**: Al abrir el tablero, la información se muestra de inmediato mientras el sistema verifica discretamente si llegaron nuevas reseñas.
+* 📶 **Modo Sin Conexión Total**: Consulta reportes, sucursales y notas históricas en zonas con baja señal o sin internet en tienda.
 
 ---
 
