@@ -79,6 +79,7 @@ const jsFiles = [
   'js/views/brand.js',
   'js/views/home.js',
   'js/views/branch.js',
+  'js/views/compare.js',
   'js/views/quarter.js',
   'js/views/about.js',
   'js/views/dashboards.js',
@@ -137,6 +138,118 @@ if (fs.existsSync(path.join(rootDir, 'index.html'))) {
 if (fs.existsSync(path.join(rootDir, 'netlify.toml'))) {
   const toml = fs.readFileSync(path.join(rootDir, 'netlify.toml'), 'utf8');
   assert(toml.includes('for = "/*.map"') && toml.includes('status = 404'), 'netlify.toml bloquea sourcemaps expuestos con código 404');
+}
+
+// 10. Verificación de Reglas Operativas LCP (Turnos y Exclusión de Reseñas Sin Texto)
+const branchJs = fs.readFileSync(path.join(rootDir, 'js/views/branch.js'), 'utf8');
+assert(!branchJs.includes("label: 'Merienda'"), 'branch.js no incluye turno Merienda');
+assert(branchJs.includes("label: 'Desayuno'") && branchJs.includes("label: 'Comida'") && branchJs.includes("label: 'Cena'"), 'branch.js define exactamente los 3 turnos (Desayuno, Comida, Cena)');
+assert(branchJs.includes('reviews.filter(r => r.text && r.text.trim().length > 0)'), 'branch.js omite estrictamente reseñas sin texto en el heatmap');
+
+const compareJs = fs.readFileSync(path.join(rootDir, 'js/views/compare.js'), 'utf8');
+assert(compareJs.includes('bReviews.filter(r => r.text && r.text.trim().length > 0)'), 'compare.js omite estrictamente reseñas sin texto en métricas cualitativas y quejas');
+
+// 11. Verificación de Luxury DataViz & Óptica Visual
+const cssFile = fs.readFileSync(path.join(rootDir, 'css/styles.css'), 'utf8');
+assert(cssFile.includes('--dv-oro:') && cssFile.includes('--dv-sage:'), 'styles.css contiene tokens de paleta DataViz de lujo (--dv-oro, --dv-sage)');
+assert(cssFile.includes('--text-dim:     #8E9D93;'), 'styles.css eleva contraste de textos secundarios a ratio WCAG AAA (#8E9D93)');
+assert(cssFile.includes('.heatmap-cell-marginal') && cssFile.includes('.heatmap-col-marginal'), 'styles.css contiene estilos para totales marginales del heatmap');
+assert(cssFile.includes('.bayes-uncertainty-bar'), 'styles.css contiene micro-indicador de incertidumbre bayesiana');
+
+assert(branchJs.includes('Total Turno') && branchJs.includes('Total Día'), 'branch.js implementa totales marginales en el Heatmap Operativo');
+assert(compareJs.includes('compareRadarChart'), 'compare.js renderiza el radar de 5 dimensiones limpio');
+
+const selectRegionJs = fs.readFileSync(path.join(rootDir, 'js/views/select-region.js'), 'utf8');
+assert(selectRegionJs.includes('bayes-uncertainty-wrap'), 'select-region.js muestra el intervalo de credibilidad bayesiana');
+
+// 12. Verificación de Arquitectura GBP y Reestructuración de Supabase
+const migrationSqlPath = path.join(rootDir, 'supabase_gbp_migration.sql');
+assert(fs.existsSync(migrationSqlPath), 'Script de migración supabase_gbp_migration.sql existe');
+if (fs.existsSync(migrationSqlPath)) {
+  const sql = fs.readFileSync(migrationSqlPath, 'utf8');
+  assert(sql.includes('CREATE TABLE IF NOT EXISTS locations'), 'supabase_gbp_migration.sql crea tabla locations');
+  assert(sql.includes('CREATE TABLE IF NOT EXISTS reviews_core'), 'supabase_gbp_migration.sql crea tabla normalizada reviews_core');
+  assert(sql.includes('CREATE OR REPLACE VIEW reviews AS'), 'supabase_gbp_migration.sql crea vista retrocompatible reviews');
+  assert(sql.includes('CREATE OR REPLACE VIEW quarterly_stats AS'), 'supabase_gbp_migration.sql actualiza vista quarterly_stats');
+}
+
+const apifyFn = fs.readFileSync(path.join(rootDir, 'netlify/functions/apify-ingest.js'), 'utf8');
+assert(apifyFn.includes('410') && apifyFn.includes('DEPRECATED'), 'apify-ingest.js deshabilitado limpiamente con código 410 Gone');
+
+const gbpSyncPath = path.join(rootDir, 'netlify/functions/gbp-sync.js');
+assert(fs.existsSync(gbpSyncPath), 'netlify/functions/gbp-sync.js existe');
+if (fs.existsSync(gbpSyncPath)) {
+  const code = fs.readFileSync(gbpSyncPath, 'utf8');
+  try {
+    new vm.Script(code);
+    assert(true, 'Sintaxis JS válida sin errores: netlify/functions/gbp-sync.js');
+  } catch (err) {
+    assert(false, `Error de sintaxis en gbp-sync.js: ${err.message}`);
+  }
+}
+
+const gbpSetupPath = path.join(rootDir, 'scripts/gbp-setup.js');
+assert(fs.existsSync(gbpSetupPath), 'scripts/gbp-setup.js existe');
+if (fs.existsSync(gbpSetupPath)) {
+  const code = fs.readFileSync(gbpSetupPath, 'utf8');
+  try {
+    new vm.Script(code);
+    assert(true, 'Sintaxis JS válida sin errores: scripts/gbp-setup.js');
+  } catch (err) {
+    assert(false, `Error de sintaxis en gbp-setup.js: ${err.message}`);
+  }
+}
+
+const gbpAuthPath = path.join(rootDir, 'scripts/gbp-auth.js');
+assert(fs.existsSync(gbpAuthPath), 'scripts/gbp-auth.js existe');
+if (fs.existsSync(gbpAuthPath)) {
+  const code = fs.readFileSync(gbpAuthPath, 'utf8');
+  try {
+    new vm.Script(code);
+    assert(true, 'Sintaxis JS válida sin errores: scripts/gbp-auth.js');
+  } catch (err) {
+    assert(false, `Error de sintaxis en gbp-auth.js: ${err.message}`);
+  }
+}
+
+// 13. Pipeline GBP: funciones, cron y pruebas unitarias
+['netlify/functions/gbp-sync.js', 'netlify/functions/gbp-reconcile.js', 'netlify/functions/gbp-sync-cron.js', 'netlify/functions/classify-review.js'].forEach(f => {
+  const fp = path.join(rootDir, f);
+  assert(fs.existsSync(fp), `${f} existe`);
+  if (fs.existsSync(fp)) {
+    try { new vm.Script(fs.readFileSync(fp, 'utf8')); assert(true, `Sintaxis JS válida: ${f}`); }
+    catch (err) { assert(false, `Error de sintaxis en ${f}: ${err.message}`); }
+  }
+});
+const tomlText = fs.readFileSync(path.join(rootDir, 'netlify.toml'), 'utf8');
+assert(/\[functions\."gbp-sync-cron"\][\s\S]*schedule\s*=/.test(tomlText), 'netlify.toml programa gbp-sync-cron');
+const classifySrc = fs.readFileSync(path.join(rootDir, 'netlify/functions/classify-review.js'), 'utf8');
+assert(!classifySrc.includes(".from('reviews')") && !classifySrc.includes('classification_status'), 'classify-review escribe en reviews_core (no en la vista reviews)');
+{
+  const { spawnSync } = require('child_process');
+  const r = spawnSync(process.execPath, [path.join(rootDir, 'tests/gbp-sync.test.js')], { encoding: 'utf8' });
+  assert(r.status === 0, `tests/gbp-sync.test.js (pruebas unitarias GBP): ${(r.stdout || '').trim().split('\n').pop()}`);
+}
+
+// 14. Higiene de secretos: nada sensible en archivos versionables
+{
+  const patterns = [/sb_secret_[A-Za-z0-9_-]{20,}/, /GOCSPX-[A-Za-z0-9_-]{20,}/, /nfp_[A-Za-z0-9]{30,}/, /eyJ[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{20,}/, /1\/\/0[A-Za-z0-9_-]{60,}/];
+  const skip = new Set(['node_modules', '.git', 'backups']);
+  const hits = [];
+  (function walk(d) {
+    for (const n of fs.readdirSync(d, { withFileTypes: true })) {
+      if (skip.has(n.name) || n.name === '.env') continue;
+      const fp = path.join(d, n.name);
+      if (n.isDirectory()) walk(fp);
+      else if (/\.(js|json|html|md|toml|sql|txt|css)$/.test(n.name) && fs.statSync(fp).size < 2e6) {
+        const txt = fs.readFileSync(fp, 'utf8');
+        if (patterns.some(re => re.test(txt))) hits.push(path.relative(rootDir, fp));
+      }
+    }
+  })(rootDir);
+  assert(hits.length === 0, `Sin secretos en archivos versionables${hits.length ? ': ' + hits.join(', ') : ''}`);
+  assert(/^\.env$/m.test(fs.readFileSync(path.join(rootDir, '.gitignore'), 'utf8')), '.env está en .gitignore');
+  assert(/^backups\/$/m.test(fs.readFileSync(path.join(rootDir, '.gitignore'), 'utf8')), 'backups/ está en .gitignore');
 }
 
 console.log('\n──────────────────────────────────────────────────────');
