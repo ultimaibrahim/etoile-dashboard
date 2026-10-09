@@ -80,3 +80,4 @@ build/
 
 # ─── Cache de Netlify CLI/build ────────────────────────────
 .netlify/
+backups/
