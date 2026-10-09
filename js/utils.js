@@ -1387,10 +1387,10 @@ const LcpWalkthrough = {
     if (userRole === 'gerente') {
       roleTextHtml = `
         <p style="font-size:13.5px; color:var(--text); line-height:1.6; margin-bottom:20px;">
-          Tu rol de <strong>Gerente de Sucursal</strong> te permite supervisar la reputación de tu tienda. En tu panel podrás medir el volumen de opiniones, la calidad de reseñas y dar seguimiento a alertas operativas.
+          Tu rol de <strong>Gerente de Sucursal</strong> te permite supervisar la reputación de tu tienda y de tu región. En tu panel podrás medir el volumen de opiniones, la calidad de reseñas y dar seguimiento a alertas operativas.
         </p>
         <div style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.18); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--oro); line-height:1.5; text-align:left;">
-          <strong>Sucursal asignada:</strong> Estás asignado a <strong>${sucursalName || 'tu sucursal'}</strong>. Tu panel mostrará directamente las estadísticas de esta tienda.
+          <strong>Sucursal asignada:</strong> Estás asignado a <strong>${sucursalName || 'tu sucursal'}</strong>. Verás tu tienda y también el resto de las sucursales de tu región para comparar tu desempeño.
         </div>
       `;
     } else if (userRole === 'zonal') {

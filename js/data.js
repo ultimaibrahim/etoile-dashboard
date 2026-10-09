@@ -87,11 +87,9 @@ let SUCURSALES_META = SUCURSALES_META_ALL.filter(s => s.region === activeRegion)
 function setRegionActiva(region) {
   if (REGION_NAME_MAP[region]) {
     activeRegion = region;
-    let base = SUCURSALES_META_ALL.filter(s => s.region === activeRegion);
-    if (typeof AppAuth !== 'undefined' && AppAuth.profile && AppAuth.profile.rol === 'gerente' && AppAuth.profile.sucursal) {
-      base = base.filter(s => s.id === AppAuth.profile.sucursal);
-    }
-    SUCURSALES_META = base;
+    // El gerente ve todas las sucursales de su región (la base lo impone en visible_location_ids());
+    // su tienda asignada sigue disponible vía AppAuth.getUserSucursal() para destacarla.
+    SUCURSALES_META = SUCURSALES_META_ALL.filter(s => s.region === activeRegion);
     return true;
   }
   return false;
