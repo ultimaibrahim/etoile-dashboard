@@ -460,7 +460,7 @@ const AboutView = {
               <svg class="faq-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
             <div class="faq-answer">
-              Las opiniones se ingieren de forma continua vía webhooks de Apify directamente a la base de datos de Supabase, manteniendo los cuadros de mando actualizados de forma sub-segundo con soporte de reintentos seguros.
+              Las opiniones se leen directamente de la API oficial de Google Business Profile y se sincronizan con la base de datos cada 30 minutos, de modo que los cuadros de mando reflejan las reseñas nuevas, ediciones y respuestas con un desfase máximo de media hora.
             </div>
           </div>
         </div>

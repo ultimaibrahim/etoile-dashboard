@@ -9,7 +9,7 @@ Module._load = function (req, ...a) { return req === '@supabase/supabase-js' ? {
 
 const { reconcile } = require('../netlify/functions/gbp-reconcile');
 const { _internal } = require('../netlify/functions/gbp-sync');
-const { parseStars, cleanComment } = _internal;
+const { parseStars, cleanComment, isUnchanged } = _internal;
 
 let pass = 0, fail = 0;
 const t = (name, cond, extra = '') => {
@@ -66,6 +66,14 @@ const first = reconcile([row('LEG1', 4, 'hola', T0)], [row('GBP1', 4, 'hola', T0
 const db2 = [row('LEG1', 4, 'hola', T0, { raw_gbp_payload: { reviewId: 'GBP1' } }), row('GBP2', 3, 'nueva', '2026-09-01T00:00:00Z', { raw_gbp_payload: { reviewId: 'GBP2' } })];
 const second = reconcile(db2, [row('GBP1', 4, 'hola', T0), row('GBP2', 3, 'nueva', '2026-09-01T00:00:00Z')]);
 t('reconcile: idempotente (2ª pasada = 0 inserciones, mismos ids)', first.rows.map(x => x.id).join() === 'LEG1,GBP2' && second.stats.inserted === 0 && second.rows.map(x => x.id).join() === 'LEG1,GBP2');
+
+// ── isUnchanged (el sync omite del upsert lo que no cambió)
+const stored = { stars: 4, text: 'hola', reply_text: null, reviewer_name: 'Ana', published_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-02T00:00:00Z', reply_published_at: null, raw_gbp_payload: { reviewId: 'G1' } };
+const incomingSame = { stars: 4, text: 'hola', reply_text: null, reviewer_name: 'Ana', published_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-02T00:00:00Z', reply_published_at: null };
+t('isUnchanged: idéntica (fechas en otro formato) -> true', isUnchanged(stored, incomingSame) === true);
+t('isUnchanged: cambia texto/estrellas/respuesta/updated_at -> false',
+  [{ text: 'otra' }, { stars: 2 }, { reply_text: 'gracias' }, { updated_at: '2026-02-01T00:00:00Z' }].every(c => !isUnchanged(stored, { ...incomingSame, ...c })));
+t('isUnchanged: fila histórica sin vincular -> false (se escribe para vincularla)', isUnchanged({ ...stored, raw_gbp_payload: null }, incomingSame) === false);
 
 console.log(`\n${fail === 0 ? '✅ TODAS LAS PRUEBAS PASARON' : '❌ HAY FALLAS'} — ${pass} ok, ${fail} fallas`);
 process.exit(fail === 0 ? 0 : 1);

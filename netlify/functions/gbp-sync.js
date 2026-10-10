@@ -50,13 +50,15 @@ function cleanComment(raw) {
 }
 
 
-/** Lee todas las filas de una sucursal en reviews_core (paginado de 1000 en 1000). */
+const EXISTING_COLS = 'id, stars, text, published_at, updated_at, reply_text, reply_published_at, reviewer_name, raw_gbp_payload';
+
+/** Lee todas las filas de una sucursal en reviews_core (paginado de 1000 en 1000). Solo para el historial completo. */
 async function loadExistingReviews(supabase, locationId) {
   const out = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
       .from('reviews_core')
-      .select('id, stars, text, published_at, raw_gbp_payload')
+      .select(EXISTING_COLS)
       .eq('location_id', locationId)
       .order('published_at', { ascending: false })
       .range(from, from + 999);
@@ -65,6 +67,38 @@ async function loadExistingReviews(supabase, locationId) {
     if (data.length < 1000) break;
   }
   return out;
+}
+
+/**
+ * Sync incremental: lee solo las filas ya vinculadas a los reviewId recibidos de Google.
+ * Una reseña sin vínculo es nueva: el historial de Apify se concilió en la carga inicial (v3.5.0f).
+ */
+async function loadLinkedReviews(supabase, locationId, reviewIds) {
+  const out = [];
+  for (let i = 0; i < reviewIds.length; i += 100) {
+    const { data, error } = await supabase
+      .from('reviews_core')
+      .select(EXISTING_COLS)
+      .eq('location_id', locationId)
+      .in('raw_gbp_payload->>reviewId', reviewIds.slice(i, i + 100));
+    if (error) throw error;
+    out.push(...data);
+  }
+  return out;
+}
+
+const sameInstant = (a, b) => (a ? Date.parse(a) : null) === (b ? Date.parse(b) : null);
+
+/** True si la fila de Google no aporta cambios respecto a la ya guardada (se omite del upsert). */
+function isUnchanged(old, row) {
+  return old.stars === row.stars
+    && (old.text || null) === (row.text || null)
+    && (old.reply_text || null) === (row.reply_text || null)
+    && (old.reviewer_name || null) === (row.reviewer_name || null)
+    && sameInstant(old.published_at, row.published_at)
+    && sameInstant(old.updated_at, row.updated_at)
+    && sameInstant(old.reply_published_at, row.reply_published_at)
+    && Boolean(old.raw_gbp_payload && old.raw_gbp_payload.reviewId);
 }
 
 const REVIEWS_PAGE_SIZE = 50; // máximo permitido por la API v4
@@ -158,7 +192,8 @@ exports.handler = async (event, context) => {
   const slots = Math.max(1, parseInt(queryParams.slots, 10) || 1);
   const slot = ((parseInt(queryParams.slot, 10) || 0) % slots + slots) % slots;
   // full=true -> historial completo (backfill, usar con ?branch= por el timeout de Netlify). Por defecto: 50 más recientes.
-  const maxPages = queryParams.full === 'true' ? Infinity : Math.max(1, parseInt(queryParams.pages, 10) || 1);
+  const fullHistory = queryParams.full === 'true';
+  const maxPages = fullHistory ? Infinity : Math.max(1, parseInt(queryParams.pages, 10) || 1);
 
   try {
     const supabaseUrl = process.env.SUPABASE_URL;
@@ -252,9 +287,14 @@ exports.handler = async (event, context) => {
           });
         }
 
-        const existing = await loadExistingReviews(supabase, loc.id);
+        const existing = fullHistory
+          ? await loadExistingReviews(supabase, loc.id)
+          : await loadLinkedReviews(supabase, loc.id, mapped.map(m => m.id));
         const { rows, stats } = reconcile(existing, mapped);
-        reviewsToUpsert.push(...rows);
+        const existingById = new Map(existing.map(e => [e.id, e]));
+        const changed = rows.filter(r => !existingById.has(r.id) || !isUnchanged(existingById.get(r.id), r));
+        stats.unchanged = rows.length - changed.length;
+        reviewsToUpsert.push(...changed);
         reconcileStats[loc.id] = stats;
         totalSynced += reviews.length;
         await sleep(REQUEST_GAP_MS);
@@ -326,4 +366,4 @@ exports.handler = async (event, context) => {
 };
 
 // Expuestos para pruebas
-exports._internal = { parseStars, cleanComment, fetchLocationReviews };
+exports._internal = { parseStars, cleanComment, fetchLocationReviews, isUnchanged };

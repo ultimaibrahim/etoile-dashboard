@@ -451,9 +451,9 @@ async function classifyBatchAndSave(supabase, reviewsBatch) {
 }
 
 exports.handler = async (event, context) => {
-  // Authorization: Bearer DIAG_SECRET o APIFY_WEBHOOK_SECRET
+  // Authorization: Bearer DIAG_SECRET
   const authHeader = event.headers['authorization'] || event.headers['Authorization'];
-  const secret = process.env.DIAG_SECRET || process.env.APIFY_WEBHOOK_SECRET;
+  const secret = process.env.DIAG_SECRET;
 
   if (!secret) {
     return { statusCode: 500, body: JSON.stringify({ error: "Falta configurar token secreto de autorización." }) };

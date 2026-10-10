@@ -4,7 +4,7 @@
 [![Status](https://img.shields.io/badge/status-production--ready-2E7D32.svg?style=flat-square)](#)
 [![Deployment](https://img.shields.io/badge/deployed%20on-Netlify%20Serverless-00C7B7.svg?style=flat-square&logo=netlify&logoColor=white)](#)
 [![Backend](https://img.shields.io/badge/database-Supabase%20%28PostgreSQL%29-3ECF8E.svg?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
-[![Scraper](https://img.shields.io/badge/data%20pipeline-Apify%20Actor-00A699.svg?style=flat-square&logo=apify&logoColor=white)](https://apify.com)
+[![Ingesta](https://img.shields.io/badge/data%20pipeline-Google%20Business%20Profile%20API-4285F4.svg?style=flat-square&logo=google&logoColor=white)](https://developers.google.com/my-business)
 [![Design](https://img.shields.io/badge/design%20system-Crystal%20%26%20Squircle-6366F1.svg?style=flat-square)](#)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat-square)](LICENSE)
 
@@ -27,9 +27,8 @@ La arquitectura está concebida bajo un modelo **Zero-Secret Client / Jamstack S
 ```mermaid
 flowchart TD
     subgraph INGEST ["Ingesta Asíncrona"]
-        GM["Google Maps Reviews"] -->|Crawler| AP["Apify Webhook Engine"]
-        AP -->|POST Ingest| NF_INGEST["Netlify: apify-ingest.js"]
-        NF_INGEST -->|Procesamiento & Deduplicación| DB[("Supabase PostgreSQL")]
+        GM["Google Business Profile API"] -->|Polling cada 30 min| NF_INGEST["Netlify: gbp-sync-cron.js / gbp-sync.js"]
+        NF_INGEST -->|Conciliación & Deduplicación| DB[("Supabase PostgreSQL")]
     end
 
     subgraph ENRICH ["Enriquecimiento & Diagnóstico"]
@@ -66,7 +65,7 @@ flowchart TD
 - **Frontend**: Vanilla JavaScript (ES6+ modular), HTML5 Semántico, CSS3 Custom Properties (Crystal & Squircle Design System, Giaza Typography).
 - **Serverless Compute**: Netlify Functions (Node.js 18+ runtime).
 - **Base de Datos & Auth**: Supabase (PostgreSQL, Row Level Security, Realtime).
-- **Data Pipelines**: Apify Actor Tasks & Webhook endpoints.
+- **Data Pipelines**: Google Business Profile API (OAuth) con sync programado en Netlify Functions.
 
 ---
 
@@ -85,7 +84,8 @@ flowchart TD
    - `SUPABASE_URL`: URL del proyecto en Supabase.
    - `SUPABASE_ANON_KEY`: Clave pública anon de Supabase.
    - `SUPABASE_SERVICE_ROLE_KEY`: Clave de servicio para funciones administrativas.
-   - `APIFY_TOKEN`: Token para la API de Apify.
+   - `GBP_ACCOUNT_ID`, `GBP_CLIENT_ID`, `GBP_CLIENT_SECRET`, `GBP_REFRESH_TOKEN`: Acceso OAuth a Google Business Profile (`node scripts/gbp-auth.js`).
+   - `GBP_SYNC_SECRET`: Token para invocar `gbp-sync` manualmente.
    - `DIAG_SECRET`: Token para endpoints de auditoría.
 4. Ejecuta localmente con Netlify CLI:
    ```bash

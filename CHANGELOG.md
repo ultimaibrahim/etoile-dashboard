@@ -9,7 +9,14 @@ Este documento contiene el historial técnico completo de versiones de Étoile D
 
 Representa la era de la perfección en rendimiento, inmediatez absoluta y estética de alta dirección. Introduce el motor de almacenamiento reactivo SWR, Command Palette universal y herramientas analíticas avanzadas.
 
-### Version 3.5.0h Zenith - Hotfix: Build de Netlify Detenido por el Escaneo de Secretos (Octubre 2026) [ACTUAL]
+### Version 3.5.0i Zenith - Retiro de Apify, Sync Incremental y Backlog de Clasificación (Octubre 2026) [ACTUAL]
+* **Retiro de Apify**: `README.md` (insignia, diagrama de ingesta, stack y variables de entorno) y la FAQ de `js/views/about.js` describen ahora la API oficial de Google Business Profile con sync cada 30 min. `classify-review.js` ya no acepta `APIFY_WEBHOOK_SECRET` como respaldo: su único secreto es `DIAG_SECRET`. Las entradas históricas del changelog que nombran Apify se conservan. Pendiente fuera del repo (Ibrahim): borrar `APIFY_TOKEN` y `APIFY_WEBHOOK_SECRET` en Netlify; desactivar Schedules y webhook y revocar el token en console.apify.com.
+* **Sync incremental (`gbp-sync.js`)**: sin `?full=true` ya no lee toda la sucursal; `loadLinkedReviews` trae solo las filas vinculadas a los `reviewId` recibidos (`raw_gbp_payload->>reviewId`, en bloques de 100). Una reseña sin vínculo es nueva, porque el historial de Apify se concilió en la carga inicial (3.5.0f). `?full=true` conserva la lectura completa y la conciliación difusa.
+* **Sin reescrituras innecesarias**: `isUnchanged` compara estrellas, texto, respuesta, autor y fechas (`published_at`, `updated_at`, `reply_published_at`) y omite del upsert lo que no cambió; las filas históricas aún sin vincular sí se escriben para quedar vinculadas. Dry-run en Antea (antes 1,707 filas leídas por corrida): 50 leídas, 50 sin cambios, 0 escrituras, 2.7 s. La respuesta del endpoint añade `unchanged` por sucursal.
+* **Backlog de clasificación (`scripts/classify-backlog.js`)**: clasifica con el motor local las quejas de 1-2★ con texto cuya `classification` es `NULL` (nunca pisa existentes). Ejecutado: 396 clasificadas, 0 pendientes (antes ~47%).
+* **Pruebas**: `tests/gbp-sync.test.js` suma 3 casos de `isUnchanged` (20 en total).
+
+### Version 3.5.0h Zenith - Hotfix: Build de Netlify Detenido por el Escaneo de Secretos (Octubre 2026)
 * **Causa**: al cargar `GBP_ACCOUNT_ID` como variable de entorno, el escaneo de secretos de Netlify encontró su valor escrito en `CHANGELOG.md` y `supabase_gbp_mappings.sql` y abortó el build (`exit code 2` en "building site"). El deploy fallido no se publica, así que producción no se vio afectada.
 * **Corrección**: se elimina el identificador de cuenta de los archivos versionables (`CHANGELOG.md` usa `<ID_DE_CUENTA>`); `supabase_gbp_mappings.sql` es un artefacto generado por `gbp-setup.js --sync-mappings` y deja de versionarse (`.gitignore`); `GBP_ACCOUNT_ID` se agrega a `SECRETS_SCAN_OMIT_KEYS` en `netlify.toml` por no ser un secreto.
 * **Prevención (`tests/qa-audit.js`)**: nueva comprobación que cruza todos los valores del `.env` contra los archivos versionables, replicando el escaneo de Netlify antes de subir.
