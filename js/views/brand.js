@@ -19,7 +19,7 @@ const BrandView = {
       return;
     }
     const role = AppAuth.getUserRole();
-    if (!['admin', 'director', 'regional'].includes(role)) {
+    if (!['corporate', 'admin', 'director', 'regional'].includes(role)) {
       Router.navigate('#/select-region');
       return;
     }

@@ -439,7 +439,7 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
   let backToSelectBtnMobile = '';
   if (typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated()) {
     const role = AppAuth.getUserRole();
-    if (['admin', 'director', 'regional', 'zonal'].includes(role)) {
+    if (['corporate', 'admin', 'director', 'regional', 'zonal'].includes(role)) {
       backToSelectBtn = `
         <a href="#/select-region" class="topbar-link-regions" title="Volver a Selección de Región" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 10px; background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.18); color: var(--oro); text-decoration: none; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-right: 8px;">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
@@ -460,7 +460,7 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
   let regionSelectMobile = '';
   if (!isCorporate && typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated()) {
     const role = AppAuth.getUserRole();
-    if (role === 'admin' || role === 'regional' || role === 'zonal') {
+    if (['corporate', 'admin', 'regional', 'zonal'].includes(role)) {
       const activeName = (typeof REGION_NAME_MAP !== 'undefined' && REGION_NAME_MAP[activeRegion]) || activeRegion;
       const optionsHtml = Object.entries(typeof REGION_NAME_MAP !== 'undefined' ? REGION_NAME_MAP : { 'GDL': 'Guadalajara', 'CDMX': 'CDMX' })
         .map(([id, name]) => {

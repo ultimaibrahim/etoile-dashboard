@@ -302,7 +302,7 @@ const HomeView = {
     // Mensaje de bienvenida personalizado para roles corporativos / regionales (Idea 4)
     const userName = (typeof AppAuth !== 'undefined' && AppAuth.profile?.nombre) || 'Usuario';
     const userRole = (typeof AppAuth !== 'undefined' && AppAuth.getUserRole()) || 'admin';
-    const roleMap = { admin: 'Administrador', director: 'Director', regional: 'Gerente Regional', zonal: 'Gerente Zonal' };
+    const roleMap = { corporate: 'Corporativo', admin: 'Administrador', director: 'Director', regional: 'Gerente Regional', zonal: 'Gerente Zonal' };
     const roleLabel = roleMap[userRole] || userRole;
 
     const welcomeBannerHtml = `

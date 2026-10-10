@@ -785,7 +785,7 @@ const SelectRegionView = {
     }
 
     let brandDashboardHtml = '';
-    const canSeeBrandDashboard = ['admin', 'director', 'regional'].includes(role);
+    const canSeeBrandDashboard = ['corporate', 'admin', 'director', 'regional'].includes(role);
 
     if (canSeeBrandDashboard) {
       brandDashboardHtml = `
