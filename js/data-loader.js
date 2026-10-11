@@ -572,7 +572,9 @@ const DataLoader = {
 
           grouped[key].reviews.push({
             id: r.id,
-            globalId: `${key}-${idx}`,
+            // Índice dentro del MES (getReviewByGlobalId lo busca en cache[mes].reviews[idx]); antes se usaba la
+            // posición en todo el historial de la región y el detalle de una reseña del feed nunca se encontraba.
+            globalId: `${key}-${grouped[key].reviews.length}`,
             sucursal: canonicalId,
             stars: r.stars,
             text: r.text,

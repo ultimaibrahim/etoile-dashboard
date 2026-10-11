@@ -12,10 +12,7 @@ const CompareView = {
 
   async render(params = {}) {
     Charts.destroyAll();
-    if (this.radarChartInstance) {
-      try { this.radarChartInstance.destroy(); } catch (e) {}
-      this.radarChartInstance = null;
-    }
+    this.radarChartInstance = null; // el ChartWrapper lo libera Charts.destroyAll()
 
     const app = document.getElementById('app');
     if (!app) return;
@@ -195,7 +192,7 @@ const CompareView = {
               <span class="ccc-sub">Índices normalizados (0-100) en pilares clave de experiencia del cliente</span>
             </div>
             <div class="compare-radar-wrap">
-              <canvas id="compareRadarChart"></canvas>
+              <div id="compareRadarChart" style="width:100%;height:100%"></div>
             </div>
             <div class="compare-radar-legend">
               <div class="crl-item"><span class="crl-color color-a"></span> ${escapeHtml(metaA.nombre)}</div>
@@ -369,11 +366,8 @@ const CompareView = {
   },
 
   _renderRadarChart(metaA, statsA, metaB, statsB) {
-    const canvas = document.getElementById('compareRadarChart');
-    if (!canvas || typeof Chart === 'undefined') return;
-
-    const ctx = canvas.getContext('2d');
-    const isDark = typeof darkMode !== 'undefined' && darkMode;
+    const el = document.getElementById('compareRadarChart');
+    if (!el || typeof EtoileCharts === 'undefined') return;
 
     const labels = [
       'CSAT General',
@@ -399,70 +393,10 @@ const CompareView = {
       statsB.responseRate
     ];
 
-    this.radarChartInstance = new Chart(ctx, {
-      type: 'radar',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: metaA.nombre,
-            data: dataA,
-            borderColor: '#E5B842',
-            backgroundColor: 'rgba(229, 184, 66, 0.22)',
-            pointBackgroundColor: '#F7D779',
-            pointBorderColor: '#ffffff',
-            pointHoverBackgroundColor: '#ffffff',
-            pointHoverBorderColor: '#E5B842',
-            borderWidth: 2.5,
-            pointRadius: 4.5
-          },
-          {
-            label: metaB.nombre,
-            data: dataB,
-            borderColor: '#5CE1A6',
-            borderDash: [5, 4],
-            backgroundColor: 'rgba(92, 225, 166, 0.2)',
-            pointBackgroundColor: '#A7F3D0',
-            pointBorderColor: '#ffffff',
-            pointHoverBackgroundColor: '#ffffff',
-            pointHoverBorderColor: '#5CE1A6',
-            borderWidth: 2.5,
-            pointRadius: 4.5
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          r: {
-            angleLines: {
-              color: isDark ? 'rgba(237, 230, 216, 0.1)' : 'rgba(22, 22, 20, 0.08)'
-            },
-            grid: {
-              color: isDark ? 'rgba(237, 230, 216, 0.08)' : 'rgba(22, 22, 20, 0.06)'
-            },
-            pointLabels: {
-              color: isDark ? '#EDE6D8' : '#1A1A1A',
-              font: {
-                family: "'Plus Jakarta Sans', sans-serif",
-                size: 11,
-                weight: '600'
-              }
-            },
-            ticks: {
-              display: false,
-              min: 0,
-              max: 100,
-              stepSize: 20
-            }
-          }
-        }
-      }
-    });
+    this.radarChartInstance = EtoileCharts.radar(el, labels, [
+      { name: metaA.nombre, data: dataA, color: '#E5B842', fill: 'rgba(229, 184, 66, 0.22)', point: '#F7D779' },
+      { name: metaB.nombre, data: dataB, color: '#5CE1A6', fill: 'rgba(92, 225, 166, 0.2)', point: '#A7F3D0', dash: true }
+    ]);
   },
 
   onSelectChange() {

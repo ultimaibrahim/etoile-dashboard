@@ -127,13 +127,13 @@ const QuarterView = {
 
       const bestBlock = mBest ? `
         <div class="quote-block">
-          <div class="quote-meta">★ ${mBest.stars} · ${mBest.sucursal} · ${formatDate(mBest.publishedAtDate)}</div>
+          <div class="quote-meta">★ ${mBest.stars} · ${mBest.sucursal} · ${reviewWhen(mBest, 'long')}</div>
           "${(mBest.text || '').substring(0, 200)}${(mBest.text || '').length > 200 ? '...' : ''}"
         </div>` : '<p style="color:var(--text-muted);font-size:13px;">Sin reseñas destacadas</p>';
       
       const worstBlock = mWorst && mWorst.stars <= 2 ? `
         <div class="quote-block warn">
-          <div class="quote-meta">★ ${mWorst.stars} · ${mWorst.sucursal} · ${formatDate(mWorst.publishedAtDate)}</div>
+          <div class="quote-meta">★ ${mWorst.stars} · ${mWorst.sucursal} · ${reviewWhen(mWorst, 'long')}</div>
           "${(mWorst.text || '').substring(0, 200)}${(mWorst.text || '').length > 200 ? '...' : ''}"
         </div>` : '';
 

@@ -329,17 +329,17 @@ const BrandView = {
       `;
     } else if (this.activeTab === 'comparativa') {
       tabContentHtml = `
-        <div class="brand-charts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 24px;">
+        <div class="brand-charts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(450px, 100%), 1fr)); gap: 24px;">
           <div class="brand-chart-card" style="background: var(--surface-2); border: 1px solid var(--border); border-radius: 24px; padding: 24px; min-height: 380px; display: flex; flex-direction: column; box-shadow: var(--sombra-card);">
             <h3 style="font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.04em;">Rendimiento Ajustado por Región</h3>
             <div style="flex: 1; position: relative; min-height: 280px;">
-              <canvas id="brandComparisonChart"></canvas>
+              <div id="brandComparisonChart" style="width:100%;height:100%;min-height:280px"></div>
             </div>
           </div>
           <div class="brand-chart-card" style="background: var(--surface-2); border: 1px solid var(--border); border-radius: 24px; padding: 24px; min-height: 380px; display: flex; flex-direction: column; box-shadow: var(--sombra-card);">
             <h3 style="font-size: 14px; font-weight: 700; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.04em;">Participación de Volumen por Región</h3>
             <div style="flex: 1; position: relative; min-height: 280px;">
-              <canvas id="brandVolumeChart"></canvas>
+              <div id="brandVolumeChart" style="width:100%;height:100%;min-height:280px"></div>
             </div>
           </div>
         </div>
@@ -359,59 +359,10 @@ const BrandView = {
           const volumes = sortedRegionsList.map(([_, stats]) => stats.reviewCount);
           
           const colors = sortedRegionsList.map((_, idx) => {
-            return idx === 0 ? 'var(--oro)' : 'var(--verde-soft)';
+            return idx === 0 ? EC.cssVar('--oro', '#B8902F') : EC.cssVar('--verde-soft', '#6B907D');
           });
 
-          const fontSans = premiumUi ? 'Plus Jakarta Sans, sans-serif' : 'Helvetica Neue, Helvetica, Arial, sans-serif';
-          const fontMono = premiumUi ? 'JetBrains Mono, monospace' : 'ui-monospace, SF Mono, Menlo, monospace';
-          
-          const comparisonChart = new Chart(comparisonCtx, {
-            type: 'bar',
-            data: {
-              labels,
-              datasets: [{
-                label: 'Rendimiento Ajustado',
-                data: scores,
-                backgroundColor: colors,
-                borderRadius: 8,
-                maxBarThickness: 32
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: darkMode ? '#1C2220' : '#161614',
-                  titleFont: { family: fontSans, size: 12, weight: '700' },
-                  bodyFont: { family: fontSans, size: 11 },
-                  padding: 10,
-                  callbacks: {
-                    label: c => ` Score: ${c.raw.toFixed(2)} pts`
-                  }
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  grid: { color: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' },
-                  ticks: {
-                    font: { size: 10, family: fontMono },
-                    color: darkMode ? '#8A9E94' : '#8A877C'
-                  }
-                },
-                x: {
-                  grid: { display: false },
-                  ticks: {
-                    font: { size: 11, family: fontSans },
-                    color: darkMode ? '#9DA89F' : '#6B6960'
-                  }
-                }
-              }
-            }
-          });
-          Charts.instances.push(comparisonChart);
+          EtoileCharts.barScore(comparisonCtx, labels, scores, colors, { title: 'Score', unit: ' pts' });
 
           const volumeColors = [
             '#2F4A3A',
@@ -421,51 +372,8 @@ const BrandView = {
             '#B23A2B',
             '#E8DCC7'
           ];
-          
-          const volumeChart = new Chart(volumeCtx, {
-            type: 'doughnut',
-            data: {
-              labels,
-              datasets: [{
-                data: volumes,
-                backgroundColor: volumeColors.slice(0, labels.length),
-                borderWidth: darkMode ? 2 : 1,
-                borderColor: darkMode ? '#151725' : '#fff'
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutout: '60%',
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'right',
-                  labels: {
-                    color: darkMode ? '#9DA89F' : '#6B6960',
-                    font: { size: 11, family: fontSans },
-                    usePointStyle: true,
-                    pointStyle: 'circle',
-                    padding: 14
-                  }
-                },
-                tooltip: {
-                  backgroundColor: darkMode ? '#1C2220' : '#161614',
-                  titleFont: { family: fontSans, size: 12, weight: '700' },
-                  bodyFont: { family: fontSans, size: 11 },
-                  padding: 10,
-                  callbacks: {
-                    label: c => {
-                      const total = c.dataset.data.reduce((a, b) => a + b, 0);
-                      const pct = total > 0 ? ((c.raw / total) * 100).toFixed(1) : 0;
-                      return ` ${c.label}: ${c.raw} opiniones (${pct}%)`;
-                    }
-                  }
-                }
-              }
-            }
-          });
-          Charts.instances.push(volumeChart);
+
+          EtoileCharts.donutDistribution(volumeCtx, labels, volumes, volumeColors.slice(0, labels.length), { decimals: 1, unit: ' opiniones', legendSize: 11, legendGap: 14 });
         }
       }, 50);
     } else if (this.activeTab === 'alertas') {
@@ -497,30 +405,7 @@ const BrandView = {
       });
 
       const unrepliedList = brandReviews.filter(r => r.stars <= 2 && (!r.responseText || r.responseText.trim() === ''));
-      const unrepliedListHtml = unrepliedList.length ? unrepliedList.map(r => {
-        const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
-        const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
-        const branchDisplay = branchMeta ? branchMeta.nombre : r.sucursal;
-        const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : 'Reciente';
-        const localGuideHtml = r.isLocalGuide ? `<span class="guide-badge">Local Guide</span>` : '';
-        
-        return `
-          <div class="modal-rev-card critical brand-item-interactive" onclick="BrandView.openBranchSummaryModal('${r.sucursal}')" title="Clic para diagnosticar sucursal" style="cursor: pointer; margin-bottom: 12px;">
-            <div class="modal-rev-top">
-              <div>
-                <span class="modal-rev-branch">${branchDisplay}</span>
-                <span class="modal-rev-stars">${starsHtml}</span>
-              </div>
-              <div>
-                ${localGuideHtml}
-                <span class="reply-badge red">Sin Respuesta</span>
-                <span class="modal-rev-date">${dateStr}</span>
-              </div>
-            </div>
-            <div class="modal-rev-text">"${escapeHtml(r.text || 'Sin comentario escrito.')}"</div>
-          </div>
-        `;
-      }).join('') : `<div style="text-align:center; padding:40px; color:var(--text-muted); font-style:italic;">100% de quejas respondidas. ¡Buen trabajo de operación!</div>`;
+      const unrepliedListHtml = unrepliedList.length ? ReviewCard.list(unrepliedList, { onclick: r => `BrandView.openBranchSummaryModal('${r.sucursal}')` }) : '<p class="drawer-empty">100% de quejas respondidas. ¡Buen trabajo de operación!</p>';
 
       tabContentHtml = `
         <div style="display: flex; flex-direction: column; gap: 24px;">
@@ -703,7 +588,6 @@ const BrandView = {
   },
 
   renderModal(tab = 'all') {
-    this.closeModal();
 
     let filtered = [...this.activeModalReviews];
     if (tab === 'alerts') {
@@ -712,39 +596,7 @@ const BrandView = {
       filtered = filtered.filter(r => r.stars >= 4);
     }
 
-    const reviewCardsHtml = filtered.length ? filtered.map(r => {
-      const isCritical = r.stars <= 2;
-      const cardClass = isCritical ? 'modal-rev-card critical' : 'modal-rev-card';
-      const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
-      const isReplied = r.responseText && r.responseText.trim() !== '';
-      const replyStatusHtml = isReplied
-        ? `<span class="reply-badge green">Respondido</span>`
-        : `<span class="reply-badge red">Sin Respuesta</span>`;
-      
-      const localGuideHtml = r.isLocalGuide ? `<span class="guide-badge">Local Guide</span>` : '';
-      const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
-      const branchDisplay = branchMeta ? branchMeta.nombre : r.sucursal;
-      const replyBoxHtml = isReplied ? `<div class="modal-rev-reply"><strong>Respuesta del Propietario:</strong> "${escapeHtml(r.responseText)}"</div>` : '';
-      const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : 'Reciente';
-
-      return `
-        <div class="${cardClass}">
-          <div class="modal-rev-top">
-            <div>
-              <span class="modal-rev-branch">${branchDisplay}</span>
-              <span class="modal-rev-stars">${starsHtml}</span>
-            </div>
-            <div>
-              ${localGuideHtml}
-              ${replyStatusHtml}
-              <span class="modal-rev-date">${dateStr}</span>
-            </div>
-          </div>
-          <div class="modal-rev-text">"${escapeHtml(r.text || 'Sin comentario escrito.')}"</div>
-          ${replyBoxHtml}
-        </div>
-      `;
-    }).join('') : `<div style="text-align:center; padding:40px; color:var(--text-dim); font-style:italic;">No se encontraron reseñas en esta categoría.</div>`;
+    const reviewCardsHtml = filtered.length ? ReviewCard.list(filtered) : '<p class="drawer-empty">No se encontraron reseñas en esta categoría.</p>';
 
     const shortcutHtml = this.activeModalBranchId
       ? `<button class="modal-shortcut-btn" onclick="BrandView.navigateToBranch('${this.activeModalBranchId}')">Ver Scorecard Completo</button>`
@@ -778,21 +630,7 @@ const BrandView = {
       </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const overlayEl = document.getElementById('brandDetailModal');
-    if (typeof ModalManager !== 'undefined') {
-      const top = ModalManager._stack[ModalManager._stack.length - 1];
-      if (top && top.el && top.el.id === 'brandDetailModal') {
-        top.el = overlayEl;
-      } else {
-        ModalManager.open(overlayEl, () => {
-          const el = document.getElementById('brandDetailModal');
-          if (el) el.remove();
-        });
-      }
-    } else {
-      document.body.style.overflow = 'hidden';
-    }
+    this._showModalHtml(modalHtml);
   },
 
   // ── 9. MODAL DE AUDITORÍA DE DÉFICITS (DRILL-DOWN) ──
@@ -802,7 +640,6 @@ const BrandView = {
   },
 
   async renderDeficitsModal() {
-    this.closeModal();
 
     const year = DataLoader.currentYear;
     const month = DataLoader.currentMonth;
@@ -911,21 +748,7 @@ const BrandView = {
       </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const overlayEl = document.getElementById('brandDetailModal');
-    if (typeof ModalManager !== 'undefined') {
-      const top = ModalManager._stack[ModalManager._stack.length - 1];
-      if (top && top.el && top.el.id === 'brandDetailModal') {
-        top.el = overlayEl;
-      } else {
-        ModalManager.open(overlayEl, () => {
-          const el = document.getElementById('brandDetailModal');
-          if (el) el.remove();
-        });
-      }
-    } else {
-      document.body.style.overflow = 'hidden';
-    }
+    this._showModalHtml(modalHtml);
   },
 
   drillDownDeficit(branchId) {
@@ -953,36 +776,7 @@ const BrandView = {
       reasons.push(`<span class="def-reason-badge red">Respuestas pendientes</span> Tiene <strong>${unreplied}</strong> quejas críticas (1-2★) sin contestar.`);
     }
 
-    const reviewCardsHtml = branchReviews.length ? branchReviews.map(r => {
-      const isCritical = r.stars <= 2;
-      const cardClass = isCritical ? 'modal-rev-card critical' : 'modal-rev-card';
-      const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
-      const isReplied = r.responseText && r.responseText.trim() !== '';
-      const replyStatusHtml = isReplied
-        ? `<span class="reply-badge green">Respondido</span>`
-        : `<span class="reply-badge red">Sin Respuesta</span>`;
-      
-      const localGuideHtml = r.isLocalGuide ? `<span class="guide-badge">Local Guide</span>` : '';
-      const replyBoxHtml = isReplied ? `<div class="modal-rev-reply"><strong>Respuesta del Propietario:</strong> "${escapeHtml(r.responseText)}"</div>` : '';
-      const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : 'Reciente';
-
-      return `
-        <div class="${cardClass}">
-          <div class="modal-rev-top">
-            <div>
-              <span class="modal-rev-stars">${starsHtml}</span>
-            </div>
-            <div>
-              ${localGuideHtml}
-              ${replyStatusHtml}
-              <span class="modal-rev-date">${dateStr}</span>
-            </div>
-          </div>
-          <div class="modal-rev-text">"${escapeHtml(r.text || 'Sin comentario escrito.')}"</div>
-          ${replyBoxHtml}
-        </div>
-      `;
-    }).join('') : '<div style="text-align:center; padding:20px; color:var(--text-dim); font-style:italic;">Sin opiniones este mes.</div>';
+    const reviewCardsHtml = branchReviews.length ? ReviewCard.list(branchReviews, { showBranch: false }) : '<p class="drawer-empty">Sin opiniones este mes.</p>';
 
     const modalHtml = `
       <div class="brand-modal-overlay" id="brandDetailModal" onclick="if(event.target === this) BrandView.closeModal()">
@@ -1048,26 +842,11 @@ const BrandView = {
       </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const overlayEl = document.getElementById('brandDetailModal');
-    if (typeof ModalManager !== 'undefined') {
-      const top = ModalManager._stack[ModalManager._stack.length - 1];
-      if (top && top.el && top.el.id === 'brandDetailModal') {
-        top.el = overlayEl;
-      } else {
-        ModalManager.open(overlayEl, () => {
-          const el = document.getElementById('brandDetailModal');
-          if (el) el.remove();
-        });
-      }
-    } else {
-      document.body.style.overflow = 'hidden';
-    }
+    this._showModalHtml(modalHtml);
   },
 
   // ── 10. MODAL EXPLICATIVO DE SCORE DE COMPLEJIDAD ──
   openComplexityExplanatoryModal() {
-    this.closeModal();
 
     const modalHtml = `
       <div class="brand-modal-overlay" id="brandDetailModal" onclick="if(event.target === this) BrandView.closeModal()">
@@ -1117,26 +896,11 @@ const BrandView = {
       </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const overlayEl = document.getElementById('brandDetailModal');
-    if (typeof ModalManager !== 'undefined') {
-      const top = ModalManager._stack[ModalManager._stack.length - 1];
-      if (top && top.el && top.el.id === 'brandDetailModal') {
-        top.el = overlayEl;
-      } else {
-        ModalManager.open(overlayEl, () => {
-          const el = document.getElementById('brandDetailModal');
-          if (el) el.remove();
-        });
-      }
-    } else {
-      document.body.style.overflow = 'hidden';
-    }
+    this._showModalHtml(modalHtml);
   },
 
   // ── 11. DIAGNÓSTICO RÁPIDO DE SUCURSAL (QUICK AUDIT) ──
   async openBranchSummaryModal(branchId) {
-    this.closeModal();
 
     const meta = SUCURSALES_META_ALL.find(s => s.id === branchId);
     const branchName = meta ? meta.nombre : branchId;
@@ -1181,21 +945,7 @@ const BrandView = {
     });
 
     const reviewsConTexto = branchReviews.filter(r => r.text && r.text.trim().length > 0);
-    const recentReviewsHtml = reviewsConTexto.length ? reviewsConTexto.slice(0, 3).map(r => {
-      const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
-      const isCritical = r.stars <= 2;
-      const cardClass = isCritical ? 'modal-rev-card critical' : 'modal-rev-card';
-      const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : 'Reciente';
-      return `
-        <div class="${cardClass}" style="padding: 12px; margin-bottom: 8px;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:11.5px;">
-            <span style="color:var(--oro);">${starsHtml}</span>
-            <span style="color:var(--text-dim); font-family:var(--mono);">${dateStr}</span>
-          </div>
-          <div style="font-size:12.5px; font-style:italic; color:var(--text); line-height:1.45;">"${escapeHtml(r.text)}"</div>
-        </div>
-      `;
-    }).join('') : '<div style="text-align:center; padding:10px; font-size:12px; color:var(--text-dim); font-style:italic;">Sin comentarios con opiniones este mes.</div>';
+    const recentReviewsHtml = reviewsConTexto.length ? ReviewCard.list(reviewsConTexto.slice(0, 3), { showBranch: false }) : '<p class="drawer-empty">Sin comentarios con opiniones este mes.</p>';
 
     const modalHtml = `
       <div class="brand-modal-overlay" id="brandDetailModal" onclick="if(event.target === this) BrandView.closeModal()">
@@ -1262,33 +1012,46 @@ const BrandView = {
       </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const overlayEl = document.getElementById('brandDetailModal');
-    if (typeof ModalManager !== 'undefined') {
-      const top = ModalManager._stack[ModalManager._stack.length - 1];
-      if (top && top.el && top.el.id === 'brandDetailModal') {
-        top.el = overlayEl;
-      } else {
-        ModalManager.open(overlayEl, () => {
-          const el = document.getElementById('brandDetailModal');
-          if (el) el.remove();
-        });
-      }
-    } else {
-      document.body.style.overflow = 'hidden';
-    }
+    this._showModalHtml(modalHtml);
   },
 
-  closeModal(force = false) {
-    if (!force && typeof ModalManager !== 'undefined' && ModalManager._stack.length > 0) {
-      ModalManager.close();
-      return;
+  /**
+   * Presenta en el Drawer único el HTML de un modal de brand (cabecera, pestañas, cuerpo y pie).
+   * Si el drawer ya está abierto (drill-down, pestañas, "Volver") solo cambia su contenido, sin cerrar ni reabrir.
+   */
+  _showModalHtml(modalHtml) {
+    const tpl = document.createElement('template');
+    tpl.innerHTML = modalHtml.trim();
+    const q = (sel) => tpl.content.querySelector(sel);
+    const header = q('.brand-modal-header');
+    const back = header && header.querySelector('.def-back-btn');
+    const heading = header && header.querySelector('.brand-modal-title');
+    let eyebrow = header && header.querySelector('.brand-eyebrow');
+    const tabs = q('.brand-modal-tabs');
+    const body = q('.brand-modal-body');
+    const footer = q('.brand-modal-footer');
+    if (footer) footer.querySelectorAll('.brand-modal-close-btn').forEach(b => b.remove());   // el drawer ya tiene ×
+    let subtitle = '';
+    if (header) {
+      // texto secundario del encabezado (región, "Diagnóstico rápido…"), si lo había
+      const extra = [...header.querySelectorAll('span')].filter(x => x !== eyebrow && !x.closest('button')).map(x => x.textContent.trim()).filter(Boolean);
+      subtitle = [eyebrow ? eyebrow.textContent.trim() : '', ...extra].filter(Boolean).join(' · ');
     }
-    const el = document.getElementById('brandDetailModal');
-    if (el) {
-      el.remove();
-    }
-    document.body.style.overflow = '';
+    const tabsHtml = tabs
+      ? `<div class="filter-row" style="grid-column:1 / -1; margin:0;">${tabs.innerHTML.replace(/brand-tab-btn/g, 'chip')}</div>` : '';
+    Drawer.show({
+      id: 'brandDetailModal',
+      title: heading ? heading.innerHTML : '',
+      subtitle,
+      backHtml: back ? back.outerHTML.replace('def-back-btn', 'def-back-btn drawer-back') : '',
+      filtersHtml: tabsHtml,
+      bodyHtml: body ? body.innerHTML : '',
+      footerHtml: footer ? footer.innerHTML.trim() : ''
+    });
+  },
+
+  closeModal() {
+    Drawer.close('brandDetailModal');
   },
 
   navigateToBranch(branchId) {

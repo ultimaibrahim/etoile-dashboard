@@ -280,6 +280,10 @@ const BranchView = {
       ratingTrendData.push(statsM.count > 0 ? statsM.avg : null);
       volumeTrendData.push(statsM.count);
     }
+    const nowUtcT = new Date();
+    const lastIsCurrentMonth = activeYear === nowUtcT.getUTCFullYear() && sortedMonths[sortedMonths.length - 1] === nowUtcT.getUTCMonth() + 1;
+    const ratingStory = Narrative.ratingTrend(trendLabels, ratingTrendData, KpiMeta.ratingMinimo, lastIsCurrentMonth);
+    const volumeStory = Narrative.volumeTrend(trendLabels, volumeTrendData, lastIsCurrentMonth);
 
     const sortedMonthsDesc = [...availableMonths].sort((a, b) => b - a);
     const customOptionsHtml = sortedMonthsDesc.map(m => {
@@ -306,6 +310,12 @@ const BranchView = {
     // Mensaje de bienvenida personalizado (Idea 4)
     const userName = (typeof AppAuth !== 'undefined' && AppAuth.profile?.nombre) || 'Usuario';
     const userRole = (typeof AppAuth !== 'undefined' && AppAuth.getUserRole()) || 'gerente';
+    // Atención inmediata: críticas recientes de esta sucursal (independiente del mes elegido)
+    const nowUtc = new Date();
+    const recentCritical = Severity.criticalIn(
+      Patterns.collect(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth() + 1, 2, r => isSameBranch(r.sucursal, meta.id)), Severity.RECENT_DAYS);
+    const attentionHtml = AttentionCard.html(recentCritical, { key: 'branch', scope: meta.nombre });
+
     const pendingCritical = reviews.filter(r => r.stars <= 2 && (!r.responseFromOwnerText || r.responseFromOwnerText.trim() === '')).length;
 
     let welcomeBannerHtml = '';
@@ -320,7 +330,7 @@ const BranchView = {
         </div>
       `;
     } else {
-      const roleMap = { admin: 'Administrador', director: 'Director', regional: 'Gerente Regional', zonal: 'Gerente Zonal' };
+      const roleMap = { corporate: 'Corporativo', admin: 'Administrador', director: 'Director', regional: 'Gerente Regional', zonal: 'Gerente Zonal' };
       const roleLabel = roleMap[userRole] || userRole;
       welcomeBannerHtml = `
         <div class="welcome-banner-gerente" style="margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 18px;">
@@ -452,6 +462,8 @@ const BranchView = {
         ${clusterPillsHtml}
       </section>
 
+      ${attentionHtml}
+
       ${keyTakeawaysHtml}
 
       <section class="section r">
@@ -479,12 +491,14 @@ const BranchView = {
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
           <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--sombra-card);">
             <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:12px; letter-spacing:0.05em;">Rating Promedio Mensual</div>
+            <p class="story-line story-line--sm">${ratingStory}</p>
             <div style="height:180px; position:relative;">
               <div id="branchRatingTrendChart" style="width:100%;height:100%"></div>
             </div>
           </div>
           <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--sombra-card);">
             <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:12px; letter-spacing:0.05em;">Volumen de Reseñas Mensual</div>
+            <p class="story-line story-line--sm">${volumeStory}</p>
             <div style="height:180px; position:relative;">
               <div id="branchVolumeTrendChart" style="width:100%;height:100%"></div>
             </div>
@@ -507,6 +521,8 @@ const BranchView = {
         </div>
         ${this._buildShiftHeatmap(reviews)}
       </section>
+
+      ${this._buildHourSection(meta, activeYear, activeMonth)}
 
       <section class="section r" id="reviewsSection">
         <div class="section-head" style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -559,6 +575,8 @@ const BranchView = {
         if (volumeCtx) {
           EtoileCharts.branchVolumeTrend(volumeCtx, trendLabels, volumeTrendData, color);
         }
+        const hourEl = document.getElementById('branchHourChart');
+        if (hourEl && this._hourData) EtoileCharts.hourComplaints(hourEl, this._hourData.h, this._hourData.hl);
       }, 100);
 
       // Montar Sticky Action Bar para móviles (Mobile-First)
@@ -812,18 +830,7 @@ const BranchView = {
         actionAttr: actionAttr
       }) : `<div class="empty-state">Sin reseñas para mostrar en este mes</div>`;
     }
-    return reviews.map(r => {
-      const low = r.stars <= 3;
-      return `<div class="review-item${low ? ' negative' : ''}" onclick="HomeView.openReviewDetailModal('${r.globalId}')" style="cursor: pointer; position: relative; overflow: hidden; padding: 20px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
-        <div class="review-quote-bg" style="position: absolute; right: 12px; top: 8px; font-size: 80px; font-family: var(--serif); color: var(--oro); opacity: 0.06; pointer-events: none; line-height: 1;">“</div>
-        <div class="rev-author" style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px;">
-          Reseñante de Google${r.isLocalGuide ? `<span class="rev-guide" style="margin-left: 8px; background: rgba(184, 144, 47, 0.1); color: var(--oro); font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase;">Local Guide</span>` : ''}
-        </div>
-        <span class="rev-stars${low ? ' low' : ''}" style="color: var(--oro); font-size: 13px; letter-spacing: 1px; display: inline-block; margin-bottom: 6px;">${starStr(r.stars)}</span>
-        <div class="rev-meta" style="font-size: 11px; color: var(--text-dim); margin-bottom: 12px;">${formatDate(r.publishedAtDate)} · ${r.sucursal}</div>
-        <div class="rev-text" style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5; font-style: italic;">"${escapeHtml(r.text || '').replace(/\n/g, '<br>')}"</div>
-      </div>`;
-    }).join('');
+    return ReviewCard.list(reviews, { showBranch: false, onclick: r => `HomeView.openReviewDetailModal('${r.globalId}')` });
   },
 
   toggleMonthDropdown(event) {
@@ -893,9 +900,9 @@ const BranchView = {
       const { day, shift } = this.feedShiftFilter;
       list = list.filter(r => {
         if (!r.publishedAtDate) return false;
-        const d = new Date(r.publishedAtDate);
-        if (d.getDay() !== day) return false;
-        const h = d.getHours();
+        const pt = BranchTime.partsFor(r.publishedAtDate, r); // hora local de la tienda, no la del navegador
+        if (!pt || pt.dow !== day) return false;
+        const h = pt.hour;
         if (shift === 0) return h < 13;
         if (shift === 1) return h >= 13 && h < 17;
         if (shift === 2) return h >= 17;
@@ -944,6 +951,24 @@ const BranchView = {
     }
   },
 
+  /** ¿A qué hora llegan las quejas? Últimos 12 meses de la sucursal, en la hora local de la tienda */
+  _buildHourSection(meta, year, month) {
+    const reviews = Patterns.collect(year, month, 12, r => isSameBranch(r.sucursal, meta.id));
+    const h = Patterns.hourly(reviews);
+    const hl = Patterns.headline(h);
+    this._hourData = { h, hl };
+    return `
+      <section class="section r">
+        <div class="section-head">
+          <div class="section-title">¿A qué hora llegan las quejas? <span class="accent">12 meses</span></div>
+          <span class="section-sub">Quejas de 1-2★ con texto, por hora local de la tienda (24 h)</span>
+        </div>
+        <p class="story-line${hl.concentrated ? ' is-alert' : ''}">${hl.text}</p>
+        <div class="chart-card"><div class="chart-wrap" style="height:260px"><div id="branchHourChart" style="width:100%;height:100%"></div></div></div>
+        <div class="story-foot">${h.nNeg} quejas de ${h.n} reseñas con texto · las horas son las de la tienda, no las de tu dispositivo</div>
+      </section>`;
+  },
+
   _buildShiftHeatmap(reviews) {
     const DAYS = [
       { key: 1, label: 'Lun', name: 'Lunes' },
@@ -974,9 +999,10 @@ const BranchView = {
 
     reviewsWithText.forEach(r => {
       if (!r.publishedAtDate) return;
-      const d = new Date(r.publishedAtDate);
-      const day = d.getDay();
-      const hour = d.getHours();
+      const pt = BranchTime.partsFor(r.publishedAtDate, r); // hora local de la tienda, no la del navegador
+      if (!pt) return;
+      const day = pt.dow;
+      const hour = pt.hour;
 
       let shiftId = 2; // Cena (17:00+)
       if (hour < 13) shiftId = 0; // Desayuno (09:00 - 12:59 y horas previas)
@@ -1174,65 +1200,18 @@ const BranchView = {
   },
 
   openProblemDetailModal(title, reviews) {
-    // Freeze background scrolling
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-
-    const reviewCards = reviews.length ? reviews.map(r => {
-      const isNeg = r.stars <= 2;
-      const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
-      const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : 'Reciente';
-      return `
-        <div class="modal-rev-card ${isNeg ? 'critical' : ''}" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:14px; padding:12px 16px; margin-bottom:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:12px;">
-            <span style="color:var(--oro); letter-spacing:1px;">${starsHtml}</span>
-            <span style="color:var(--text-dim); font-family:var(--mono);">${dateStr}</span>
-          </div>
-          <div style="font-size:13px; font-style:italic; line-height:1.4; color:var(--text);">"${escapeHtml(r.text)}"</div>
-          ${r.responseFromOwnerText ? `<div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:8px 12px; margin-top:8px; font-size:12px; color:var(--text-dim);"><strong>Respuesta:</strong> "${escapeHtml(r.responseFromOwnerText)}"</div>` : ''}
-        </div>
-      `;
-    }).join('') : '<div style="text-align:center; padding:30px; color:var(--text-dim); font-style:italic;">No hay opiniones en esta categoría.</div>';
-
-    const modalHtml = `
-      <div class="brand-modal-overlay" id="problemDetailModal" onclick="if(event.target === this) BranchView.closeProblemDetailModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(10, 20, 15, 0.6); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; box-sizing: border-box;">
-        <div class="brand-modal-box" style="background: rgba(25, 38, 30, 0.9); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 24px; width: 100%; max-width: 580px; max-height: 80vh; display: flex; flex-direction: column; box-sizing: border-box; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4); animation: modalScaleUp 0.3s ease;">
-          <div class="brand-modal-header" style="padding: 20px 24px 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;">
-            <h2 class="brand-modal-title" style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text);">${title}</h2>
-            <button class="brand-modal-close" onclick="BranchView.closeProblemDetailModal()" style="background: none; border: none; color: var(--text-dim); font-size: 24px; cursor: pointer;">×</button>
-          </div>
-          <div class="brand-modal-body" style="padding: 20px 24px; overflow-y: auto; flex: 1;">
-            <div class="brand-modal-reviews-list">
-              ${reviewCards}
-            </div>
-          </div>
-          <div class="brand-modal-footer" style="padding: 14px 24px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: flex-end;">
-            <button class="brand-modal-close-btn" onclick="BranchView.closeProblemDetailModal()" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text); padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;">Cerrar</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const overlayEl = document.getElementById('problemDetailModal');
-    if (typeof ModalManager !== 'undefined') {
-      ModalManager.open(overlayEl, () => {
-        const el = document.getElementById('problemDetailModal');
-        if (el) el.remove();
-      });
-    } else {
-      document.body.style.overflow = 'hidden';
-    }
+    Drawer.open({
+      id: 'problemDetailModal',
+      title,
+      subtitle: reviews.length ? `${reviews.length} opinión${reviews.length !== 1 ? 'es' : ''} en esta categoría` : '',
+      bodyHtml: reviews.length
+        ? ReviewCard.list(reviews, { showBranch: false })
+        : '<p class="drawer-empty">No hay opiniones en esta categoría.</p>'
+    });
   },
 
   closeProblemDetailModal() {
-    if (typeof ModalManager !== 'undefined' && ModalManager._stack.length > 0) {
-      ModalManager.close();
-      return;
-    }
-    const el = document.getElementById('problemDetailModal');
-    if (el) el.remove();
-    document.body.style.overflow = '';
+    Drawer.close('problemDetailModal');
   },
 
   renderSkeleton() {

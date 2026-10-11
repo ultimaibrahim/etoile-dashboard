@@ -4,18 +4,18 @@
  * Genera js/vendor/echarts.custom.min.js con `node scripts/build-echarts.js`; expone window.echarts.
  */
 import * as echarts from 'echarts/core';
-import { LineChart, BarChart, PieChart, ScatterChart, HeatmapChart } from 'echarts/charts';
+import { LineChart, BarChart, PieChart, ScatterChart, HeatmapChart, RadarChart } from 'echarts/charts';
 import {
   GridComponent, TooltipComponent, LegendComponent, DataZoomComponent,
-  MarkAreaComponent, MarkLineComponent, VisualMapComponent, CalendarComponent, BrushComponent
+  MarkAreaComponent, MarkLineComponent, MarkPointComponent, VisualMapComponent, CalendarComponent, BrushComponent, RadarComponent
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import { UniversalTransition, LabelLayout } from 'echarts/features';
 
 echarts.use([
-  LineChart, BarChart, PieChart, ScatterChart, HeatmapChart,
+  LineChart, BarChart, PieChart, ScatterChart, HeatmapChart, RadarChart,
   GridComponent, TooltipComponent, LegendComponent, DataZoomComponent,
-  MarkAreaComponent, MarkLineComponent, VisualMapComponent, CalendarComponent, BrushComponent,
+  MarkAreaComponent, MarkLineComponent, MarkPointComponent, VisualMapComponent, CalendarComponent, BrushComponent, RadarComponent,
   CanvasRenderer, UniversalTransition, LabelLayout
 ]);
 

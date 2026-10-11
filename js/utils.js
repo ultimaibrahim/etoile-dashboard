@@ -227,21 +227,12 @@ function svgIcon(name) {
   return i[name] || '';
 }
 
-function formatDate(isoString) {
-  const d = new Date(isoString);
-  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const dia = String(d.getUTCDate()).padStart(2, '0');
-  const mes = meses[d.getUTCMonth()];
-  const anio = d.getUTCFullYear();
-  return `${dia} ${mes} ${anio}`;
+function formatDate(isoString, regionOrBranch) {
+  return BranchTime.label(isoString, regionOrBranch, 'date');
 }
 
-function formatDateTime(isoString) {
-  const d = new Date(isoString);
-  const datePart = formatDate(isoString);
-  const hora = String(d.getUTCHours()).padStart(2, '0');
-  const min = String(d.getUTCMinutes()).padStart(2, '0');
-  return `${datePart} · ${hora}:${min}`;
+function formatDateTime(isoString, regionOrBranch) {
+  return BranchTime.label(isoString, regionOrBranch, 'long');
 }
 
 function isMonthComplete(year, month) {
@@ -839,10 +830,6 @@ function showConcludedMonthModal(year, month) {
   const monthName = MONTH_NAMES[month - 1];
   const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
-  // Congelar scroll de fondo
-  document.documentElement.style.overflow = 'hidden';
-  document.body.style.overflow = 'hidden';
-
   // Obtener estadísticas
   const currGlobal = DataLoader.getGlobalStats(year, month);
   const currStats = DataLoader.getAllBranchStats(year, month);
@@ -1016,21 +1003,16 @@ function showConcludedMonthModal(year, month) {
     </div>
   `;
 
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-  // Escuchar tecla Escape
-  const _escHandler = (e) => {
-    if (e.key === 'Escape') {
-      const modal = document.getElementById('concludedMonthModal');
-      if (modal) {
-        modal.remove();
-        document.documentElement.style.overflow = '';
-        document.body.style.overflow = '';
-      }
-      document.removeEventListener('keydown', _escHandler);
-    }
-  };
-  document.addEventListener('keydown', _escHandler);
+  // El resumen ahora vive en el Drawer único (mismo panel, Esc, botón "atrás" y scroll que el resto de la app)
+  const tpl = document.createElement('template');
+  tpl.innerHTML = modalHtml.trim();
+  const bodyEl = tpl.content.querySelector('.modal-body');
+  Drawer.open({
+    id: 'concludedMonthModal',
+    title: `Resumen Ejecutivo — ${capitalizedMonth} ${year}`,
+    subtitle: `Análisis operativo · ${typeof getRegionName === 'function' ? getRegionName(activeRegion) : ''}`,
+    bodyHtml: bodyEl ? bodyEl.innerHTML : ''
+  });
 }
 
 const LcpWalkthrough = {

@@ -5,7 +5,22 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 
 ---
 
-## Versión 2.0.0 beta 2 Eltanin — Todas las Gráficas con el Nuevo Motor (Octubre 2026) [PREVIEW]
+## Versión 2.0.0 beta 4 Eltanin — Patrones, Alertas Graves y una Sola Forma de Ver Todo (Octubre 2026) [PREVIEW]
+* 🕘 **Hora de cada reseña, en formato de 24 horas y en la hora de la tienda**: antes la hora se mostraba corrida (6 horas adelantada) y las reseñas de la noche aparecían con la fecha del día siguiente. Ahora cada reseña muestra su fecha y hora reales en la zona horaria de su sucursal (Cancún y Tijuana incluidas).
+* 📊 **"¿A qué hora llegan las quejas?"**: nueva gráfica por tienda y por región que muestra a qué horas se concentran las quejas y las compara con el volumen de reseñas, con una frase que explica el hallazgo. Por ejemplo, en Ciudad de México el 37% de las quejas llega entre las 20:00 y las 22:59, aunque esas horas traen solo el 26% de las reseñas. En el celular se ve una versión más sencilla.
+* 🚨 **Atención inmediata**: si entra una reseña **grave** (salud, plagas, objetos en la comida, acoso o discriminación, cobros indebidos, amenazas legales…), aparece arriba del inicio y de la ficha de la tienda, con las razones por las que se marcó. Es la excepción, no la regla: solo cerca del 5% de las quejas.
+* ✍️ **Cada gráfica cuenta su hallazgo**: ranking, volumen, estrellas y tendencias ahora llevan una frase que dice qué se ve y por qué importa (qué tienda va más rezagada, cuál fue el mejor y el peor mes), con aviso cuando hay pocas reseñas para concluir algo.
+* ✨ **Una sola forma de ver todo**: todos los paneles de detalle (feed de reseñas, alertas, estrellas, resumen del mes, panel corporativo) ahora comparten el mismo diseño de panel lateral —en el celular sube desde abajo— y las reseñas se ven siempre igual, con una marca de "Sin respuesta" cuando una queja está pendiente.
+* 🎬 **Más vida**: pasar el cursor por una tienda en el ranking la resalta también en el volumen; las gráficas marcan el mejor y el peor mes; las barras entran una por una.
+* 🐛 **Corregido**: al tocar una reseña del feed no siempre abría su detalle; un panel se veía oscuro en modo claro; el resumen del mes decía "GDL" en todas las regiones.
+
+## Versión 2.0.0 beta 3 Eltanin — Todo el Sitio con el Nuevo Motor de Gráficas (Octubre 2026)
+* ✨ **El comparador de tiendas y el panel corporativo estrenan las gráficas nuevas**: el radar de 5 ejes del comparador y las gráficas por región del panel étoile corporativo ahora son más fluidas.
+* 🎨 **Corregido en el panel corporativo**: las barras de "Rendimiento ajustado por región" se veían todas negras; ahora la mejor región se destaca en dorado y las demás en verde.
+* 📱 **Panel corporativo en celular**: ya no se sale de la pantalla ni se corta la leyenda.
+* ⚡ **Carga un poco más ligera**: se elimina la librería de gráficas anterior, que bloqueaba la carga inicial.
+
+## Versión 2.0.0 beta 2 Eltanin — Todas las Gráficas con el Nuevo Motor (Octubre 2026)
 * ✨ **Gráficas renovadas en Dashboards y en cada sucursal**: volumen de reseñas, ranking de calificación, distribución de estrellas y tendencias ahora usan el nuevo motor. Se ven igual de claras, con tarjetas flotantes al pasar el cursor que muestran el detalle de cada barra o punto.
 * 🐛 **Corregido**: al tocar una barra del gráfico de volumen en Dashboards no pasaba nada; ahora abre el listado de reseñas correspondiente.
 * 📱 **Mejor en el celular**: las etiquetas de los ejes se acomodan según el ancho de la pantalla para que se lean completas.

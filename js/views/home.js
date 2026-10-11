@@ -284,6 +284,11 @@ const HomeView = {
       ? `<span class="hero-stat-sub">${prevGlobal.totalReviews} en ${capitalizedPrevMonth.toLowerCase()}</span>`
       : `<span class="hero-stat-sub">Meta: 4.5+ estrellas</span>`;
 
+    // Atención inmediata: reseñas críticas de los últimos días en la región (independiente del mes que se esté viendo)
+    const nowUtc = new Date();
+    const recentCritical = Severity.criticalIn(Patterns.collect(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth() + 1, 2), Severity.RECENT_DAYS);
+    const attentionHtml = AttentionCard.html(recentCritical, { key: 'home', scope: getRegionName(activeRegion) });
+
     const concluded = getConcludedMonthInfo();
     let concludedBannerHtml = '';
     if (concluded) {
@@ -369,6 +374,8 @@ const HomeView = {
           ${this._buildHeroDiagnosis(conAlerta, currGlobal, branches, currStats)}
         </div>
       </section>
+
+      ${attentionHtml}
 
       <div class="home-grid-2" style="margin-top: 24px; margin-bottom: 24px;">
         ${alertBannerHtml}
@@ -843,24 +850,7 @@ const HomeView = {
 
   _buildReviewFeed(activeReviews, countWithText) {
     const isCarouselDisabled = this.carouselPool.length <= 3;
-    const cards = activeReviews.map(r => {
-      const isNeg = r.stars <= 3;
-      const cardClass = isNeg ? 'review-card neg' : 'review-card';
-      const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
-      const timeStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
-      const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
-      const branchDisplayName = branchMeta ? branchMeta.abr : r.sucursal;
-      return `
-        <div class="${cardClass}" onclick="HomeView.openReviewDetailModal(${r.carouselId})">
-          <div class="rc-head">
-            <span class="rc-branch">${branchDisplayName}</span>
-            <span class="rc-date">${timeStr}</span>
-          </div>
-          <div class="rc-stars">${starsHtml}</div>
-          <p class="rc-text">"${escapeHtml(r.text)}"</p>
-        </div>
-      `;
-    }).join('');
+    const cards = activeReviews.map((r, i) => ReviewCard.html(r, { variant: 'compact', index: i % 8, onclick: `HomeView.openReviewDetailModal(${r.carouselId})` })).join('');
 
     return `
       <section class="section review-feed-section r">
@@ -898,15 +888,11 @@ const HomeView = {
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
     
-    const sidebarHtml = `
-      <div class="sidebar-overlay" id="feedSidebarOverlay" onclick="if(event.target===this) HomeView.closeSidebar()">
-        <div class="feed-sidebar">
-          <div class="sidebar-header">
-            <h2 class="sidebar-title">Feed de Reseñas</h2>
-            <button class="sidebar-close" onclick="HomeView.closeSidebar()">×</button>
-          </div>
-          
-          <div class="sidebar-filters">
+    Drawer.open({
+      id: 'feedSidebarOverlay',
+      title: 'Feed de Reseñas',
+      bodyId: 'sidebarReviewsContainer',
+      filtersHtml: `
             <div class="filter-group">
               <label>Sentimiento</label>
               <div class="custom-select" id="sidebarSentimentDropdown">
@@ -941,38 +927,13 @@ const HomeView = {
               </div>
             </div>
 
-            <div class="filter-group" style="display:flex; align-items:center; gap:8px; margin-top: 14px; grid-column: 1 / -1;">
+            <div class="filter-group" style="display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:8px; margin-top: 4px; grid-column: 1 / -1;">
               <input type="checkbox" id="sidebarUnrepliedCheckbox" ${this.feedOnlyUnreplied ? 'checked' : ''} onchange="HomeView.toggleSidebarUnreplied(this.checked)" style="cursor:pointer; width:16px; height:16px; accent-color:var(--oro);">
-              <label for="sidebarUnrepliedCheckbox" style="margin:0; font-size:12px; color:var(--text); cursor:pointer; font-weight:600;">Solo pendientes de respuesta</label>
-            </div>
-          </div>
-          
-          <div class="sidebar-content" id="sidebarReviewsContainer">
-            <!-- Reviews loaded dynamically -->
-          </div>
-        </div>
-      </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', sidebarHtml);
-    
-    // Trigger animation
-    const overlay = document.getElementById('feedSidebarOverlay');
-    requestAnimationFrame(() => {
-      overlay.classList.add('active');
+              <label for="sidebarUnrepliedCheckbox" style="margin:0; font-size:12px; color:var(--text); cursor:pointer; font-weight:600; text-transform:none;">Solo pendientes de respuesta</label>
+            </div>`
     });
 
     this.filterSidebarReviews();
-
-    if (typeof ModalManager !== 'undefined') {
-      ModalManager.open(overlay, () => {
-        const el = document.getElementById('feedSidebarOverlay');
-        if (el) {
-          el.classList.remove('active');
-          setTimeout(() => el.remove(), 300);
-        }
-      });
-    }
   },
 
   getSentimentLabel(val) {
@@ -1018,18 +979,7 @@ const HomeView = {
   },
 
   closeSidebar() {
-    if (typeof ModalManager !== 'undefined' && ModalManager._stack.length > 0) {
-      ModalManager.close();
-      return;
-    }
-    const overlay = document.getElementById('feedSidebarOverlay');
-    if (overlay) {
-      overlay.classList.remove('active');
-      setTimeout(() => overlay.remove(), 300);
-    }
-    // Restore scrolling
-    document.documentElement.style.overflow = '';
-    document.body.style.overflow = '';
+    Drawer.close('feedSidebarOverlay');
   },
 
   openReviewDetailModal(carouselId) {
@@ -1041,81 +991,22 @@ const HomeView = {
     }
     if (!r) return;
 
-    // Freeze background scrolling
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-
-    // Pause continuous scroll
+    // Pausa el desplazamiento continuo del carrusel mientras el detalle está abierto
     HomeView.isPaused = true;
 
-    const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
-    const dateStr = r.publishedAtDate ? formatDate(r.publishedAtDate) : 'Sin fecha';
-    
-    // Check if isLocalGuide
-    const localGuideBadge = r.isLocalGuide 
-      ? `<span class="local-guide-badge">${svgIcon('starFilled')} Local Guide</span>`
-      : '';
-      
-    // Reply/Owner response
-    const responseHtml = r.responseFromOwnerText
-      ? `<div class="modal-owner-response"><strong>Respuesta del Propietario:</strong> "${escapeHtml(r.responseFromOwnerText)}"</div>`
-      : '';
-
-    const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
-    const branchDisplayName = branchMeta ? branchMeta.nombre : r.sucursal;
-
-    const modalHtml = `
-      <div class="modal-overlay active" id="reviewDetailModal" onclick="if(event.target === this) HomeView.closeReviewDetailModal()">
-        <div class="modal-box">
-          <div class="modal-header">
-            <h2 class="modal-title">Detalle de Reseña</h2>
-            <button class="modal-close" onclick="HomeView.closeReviewDetailModal()">×</button>
-          </div>
-          <div class="modal-body">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-              <div>
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                  <span style="font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text);">${branchDisplayName}</span>
-                  <span style="color:var(--oro); font-size:14px; letter-spacing:1px; display:inline-flex; align-items:center;">${starsHtml}</span>
-                </div>
-                <div style="font-size:11px; font-family:var(--mono); color:var(--text-dim); margin-top:2px;">${dateStr}</div>
-              </div>
-              ${localGuideBadge}
-            </div>
-            
-            <blockquote class="modal-quote">"${escapeHtml(r.text)}"</blockquote>
-            
-            ${responseHtml}
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const overlayEl = document.getElementById('reviewDetailModal');
-    if (typeof ModalManager !== 'undefined') {
-      ModalManager.open(overlayEl, () => {
-        const el = document.getElementById('reviewDetailModal');
-        if (el) el.remove();
-        HomeView.isPaused = false;
-      });
-    }
+    const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(r.sucursal) : null;
+    Drawer.open({
+      id: 'reviewDetailModal',
+      title: 'Detalle de reseña',
+      subtitle: meta ? meta.nombre : (r.sucursal || ''),
+      bodyHtml: ReviewCard.html(r, { variant: 'full', showBranch: false }) +
+        (meta ? `<a class="show-all-btn-link" href="#/sucursal/${meta.id}" onclick="Drawer.close('reviewDetailModal')">Ver ficha de ${escapeHtml(meta.nombre)} →</a>` : ''),
+      onClose: () => { HomeView.isPaused = false; }
+    });
   },
 
-
-
   closeReviewDetailModal() {
-    if (typeof ModalManager !== 'undefined' && ModalManager._stack.length > 0) {
-      ModalManager.close();
-      return;
-    }
-    const modal = document.getElementById('reviewDetailModal');
-    if (modal) {
-      modal.remove();
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-    }
-    // Resume continuous scroll
+    Drawer.close('reviewDetailModal');
     HomeView.isPaused = false;
   },
 
@@ -1159,24 +1050,7 @@ const HomeView = {
       return;
     }
 
-    container.innerHTML = filtered.map(r => {
-      const isNeg = r.stars <= 2;
-      const starsHtml = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
-      const timeStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
-      const branchMeta = SUCURSALES_META_ALL.find(s => s.id === r.sucursal);
-      const branchDisplayName = branchMeta ? branchMeta.abr : r.sucursal;
-      return `
-        <div class="sidebar-review-card ${isNeg ? 'neg' : ''}" onclick="HomeView.openReviewDetailModal('${r.globalId}')">
-          <div class="src-head">
-            <span class="src-branch">${branchDisplayName}</span>
-            <span class="src-date">${timeStr}</span>
-          </div>
-          <div class="src-stars">${starsHtml}</div>
-          <p class="src-text">"${escapeHtml(r.text)}"</p>
-          ${r.responseFromOwnerText ? `<div class="src-response"><strong>Respuesta:</strong> "${escapeHtml(r.responseFromOwnerText)}"</div>` : ''}
-        </div>
-      `;
-    }).join('');
+    container.innerHTML = ReviewCard.list(filtered, { onclick: r => `HomeView.openReviewDetailModal('${r.globalId}')` });
   },
 
   openAlertModal(branchId) {
@@ -1191,48 +1065,20 @@ const HomeView = {
     const branchReviews = DataLoader.getReviewsForBranch(year, month, branchId);
     const negatives = branchReviews.filter(r => r.stars <= 3 && r.text && r.text.trim().length > 0);
 
-    // Freeze background scrolling when opening the modal
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-
-    const monthName = MONTH_NAMES[month - 1] || '';
-    const modalHtml = `
-      <div class="modal-overlay active" id="alertModal" onclick="if(event.target === this) HomeView.closeAlertModal()">
-        <div class="modal-box">
-          <div class="modal-header">
-            <h2 class="modal-title">Alertas: ${branchMeta.abr}</h2>
-            <button class="modal-close" onclick="HomeView.closeAlertModal()">×</button>
-          </div>
-          <div class="modal-body">
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Las siguientes reseñas negativas requieren reporte a Marketing para su resolución.</p>
-            <div class="copy-report-container">
-              <button id="copyAlertBtn" class="copy-report-btn" onclick="HomeView.copyAlertSummary('${branchId}')">
-                ${svgIcon('clipboard')} Copiar Resumen para Marketing
-              </button>
-            </div>
-            ${negatives.length === 0 ? '<p>No hay reseñas negativas con texto.</p>' : ''}
-            ${negatives.map(r => `
-              <div class="review-item" style="border-left: 2px solid var(--alerta); padding-left:12px; margin-bottom:12px;">
-                <div class="ri-head">
-                  <div class="ri-score" style="color: var(--alerta)">${starStr(r.stars)}</div>
-                  <div class="ri-date">${formatDate(r.publishedAtDate)}</div>
-                </div>
-                <div class="ri-text">"${escapeHtml(r.text)}"</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const overlayEl = document.getElementById('alertModal');
-    if (typeof ModalManager !== 'undefined') {
-      ModalManager.open(overlayEl, () => {
-        const el = document.getElementById('alertModal');
-        if (el) el.remove();
-      });
-    }
+    Drawer.open({
+      id: 'alertModal',
+      title: `Alertas: ${branchMeta.abr}`,
+      subtitle: 'Las siguientes reseñas negativas requieren reporte a Marketing para su resolución.',
+      footerHtml: negatives.length === 0 ? '' : `
+        <div class="copy-report-container" style="margin:0;">
+          <button id="copyAlertBtn" class="copy-report-btn" onclick="HomeView.copyAlertSummary('${branchId}')">
+            ${svgIcon('clipboard')} Copiar Resumen para Marketing
+          </button>
+        </div>`,
+      bodyHtml: negatives.length === 0
+        ? '<p class="drawer-empty">No hay reseñas negativas con texto.</p>'
+        : ReviewCard.list(negatives, { showBranch: false })
+    });
   },
 
   async copyAlertSummary(branchId) {
@@ -1248,7 +1094,7 @@ const HomeView = {
     let text = `étoile GDL — Reporte de Incidencias — ${branchMeta.abr} ${monthName} ${year}\n`;
     text += `${negatives.length} reseña${negatives.length !== 1 ? 's' : ''} crítica${negatives.length !== 1 ? 's' : ''}:\n\n`;
     negatives.forEach((r, i) => {
-      const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : 'Sin fecha';
+      const dateStr = reviewWhen(r, 'short');
       text += `${i + 1}. ${dateStr} (${'★'.repeat(r.stars)}${'☆'.repeat(5 - r.stars)}): "${r.text}"\n`;
     });
     try {
@@ -1276,12 +1122,10 @@ const HomeView = {
     const data = DataLoader.getMonth(year, month);
     if (!data) return;
 
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-
     const monthName = MONTH_NAMES[month - 1] || '';
     let branchesHtml = '';
     let hasIncidents = false;
+    let idx = 0;
 
     SUCURSALES_META.forEach(branchMeta => {
       const branchReviews = DataLoader.getReviewsForBranch(year, month, branchMeta.id);
@@ -1289,55 +1133,25 @@ const HomeView = {
       if (negatives.length > 0) {
         hasIncidents = true;
         branchesHtml += `
-          <div class="branch-incident-group" style="margin-bottom: 20px;">
-            <h3 style="font-size:14px; font-weight:700; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:8px;">
-              <span class="bc-status warn-red" style="margin-top:0; width:8px; height:8px;"></span>
-              ${branchMeta.nombre} (${negatives.length})
-            </h3>
-            ${negatives.map(r => `
-              <div class="review-item" style="border-left: 2px solid var(--alerta); padding-left:12px; margin-bottom:12px; margin-left:8px;">
-                <div class="ri-head" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                  <div class="ri-score" style="color: var(--alerta); font-size:11px;">${starStr(r.stars)}</div>
-                  <div class="ri-date" style="font-size:11px; color:var(--text-muted);">${formatDate(r.publishedAtDate)}</div>
-                </div>
-                <div class="ri-text" style="font-size:13px; line-height:1.4; font-style:italic;">"${escapeHtml(r.text)}"</div>
-              </div>
-            `).join('')}
-          </div>
-        `;
+          <div class="drawer-group">
+            <h3 class="drawer-group-title"><span class="bc-status warn-red" style="margin-top:0; width:8px; height:8px;"></span>${escapeHtml(branchMeta.nombre)} (${negatives.length})</h3>
+            ${negatives.map(r => ReviewCard.html(r, { showBranch: false, index: idx++ })).join('')}
+          </div>`;
       }
     });
 
-    const modalHtml = `
-      <div class="modal-overlay active" id="alertModal" onclick="if(event.target === this) HomeView.closeAlertModal()">
-        <div class="modal-box" style="max-height: 85vh; display: flex; flex-direction: column;">
-          <div class="modal-header" style="flex-shrink: 0;">
-            <h2 class="modal-title">Todas las Alertas: ${monthName} ${year}</h2>
-            <button class="modal-close" onclick="HomeView.closeAlertModal()">×</button>
-          </div>
-          <div class="modal-body" style="overflow-y: auto; flex-grow: 1; padding-top: 14px;">
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">Consolidado de reseñas críticas en la región durante el mes. Reportar a Marketing.</p>
-            ${hasIncidents ? `
-              <div class="copy-report-container">
-                <button id="copyAllAlertsBtn" class="copy-report-btn" onclick="HomeView.copyAllAlertsSummary()">
-                  ${svgIcon('clipboard')} Copiar Reporte Consolidado
-                </button>
-              </div>
-              ${branchesHtml}
-            ` : '<p style="text-align:center; padding:20px; color:var(--text-muted);">No hay reseñas negativas registradas este mes.</p>'}
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    const overlayEl = document.getElementById('alertModal');
-    if (typeof ModalManager !== 'undefined') {
-      ModalManager.open(overlayEl, () => {
-        const el = document.getElementById('alertModal');
-        if (el) el.remove();
-      });
-    }
+    Drawer.open({
+      id: 'alertModal',
+      title: `Todas las Alertas: ${monthName} ${year}`,
+      subtitle: 'Consolidado de reseñas negativas en la región durante el mes. Reportar a Marketing.',
+      footerHtml: hasIncidents ? `
+        <div class="copy-report-container" style="margin:0;">
+          <button id="copyAllAlertsBtn" class="copy-report-btn" onclick="HomeView.copyAllAlertsSummary()">
+            ${svgIcon('clipboard')} Copiar Reporte Consolidado
+          </button>
+        </div>` : '',
+      bodyHtml: hasIncidents ? branchesHtml : '<p class="drawer-empty">No hay reseñas negativas registradas este mes.</p>'
+    });
   },
 
   async copyAllAlertsSummary() {
@@ -1357,7 +1171,7 @@ const HomeView = {
         totalCount += negatives.length;
         text += `• ${branchMeta.nombre} (${negatives.length} reseña${negatives.length !== 1 ? 's' : ''} crítica${negatives.length !== 1 ? 's' : ''}):\n`;
         negatives.forEach((r, i) => {
-          const dateStr = r.publishedAtDate ? new Date(r.publishedAtDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : 'Sin fecha';
+          const dateStr = reviewWhen(r, 'short');
           text += `  ${i + 1}. ${dateStr} (${'★'.repeat(r.stars)}${'☆'.repeat(5 - r.stars)}): "${r.text}"\n`;
         });
         text += '\n';
@@ -1388,16 +1202,7 @@ const HomeView = {
   },
 
   closeAlertModal() {
-    if (typeof ModalManager !== 'undefined' && ModalManager._stack.length > 0) {
-      ModalManager.close();
-      return;
-    }
-    const modal = document.getElementById('alertModal');
-    if (modal) {
-      modal.remove();
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-    }
+    Drawer.close('alertModal');
   },
 
   _buildHighlights(branches, year, month) {

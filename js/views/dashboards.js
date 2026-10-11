@@ -333,26 +333,11 @@ const DashboardsView = {
       <div class="home-grid-2">
         <section class="section r">
           <div class="section-head">
-            <h2 class="section-title" style="margin:0;">Volumen de Reseñas <span class="accent">${capitalizedCurrMonth}</span></h2>
-            <span class="section-sub">${currGlobal.totalReviews} reseñas · Negativas vs Positivas/Neutrales</span>
-          </div>
-          <div class="chart-card spotlight-card"><div class="chart-wrap"><div id="volChart" style="width:100%;height:100%"></div></div></div>
-        </section>
-
-        <section class="section r">
-          <div class="section-head">
             <h2 class="section-title" style="margin:0;">Ranking de Calificación <span class="accent">${capitalizedCurrMonth}</span></h2>
             <span class="section-sub">Calificación promedio por sucursal en el mes.</span>
           </div>
+          <p class="story-line story-line--center" id="storyRank" aria-live="polite"></p>
           <div class="chart-card spotlight-card"><div class="chart-wrap"><div id="rankingChart" style="width:100%;height:100%"></div></div></div>
-        </section>
-
-        <section class="section r">
-          <div class="section-head">
-            <div class="section-title">Distribución de Estrellas <span class="accent">${capitalizedCurrMonth}</span></div>
-            <span class="section-sub">Desglose de calificaciones de 1 a 5 estrellas.</span>
-          </div>
-          <div class="chart-card spotlight-card"><div class="chart-wrap"><div id="distChart" style="width:100%;height:100%"></div></div></div>
         </section>
 
         <section class="section r">
@@ -360,8 +345,29 @@ const DashboardsView = {
             <div class="section-title">Tendencia Regional <span class="accent">YTD</span></div>
             <span class="section-sub">Evolución de la calificación promedio regional durante el año.</span>
           </div>
+          <p class="story-line story-line--center" id="storyTrend" aria-live="polite"></p>
           <div class="chart-card"><div class="chart-wrap"><div id="trendChart" style="width:100%;height:100%"></div></div></div>
         </section>
+
+        <section class="section r">
+          <div class="section-head">
+            <h2 class="section-title" style="margin:0;">Volumen de Reseñas <span class="accent">${capitalizedCurrMonth}</span></h2>
+            <span class="section-sub">${currGlobal.totalReviews} reseñas · Negativas vs Positivas/Neutrales</span>
+          </div>
+          <p class="story-line story-line--center" id="storyVol" aria-live="polite"></p>
+          <div class="chart-card spotlight-card"><div class="chart-wrap"><div id="volChart" style="width:100%;height:100%"></div></div></div>
+        </section>
+
+        <section class="section r">
+          <div class="section-head">
+            <div class="section-title">Distribución de Estrellas <span class="accent">${capitalizedCurrMonth}</span></div>
+            <span class="section-sub">Desglose de calificaciones de 1 a 5 estrellas.</span>
+          </div>
+          <p class="story-line story-line--center" id="storyDist" aria-live="polite"></p>
+          <div class="chart-card spotlight-card"><div class="chart-wrap"><div id="distChart" style="width:100%;height:100%"></div></div></div>
+        </section>
+
+        ${this._buildRegionHourSection(currYear, currMonth)}
       </div>
 
       <div class="proactive-alerts-container">
@@ -401,6 +407,10 @@ const DashboardsView = {
       window._dashMonthDropdownOutsideHandler = _clickOutsideHandler;
       document.addEventListener('click', _clickOutsideHandler);
 
+      // Titular de cada gráfica (Narrative) y vínculo entre volumen y ranking
+      const story = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+      let apiVol = null, apiRank = null;
+
       // Render Charts
       // 1. Volume Chart
       const sortedVol = [...branches].sort((a, b) => b.curr.count - a.curr.count);
@@ -421,8 +431,9 @@ const DashboardsView = {
           neutralData.push(neutrals);
           okData.push(positives);
         });
+        story('storyVol', Narrative.volume(sortedVol.map((s, i) => ({ nombre: s.nombre || s.abr, count: s.curr.count, neg: warnData[i] }))));
 
-        EtoileCharts.stackedVolume(ctxVol, labels, okData, neutralData, warnData, (index, datasetIdx) => {
+        apiVol = EtoileCharts.stackedVolume(ctxVol, labels, okData, neutralData, warnData, (index, datasetIdx) => {
           const branchObj = sortedVol[index];
           if (branchObj && typeof HomeView !== 'undefined' && HomeView.openFullFeedModal) {
             HomeView.openFullFeedModal(datasetIdx === 0 ? 'negativas' : (datasetIdx === 1 ? 'neutras' : 'positivas'));
@@ -436,6 +447,7 @@ const DashboardsView = {
       if (ctxRanking) {
         const labels = sortedRating.map(s => s.abr);
         const data = sortedRating.map(s => s.curr.score);
+        story('storyRank', Narrative.ranking(sortedRating.map(s => ({ nombre: s.nombre || s.abr, score: s.curr.score, count: s.curr.count })), KpiMeta.ratingMinimo));
         const colors = sortedRating.map(s => {
           if (s.curr.count === 0) return darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
           return s.curr.score >= KpiMeta.ratingMinimo
@@ -444,13 +456,16 @@ const DashboardsView = {
                 ? (darkMode ? 'rgba(244,201,130,0.85)' : 'rgba(201,125,16,0.85)') 
                 : (darkMode ? 'rgba(244,144,144,0.85)' : 'rgba(198,40,40,0.85)'));
         });
-        EtoileCharts.barRanking(ctxRanking, labels, data, colors, (index) => {
+        apiRank = EtoileCharts.barRanking(ctxRanking, labels, data, colors, (index) => {
           const branchObj = sortedRating[index];
           if (branchObj && branchObj.id) {
             Router.navigate(`#/sucursal/${branchObj.id}`);
           }
         });
       }
+
+      // Pasar el cursor por una sucursal en una gráfica la resalta en la otra
+      EC.linkHover(apiVol, apiRank);
 
       // 3. Distribution Chart
       const ctxDist = document.getElementById('distChart');
@@ -463,6 +478,7 @@ const DashboardsView = {
             starCounts[5 - r.stars]++;
           }
         });
+        story('storyDist', Narrative.distribution(starCounts));
         const labels = ['5 ★', '4 ★', '3 ★', '2 ★', '1 ★'];
         const colors = darkMode 
           ? ['rgba(122,158,138,0.85)', 'rgba(137,173,152,0.7)', 'rgba(244,201,130,0.85)', 'rgba(244,160,144,0.85)', 'rgba(244,116,116,0.85)']
@@ -490,8 +506,15 @@ const DashboardsView = {
           }
         }
         const color = darkMode ? '#7A9E8A' : '#3D5A47';
+        const nowUtc = new Date();
+        const lastIsCurrentMonth = currYear === nowUtc.getUTCFullYear() && sortedMonths[sortedMonths.length - 1] === nowUtc.getUTCMonth() + 1;
+        story('storyTrend', Narrative.ratingTrend(trendLabels, trendData, KpiMeta.ratingMinimo, lastIsCurrentMonth));
         EtoileCharts.lineTrend(ctxTrend, trendLabels, trendData, 'Promedio Regional', color);
       }
+
+      // 5. Quejas por hora de la región (últimos 12 meses, hora local de cada tienda)
+      const hourEl = document.getElementById('regionHourChart');
+      if (hourEl && DashboardsView._hourData) EtoileCharts.hourComplaints(hourEl, DashboardsView._hourData.h, DashboardsView._hourData.hl);
     }, 350);
 
     requestAnimationFrame(() => {
@@ -651,6 +674,24 @@ const DashboardsView = {
     `;
   },
 
+  /** ¿A qué hora llegan las quejas en la región? Últimos 12 meses, hora local de cada tienda */
+  _buildRegionHourSection(year, month) {
+    const h = Patterns.hourly(Patterns.collect(year, month, 12));
+    const hl = Patterns.headline(h);
+    this._hourData = { h, hl };
+    const regionName = typeof getRegionName === 'function' ? getRegionName(activeRegion) : '';
+    return `
+        <section class="section r" style="grid-column: 1 / -1;">
+          <div class="section-head">
+            <div class="section-title">¿A qué hora llegan las quejas? <span class="accent">${regionName}</span></div>
+            <span class="section-sub">Quejas de 1-2★ con texto, por hora local de cada tienda (24 h) · últimos 12 meses</span>
+          </div>
+          <p class="story-line story-line--center${hl.concentrated ? ' is-alert' : ''}">${hl.text}</p>
+          <div class="chart-card"><div class="chart-wrap" style="height:280px"><div id="regionHourChart" style="width:100%;height:100%"></div></div></div>
+          <div class="story-foot">${h.nNeg} quejas de ${h.n} reseñas con texto en ${regionName}</div>
+        </section>`;
+  },
+
   openStarReviewsModal(year, month, stars) {
     this._modalYear = year;
     this._modalMonth = month;
@@ -676,76 +717,48 @@ const DashboardsView = {
       branchCountsMap[rawKey].count++;
     });
 
-    const branchOptionsHtml = Object.keys(branchCountsMap).sort((a, b) => branchCountsMap[a].name.localeCompare(branchCountsMap[b].name)).map(rawKey => {
+    const branchOptionsHtml = Object.keys(branchCountsMap).sort((x, y) => branchCountsMap[x].name.localeCompare(branchCountsMap[y].name)).map(rawKey => {
       const bInfo = branchCountsMap[rawKey];
-      return `<div class="custom-option" data-value="${escapeHtml(rawKey)}" data-label="${escapeHtml(bInfo.name)} (${bInfo.count})" onclick="DashboardsView.onStarModalOptionClick(this)" style="padding:10px 14px; font-size:12px; cursor:pointer;">${escapeHtml(bInfo.name)} (${bInfo.count})</div>`;
+      return `<div class="custom-option" data-value="${escapeHtml(rawKey)}" data-label="${escapeHtml(bInfo.name)} (${bInfo.count})" onclick="DashboardsView.onStarModalOptionClick(this)">${escapeHtml(bInfo.name)} (${bInfo.count})</div>`;
     }).join('');
 
-    this.closeStarReviewsModal();
-
-    // INVARIANTE: Congelar scroll del documento al abrir modales
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-
-    const overlay = document.createElement('div');
-    overlay.id = 'dashStarModalOverlay';
-    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;';
-
-    overlay.onclick = (e) => {
-      if (e.target === overlay) DashboardsView.closeStarReviewsModal();
-    };
-
     const monthName = MONTH_NAMES[month - 1];
-
-    overlay.innerHTML = `
-      <div style="background:var(--surface); border:1px solid var(--border); border-radius:18px; max-width:680px; width:100%; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 24px 60px rgba(0,0,0,0.4); overflow:hidden;">
-        <!-- Header con fondo sólido y dropdown de ancho fijo -->
-        <div style="padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px; background:var(--surface); flex-shrink:0;">
-          <div style="flex:1; min-width:0;">
-            <h3 style="margin:0 0 4px 0; font-family:var(--title); font-size:20px; color:var(--text); display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-              <span>Reseñas de ${stars} ★</span>
-              <span style="font-size:12px; font-weight:700; background:rgba(61,90,71,0.12); color:var(--verde); padding:3px 12px; border-radius:14px; border:1px solid rgba(61,90,71,0.2);" id="starModalCountBadge">${this._modalFiltered.length} verificadas</span>
-            </h3>
-            <span style="font-size:12px; color:var(--text-muted);">${monthName} ${year} · Región ${getRegionName(activeRegion)}</span>
-          </div>
-
-          <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
-            <div class="custom-select" id="starModalBranchDropdown" style="width:230px; position:relative;">
-              <button class="custom-select-trigger" onclick="DashboardsView.toggleStarModalDropdown(event)" style="width:100%; padding:8px 14px; font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:space-between; border-radius:10px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); cursor:pointer;">
-                <span class="custom-select-value" id="starModalSelectedBranchLabel" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Todas las sucursales (${this._modalFiltered.length})</span>
-                <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none" style="flex-shrink:0; margin-left:6px;"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <div class="custom-select-options" style="position:absolute; top:calc(100% + 4px); right:0; width:100%; max-height:240px; overflow-y:auto; z-index:1000; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.25);">
-                <div class="custom-option active" data-value="all" data-label="Todas las sucursales (${this._modalFiltered.length})" onclick="DashboardsView.onStarModalOptionClick(this)" style="padding:10px 14px; font-size:12px; cursor:pointer;">Todas las sucursales (${this._modalFiltered.length})</div>
-                ${branchOptionsHtml}
-              </div>
+    Drawer.open({
+      id: 'dashStarModalOverlay',
+      bodyId: 'starModalCardsContainer',
+      title: `Reseñas de ${stars} ★`,
+      subtitle: `${monthName} ${year} · Región ${getRegionName(activeRegion)} · <strong id="starModalCountBadge">${this._modalFiltered.length} verificadas</strong>`,
+      filtersHtml: `
+        <div class="filter-group" style="grid-column: 1 / -1;">
+          <label>Sucursal</label>
+          <div class="custom-select" id="starModalBranchDropdown">
+            <button class="custom-select-trigger" onclick="DashboardsView.toggleStarModalDropdown(event)">
+              <span class="custom-select-value" id="starModalSelectedBranchLabel">Todas las sucursales (${this._modalFiltered.length})</span>
+              <svg class="custom-select-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="custom-select-options">
+              <div class="custom-option active" data-value="all" data-label="Todas las sucursales (${this._modalFiltered.length})" onclick="DashboardsView.onStarModalOptionClick(this)">Todas las sucursales (${this._modalFiltered.length})</div>
+              ${branchOptionsHtml}
             </div>
-
-            <button onclick="DashboardsView.closeStarReviewsModal()" style="background:var(--surface-2); border:1px solid var(--border); width:34px; height:34px; border-radius:10px; font-size:20px; cursor:pointer; color:var(--text-muted); display:flex; align-items:center; justify-content:center; flex-shrink:0;" title="Cerrar modal">&times;</button>
           </div>
-        </div>
-
-        <!-- Tarjetas sobre fondo sólido de máxima legibilidad -->
-        <div id="starModalCardsContainer" style="padding:20px 24px; overflow-y:auto; flex:1; background:var(--bg);">
-          ${this._buildStarModalCards(this._modalFiltered)}
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
+        </div>`,
+      bodyHtml: this._buildStarModalCards(this._modalFiltered)
+    });
   },
 
   closeStarReviewsModal() {
-    const overlay = document.getElementById('dashStarModalOverlay');
-    if (overlay) overlay.remove();
-    document.documentElement.style.overflow = '';
-    document.body.style.overflow = '';
+    Drawer.close('dashStarModalOverlay');
   },
 
   toggleStarModalDropdown(event) {
     event.stopPropagation();
     const dropdown = document.getElementById('starModalBranchDropdown');
-    if (dropdown) dropdown.classList.toggle('open');
+    if (!dropdown) return;
+    dropdown.classList.toggle('open');
+    if (dropdown.classList.contains('open')) {
+      const away = (e) => { if (!dropdown.contains(e.target)) { dropdown.classList.remove('open'); document.removeEventListener('click', away); } };
+      setTimeout(() => document.addEventListener('click', away), 0);
+    }
   },
 
   onStarModalOptionClick(el) {
@@ -776,22 +789,9 @@ const DashboardsView = {
 
   _buildStarModalCards(reviews) {
     if (!reviews || !reviews.length) {
-      return '<div style="text-align:center; padding:40px 20px; color:var(--text-muted); font-size:13.5px; background:var(--surface); border:1px dashed var(--border); border-radius:14px; margin:10px 0;">No se encontraron opiniones escritas con texto en este filtro.</div>';
+      return '<p class="drawer-empty">No se encontraron opiniones con este criterio.</p>';
     }
-    return reviews.map(r => {
-      const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(r.sucursal) : null;
-      const bName = meta ? meta.nombre : (r.sucursal || 'Sucursal');
-      return `
-        <div style="margin-bottom:12px; padding:16px 20px; background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <span style="font-weight:700; font-size:14px; color:var(--text);">${escapeHtml(bName)}</span>
-            <span style="font-size:13px; color:var(--oro); letter-spacing:2px;">${'★'.repeat(r.stars)}</span>
-          </div>
-          <p style="font-size:13.5px; color:var(--text); margin:0 0 8px 0; line-height:1.5; font-style:italic;">"${escapeHtml(r.text || '')}"</p>
-          <span style="font-size:11.5px; color:var(--text-muted); opacity:0.8;">${formatDate(r.publishedAtDate)}</span>
-        </div>
-      `;
-    }).join('');
+    return ReviewCard.list(reviews);
   },
 
   filterStarModalByBranch(branchKey) {

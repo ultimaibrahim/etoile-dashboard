@@ -1,6 +1,6 @@
 {
   "name": "etoile-dashboard",
-  "version": "2.0.0-beta.2",
+  "version": "2.0.0-beta.4",
   "description": "Étoile Dashboard - Hospitality Operations & Customer Sentiment Intelligence Platform",
   "main": "index.html",
   "dependencies": {
@@ -12,6 +12,7 @@
     "netlify-cli": "^17.38.1"
   },
   "scripts": {
-    "build:echarts": "node scripts/build-echarts.js"
+    "build:echarts": "node scripts/build-echarts.js",
+    "test": "node tests/qa-audit.js && node tests/gbp-sync.test.js && node tests/time.test.js && node tests/patterns.test.js && node tests/severity.test.js && node tests/narrative.test.js"
   }
 }
