@@ -336,7 +336,7 @@ const DashboardsView = {
             <h2 class="section-title" style="margin:0;">Volumen de Reseñas <span class="accent">${capitalizedCurrMonth}</span></h2>
             <span class="section-sub">${currGlobal.totalReviews} reseñas · Negativas vs Positivas/Neutrales</span>
           </div>
-          <div class="chart-card spotlight-card"><div class="chart-wrap"><canvas id="volChart"></canvas></div></div>
+          <div class="chart-card spotlight-card"><div class="chart-wrap"><div id="volChart" style="width:100%;height:100%"></div></div></div>
         </section>
 
         <section class="section r">
@@ -344,7 +344,7 @@ const DashboardsView = {
             <h2 class="section-title" style="margin:0;">Ranking de Calificación <span class="accent">${capitalizedCurrMonth}</span></h2>
             <span class="section-sub">Calificación promedio por sucursal en el mes.</span>
           </div>
-          <div class="chart-card spotlight-card"><div class="chart-wrap"><canvas id="rankingChart"></canvas></div></div>
+          <div class="chart-card spotlight-card"><div class="chart-wrap"><div id="rankingChart" style="width:100%;height:100%"></div></div></div>
         </section>
 
         <section class="section r">
@@ -352,7 +352,7 @@ const DashboardsView = {
             <div class="section-title">Distribución de Estrellas <span class="accent">${capitalizedCurrMonth}</span></div>
             <span class="section-sub">Desglose de calificaciones de 1 a 5 estrellas.</span>
           </div>
-          <div class="chart-card spotlight-card"><div class="chart-wrap"><canvas id="distChart"></canvas></div></div>
+          <div class="chart-card spotlight-card"><div class="chart-wrap"><div id="distChart" style="width:100%;height:100%"></div></div></div>
         </section>
 
         <section class="section r">
@@ -360,7 +360,7 @@ const DashboardsView = {
             <div class="section-title">Tendencia Regional <span class="accent">YTD</span></div>
             <span class="section-sub">Evolución de la calificación promedio regional durante el año.</span>
           </div>
-          <div class="chart-card"><div class="chart-wrap"><canvas id="trendChart"></canvas></div></div>
+          <div class="chart-card"><div class="chart-wrap"><div id="trendChart" style="width:100%;height:100%"></div></div></div>
         </section>
       </div>
 
@@ -404,7 +404,7 @@ const DashboardsView = {
       // Render Charts
       // 1. Volume Chart
       const sortedVol = [...branches].sort((a, b) => b.curr.count - a.curr.count);
-      const ctxVol = document.getElementById('volChart')?.getContext('2d');
+      const ctxVol = document.getElementById('volChart');
       if (ctxVol) {
         const labels = sortedVol.map(s => s.abr);
         const warnData = [];    // 1-2★
@@ -422,8 +422,8 @@ const DashboardsView = {
           okData.push(positives);
         });
 
-        Charts.stackedVolume(ctxVol, labels, okData, neutralData, warnData, (index, datasetIdx) => {
-          const branchObj = sortedBranches[index];
+        EtoileCharts.stackedVolume(ctxVol, labels, okData, neutralData, warnData, (index, datasetIdx) => {
+          const branchObj = sortedVol[index];
           if (branchObj && typeof HomeView !== 'undefined' && HomeView.openFullFeedModal) {
             HomeView.openFullFeedModal(datasetIdx === 0 ? 'negativas' : (datasetIdx === 1 ? 'neutras' : 'positivas'));
           }
@@ -432,7 +432,7 @@ const DashboardsView = {
 
       // 2. Ranking Chart
       const sortedRating = [...branches].sort((a, b) => b.curr.score - a.curr.score);
-      const ctxRanking = document.getElementById('rankingChart')?.getContext('2d');
+      const ctxRanking = document.getElementById('rankingChart');
       if (ctxRanking) {
         const labels = sortedRating.map(s => s.abr);
         const data = sortedRating.map(s => s.curr.score);
@@ -444,7 +444,7 @@ const DashboardsView = {
                 ? (darkMode ? 'rgba(244,201,130,0.85)' : 'rgba(201,125,16,0.85)') 
                 : (darkMode ? 'rgba(244,144,144,0.85)' : 'rgba(198,40,40,0.85)'));
         });
-        Charts.barRanking(ctxRanking, labels, data, colors, (index) => {
+        EtoileCharts.barRanking(ctxRanking, labels, data, colors, (index) => {
           const branchObj = sortedRating[index];
           if (branchObj && branchObj.id) {
             Router.navigate(`#/sucursal/${branchObj.id}`);
@@ -453,7 +453,7 @@ const DashboardsView = {
       }
 
       // 3. Distribution Chart
-      const ctxDist = document.getElementById('distChart')?.getContext('2d');
+      const ctxDist = document.getElementById('distChart');
       if (ctxDist) {
         const currMonthData = DataLoader.getMonth(currYear, currMonth);
         const currReviews = currMonthData ? currMonthData.reviews : [];
@@ -467,14 +467,14 @@ const DashboardsView = {
         const colors = darkMode 
           ? ['rgba(122,158,138,0.85)', 'rgba(137,173,152,0.7)', 'rgba(244,201,130,0.85)', 'rgba(244,160,144,0.85)', 'rgba(244,116,116,0.85)']
           : ['rgba(61,90,71,0.85)', 'rgba(122,158,138,0.7)', 'rgba(201,125,16,0.85)', 'rgba(178,58,43,0.85)', 'rgba(198,40,40,0.85)'];
-        Charts.starDistributionBar(ctxDist, labels, starCounts, colors, (index) => {
+        EtoileCharts.starDistributionBar(ctxDist, labels, starCounts, colors, (index) => {
           const targetStars = 5 - index;
           DashboardsView.openStarReviewsModal(currYear, currMonth, targetStars);
         });
       }
 
       // 4. Trend Chart
-      const ctxTrend = document.getElementById('trendChart')?.getContext('2d');
+      const ctxTrend = document.getElementById('trendChart');
       if (ctxTrend) {
         const trendLabels = [];
         const trendData = [];
@@ -490,7 +490,7 @@ const DashboardsView = {
           }
         }
         const color = darkMode ? '#7A9E8A' : '#3D5A47';
-        Charts.lineTrend(ctxTrend, trendLabels, trendData, 'Promedio Regional', color);
+        EtoileCharts.lineTrend(ctxTrend, trendLabels, trendData, 'Promedio Regional', color);
       }
     }, 350);
 

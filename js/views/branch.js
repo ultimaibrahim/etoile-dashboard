@@ -480,13 +480,13 @@ const BranchView = {
           <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--sombra-card);">
             <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:12px; letter-spacing:0.05em;">Rating Promedio Mensual</div>
             <div style="height:180px; position:relative;">
-              <canvas id="branchRatingTrendChart"></canvas>
+              <div id="branchRatingTrendChart" style="width:100%;height:100%"></div>
             </div>
           </div>
           <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--sombra-card);">
             <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:12px; letter-spacing:0.05em;">Volumen de Reseñas Mensual</div>
             <div style="height:180px; position:relative;">
-              <canvas id="branchVolumeTrendChart"></canvas>
+              <div id="branchVolumeTrendChart" style="width:100%;height:100%"></div>
             </div>
           </div>
         </div>
@@ -549,15 +549,15 @@ const BranchView = {
 
       // Render Evolution Trend Charts
       setTimeout(() => {
-        const ratingCtx = document.getElementById('branchRatingTrendChart')?.getContext('2d');
-        const volumeCtx = document.getElementById('branchVolumeTrendChart')?.getContext('2d');
+        const ratingCtx = document.getElementById('branchRatingTrendChart');
+        const volumeCtx = document.getElementById('branchVolumeTrendChart');
         const color = darkMode ? '#7A9E8A' : '#3D5A47';
 
         if (ratingCtx) {
-          Charts.branchRatingTrend(ratingCtx, trendLabels, ratingTrendData, color);
+          EtoileCharts.branchRatingTrend(ratingCtx, trendLabels, ratingTrendData, color);
         }
         if (volumeCtx) {
-          Charts.branchVolumeTrend(volumeCtx, trendLabels, volumeTrendData, color);
+          EtoileCharts.branchVolumeTrend(volumeCtx, trendLabels, volumeTrendData, color);
         }
       }, 100);
 

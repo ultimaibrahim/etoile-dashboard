@@ -5,7 +5,12 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 
 ---
 
-## Versión 2.0.0 beta 1 Eltanin — Arranque de Étoile 2.0 (Octubre 2026) [PREVIEW]
+## Versión 2.0.0 beta 2 Eltanin — Todas las Gráficas con el Nuevo Motor (Octubre 2026) [PREVIEW]
+* ✨ **Gráficas renovadas en Dashboards y en cada sucursal**: volumen de reseñas, ranking de calificación, distribución de estrellas y tendencias ahora usan el nuevo motor. Se ven igual de claras, con tarjetas flotantes al pasar el cursor que muestran el detalle de cada barra o punto.
+* 🐛 **Corregido**: al tocar una barra del gráfico de volumen en Dashboards no pasaba nada; ahora abre el listado de reseñas correspondiente.
+* 📱 **Mejor en el celular**: las etiquetas de los ejes se acomodan según el ancho de la pantalla para que se lean completas.
+
+## Versión 2.0.0 beta 1 Eltanin — Arranque de Étoile 2.0 (Octubre 2026)
 * 🧪 **Empieza la etapa de pruebas de Étoile 2.0**: las versiones beta se prueban con el equipo; si se aprueban, se lanza Étoile 2.0.
 * 🎬 **Vuelven los videos de fondo en el inicio de sesión**: la pantalla de acceso recupera su fondo animado con las imágenes de la marca, ahora más ligeros para que carguen rápido incluso en celular.
 * 📅 **Siempre lo más reciente**: al entrar, el tablero abre directamente en el mes en curso para monitorear y actuar al momento. Durante los primeros 7 días de cada mes sigue apareciendo el aviso con el resumen del mes que acaba de terminar.

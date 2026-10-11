@@ -15,9 +15,11 @@ Rama: `feat/v2.0.0-eltanin`. Doble changelog en el mismo commit. Sin commit/push
 - [x] Carga: precarga en paralelo, init+precarga en paralelo, descarga al hacer clic
 
 ## beta.2 — Resto de `charts.js` (A2)
-- [ ] barVolume, stackedVolume, barRanking, donutDistribution, starDistributionBar
-- [ ] lineTrend, branchRatingTrend, branchVolumeTrend
-- [ ] Tooltip "crystal" equivalente en ECharts (hoy `crystalTooltipHandler`) y plugins `targetLine` / otros
+- [x] barVolume, stackedVolume, barRanking, donutDistribution, starDistributionBar
+- [x] lineTrend, branchRatingTrend, branchVolumeTrend
+- [x] Tooltip "crystal" equivalente en ECharts (`.etoile-tip-card`) y línea de meta (`EC.goalLine`)
+- [x] QA automatizado antes/después (claro, oscuro, móvil) y de interacción (10/10)
+- [x] Bug previo: clic en volumen de dashboards (`sortedBranches`)
 
 ## beta.3 — compare.js y brand.js; retirar Chart.js
 - [ ] compare.js (3 gráficas), brand.js (2)
