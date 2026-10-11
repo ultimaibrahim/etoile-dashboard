@@ -204,6 +204,7 @@ const Charts = {
       try { c.destroy(); } catch (e) {}
     });
     this.instances = [];
+    if (typeof ChartWrapper !== 'undefined') ChartWrapper.disposeAll();
     const tooltipEl = document.getElementById('chartjs-crystal-tooltip');
     if (tooltipEl) tooltipEl.style.opacity = '0';
   },

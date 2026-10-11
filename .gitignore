@@ -77,6 +77,8 @@ build/
 
 # ─── Video pesado — no pertenece en git ────────────────────
 *.mp4
+# Excepción: los 4 videos del fondo del login (recomprimidos, sin audio, ~2 MB c/u)
+!videos/*.mp4
 
 # ─── Cache de Netlify CLI/build ────────────────────────────
 .netlify/

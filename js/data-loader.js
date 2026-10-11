@@ -5,6 +5,10 @@
 
 const DataLoader = {
   manifest: null,
+  // Regiones ya precargadas en esta sesión: { [region]: { cache, manifest, at } }. Se vacía al iniciar/cerrar sesión.
+  _regionStore: {},
+  _brandCache: {},
+  REGION_CACHE_TTL_MS: 5 * 60 * 1000,
   cache: {},
   currentYear: null,
   currentMonth: null,
@@ -102,9 +106,17 @@ const DataLoader = {
 
   async switchRegion(region) {
     if (setRegionActiva(region)) {
+      // Región ya cargada hace poco (p. ej. la del perfil, precargada en el login): se reutiliza sin red
+      const hit = this._regionStore[region];
+      if (hit && Date.now() - hit.at < this.REGION_CACHE_TTL_MS) {
+        this.cache = hit.cache;
+        this.manifest = hit.manifest;
+        this.setupCurrentPeriods();
+        this._applyHistoricalRatings();
+        return true;
+      }
       this.cache = {}; // Vaciar la caché al cambiar de región
-      await this.init();
-      await this.computeHistoricalRatings();
+      await Promise.all([this.init(), this.computeHistoricalRatings()]);
       return true;
     }
     return false;
@@ -336,7 +348,9 @@ const DataLoader = {
 
   async loadBrandData(year, month) {
     const key = `brand-${year}-${String(month).padStart(2, '0')}`;
-    if (this.cache[key]) return this.cache[key];
+    // Datos de todas las regiones: no dependen de la región activa, así que viven fuera de `cache` (que se cambia al entrar a una región)
+    const brandHit = this._brandCache[key];
+    if (brandHit && Date.now() - brandHit.at < this.REGION_CACHE_TTL_MS) return brandHit.data;
 
     if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
@@ -391,7 +405,7 @@ const DataLoader = {
           };
         });
 
-        this.cache[key] = mappedReviews;
+        this._brandCache[key] = { data: mappedReviews, at: Date.now() };
         return mappedReviews;
       } catch (e) {
         console.error(`Error al consultar reseñas globales de Supabase para ${key}:`, e);
@@ -500,28 +514,37 @@ const DataLoader = {
   async preloadAllReviews() {
     if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
-        let allData = [];
-        let page = 0;
         const pageSize = 1000;
-        let hasMore = true;
-
-        while (hasMore) {
-          let query = supabaseClient.from('reviews').select('*');
+        const pageQuery = (p, withCount) => {
+          let query = supabaseClient.from('reviews').select('*', withCount ? { count: 'exact' } : undefined);
           if (activeRegion && activeRegion !== 'BRAND') {
             query = query.eq('region', activeRegion);
           }
-          const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
-          if (error) throw error;
+          return query.range(p * pageSize, (p + 1) * pageSize - 1);
+        };
 
-          if (data && data.length > 0) {
-            allData = allData.concat(data);
-            if (data.length < pageSize) {
-              hasMore = false;
-            } else {
-              page++;
+        // Página 0 con el total; el resto de páginas se piden en paralelo (antes: una tras otra, ~400 ms c/u)
+        const first = await pageQuery(0, true);
+        if (first.error) throw first.error;
+        let allData = first.data || [];
+        const totalRows = first.count;
+        if (allData.length === pageSize) {
+          if (typeof totalRows === 'number') {
+            const extraPages = Math.ceil(totalRows / pageSize) - 1;
+            const rest = await Promise.all(Array.from({ length: Math.max(0, extraPages) }, (_, i) => pageQuery(i + 1, false)));
+            for (const r of rest) {
+              if (r.error) throw r.error;
+              allData = allData.concat(r.data || []);
             }
           } else {
-            hasMore = false;
+            // Sin total disponible: respaldo secuencial
+            for (let p = 1; ; p++) {
+              const r = await pageQuery(p, false);
+              if (r.error) throw r.error;
+              if (!r.data || r.data.length === 0) break;
+              allData = allData.concat(r.data);
+              if (r.data.length < pageSize) break;
+            }
           }
         }
 
@@ -585,7 +608,13 @@ const DataLoader = {
   async computeHistoricalRatings() {
     // Carga masiva en un solo query en lugar de multiples llamadas HTTP concurrentes
     await this.preloadAllReviews();
+    if (typeof activeRegion !== 'undefined' && activeRegion) {
+      this._regionStore[activeRegion] = { cache: this.cache, manifest: this.manifest, at: Date.now() };
+    }
+    this._applyHistoricalRatings();
+  },
 
+  _applyHistoricalRatings() {
     for (const meta of SUCURSALES_META_ALL) {
       const stats = this.computeBranchHistoricalStats(meta.id);
       if (stats.count > 0) {

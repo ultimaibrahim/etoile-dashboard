@@ -6065,3 +6065,7 @@ html.login-page-active body {
   line-height: 1.6;
   color: var(--text);
 }
+
+/* ── ChartWrapper (Étoile 2.0): estados de gráfica ── */
+.chart-state{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:12px;font-size:12px;font-weight:600;color:var(--text-muted);border-radius:12px;pointer-events:none}
+.chart-state[data-state="error"]{color:var(--danger,#c0392b)}

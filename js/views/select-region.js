@@ -997,25 +997,19 @@ const SelectRegionView = {
     const curYear = now.getFullYear();
     const curMonth = now.getMonth() + 1; // 1-indexed (1-12)
 
-    // Por defecto en analítica de negocios, el mes de operación "cerrado" es el mes anterior al actual
-    let defaultYear = curMonth === 1 ? curYear - 1 : curYear;
-    let defaultMonth = curMonth === 1 ? 12 : curMonth - 1;
+    // Se monitorea lo último de lo último: por defecto, el mes más reciente con datos (el mes en curso).
+    // El resumen del mes recién cerrado se avisa aparte con el banner de los primeros 7 días (getConcludedMonthInfo).
+    let defaultYear = curYear;
+    let defaultMonth = curMonth;
 
-    // Si DataLoader cuenta con manifest cargado de la base de datos, evaluar el período más reciente válido
     if (typeof DataLoader !== 'undefined' && DataLoader.manifest) {
       const manifestYears = Object.keys(DataLoader.manifest).map(Number).sort((a, b) => b - a);
       if (manifestYears.length > 0) {
         const latestYear = manifestYears[0];
         const monthsInYear = [...DataLoader.manifest[latestYear]].sort((a, b) => a - b);
-        
         if (monthsInYear.length > 0) {
           defaultYear = latestYear;
-          const targetPrevMonth = curMonth === 1 ? 12 : curMonth - 1;
-          if (monthsInYear.includes(targetPrevMonth)) {
-            defaultMonth = targetPrevMonth;
-          } else {
-            defaultMonth = monthsInYear[monthsInYear.length - 1];
-          }
+          defaultMonth = monthsInYear[monthsInYear.length - 1];
         }
       }
     }
@@ -1250,12 +1244,15 @@ const SelectRegionView = {
     }
 
     const regionName = getRegionName(regionId);
+    // La descarga empieza al instante y corre mientras dura la animación del loader (antes arrancaba al terminar)
+    let regionReady = Promise.resolve();
+    if (typeof DataLoader !== 'undefined') {
+      DataLoader.setMonth(this.selectedYear, this.selectedMonth);
+      regionReady = DataLoader.switchRegion(regionId);
+    }
     if (typeof showRegionTransitionLoader !== 'undefined') {
       showRegionTransitionLoader(regionName, 'Accediendo al panel regional...', async () => {
-        if (typeof DataLoader !== 'undefined') {
-          DataLoader.setMonth(this.selectedYear, this.selectedMonth);
-          await DataLoader.switchRegion(regionId);
-        }
+        await regionReady;
         Router.navigate('#/');
       });
     } else {

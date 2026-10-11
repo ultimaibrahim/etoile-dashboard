@@ -282,6 +282,7 @@ const Router = {
         if (typeof updateSlidingTabPill === 'function') updateSlidingTabPill();
         if (typeof initSegmentedTabs === 'function') initSegmentedTabs();
       }
+      window.dispatchEvent(new CustomEvent('etoile:route-rendered', { detail: { hash } }));
     }, 150);
   },
 

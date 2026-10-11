@@ -5,11 +5,33 @@ Este documento contiene el historial técnico completo de versiones de Étoile D
 
 ---
 
-## Generación Zenith (v3.5.0 - Presente)
+## Época Eltanin (v2.0.0 beta - Presente) [PREVIEW]
+
+Nueva línea de numeración: las betas `2.0.0-beta.N` (parches locales con letra: `beta.1a`, `beta.1b`) validan Étoile 2.0; si se aprueban, se lanza `2.0.0`. El historial 1.x–3.5.0j (Fundacional, 2.x, Izar, Zenith) es la línea previa y se conserva intacto. Foco: sistema de inteligencia operativa interactivo y visual sobre ECharts.
+
+### Version 2.0.0-beta.1 Eltanin - Cimientos ECharts: Build Propio, Chart Wrapper y Gráfica Hero Migrada (Octubre 2026) [ACTUAL]
+* **Build propio de ECharts 6 con tree-shaking real** (`src/echarts-entry.js` + `scripts/build-echarts.js`, esbuild): solo línea, barra, pie, scatter, heatmap y los componentes de grid, tooltip, leyenda, `dataZoom`, `markArea`/`markLine`, `visualMap`, calendario y brush, con render canvas. Sale a `js/vendor/echarts.custom.min.js` (versionado, sin CDN: la CSP no cambia y el sitio sigue sin paso de build en producción).
+* **Chart wrapper (roadmap A5, `js/components/chart-wrapper.js`)**: contenedor único con estados `ready`/`loading`/`empty`/`error`, `ResizeObserver` y limpieza (`disposeAll`, enganchado a `Charts.destroyAll`).
+* **Primera gráfica migrada (`js/charts-echarts.js`)**: `heroTrend` del home pasa de Chart.js a ECharts (el `<canvas>` es ahora un contenedor `<div>`). Chart.js 4.4.1 sigue cargado para las demás gráficas hasta `beta.3`.
+* **Fondo de video del login restaurado**: el commit `29f4065` (8-jul) sacó `videos/*.mp4` del repo y `*.mp4` quedó en `.gitignore`; `19ca7f7` borró además los `<video>` y la playlist de `login.js`, por lo que en producción el fondo nunca cargaba. Se revierte esa parte de `19ca7f7` (playlist aleatoria sin repetición, doble `<video>` con precarga e intercambio al terminar) y los 4 videos se recomprimen sin audio (H.264, CRF 30, `faststart`: de 13.7 MB a 7.2 MB) con excepción `!videos/*.mp4` en `.gitignore`. `media-src 'self'` de la CSP ya los permite.
+* **Mes por defecto = el más reciente con datos** (`select-region.js` → `getDefaultPeriod`): ya no abre en el "mes cerrado" (mes calendario anterior); monitorea siempre lo último. El aviso "el mes X ha terminado" de los primeros 7 días (`getConcludedMonthInfo`) no cambia.
+* **Carga más rápida (login y cambio de región)**: causa medida: `preloadAllReviews()` descargaba el historial completo de la región en páginas de 1000 **en serie** (GDL 1,227 ms, CDMX 1,349 ms solo de red) y todo el flujo era secuencial.
+  - `preloadAllReviews`: página 0 con `count: 'exact'` y el resto de páginas en paralelo (`Promise.all`), con respaldo secuencial si no hay total. Mismas filas que antes (2,194 / 4,775); GDL 700 ms, CDMX 823 ms.
+  - `DataLoader.init()` (manifiesto) y `computeHistoricalRatings()` corren en paralelo en `AppAuth.login`, el arranque (`app.js`) y `switchRegion`.
+  - **Caché por región con TTL de 5 min** (`DataLoader._regionStore`): `switchRegion` reutiliza sin red una región ya precargada (en el waterfall real, CDMX se descargaba dos veces: en el login y al elegirla, 5 páginas / ~428 KB c/u). Reelegir una región cargada: 6 ms y 0 consultas; vencida o nueva: recarga. El almacén se vacía al iniciar y cerrar sesión (cada rol tiene alcance distinto por RLS).
+  - **Precarga diferida por rol**: `select-region` solo usa el manifiesto, no la precarga pesada. Los roles que aterrizan ahí (admin/corporate/regional/zonal) solo corren `init()` en el login y al refrescar en `#/select-region` o `#/brand`; el gerente (entra directo a su región) conserva la precarga completa.
+  - **Causa raíz de la UI "trabada" (medida con QA automatizado, Playwright + Chromium)**: `_applyHistoricalRatings()` bloqueaba el hilo principal **~2.5 s** en cada entrada a una región (tarea larga de 2,526 ms, incluso con la región en caché y 0 peticiones). Para cada una de las ~33 sucursales recorría las 4,775 reseñas de CDMX llamando dos veces a `resolveBranchMeta`, que normalizaba (NFD + regex) todos los ids/nombres en cada llamada (>300 mil llamadas). `resolveBranchMeta` ahora se memoiza por entrada (`_rbmCache`, invalidada si cambia `SUCURSALES_META_ALL`) y el resultado es idéntico. `_applyHistoricalRatings`: 2,500 ms → ~40 ms; `switchRegion` con caché: ~2,500 ms → ~45 ms; clic → home: ~3.9 s → ~1.5 s (800 ms de animación + 150 ms del Router + render). Beneficia además a todo lo que usa `isSameBranch`.
+  - **Loader de región atado al render** (`showRegionTransitionLoader`): causa del parpadeo de `select-region` y de la UI "trabada" al entrar y salir de una región: el callback corría a los 800 ms y el telón subía a los 1100 ms **fijos**, aunque la descarga o el render tardaran más. Ahora el telón espera (mínimo 1100 ms) a que el callback termine y a que el Router emita el nuevo evento `etoile:route-rendered` (tope de seguridad de 10 s); un error en la transición ya no deja el telón atorado.
+  - **Caché corporativa independiente (`_brandCache`, TTL 5 min)**: `loadBrandData` (octubre/septiembre de todas las regiones, usado por `select-region` y `brand`) vivía en `cache`, que se reemplaza al cambiar de región; por eso se volvía a pedir cada vez que se regresaba al selector (2 consultas, ~66 KB). Se vacía al iniciar y cerrar sesión.
+  - `<link rel="preconnect">` a Supabase en `index.html` (handshake TLS en paralelo con la carga de scripts).
+  - `SelectRegionView.handleSelect`: la descarga de la región arranca al hacer clic y corre mientras dura la animación del loader; el callback solo espera la promesa. Antes empezaba al terminar la animación (el desfase de 2–3 s con la pantalla de regiones visible).
+* **Plan**: `documentacion/plan_v2.0.0.md`. `package.json` pasa a `2.0.0-beta.1`.
+
+## Generación Zenith (v3.5.0 - v3.5.0j)
 
 Representa la era de la perfección en rendimiento, inmediatez absoluta y estética de alta dirección. Introduce el motor de almacenamiento reactivo SWR, Command Palette universal y herramientas analíticas avanzadas.
 
-### Version 3.5.0j Zenith - Rol `corporate` con Migración en Dos Fases (Octubre 2026) [ACTUAL]
+### Version 3.5.0j Zenith - Rol `corporate` con Migración en Dos Fases (Octubre 2026) [PROD]
 * **Roadmap A10**: el frontend (`utils.js`, `home.js`, `brand.js`, `select-region.js`) reconoce el rol `corporate` (acceso nacional + `#/brand`, etiqueta "Corporativo") y conserva `admin`/`regional`/`director` como alias, por lo que se puede desplegar antes de tocar la base.
 * **`supabase_roles_corporate.sql` (no ejecutado)**: fase 1 amplía `profiles_rol_check` y `visible_location_ids()` para aceptar `corporate` junto a los roles actuales; fase 2 (comentada, tras el deploy) migra `admin`/`regional` a `corporate` y retira los alias, dejando `corporate`/`zonal`/`gerente`. Resuelve de paso `director`, que el código usaba pero la base nunca admitió.
 

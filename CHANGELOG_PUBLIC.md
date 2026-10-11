@@ -5,7 +5,14 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 
 ---
 
-## Versión 3.5.0 Zenith — Inteligencia Operativa, Heatmaps y Comparador (Septiembre 2026) [ACTUAL]
+## Versión 2.0.0 beta 1 Eltanin — Arranque de Étoile 2.0 (Octubre 2026) [PREVIEW]
+* 🧪 **Empieza la etapa de pruebas de Étoile 2.0**: las versiones beta se prueban con el equipo; si se aprueban, se lanza Étoile 2.0.
+* 🎬 **Vuelven los videos de fondo en el inicio de sesión**: la pantalla de acceso recupera su fondo animado con las imágenes de la marca, ahora más ligeros para que carguen rápido incluso en celular.
+* 📅 **Siempre lo más reciente**: al entrar, el tablero abre directamente en el mes en curso para monitorear y actuar al momento. Durante los primeros 7 días de cada mes sigue apareciendo el aviso con el resumen del mes que acaba de terminar.
+* ⚡ **Entrada y cambio de región más rápidos**: iniciar sesión y entrar a una región ahora cargan sus datos en paralelo y mientras corre la animación, por lo que se espera menos y ya no se queda la pantalla de regiones "congelada" unos segundos. Se corrigió además la causa principal de que la pantalla se quedara congelada unos segundos al entrar a una región: ahora entrar toma alrededor de un segundo y medio, menos de la mitad que antes. La animación de entrada a una región ahora espera a que la pantalla esté lista, así que ya no se alcanza a ver por un instante la pantalla anterior. Además, volver a una región que ya abriste hace unos minutos es instantáneo, y quienes eligen región al entrar ya no esperan a que se cargue una que quizá no van a usar.
+* ✨ **Nuevo motor de gráficas**: se prepara la base para gráficas más interactivas y visuales (zoom, eventos sobre la línea del tiempo, mapas de calor). En esta primera beta solo cambia la curva de fondo de la pantalla de inicio, que ahora es más fluida; el resto se ve igual.
+
+## Versión 3.5.0 Zenith — Inteligencia Operativa, Heatmaps y Comparador (Septiembre 2026) [PROD]
 * ⚖️ **Comparador Directo y Radar Operativo (`#/comparar`)**: Visualización intuitiva con Radar de 5 Dimensiones y Matriz Directa con badges de tienda líder. Diseñado para que cualquier colaborador entienda al primer golpe de vista las fortalezas y áreas de oportunidad sin gráficas confusas ni sobreingeniería.
 * 🔢 **Totales Marginales en el Heatmap Semanal ("Show the Totals")**: El mapa de calor de turnos ahora incluye una columna de **Total Turno** a la derecha y una fila de **Total Día** en la parte inferior. De un vistazo, cualquier gerente puede saber cuál es el turno con más quejas de toda la semana sin tener que sumar casilla por casilla.
 * 🎯 **Auditoría de Calidad Real (Exclusión de Reseñas Sin Texto)**: Los análisis de fricciones, quejas críticas y turnos operativos ahora procesan exclusivamente opiniones que contienen comentarios escritos. Las calificaciones vacías o sin texto únicamente se consideran para el volumen total y la nota promedio, asegurando que los reportes de servicio reflejen situaciones 100% reales y auditables.

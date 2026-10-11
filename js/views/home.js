@@ -319,7 +319,7 @@ const HomeView = {
       ${buildTopbar()}
       <section class="hero" style="position: relative;">
         <div class="hero-chart-bg" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; opacity: 0.18; pointer-events: none;">
-          <canvas id="heroTrendChart" style="width: 100%; height: 100%;"></canvas>
+          <div id="heroTrendChart" style="width: 100%; height: 100%;"></div>
         </div>
         <div class="hero-inner" style="position: relative; z-index: 2;">
           <div class="hero-left">
@@ -476,8 +476,8 @@ const HomeView = {
       });
 
       // Render absolute background trend chart in Hero
-      const heroChartCtx = document.getElementById('heroTrendChart')?.getContext('2d');
-      if (heroChartCtx && typeof Charts !== 'undefined') {
+      const heroChartEl = document.getElementById('heroTrendChart');
+      if (heroChartEl && typeof EtoileCharts !== 'undefined') {
         const trendLabels = [];
         const trendData = [];
         const sortedMonths = [...(DataLoader.manifest[currYear] || [])].sort((a, b) => a - b);
@@ -492,7 +492,7 @@ const HomeView = {
             trendData.push(null);
           }
         }
-        Charts.heroTrend(heroChartCtx, trendLabels, trendData);
+        EtoileCharts.heroTrend(heroChartEl, trendLabels, trendData);
       }
 
       // Start Carousel Autoplay

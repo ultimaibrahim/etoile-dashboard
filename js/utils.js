@@ -287,7 +287,26 @@ function normalizeBranchToken(str) {
     .replace(/[^a-z0-9]/g, "");
 }
 
+// Memoización: resolveBranchMeta se llama cientos de miles de veces (isSameBranch × reseñas × sucursales) y cada
+// llamada normalizaba todos los ids/nombres. Medido: _applyHistoricalRatings bloqueaba el hilo ~2.5 s con 4,775 reseñas.
+let _rbmCache = new Map();
+let _rbmSource = null;
+let _rbmSourceLen = -1;
 function resolveBranchMeta(input) {
+  if (!input) return null;
+  if (_rbmSource !== SUCURSALES_META_ALL || _rbmSourceLen !== SUCURSALES_META_ALL.length) {
+    _rbmCache = new Map();
+    _rbmSource = SUCURSALES_META_ALL;
+    _rbmSourceLen = SUCURSALES_META_ALL.length;
+  }
+  const key = String(input);
+  if (_rbmCache.has(key)) return _rbmCache.get(key);
+  const found = _resolveBranchMetaUncached(input);
+  _rbmCache.set(key, found);
+  return found;
+}
+
+function _resolveBranchMetaUncached(input) {
   if (!input) return null;
   const raw = String(input).trim();
   const norm = normalizeBranchToken(raw);
@@ -616,13 +635,28 @@ function showRegionTransitionLoader(titleText, subtitleText, callback) {
   loader.classList.add('active');
   document.body.style.overflow = 'hidden';
 
-  setTimeout(async () => {
-    if (callback) {
-      await callback();
-    }
-  }, 800);
+  // El telón se mantiene hasta que la vista de destino ya se pintó (evento del Router), con mínimo de animación
+  // y un tope de seguridad. Antes subía a los 1100 ms fijos y dejaba ver la pantalla anterior mientras cargaba.
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const routeRendered = new Promise(resolve => {
+    const done = () => { window.removeEventListener('etoile:route-rendered', done); resolve(); };
+    window.addEventListener('etoile:route-rendered', done);
+    setTimeout(done, 10000);
+  });
 
-  setTimeout(() => {
+  const work = (async () => {
+    await sleep(800);
+    try {
+      if (callback) {
+        await callback();
+        await routeRendered;
+      }
+    } catch (e) {
+      console.error('[RegionTransition] Error en la transición:', e);
+    }
+  })();
+
+  Promise.all([sleep(1100), work]).then(() => {
     loader.classList.remove('active');
     setTimeout(() => {
       if (loader && loader.parentNode) {
@@ -630,7 +664,7 @@ function showRegionTransitionLoader(titleText, subtitleText, callback) {
       }
       document.body.style.overflow = '';
     }, 300);
-  }, 1100);
+  });
 }
 
 async function handleRegionChange(region) {
