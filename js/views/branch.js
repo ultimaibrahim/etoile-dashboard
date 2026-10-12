@@ -14,7 +14,8 @@ const BranchView = {
     }
 
     const activeYear = DataLoader.currentYear;
-    const activeMonth = DataLoader.currentMonth;
+    // `let`: si el mes elegido no tiene reseñas de esta sucursal se cambia al más reciente que sí tenga (antes era const y la ficha se rompía)
+    let activeMonth = DataLoader.currentMonth;
 
     const skeletonTimeout = setTimeout(() => {
       this.renderSkeleton();
@@ -314,7 +315,7 @@ const BranchView = {
     const nowUtc = new Date();
     const recentCritical = Severity.criticalIn(
       Patterns.collect(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth() + 1, 2, r => isSameBranch(r.sucursal, meta.id)), Severity.RECENT_DAYS);
-    const attentionHtml = AttentionCard.html(recentCritical, { key: 'branch', scope: meta.nombre });
+    const attentionHtml = AttentionCard.html(Incidents.unresolved(recentCritical), { key: 'branch', scope: meta.nombre, incidentFilter: i => i.location_id === meta.id });
 
     const pendingCritical = reviews.filter(r => r.stars <= 2 && (!r.responseFromOwnerText || r.responseFromOwnerText.trim() === '')).length;
 
@@ -514,14 +515,6 @@ const BranchView = {
         ${this._buildOpportunityAreas(reviews, meta.id)}
       </section>
 
-      <section class="section r">
-        <div class="section-head">
-          <div class="section-title">Heatmap Operativo de Fricciones por Turno <span class="accent">${capitalizedMonth}</span></div>
-          <span class="section-sub">Matriz de 7 días × 4 turnos. Identifica turnos con mayores quejas (haz clic en cualquier celda para auditar sus reseñas)</span>
-        </div>
-        ${this._buildShiftHeatmap(reviews)}
-      </section>
-
       ${this._buildHourSection(meta, activeYear, activeMonth)}
 
       <section class="section r" id="reviewsSection">
@@ -570,13 +563,13 @@ const BranchView = {
         const color = darkMode ? '#7A9E8A' : '#3D5A47';
 
         if (ratingCtx) {
-          EtoileCharts.branchRatingTrend(ratingCtx, trendLabels, ratingTrendData, color);
+          EtoileCharts.branchRatingTrend(ratingCtx, trendLabels, ratingTrendData, color, i => BranchView.selectMonthOption(sortedMonths[i]));
         }
         if (volumeCtx) {
-          EtoileCharts.branchVolumeTrend(volumeCtx, trendLabels, volumeTrendData, color);
+          EtoileCharts.branchVolumeTrend(volumeCtx, trendLabels, volumeTrendData, color, i => BranchView.selectMonthOption(sortedMonths[i]));
         }
         const hourEl = document.getElementById('branchHourChart');
-        if (hourEl && this._hourData) EtoileCharts.hourComplaints(hourEl, this._hourData.h, this._hourData.hl);
+        if (hourEl && this._hourData) EtoileCharts.hourComplaints(hourEl, this._hourData.h, this._hourData.hl, hr => HourDrawer.open(hr, this._hourData.h, meta.nombre));
       }, 100);
 
       // Montar Sticky Action Bar para móviles (Mobile-First)
@@ -967,198 +960,6 @@ const BranchView = {
         <div class="chart-card"><div class="chart-wrap" style="height:260px"><div id="branchHourChart" style="width:100%;height:100%"></div></div></div>
         <div class="story-foot">${h.nNeg} quejas de ${h.n} reseñas con texto · las horas son las de la tienda, no las de tu dispositivo</div>
       </section>`;
-  },
-
-  _buildShiftHeatmap(reviews) {
-    const DAYS = [
-      { key: 1, label: 'Lun', name: 'Lunes' },
-      { key: 2, label: 'Mar', name: 'Martes' },
-      { key: 3, label: 'Mié', name: 'Miércoles' },
-      { key: 4, label: 'Jue', name: 'Jueves' },
-      { key: 5, label: 'Vie', name: 'Viernes' },
-      { key: 6, label: 'Sáb', name: 'Sábado' },
-      { key: 0, label: 'Dom', name: 'Domingo' }
-    ];
-
-    const SHIFTS = [
-      { id: 0, label: 'Desayuno', hours: '09-13h', time: '09:00 - 12:59' },
-      { id: 1, label: 'Comida', hours: '13-17h', time: '13:00 - 16:59' },
-      { id: 2, label: 'Cena', hours: '17-22h+', time: '17:00 - 22:00+' }
-    ];
-
-    const matrix = {};
-    DAYS.forEach(d => {
-      matrix[d.key] = {};
-      SHIFTS.forEach(s => {
-        matrix[d.key][s.id] = { total: 0, negatives: 0, sumStars: 0, reviews: [] };
-      });
-    });
-
-    // Regla Inamovible LCP: Omitir estrictamente reseñas sin texto en analítica operativa/cualitativa
-    const reviewsWithText = reviews.filter(r => r.text && r.text.trim().length > 0);
-
-    reviewsWithText.forEach(r => {
-      if (!r.publishedAtDate) return;
-      const pt = BranchTime.partsFor(r.publishedAtDate, r); // hora local de la tienda, no la del navegador
-      if (!pt) return;
-      const day = pt.dow;
-      const hour = pt.hour;
-
-      let shiftId = 2; // Cena (17:00+)
-      if (hour < 13) shiftId = 0; // Desayuno (09:00 - 12:59 y horas previas)
-      else if (hour >= 13 && hour < 17) shiftId = 1; // Comida (13:00 - 16:59)
-      else shiftId = 2; // Cena (17:00 - 22:00+)
-
-      if (matrix[day] && matrix[day][shiftId]) {
-        const cell = matrix[day][shiftId];
-        cell.total++;
-        cell.sumStars += (r.stars || 0);
-        if (r.stars <= 2) cell.negatives++;
-        cell.reviews.push(r);
-      }
-    });
-
-    const headerCols = DAYS.map(d => `<div class="heatmap-col-header">${d.label}</div>`).join('') + 
-                       `<div class="heatmap-col-header heatmap-col-marginal">Total Turno</div>`;
-
-    const rowsHtml = SHIFTS.map(s => {
-      let shiftTotal = 0;
-      let shiftNegatives = 0;
-      let shiftSumStars = 0;
-
-      const cellsHtml = DAYS.map(d => {
-        const cell = matrix[d.key][s.id];
-        shiftTotal += cell.total;
-        shiftNegatives += cell.negatives;
-        shiftSumStars += cell.sumStars;
-
-        const isSelected = this.feedShiftFilter && 
-                           this.feedShiftFilter.day === d.key && 
-                           this.feedShiftFilter.shift === s.id;
-        
-        let severityCls = 'hm-empty';
-        let badgeHtml = '';
-
-        if (cell.total > 0) {
-          const avg = (cell.sumStars / cell.total).toFixed(1);
-          if (cell.negatives >= 2) {
-            severityCls = 'hm-critical';
-            badgeHtml = `<span class="hm-badge">${cell.negatives} ⚠️</span>`;
-          } else if (cell.negatives === 1 || Number(avg) < 4.2) {
-            severityCls = 'hm-warning';
-            badgeHtml = `<span class="hm-badge">${cell.negatives > 0 ? '1 ⚠️' : `${avg}★`}</span>`;
-          } else {
-            severityCls = 'hm-optimal';
-            badgeHtml = `<span class="hm-badge">${avg}★</span>`;
-          }
-        }
-
-        const tooltip = `${d.name} (${s.label}, ${s.time}): ${cell.total} opiniones, ${cell.negatives} quejas`;
-
-        return `
-          <button 
-            type="button"
-            class="heatmap-cell ${severityCls} ${isSelected ? 'selected' : ''}" 
-            onclick="BranchView.filterShift(${d.key}, ${s.id}, '${d.name}', '${s.label}')"
-            title="${tooltip}"
-            aria-label="${tooltip}">
-            <span class="hm-count">${cell.total > 0 ? cell.total : '—'}</span>
-            ${badgeHtml}
-          </button>
-        `;
-      }).join('');
-
-      const shiftAvg = shiftTotal > 0 ? (shiftSumStars / shiftTotal).toFixed(1) : '—';
-      const shiftMarginalCell = `
-        <div class="heatmap-cell heatmap-cell-marginal" title="Total ${s.label}: ${shiftTotal} opiniones, ${shiftNegatives} quejas">
-          <span class="hm-count">${shiftTotal > 0 ? shiftTotal : '—'}</span>
-          <span class="hm-badge badge-marginal">${shiftNegatives > 0 ? `${shiftNegatives} ⚠️` : (shiftTotal > 0 ? `${shiftAvg}★` : '—')}</span>
-        </div>
-      `;
-
-      return `
-        <div class="heatmap-row">
-          <div class="heatmap-row-label">
-            <span class="hrl-shift">${s.label}</span>
-            <span class="hrl-hours">${s.hours}</span>
-          </div>
-          <div class="heatmap-cells-grid">
-            ${cellsHtml}
-            ${shiftMarginalCell}
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    // Fila Marginal Inferior: Totales por Día de la Semana
-    let grandTotal = 0;
-    let grandNegatives = 0;
-    let grandSumStars = 0;
-
-    const dayCellsHtml = DAYS.map(d => {
-      let dt = 0;
-      let dn = 0;
-      let ds = 0;
-      SHIFTS.forEach(s => {
-        dt += matrix[d.key][s.id].total;
-        dn += matrix[d.key][s.id].negatives;
-        ds += matrix[d.key][s.id].sumStars;
-      });
-      grandTotal += dt;
-      grandNegatives += dn;
-      grandSumStars += ds;
-      const dAvg = dt > 0 ? (ds / dt).toFixed(1) : '—';
-      return `
-        <div class="heatmap-cell heatmap-cell-marginal" title="Total ${d.name}: ${dt} opiniones, ${dn} quejas">
-          <span class="hm-count">${dt > 0 ? dt : '—'}</span>
-          <span class="hm-badge badge-marginal">${dn > 0 ? `${dn} ⚠️` : (dt > 0 ? `${dAvg}★` : '—')}</span>
-        </div>
-      `;
-    }).join('');
-
-    const grandAvg = grandTotal > 0 ? (grandSumStars / grandTotal).toFixed(1) : '—';
-    const grandCellHtml = `
-      <div class="heatmap-cell heatmap-cell-marginal" style="border-left:2px solid var(--oro); background:rgba(184,144,47,0.08);" title="Total Semanal: ${grandTotal} opiniones con texto, ${grandNegatives} quejas">
-        <span class="hm-count" style="color:var(--oro);">${grandTotal > 0 ? grandTotal : '—'}</span>
-        <span class="hm-badge badge-marginal" style="background:var(--oro); color:#14181A; font-weight:800;">${grandNegatives > 0 ? `${grandNegatives} ⚠️` : `${grandAvg}★`}</span>
-      </div>
-    `;
-
-    const marginalRowHtml = `
-      <div class="heatmap-row heatmap-row-marginal">
-        <div class="heatmap-row-label">
-          <span class="hm-marginal-label">Total Día</span>
-        </div>
-        <div class="heatmap-cells-grid">
-          ${dayCellsHtml}
-          ${grandCellHtml}
-        </div>
-      </div>
-    `;
-
-    return `
-      <div class="heatmap-card">
-        <div class="heatmap-scroll-wrap">
-          <div class="heatmap-grid-container">
-            <div class="heatmap-header-row">
-              <div class="heatmap-corner-label">Turno / Día</div>
-              <div class="heatmap-days-grid">
-                ${headerCols}
-              </div>
-            </div>
-            ${rowsHtml}
-            ${marginalRowHtml}
-          </div>
-        </div>
-
-        <div class="heatmap-footer-legend">
-          <div class="hfl-item"><span class="hfl-dot hm-optimal"></span> Óptimo / Sin quejas</div>
-          <div class="hfl-item"><span class="hfl-dot hm-warning"></span> Atención (1 queja / &lt;4.2★)</div>
-          <div class="hfl-item"><span class="hfl-dot hm-critical"></span> Crítico (≥2 quejas ≤2★)</div>
-          <div class="hfl-hint">💡 Clic en cualquier turno para filtrar las opiniones inferiores</div>
-        </div>
-      </div>
-    `;
   },
 
   _buildShiftFilterBanner() {

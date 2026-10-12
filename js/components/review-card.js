@@ -7,9 +7,10 @@
 const ReviewCard = {
   /**
    * @param {object} r reseña (stars, text, publishedAtDate, sucursal, responseFromOwnerText)
-   * @param {{variant?: 'full'|'compact', onclick?: string|Function, index?: number, showBranch?: boolean}} opts (onclick puede ser una función r => string)
+   * @param {{variant?: 'full'|'compact', onclick?: string|Function, index?: number, showBranch?: boolean, noIncident?: boolean}} opts
+   *   (onclick puede ser una función r => string; noIncident oculta el botón de seguimiento, p. ej. dentro del propio drawer de la incidencia)
    */
-  html(r, { variant = 'full', onclick = '', index = 0, showBranch = true } = {}) {
+  html(r, { variant = 'full', onclick = '', index = 0, showBranch = true, noIncident = false } = {}) {
     const sev = (typeof Severity !== 'undefined') ? Severity.analyze(r) : { critical: false, reasons: [] };
     const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(r.sucursal) : null;
     const branch = meta ? meta.abr : (r.sucursal || '');
@@ -22,13 +23,14 @@ const ReviewCard = {
           .map(x => `<span class="rv-why-chip" title="${x.match ? escapeHtml(`Menciona «${x.match}»`) : escapeHtml(x.label)}">${escapeHtml(x.label)}</span>`).join('')
       : '';
     const oc = typeof onclick === 'function' ? onclick(r) : onclick;
+    const inc = (!noIncident && typeof Incidents !== 'undefined') ? Incidents.badgeHtml(r, { critical: sev.critical, variant }) : '';
     const replyText = r.responseFromOwnerText || r.responseText || '';
     const hasReply = replyText.trim().length > 0;
     const reply = hasReply ? `<div class="rv-reply"><strong>Respuesta:</strong> “${escapeHtml(replyText)}”</div>` : '';
     // Una queja (≤ 3★) sin respuesta es una acción pendiente: se ve en cualquier pantalla donde aparezca la reseña
     const pending = (!hasReply && r.stars <= 3) ? '<span class="rv-pending">Sin respuesta</span>' : '';
     return `
-      <article class="${cls}" style="--i:${Math.min(index, 10)}"${oc ? ` onclick="${oc}" role="button" tabindex="0"` : ''}>
+      <article class="${cls}" data-rid="${escapeHtml(r.id || '')}" style="--i:${Math.min(index, 10)}"${oc ? ` onclick="${oc}" role="button" tabindex="0"` : ''}>
         <div class="rv-head">
           ${showBranch ? `<span class="rv-branch">${escapeHtml(branch)}</span>` : '<span></span>'}
           <time class="rv-time" datetime="${escapeHtml(iso)}">${reviewWhen(r, 'short')}</time>
@@ -41,6 +43,7 @@ const ReviewCard = {
         ${why ? `<div class="rv-why">${why}</div>` : ''}
         <p class="rv-text">“${escapeHtml(r.text || '')}”</p>
         ${reply}
+        ${!noIncident && r.stars <= 2 ? `<div class="rv-inc-slot">${inc}</div>` : ''}
       </article>`;
   },
 

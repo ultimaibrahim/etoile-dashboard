@@ -14,6 +14,7 @@ const BranchTime = {
   MESES: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
   MESES_CAP: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
   _fmt: {},
+  _memo: new Map(),
   _dow: { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 },
 
   /** Zona horaria de una reseña, sucursal (id) o región (id de región) */
@@ -44,14 +45,21 @@ const BranchTime = {
 
   /** { year, month (1-12), day, hour (0-23), minute, dow (0 = domingo) } en la zona dada; null si la fecha no es válida */
   parts(iso, tz) {
+    tz = tz || this.DEFAULT_TZ;
+    // Memoizado por (zona, instante): formatToParts es lo más caro de recorrer miles de reseñas varias veces por vista
+    const key = tz + '|' + iso;
+    const hit = this._memo.get(key);
+    if (hit !== undefined) return hit;
     const d = new Date(iso);
-    if (!iso || isNaN(d.getTime())) return null;
-    const o = {};
-    for (const p of this._formatter(tz || this.DEFAULT_TZ).formatToParts(d)) o[p.type] = p.value;
-    return {
-      year: +o.year, month: +o.month, day: +o.day, hour: +o.hour % 24, minute: +o.minute,
-      dow: this._dow[o.weekday] ?? 0
-    };
+    let res = null;
+    if (iso && !isNaN(d.getTime())) {
+      const o = {};
+      for (const p of this._formatter(tz).formatToParts(d)) o[p.type] = p.value;
+      res = { year: +o.year, month: +o.month, day: +o.day, hour: +o.hour % 24, minute: +o.minute, dow: this._dow[o.weekday] ?? 0 };
+    }
+    if (this._memo.size > 60000) this._memo.clear();
+    this._memo.set(key, res);
+    return res;
   },
 
   /** Partes en la zona horaria de la reseña (o del id de sucursal/región que se pase) */

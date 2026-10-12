@@ -78,6 +78,12 @@ const Drawer = {
     if (!this.update(opts.id, opts)) this.open(opts);
   },
 
+  /** Cierra todo lo abierto y navega a `hash` (sin que el retroceso del historial la deshaga) */
+  navigate(hash) {
+    if (typeof ModalManager !== 'undefined') ModalManager.closeAllThen(() => Router.navigate(hash));
+    else Router.navigate(hash);
+  },
+
   setBody(id, html) {
     const b = document.getElementById(`${id}Body`);
     if (b) { b.innerHTML = html; b.scrollTop = 0; }

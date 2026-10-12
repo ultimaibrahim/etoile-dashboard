@@ -158,9 +158,9 @@ const AppAuth = {
       // Los roles que aterrizan en select-region solo necesitan el manifiesto: la región se precarga al elegirla.
       // El gerente entra directo a su región, así que ese sí precarga ahora.
       if (this.getUserRole() === 'gerente') {
-        await Promise.all([DataLoader.init(), DataLoader.computeHistoricalRatings()]);
+        await Promise.all([DataLoader.init(), DataLoader.computeHistoricalRatings(), Incidents.load(true)]);
       } else {
-        await DataLoader.init();
+        await Promise.all([DataLoader.init(), Incidents.load(true)]);
       }
     }
     return true;
@@ -181,6 +181,7 @@ const AppAuth = {
       DataLoader._regionStore = {};
       DataLoader._brandCache = {};
       DataLoader.manifest = null;
+      if (typeof Incidents !== 'undefined') Incidents.reset();
     }
     if (typeof setRegionActiva === 'function') {
       setRegionActiva('GDL');
@@ -311,9 +312,9 @@ async function initApp() {
     // Al refrescar en select-region o brand solo hace falta el manifiesto; el resto de rutas precarga la región
     const lazyRegion = AppAuth.getUserRole() !== 'gerente' && ['#/select-region', '#/brand'].includes(window.location.hash);
     if (lazyRegion) {
-      await DataLoader.init();
+      await Promise.all([DataLoader.init(), Incidents.load(true)]);
     } else {
-      await Promise.all([DataLoader.init(), DataLoader.computeHistoricalRatings()]);
+      await Promise.all([DataLoader.init(), DataLoader.computeHistoricalRatings(), Incidents.load(true)]);
     }
     window.updateLcpLoader(85);
   }

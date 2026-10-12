@@ -287,7 +287,10 @@ const HomeView = {
     // Atención inmediata: reseñas críticas de los últimos días en la región (independiente del mes que se esté viendo)
     const nowUtc = new Date();
     const recentCritical = Severity.criticalIn(Patterns.collect(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth() + 1, 2), Severity.RECENT_DAYS);
-    const attentionHtml = AttentionCard.html(recentCritical, { key: 'home', scope: getRegionName(activeRegion) });
+    const attentionHtml = AttentionCard.html(Incidents.unresolved(recentCritical), {
+      key: 'home', scope: getRegionName(activeRegion),
+      incidentFilter: i => { const m = resolveBranchMeta(i.location_id); return !!m && m.region === activeRegion; }
+    });
 
     const concluded = getConcludedMonthInfo();
     let concludedBannerHtml = '';
@@ -1000,7 +1003,7 @@ const HomeView = {
       title: 'Detalle de reseña',
       subtitle: meta ? meta.nombre : (r.sucursal || ''),
       bodyHtml: ReviewCard.html(r, { variant: 'full', showBranch: false }) +
-        (meta ? `<a class="show-all-btn-link" href="#/sucursal/${meta.id}" onclick="Drawer.close('reviewDetailModal')">Ver ficha de ${escapeHtml(meta.nombre)} →</a>` : ''),
+        (meta ? `<a class="show-all-btn-link" href="#/sucursal/${meta.id}" onclick="event.preventDefault(); Drawer.navigate('#/sucursal/${meta.id}')">Ver ficha de ${escapeHtml(meta.nombre)} →</a>` : ''),
       onClose: () => { HomeView.isPaused = false; }
     });
   },

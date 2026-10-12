@@ -1055,8 +1055,7 @@ const BrandView = {
   },
 
   navigateToBranch(branchId) {
-    this.closeModal();
-    Router.navigate(`#/sucursal/${branchId}`);
+    Drawer.navigate(`#/sucursal/${branchId}`);
   },
 
   handleMonthSelect(monthVal) {
@@ -1107,7 +1106,7 @@ const BrandView = {
         font-size: 11px;
       }
       .brand-main-title {
-        font-family: var(--giaza);
+        font-family: var(--serif);
         font-size: 38px;
         font-weight: 400;
         color: var(--text);
@@ -1131,8 +1130,6 @@ const BrandView = {
         border-radius: 20px;
         padding: 24px;
         box-sizing: border-box;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -1185,8 +1182,6 @@ const BrandView = {
         border-radius: 20px;
         padding: 24px;
         box-sizing: border-box;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
         display: flex;
         flex-direction: column;
         gap: 12px;
@@ -1245,8 +1240,6 @@ const BrandView = {
         border-radius: 24px;
         padding: 24px;
         box-sizing: border-box;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
         box-shadow: var(--sombra-card);
       }
       .brand-region-perf-header {
@@ -1360,8 +1353,6 @@ const BrandView = {
         border-radius: 24px;
         padding: 24px;
         box-sizing: border-box;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
         display: flex;
         flex-direction: column;
         gap: 16px;
@@ -1438,8 +1429,6 @@ const BrandView = {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(10, 20, 15, 0.6);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
         display: flex;
         align-items: center;
         justify-content: center;

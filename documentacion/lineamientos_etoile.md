@@ -25,6 +25,11 @@ Ninguna gráfica entra "por poner gráficas". Cada una debe tener:
 ## 2c. Reseñas "Graves" **[decidido, umbrales ajustables]**
 - Una reseña grave es la excepción (~5% de las quejas), no la regla; se llama **Grave** (no "crítica", que ya significa ≤ 2★). Reglas explícitas y explicables en `js/severity.js`; cada razón muestra la palabra que la disparó. Se valida contra datos reales antes de cambiar umbrales o palabras. Aparecen en "Atención inmediata" (últimos 14 días).
 
+## 2d. De la alerta a la acción **[decidido, implementado en beta.5]**
+- Detectar no basta: toda queja relevante puede tener **seguimiento** (estado, responsable, bitácora). Una grave resuelta sale de "Atención inmediata"; lo abierto se mantiene a la vista.
+- Las gráficas **llevan a las reseñas**: un clic en una hora o en un mes abre o cambia lo que respalda el titular. El área de clic es amplia (columna completa), pensada también para el celular.
+- Todo lo accionable lo dice: cursor de mano y pie de tooltip "Clic: …".
+
 ## 3. Responsive adaptativo: complejidad según el espacio **[decidido el criterio; los cortes por afinar]**
 - Mobile-first, pero **no** "lo mismo en pequeño": según el ancho disponible se muestra la versión simple o la rica. Un gerente en piso necesita 3 datos en 3 segundos; un director en escritorio quiere profundidad.
 - Corte base: `768 px` (decisión del roadmap, patrón dispatcher). Las gráficas deciden con el ancho de su contenedor, no solo con el de la ventana. **[propuesta]** un segundo corte ≥ 1200 px para las más ricas.
@@ -51,7 +56,11 @@ Ninguna gráfica entra "por poner gráficas". Cada una debe tener:
 
 ## 5. Diseño
 - Paleta LCP (verde `#3D5A47`, sage `#7A9E8A`, crema `#F5EFE6`; oro `#B8902F`); **jamás** mezclar con la identidad personal de Ibrahim.
-- Crystal & Squircle: radios 10–16 px, glassmorphism en superficies flotantes, tooltip crystal (`.etoile-tip-card`), sin controles nativos toscos.
+- Radios 10–16 px, sin controles nativos toscos, tooltip crystal (`.etoile-tip-card`).
+- **Tipografía [decidido]**: *Giaza* solo para el nombre "étoile" (barra superior, footer, carga, login) y lugares sin lectura continua; todo título que se lea (secciones, drawer, tarjetas) va en Playfair Display. Cifras en JetBrains Mono con `tabular-nums`.
+- **Nada "vibecoded" [decidido, verificable]**: (1) sin `border-left/right/top` ≥ 2 px en tarjetas, alertas o citas: el estado se dice con borde completo de 1 px + tinte de fondo (`color-mix`) + texto o icono; (2) sin brillos de color (`box-shadow` con color/blur sin offset), sin degradados de fondo o de texto en tarjetas; (3) `backdrop-filter` solo en overlays y flotantes (el blur sobre tarjetas es lo que más cuesta al desplazar); (4) una tarjeta lleva borde o sombra, no ambos; (5) sin emojis como iconos ni iconos en círculos pastel; (6) pills solo para estados reales y finitos; (7) sin animación infinita en indicadores; (8) un foco por pantalla, no rejillas de tarjetas idénticas. `tests/qa-audit.js` vigila 1 y 3. Fuentes: impeccable.style/slop, thefountaininstitute.com (signs of vibe-coded UI), saasui.design.
+- **Sin panel lateral en escritorio/tableta [decidido]**: el `Drawer` es un diálogo centrado; la hoja inferior es solo móvil (≤ 640 px).
+- **Rendimiento [decidido]**: el scroll debe mantenerse a 60 fps (0 % de cuadros > 33 ms) en Inicio, Dashboards y ficha; antes de añadir un efecto de pintado, medirlo con el A/B de scroll.
 - Claro y oscuro siempre probados. Mobile-first a 375 px. Cierre de modales y dropdowns al hacer clic fuera.
 
 ## 6. Versionado y épocas **[decidido]**
@@ -79,7 +88,7 @@ Ninguna gráfica entra "por poner gráficas". Cada una debe tener:
 ## 10. Por definir
 - [ ] Ideas anotadas por Ibrahim (recuperar y volcar aquí).
 - [ ] Validar con Ibrahim la lista de palabras y los umbrales de "Grave" (`CRITICAL_SCORE` 6, texto ≥ 500).
-- [ ] Pilar F: trazar incidencias (responsable, estado, seguimiento) a partir de las graves.
+- [ ] Seguimiento de incidencias: ejecutar `supabase_incidents.sql` y decidir permisos por rol (hoy cualquiera que vea la sucursal puede abrir/actualizar).
 - [ ] Qué visualizaciones "ricas" entran para escritorio y con qué titular generado.
 - [ ] Métricas de éxito del propio producto (tiempo de respuesta, decisiones atribuidas a Étoile, usuarios activos).
 - [ ] Nombre de la época de Mise (letra M) y sincronizar la regla en su documentación.

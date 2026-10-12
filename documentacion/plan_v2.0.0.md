@@ -26,7 +26,7 @@ Rama: `feat/v2.0.0-eltanin`. Doble changelog en el mismo commit. Sin commit/push
 - [x] Chart.js retirado del index.html; charts.js reducido a `destroyAll`
 - [x] Bugs previos: barras negras y desborde móvil de brand
 
-## beta.4 — Patrones, atención e inmersión (hecho, pendiente de revisión de Ibrahim)
+## beta.4 — Patrones, atención y un solo sistema de interfaz (commiteada `8466b96`)
 - [x] Hora local de la tienda en 24 h en toda la app (`js/time.js`); corregido el desfase UTC y el heatmap
 - [x] "¿A qué hora llegan las quejas?" por sucursal y por región, con titular y complejidad adaptativa
 - [x] Reseñas Graves (`js/severity.js`) calibradas con datos reales (4.6%) + "Atención inmediata" en home y sucursal
@@ -36,13 +36,31 @@ Rama: `feat/v2.0.0-eltanin`. Doble changelog en el mismo commit. Sin commit/push
 - [ ] Podar CSS heredado ya sin uso (`.review-card`, `.sidebar-review-card`, `.review-item`, `.brand-modal-*`, `.modal-overlay`, `.modal-box`) y las envolturas-plantilla de brand
 - [ ] Mover los scripts de QA (Playwright) de la sesión a `tests/` (flujo, interacción, atención, migración)
 
+## beta.5 — Acciones desde las gráficas, heatmap con vida y seguimiento de incidencias (hecho; seguimiento APAGADO por decisión de Ibrahim)
+- [x] Clic en una hora → sus quejas (`HourDrawer`); clic en un mes de la tendencia → ese mes; área de clic = columna entera
+- [x] Heatmap: entrada escalonada, mira de cruz, pulso en la celda con más quejas
+- [x] Fix: elevación al pasar el cursor (fill-mode)
+- [x] Seguimiento de incidencias (`js/incidents.js` + `supabase_incidents.sql`), apagado automático sin tabla
+- [ ] (Pospuesto) correr `supabase_incidents.sql`, poner `Incidents.ENABLED = true` y probar la RLS real con un gerente y un zonal
+- [ ] Decidir quién puede abrir/actualizar incidencias (hoy: cualquiera que vea la sucursal, incluido el gerente)
+- [ ] Aviso (correo/WhatsApp) al abrir una grave o al cambiar de estado (pilar G3)
+- [x] Entrada escalonada de scorecards, insights, takeaways, brand y comparador (`initStagger`, beta.6)
+- [ ] Interacciones propias que aún faltan: hero
+
+## beta.6 — Comparación entre sucursales en el tiempo (hecho, pendiente de revisión)
+- [x] Heatmap sucursal × mes (C1) con selector calificación/volumen, titular por reglas y clic a las reseñas
+- [x] Mini-tendencias por sucursal (C9): ya existían en las tarjetas del home
+- [x] Bug crítico de la ficha de sucursal (`const activeMonth`) y bug de "cerrar y navegar" (`Drawer.navigate`)
+- [x] Rendimiento: quitar blur de tarjetas (scroll 79 % → 0 % de cuadros lentos), memoizar `BranchTime.parts`, podar CSS heredado
+- [x] Rediseño anti-vibecoded: sin acentos laterales, Giaza solo en marca, drawer centrado en escritorio, takeaways alineados, acordeón trimestral estable
+- [x] Retirado el heatmap de turnos de la ficha de sucursal
+- [x] Entrada escalonada de rejillas
+
 ## Betas futuras (guardadas; el corte del 2.0.0 y el orden los decide Ibrahim)
-- **beta.5 — Contexto**: A4 tabla `events` por sucursal-fecha (SQL lo corre Ibrahim) + B6 pantalla para anotar eventos ("cambio de gerente", "promo") + C4 tendencias con `dataZoom` y `markArea` de eventos.
-- **beta.6 — Comparación**: C1 heatmap sucursal × mes (rating y volumen alternables) + C9 sparklines en cada tarjeta de sucursal.
-- **beta.7 — Móvil**: A7 patrón dispatcher mobile/desktop (`home.js` → `home.mobile.js` / `home.desktop.js`, breakpoint 768 px) + G2 home móvil rediseñado.
-- **Pilar F — trazar incidencias** (siguiente paso natural de "Grave"): asignar responsable, estado (nueva/en revisión/respondida/resuelta) y seguimiento por reseña; requiere tabla en Supabase (SQL lo corre Ibrahim). Con las graves ya identificadas, es lo que convierte la alerta en acción.
+- **beta.7 — Contexto** (requiere SQL; pospuesto junto con incidencias): A4 tabla `events` por sucursal-fecha (SQL lo corre Ibrahim) + B6 pantalla para anotar eventos ("cambio de gerente", "promo") + C4 tendencias con `dataZoom` y `markArea` de eventos.
+- **beta.8 — Móvil**: A7 patrón dispatcher mobile/desktop (`home.js` → `home.mobile.js` / `home.desktop.js`, breakpoint 768 px) + G2 home móvil rediseñado.
 - **Aparte de las betas**: caché IndexedDB (SWR) de la precarga, RPC/vista con el histórico por sucursal, fase 2 del SQL de roles (`supabase_roles_corporate.sql`), pipeline P&L y delivery (B1–B3, depende de confirmar acceso a esos datos), páginas legales y paso de OAuth a producción.
-- **Opciones de corte**: (a) lanzar `2.0.0` con beta.4 (base nueva, rápida, con patrones y alertas) y llevar beta.5–7 como 2.1–2.3; (b) incluir beta.5 y beta.6 en el 2.0.
+- **Opciones de corte**: (a) lanzar `2.0.0` con beta.6 (base nueva y rápida, con patrones, alertas y comparación) y llevar beta.7–8 como 2.1–2.2; (b) incluir además la beta.8 (móvil dedicado) en el 2.0.
 
 ## Optimización de carga (siguiente paso, si lo medido no basta)
 - [x] Caché por región en memoria (TTL 5 min), precarga diferida por rol y preconnect a Supabase

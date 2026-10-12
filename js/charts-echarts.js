@@ -116,6 +116,24 @@ const EC = {
     });
   },
 
+  /**
+   * Clic en cualquier punto de la columna de una categoría del eje X (no solo sobre la barra o el punto):
+   * un área de toque amplia, pensada también para el celular. `isActive(i)` decide si esa columna es accionable.
+   */
+  columnClick(api, count, onSelect, isActive = () => true) {
+    if (!api || !onSelect) return;
+    const zr = api.chart.getZr();
+    const indexAt = (e) => {
+      const pt = [e.offsetX, e.offsetY];
+      if (!api.chart.containPixel({ gridIndex: 0 }, pt)) return -1;
+      const v = api.chart.convertFromPixel({ xAxisIndex: 0 }, e.offsetX);
+      const i = Math.round(Array.isArray(v) ? v[0] : v);
+      return Number.isFinite(i) && i >= 0 && i < count ? i : -1;
+    };
+    zr.on('click', e => { const i = indexAt(e); if (i >= 0 && isActive(i)) onSelect(i); });
+    zr.on('mousemove', e => { const i = indexAt(e); zr.setCursorStyle(i >= 0 && isActive(i) ? 'pointer' : 'default'); });
+  },
+
   setCursor(api, fn) {
     const zr = api.chart.getZr();
     zr.on('mousemove', e => zr.setCursorStyle(fn(e) ? 'pointer' : 'default'));
@@ -137,9 +155,9 @@ const EC = {
   },
 
   /** Serie de línea de tendencia (compartida por lineTrend y las dos de sucursal) */
-  trendSeries({ data, color, border, area, goal, marks = false }) {
+  trendSeries({ data, color, border, area, goal, marks = false, clickable = false }) {
     return {
-      type: 'line', data, smooth: 0.35, clip: false,
+      type: 'line', data, smooth: 0.35, clip: false, cursor: clickable ? 'pointer' : 'default',
       symbol: 'circle', symbolSize: 8,
       lineStyle: { width: 3, color },
       itemStyle: { color, borderColor: border, borderWidth: 2 },
@@ -158,6 +176,8 @@ const EC = {
     };
   }
 };
+
+function colLabelsOf(cols, short = false) { return cols.map(c => (short ? c.label.split(' ')[0] : c.label)); }
 
 const EtoileCharts = {
   heroTrend(el, labels, data) {
@@ -336,7 +356,7 @@ const EtoileCharts = {
     return api;
   },
 
-  lineTrend(el, labels, data, label, color) {
+  lineTrend(el, labels, data, label, color, onSelect) {
     const p = EC.pal();
     const meta = EC.metaRating();
     let goalLabel = 'Meta Regional 4.60';
@@ -348,7 +368,7 @@ const EtoileCharts = {
       option: {
         animationDuration: 800,
         grid: { left: 8, right: 16, top: 44, bottom: 8, containLabel: true },
-        tooltip: EC.tooltip(items => EC.card(items[0].axisValueLabel, [{ color: 'var(--oro)', text: ` ${EC.esc(label)}: ${Number(items[0].value).toFixed(2)}` }])),
+        tooltip: EC.tooltip(items => EC.card(items[0].axisValueLabel, [{ color: 'var(--oro)', text: ` ${EC.esc(label)}: ${Number(items[0].value).toFixed(2)}` }], onSelect ? 'Clic: ver este mes' : '')),
         xAxis: EC.catAxis(labels, p, { boundaryGap: false, axisLabel: EC.xLabels(el, labels, p, EC.isMobile()) }),
         yAxis: EC.valAxis(p, {
           min: 4.5, max: 5.15, interval: 0.1, splitLine: { show: false },
@@ -356,15 +376,16 @@ const EtoileCharts = {
         }),
         series: [
           { type: 'line', data: [], silent: true, tooltip: { show: false }, markLine: { silent: true, symbol: 'none', animation: false, label: { show: false }, lineStyle: { color: p.grid, width: 1, type: 'solid' }, data: gridLines } },
-          EC.trendSeries({ data, color, border: p.ptBorder, marks: data.filter(v => typeof v === 'number').length >= 4, goal: EC.goalLine('yAxis', meta, goalLabel, '#c97d10', 2, [5, 5], p, 'insideEndTop') })
+          EC.trendSeries({ data, color, border: p.ptBorder, clickable: !!onSelect, marks: data.filter(v => typeof v === 'number').length >= 4, goal: EC.goalLine('yAxis', meta, goalLabel, '#c97d10', 2, [5, 5], p, 'insideEndTop') })
         ]
       }
     });
+    EC.columnClick(api, labels.length, onSelect, i => typeof data[i] === 'number');
     EC.autoHideTip(api);
     return api;
   },
 
-  branchRatingTrend(el, labels, data, color) {
+  branchRatingTrend(el, labels, data, color, onSelect) {
     const p = EC.pal();
     const meta = EC.metaRating();
     const api = ChartWrapper.mount(el, {
@@ -372,21 +393,22 @@ const EtoileCharts = {
       option: {
         animationDuration: 800,
         grid: { left: 8, right: 16, top: 40, bottom: 8, containLabel: true },
-        tooltip: EC.tooltip(items => EC.card(items[0].axisValueLabel, [{ color: 'var(--oro)', text: ` Rating: ${Number(items[0].value).toFixed(2)} ★` }])),
+        tooltip: EC.tooltip(items => EC.card(items[0].axisValueLabel, [{ color: 'var(--oro)', text: ` Rating: ${Number(items[0].value).toFixed(2)} ★` }], onSelect ? 'Clic: ver este mes' : '')),
         xAxis: EC.catAxis(labels, p, { boundaryGap: false, axisLabel: EC.xLabels(el, labels, p, EC.isMobile()) }),
         yAxis: EC.valAxis(p, { min: 2.0, max: 5.2, interval: 0.5, axisLabel: { fontSize: 10, fontFamily: EC.mono, color: p.axisMono, formatter: v => v.toFixed(1) } }),
         series: [EC.trendSeries({
-          data, color, border: p.dark ? '#151725' : '#fff',
+          data, color, border: p.dark ? '#151725' : '#fff', clickable: !!onSelect,
           marks: data.filter(v => typeof v === 'number').length >= 4,
           goal: EC.goalLine('yAxis', meta, 'Meta 4.60', '#c97d10', 1.5, [5, 5], p, 'insideEndBottom')
         })]
       }
     });
+    EC.columnClick(api, labels.length, onSelect, i => typeof data[i] === 'number');
     EC.autoHideTip(api);
     return api;
   },
 
-  branchVolumeTrend(el, labels, data, color) {
+  branchVolumeTrend(el, labels, data, color, onSelect) {
     const p = EC.pal();
     const meta = EC.metaVolumen();
     const maxData = Math.max(0, ...data.filter(v => typeof v === 'number'));
@@ -395,17 +417,18 @@ const EtoileCharts = {
       option: {
         animationDuration: 800,
         grid: { left: 8, right: 16, top: 24, bottom: 8, containLabel: true },
-        tooltip: EC.tooltip(items => EC.card(items[0].axisValueLabel, [{ color: 'var(--oro)', text: ` Reseñas: ${items[0].value}` }])),
+        tooltip: EC.tooltip(items => EC.card(items[0].axisValueLabel, [{ color: 'var(--oro)', text: ` Reseñas: ${items[0].value}` }], onSelect ? 'Clic: ver este mes' : '')),
         xAxis: EC.catAxis(labels, p, { boundaryGap: false, axisLabel: EC.xLabels(el, labels, p, EC.isMobile()) }),
         // +10% de holgura sobre el máximo y la meta siempre visible (antes la línea de meta podía quedar fuera del eje)
         yAxis: EC.valAxis(p, { min: 0, minInterval: 1, max: Math.ceil(Math.max(maxData, meta) * 1.1) }),
         series: [EC.trendSeries({
-          data, color, border: p.dark ? '#151725' : '#fff',
+          data, color, border: p.dark ? '#151725' : '#fff', clickable: !!onSelect,
           area: EC.rgba(color, 0.15, 'rgba(107, 144, 125, 0.1)'),
           goal: EC.goalLine('yAxis', meta, `Meta ${meta}`, EC.oro, 1.5, [5, 5], p, 'insideEndTop')
         })]
       }
     });
+    EC.columnClick(api, labels.length, onSelect, i => typeof data[i] === 'number');
     EC.autoHideTip(api);
     return api;
   },
@@ -473,7 +496,7 @@ const EtoileCharts = {
    *  · ancho (≥ 560 px): suma las franjas de turno y la tasa de queja por hora (quejas / reseñas con texto).
    * h = Patterns.hourly(...), hl = Patterns.headline(h)
    */
-  hourComplaints(el, h, hl) {
+  hourComplaints(el, h, hl, onSelect) {
     const p = EC.pal();
     const rich = !!(el && el.clientWidth >= 560);
     const pad = Patterns.pad;
@@ -495,7 +518,8 @@ const EtoileCharts = {
     ]] : [];
 
     const series = [{
-      name: 'Quejas', type: 'bar', barMaxWidth: 22, data: h.neg,
+      name: 'Quejas', type: 'bar', barMaxWidth: 22, data: h.neg, cursor: onSelect ? 'pointer' : 'default',
+      emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(198,40,40,.45)' } },
       itemStyle: { color: red, borderRadius: [4, 4, 0, 0] },
       markArea: { silent: true, data: [...bands, ...peak] }
     }];
@@ -518,7 +542,7 @@ const EtoileCharts = {
           const i = items[0].dataIndex;
           const rows = [{ color: red, text: `Quejas: ${h.neg[i]}` }, { color: 'var(--oro)', text: `Reseñas con texto: ${h.tot[i]}` }];
           if (h.tot[i] >= 3) rows.push({ color: gold, text: `Tasa de queja: ${rate[i]}%` });
-          return EC.card(`${pad(i)}:00 – ${pad(i)}:59`, rows);
+          return EC.card(`${pad(i)}:00 – ${pad(i)}:59`, rows, onSelect && h.neg[i] > 0 ? 'Clic: ver estas quejas' : '');
         }),
         xAxis: EC.catAxis(labels, p, { axisLabel: { fontSize: 10, fontFamily: EC.mono, color: p.axisMono, interval: rich ? 0 : 2 } }),
         yAxis: rich
@@ -527,6 +551,72 @@ const EtoileCharts = {
         series
       }
     });
+    EC.columnClick(api, 24, onSelect, i => h.neg[i] > 0);
+    EC.autoHideTip(api);
+    return api;
+  },
+
+  /**
+   * Heatmap sucursal × mes (Patterns.branchMonthMatrix). metric: 'rating' (color por calificación frente a la meta)
+   * o 'volume' (intensidad por número de reseñas). Complejidad adaptativa: en angosto solo los últimos 6 meses y sin números.
+   * onSelect(rowIndex, monthIndex) con índices absolutos de la matriz.
+   */
+  branchMonthHeatmap(el, mx, { metric = 'rating', onSelect } = {}) {
+    const p = EC.pal();
+    const meta = EC.metaRating();
+    const rich = !!(el && el.clientWidth >= 560);
+    const shown = rich ? mx.months.length : Math.min(6, mx.months.length);
+    const off = mx.months.length - shown;
+    const cols = mx.months.slice(off);
+    const rows = mx.rows;
+    const MIN_RELIABLE = 3;                       // con menos reseñas el color se atenúa (poca muestra)
+    const data = [];
+    let maxCount = 1;
+    rows.forEach((r, yi) => cols.forEach((c, xi) => {
+      const k = off + xi, cnt = r.counts[k];
+      if (!cnt) return;
+      maxCount = Math.max(maxCount, cnt);
+      const faint = metric === 'rating' && cnt < MIN_RELIABLE;
+      data.push({ value: [xi, yi, metric === 'rating' ? r.values[k] : cnt, cnt, r.values[k]], itemStyle: faint ? { opacity: 0.42 } : {} });
+    }));
+
+    const visualMap = metric === 'rating'
+      ? { type: 'piecewise', show: false, dimension: 2, pieces: [
+          { gte: meta, color: '#3D7A55' }, { gte: 4.4, lt: meta, color: '#6FA27F' },
+          { gte: 4.0, lt: 4.4, color: '#C98A12' }, { lt: 4.0, color: '#C62828' }] }
+      : { type: 'continuous', show: false, dimension: 2, min: 0, max: maxCount, inRange: { color: ['#CFE0D5', '#7A9E8A', '#2F4A3A'] } };
+
+    const api = ChartWrapper.mount(el, {
+      state: rows.length ? 'ready' : 'empty',
+      emptyText: 'Aún no hay reseñas para comparar sucursales',
+      option: {
+        animationDuration: 600, animationEasing: 'cubicOut', animationDelay: (i) => i * 6,
+        grid: { left: 6, right: 6, top: 34, bottom: 6, containLabel: true },
+        tooltip: EC.tooltip(e => {
+          const [xi, yi, , cnt, avg] = e.value;
+          const r = rows[yi], k = off + xi;
+          const rowsHtml = [{ color: 'var(--oro)', text: `Calificación: ${Number(avg).toFixed(2)}★` }, { color: 'var(--oro)', text: `Reseñas: ${cnt}${cnt < MIN_RELIABLE ? ' (pocas: ojo con la muestra)' : ''}` }];
+          if (k > 0 && r.counts[k - 1] > 0) {
+            const d = avg - r.values[k - 1];
+            rowsHtml.push({ color: d >= 0 ? '#3D7A55' : '#C62828', text: `Frente a ${mx.months[k - 1].label}: ${d >= 0 ? '+' : ''}${d.toFixed(2)}★` });
+          }
+          return EC.card(`${r.nombre} · ${mx.months[k].full}`, rowsHtml, onSelect ? 'Clic: ver estas reseñas' : '');
+        }, 'item'),
+        xAxis: EC.catAxis(colLabelsOf(cols, !rich), p, { position: 'top', axisLabel: { fontSize: 10, fontFamily: EC.mono, color: p.axisMono, interval: 0 } }),
+        yAxis: EC.catAxis(rows.map(r => r.abr), p, { inverse: true, axisLabel: { fontSize: 11, fontFamily: EC.sans, color: p.axisSans, interval: 0 } }),
+        visualMap,
+        series: [{
+          type: 'heatmap', data, cursor: onSelect ? 'pointer' : 'default',
+          label: {
+            show: rich, fontSize: 10, fontFamily: EC.mono, color: '#fff', textBorderColor: 'rgba(0,0,0,.35)', textBorderWidth: 2,
+            formatter: e => (metric === 'rating' ? Number(e.value[2]).toFixed(1) : e.value[2])
+          },
+          itemStyle: { borderColor: p.dark ? '#1C2220' : '#FFFCF7', borderWidth: 2, borderRadius: 5 },
+          emphasis: { itemStyle: { borderColor: EC.oro, borderWidth: 2, shadowBlur: 10, shadowColor: 'rgba(0,0,0,.35)' } }
+        }]
+      }
+    });
+    if (api && onSelect) api.chart.on('click', e => { if (e.componentType === 'series') onSelect(e.value[1], off + e.value[0]); });
     EC.autoHideTip(api);
     return api;
   },

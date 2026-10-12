@@ -45,5 +45,24 @@ t('tendencia: un solo mes', /Solo hay un mes con datos/.test(N.ratingTrend(['A']
 t('volumen en el tiempo: variación porcentual', /baja 20% frente a Abr \(10 → 8\)/.test(N.volumeTrend(['Mar', 'Abr', 'May'], [30, 10, 8])));
 t('volumen en el tiempo: mes en curso no se compara contra un mes completo', /May va con 8 reseñas \(mes en curso\)/.test(N.volumeTrend(['Mar', 'Abr', 'May'], [30, 10, 8], true)));
 
+// matriz sucursal × mes
+const M = (rows, labels = ['Ago 26', 'Sep 26', 'Oct 26']) => ({ months: labels.map(l => ({ label: l, full: l })), rows });
+const row = (nombre, values, counts) => ({ nombre, values, counts, total: counts.reduce((x, y) => x + y, 0) });   // como lo arma Patterns.branchMonthMatrix
+let mx = M([row('Tepeyac', [4.8, 4.9, 4.2], [10, 10, 9]), row('Artz', [4.5, 4.4, 4.9], [8, 8, 8]), row('Aztlán', [4.9, 4.9, 4.9], [20, 20, 20])]);
+s = N.matrix(mx, 4.6);
+t('matriz: cuántas están bajo la meta este mes', /1 de 3 sucursales con reseñas suficientes están bajo la meta de 4.60★ en Oct 26/.test(s), s);
+t('matriz: mayor caída con antes → después', /Mayor caída: Tepeyac \(-0.70★ frente a Sep 26: 4.90 → 4.20\)/.test(s), s);
+t('matriz: mayor mejora', /Mayor mejora: Artz \(\+0.50★\)/.test(s), s);
+t('matriz: ignora sucursales con muestra chica (< 5) en alguno de los meses', !/Tepeyac/.test(N.matrix(M([row('Tepeyac', [4.8, 4.9, 3.0], [10, 10, 2]), row('Aztlán', [4.9, 4.9, 4.9], [20, 20, 20])]), 4.6).replace(/^.*?Mayor/, 'Mayor')) || /0 de 1/.test(N.matrix(M([row('Tepeyac', [4.8, 4.9, 3.0], [10, 10, 2]), row('Aztlán', [4.9, 4.9, 4.9], [20, 20, 20])]), 4.6)));
+t('matriz: nadie se movió más de 0.10★', /Ninguna sucursal se movió más de 0.10★ frente a Sep 26/.test(N.matrix(M([row('A', [4.8, 4.8, 4.82], [9, 9, 9]), row('B', [4.7, 4.7, 4.7], [9, 9, 9])]), 4.6)));
+t('matriz: mes en curso se avisa', /Oct 26 \(en curso\)/.test(N.matrix(mx, 4.6, true)));
+t('matriz: con pocas reseñas en el último mes no afirma nada', /Aún hay pocas reseñas en Oct 26/.test(N.matrix(M([row('A', [4.8, 4.8, 3.0], [9, 9, 2])]), 4.6)));
+const sw = N.matrix(M([row('Aztlán', [4.9, 4.9, 4.9], [20, 20, 20]), row('Plaza Carso', [5, 4.8, 2.33], [6, 6, 3]), row('Tepeyac', [4.8, 4.8, 3.0], [9, 9, 1])]), 4.6);
+t('matriz: avisa de calificaciones muy bajas con pocas reseñas (a vigilar), de la peor a la mejor', /A vigilar \(pocas reseñas\): Plaza Carso \(2.33★, 3 reseñas\), Tepeyac \(3.00★, 1 reseña\)\./.test(sw), sw);
+t('matriz: sin esos casos no añade el aviso', !/A vigilar/.test(N.matrix(mx, 4.6)));
+t('matriz: sin datos', N.matrix({ months: [], rows: [] }, 4.6) === 'Aún no hay reseñas para comparar sucursales.');
+s = N.matrixVolume(M([row('A', [4, 4, 4], [10, 30, 5]), row('B', [4, 4, 4], [5, 5, 5])]));
+t('matriz de volumen: mes pico y sucursal con más volumen', /El mes con más reseñas fue Sep 26 \(35\)/.test(s) && /A es la sucursal con más volumen: 45 reseñas en 3 meses \(15 al mes\)/.test(s), s);
+
 console.log(`\n${fail === 0 ? '✅ TODAS LAS PRUEBAS PASARON' : '❌ HAY FALLAS'} — ${pass} ok, ${fail} fallas`);
 process.exit(fail === 0 ? 0 : 1);

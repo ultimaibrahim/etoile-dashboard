@@ -129,7 +129,7 @@ const PrivacyView = {
         padding-bottom: 20px;
       }
       .privacy-title {
-        font-family: var(--giaza);
+        font-family: var(--serif);
         font-size: 36px;
         font-weight: 400;
         color: var(--text);

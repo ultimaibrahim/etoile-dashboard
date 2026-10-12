@@ -73,6 +73,22 @@ const ModalManager = {
     if (this._stack.length === 0) this._teardown();
   },
   
+  /**
+   * Cierra TODOS los paneles abiertos y ejecuta `fn` cuando el historial ya terminó de retroceder.
+   * Necesario para "cerrar y navegar": close() llama a history.back() (asíncrono) y, si se navega justo después,
+   * el retroceso deshace la navegación. Un solo history.go(-n) cubre también paneles apilados (feed → detalle).
+   */
+  closeAllThen(fn) {
+    const n = this._stack.length;
+    if (!n) { fn(); return; }
+    const entries = this._stack.splice(0, n).reverse();
+    const done = () => { window.removeEventListener('popstate', done); fn(); };
+    window.addEventListener('popstate', done);
+    entries.forEach(e => this._doClose(e));
+    this._teardown();
+    history.go(-n);
+  },
+
   _doClose(entry) {
     if (entry.onClose) {
       entry.onClose();
@@ -259,6 +275,25 @@ function initReveal() {
   }, { threshold: 0.08 });
   document.querySelectorAll('.r').forEach(el => obs.observe(el));
   initSpotlightCards();
+  initStagger();
+}
+
+/**
+ * Entrada escalonada de las tarjetas de una rejilla: cada hija entra una tras otra cuando la rejilla aparece en pantalla.
+ * Se activa por JS (si el script no corre, nada queda oculto) y respeta prefers-reduced-motion.
+ */
+function initStagger() {
+  const sel = '.scorecard-grid, .insight-grid, .kt-list, .brand-kpi-grid, .compare-analytics-grid';
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const obs = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('stagger-go'); obs.unobserve(e.target); }
+  }), { threshold: 0.12 });
+  document.querySelectorAll(sel).forEach(c => {
+    if (c.dataset.stg) return;
+    c.dataset.stg = '1';
+    [...c.children].forEach((ch, i) => { ch.classList.add('stagger-item'); ch.style.setProperty('--i', Math.min(i, 10)); });
+    if (reduce) c.classList.add('stagger-go'); else obs.observe(c);
+  });
 }
 
 function getBranchById(id) {

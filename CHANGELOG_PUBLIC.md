@@ -5,7 +5,25 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 
 ---
 
-## Versión 2.0.0 beta 4 Eltanin — Patrones, Alertas Graves y una Sola Forma de Ver Todo (Octubre 2026) [PREVIEW]
+## Versión 2.0.0 beta 6 Eltanin — Comparar Sucursales mes a mes (Octubre 2026) [PREVIEW]
+* 🗺️ **"¿Cómo evoluciona cada sucursal?"**: un mapa de colores con todas las tiendas de la región y los últimos 12 meses. De un vistazo se ve qué tienda arrastra problemas todo el año, cuál tuvo un solo mal mes y cuál cae justo ahora. Se puede cambiar entre calificación y volumen de reseñas, y al tocar una celda se abren las reseñas de esa tienda en ese mes. Una frase arriba resume el hallazgo y avisa de las tiendas con calificación muy baja pero pocas reseñas.
+* 🐛 **Corregido (importante)**: la ficha de una sucursal podía no abrir cuando esa tienda aún no tenía reseñas en el mes elegido. Ahora abre y muestra el último mes con reseñas.
+* 🐛 **Corregido**: al tocar "Ver ficha…" dentro de un panel, a veces la pantalla regresaba sola a donde estabas.
+* ✨ **Las tarjetas entran una por una** al aparecer en pantalla (indicadores, insights y resúmenes).
+* ⚡ **La página va mucho más fluida al desplazarse**: se quitaron los efectos de desenfoque sobre las tarjetas, que eran lo que más pesaba.
+* 🎨 **Diseño más limpio y propio**: fuera las líneas de color gruesas en el borde de algunas tarjetas (ahora el estado se ve con un fondo suave y borde fino) y la tipografía decorativa solo en el nombre étoile; los títulos se leen con una letra más clara.
+* 🪟 **Las ventanas de detalle ahora se abren al centro** en computadora y tableta (en el celular siguen subiendo desde abajo), ya no se desliza un panel que movía todo a un lado.
+* 📅 **Resúmenes trimestrales rediseñados**: tarjeta abierta clara y con buen contraste, el texto no se mueve al abrir o cerrar, y se abre con un toque o clic (también con teclado).
+* 📐 **Key Takeaways alineados** con el resto de la página.
+* 🧹 Se retiró el mapa de calor de turnos dentro de cada sucursal; la gráfica de quejas por hora ya cuenta esa historia con un clic directo a las reseñas.
+
+## Versión 2.0.0 beta 5 Eltanin — De la Alerta a la Acción (Octubre 2026)
+* ✅ **Seguimiento de incidencias**: cualquier reseña grave (o queja) se puede convertir en una incidencia con responsable, estado (nueva, en revisión, respondida, resuelta) y bitácora de lo que se fue haciendo. Cuando se marca como resuelta deja de aparecer en "Atención inmediata". *(Preparado pero apagado por ahora: se activa cuando se decida y se prepare la base de datos.)*
+* 👆 **Toca la gráfica y ve el detalle**: al tocar una hora en "¿A qué hora llegan las quejas?" se abren las quejas de esa hora; al tocar un mes en una tendencia, el tablero salta a ese mes. Se puede tocar en cualquier parte de la columna, no solo sobre el punto.
+* 🔆 **El mapa de turnos cobra vida**: al pasar por una celda se iluminan su día y su turno, y la celda con más quejas late para llamar la atención.
+* 🐛 **Corregido**: las tarjetas de reseña no se elevaban al pasar el cursor.
+
+## Versión 2.0.0 beta 4 Eltanin — Patrones, Alertas Graves y una Sola Forma de Ver Todo (Octubre 2026)
 * 🕘 **Hora de cada reseña, en formato de 24 horas y en la hora de la tienda**: antes la hora se mostraba corrida (6 horas adelantada) y las reseñas de la noche aparecían con la fecha del día siguiente. Ahora cada reseña muestra su fecha y hora reales en la zona horaria de su sucursal (Cancún y Tijuana incluidas).
 * 📊 **"¿A qué hora llegan las quejas?"**: nueva gráfica por tienda y por región que muestra a qué horas se concentran las quejas y las compara con el volumen de reseñas, con una frase que explica el hallazgo. Por ejemplo, en Ciudad de México el 37% de las quejas llega entre las 20:00 y las 22:59, aunque esas horas traen solo el 26% de las reseñas. En el celular se ve una versión más sencilla.
 * 🚨 **Atención inmediata**: si entra una reseña **grave** (salud, plagas, objetos en la comida, acoso o discriminación, cobros indebidos, amenazas legales…), aparece arriba del inicio y de la ficha de la tienda, con las razones por las que se marcó. Es la excepción, no la regla: solo cerca del 5% de las quejas.

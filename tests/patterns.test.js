@@ -48,5 +48,16 @@ ctx.DataLoader = { getMonth: (y, m) => (y === 2026 && m === 10) ? { reviews: [at
 t('collect toma 12 meses hacia atrás (incluye nov-2025, excluye oct-2025)', P.collect(2026, 10, 12).length === 3, `n=${P.collect(2026, 10, 12).length}`);
 t('collect aplica el filtro', P.collect(2026, 10, 12, r => r.stars === 5).length === 1);
 
+// monthSpan y matriz sucursal × mes
+const sp = P.monthSpan(2026, 2, 4);
+t('monthSpan: 4 meses terminando en feb-2026, del más antiguo al más reciente', sp.map(x => `${x.y}-${x.m}`).join() === '2025-11,2025-12,2026-1,2026-2', JSON.stringify(sp.map(x => x.label)));
+t('monthSpan: etiqueta corta y larga', sp[3].label === 'Feb 26' && sp[3].full === 'Feb 2026');
+ctx.DataLoader = { computeBranchStats: (y, m, id) => ({ a: { '2026-1': [10, 5.0], '2026-2': [10, 4.0] }, b: { '2026-2': [4, 3.0] }, c: {} }[id] || {})[`${y}-${m}`] ? { count: ({ a: { '2026-1': [10, 5.0], '2026-2': [10, 4.0] }, b: { '2026-2': [4, 3.0] } }[id][`${y}-${m}`])[0], avg: ({ a: { '2026-1': [10, 5.0], '2026-2': [10, 4.0] }, b: { '2026-2': [4, 3.0] } }[id][`${y}-${m}`])[1] } : { count: 0, avg: 0 } };
+const mx = P.branchMonthMatrix([{ id: 'a', abr: 'A', nombre: 'Aa' }, { id: 'b', abr: 'B' }, { id: 'c', abr: 'C' }], 2026, 2, 4);
+t('matriz: omite sucursales sin reseñas en la ventana', mx.rows.length === 2 && !mx.rows.some(r => r.id === 'c'));
+t('matriz: valores y conteos por mes (null donde no hay reseñas)', JSON.stringify(mx.rows[0].values) === '[null,null,5,4]' && JSON.stringify(mx.rows[0].counts) === '[0,0,10,10]');
+t('matriz: ordenada de mejor a peor media ponderada (A 4.5 antes que B 3.0)', mx.rows[0].id === 'a' && Math.abs(mx.rows[0].mean - 4.5) < 1e-9 && mx.rows[1].id === 'b');
+t('matriz: el nombre cae al abreviado si falta', mx.rows[1].nombre === 'B');
+
 console.log(`\n${fail === 0 ? '✅ TODAS LAS PRUEBAS PASARON' : '❌ HAY FALLAS'} — ${pass} ok, ${fail} fallas`);
 process.exit(fail === 0 ? 0 : 1);

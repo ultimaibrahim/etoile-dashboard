@@ -103,7 +103,7 @@ const SelectRegionView = {
           gap: 6px;
         }
         .srv-title {
-          font-family: var(--giaza);
+          font-family: var(--serif);
           font-size: 38px;
           color: var(--text);
           margin: 0;
@@ -553,7 +553,7 @@ const SelectRegionView = {
           gap: 12px;
         }
         .ranking-table-title {
-          font-family: var(--giaza);
+          font-family: var(--serif);
           font-size: 26px;
           color: var(--text);
           margin: 0;
@@ -716,7 +716,7 @@ const SelectRegionView = {
           color: var(--oro);
         }
         .brand-shortcut-title {
-          font-family: var(--giaza);
+          font-family: var(--serif);
           font-size: 28px;
           color: var(--text);
           margin: 0;

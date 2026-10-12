@@ -243,54 +243,6 @@ const DashboardsView = {
             gap: 48px !important;
           }
         }
-        .hero-right .quarter-accordion-card {
-          height: 230px !important;
-          background: rgba(255, 255, 255, 0.04) !important;
-          border: 1px solid rgba(255, 255, 255, 0.1) !important;
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-        }
-        .hero-right .quarter-accordion-card.active {
-          background: rgba(255, 255, 255, 0.08) !important;
-          border-color: rgba(255, 255, 255, 0.25) !important;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
-        }
-        .hero-right .qcard-collapsed-label {
-          border-right: 1px solid transparent !important;
-        }
-        .hero-right .quarter-accordion-card.active .qcard-collapsed-label {
-          border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
-        }
-        .hero-right .qcard-collapsed-year {
-          color: rgba(245, 239, 230, 0.5) !important;
-        }
-        .hero-right .qcard-title {
-          color: #FAF5EB !important;
-        }
-        .hero-right .qcard-stat-label {
-          color: rgba(245, 239, 230, 0.55) !important;
-        }
-        .hero-right .qcard-stat-value {
-          color: #FAF5EB !important;
-        }
-        .hero-right .qcard-stat-value.gold {
-          color: var(--oro) !important;
-        }
-        .hero-right .qcard-stat-value.down {
-          color: var(--rojo-soft) !important;
-        }
-        .hero-right .quarter-accordion-wrapper {
-          min-height: 230px !important;
-        }
-        /* Garantizar que en pantallas estrechas del hero-right no se aplaste el contenido */
-        @media (min-width: 992px) and (max-width: 1200px) {
-          .qcard-expanded-content {
-            padding: 16px 18px !important;
-          }
-          .qcard-stats-grid {
-            gap: 8px !important;
-          }
-        }
       </style>
       <section class="hero" style="padding:48px 22px;">
         <div class="hero-inner dashboards-hero-inner">
@@ -348,6 +300,8 @@ const DashboardsView = {
           <p class="story-line story-line--center" id="storyTrend" aria-live="polite"></p>
           <div class="chart-card"><div class="chart-wrap"><div id="trendChart" style="width:100%;height:100%"></div></div></div>
         </section>
+
+        ${this._buildMatrixSection(currYear, currMonth)}
 
         <section class="section r">
           <div class="section-head">
@@ -509,23 +463,19 @@ const DashboardsView = {
         const nowUtc = new Date();
         const lastIsCurrentMonth = currYear === nowUtc.getUTCFullYear() && sortedMonths[sortedMonths.length - 1] === nowUtc.getUTCMonth() + 1;
         story('storyTrend', Narrative.ratingTrend(trendLabels, trendData, KpiMeta.ratingMinimo, lastIsCurrentMonth));
-        EtoileCharts.lineTrend(ctxTrend, trendLabels, trendData, 'Promedio Regional', color);
+        EtoileCharts.lineTrend(ctxTrend, trendLabels, trendData, 'Promedio Regional', color, i => DashboardsView.selectMonthOption(sortedMonths[i]));
       }
+
+      // 4b. Heatmap sucursal × mes
+      DashboardsView._initMatrix();
 
       // 5. Quejas por hora de la región (últimos 12 meses, hora local de cada tienda)
       const hourEl = document.getElementById('regionHourChart');
-      if (hourEl && DashboardsView._hourData) EtoileCharts.hourComplaints(hourEl, DashboardsView._hourData.h, DashboardsView._hourData.hl);
+      if (hourEl && DashboardsView._hourData) EtoileCharts.hourComplaints(hourEl, DashboardsView._hourData.h, DashboardsView._hourData.hl, hr => HourDrawer.open(hr, DashboardsView._hourData.h, getRegionName(activeRegion)));
     }, 350);
 
     requestAnimationFrame(() => {
       initReveal();
-
-      // Enlazar hover en las tarjetas de Dashboards
-      document.querySelectorAll('.quarter-accordion-card').forEach((card, idx) => {
-        card.addEventListener('mouseenter', () => {
-          DashboardsView.setActiveQuarterCard(idx);
-        });
-      });
     });
   },
 
@@ -600,31 +550,31 @@ const DashboardsView = {
     const cardsHtml = quarterData.map((qd, index) => {
       const isActive = index === 0 ? ' active' : ''; // Q1 activo por defecto
       const avgStr = qd.totalReviews > 0 ? qd.avgRating.toFixed(2) : '—';
-      const reviewsStr = qd.totalReviews > 0 ? `${qd.totalReviews} reseñas` : 'Sin reseñas';
-      const negStr = qd.totalReviews > 0 ? `${qd.negativeReviews} críticas` : '0 críticas';
+      const reviewsStr = qd.totalReviews > 0 ? `${qd.totalReviews}` : '—';
+      const negStr = qd.totalReviews > 0 ? `${qd.negativeReviews}` : '—';
       return `
-        <div class="quarter-accordion-card${isActive}" data-index="${index}" onclick="DashboardsView.setActiveQuarterCard(${index})">
+        <div class="quarter-accordion-card${isActive}" data-index="${index}" role="button" tabindex="0" aria-expanded="${index === 0}" aria-label="Resumen del trimestre Q${qd.quarter} ${currYear}" onclick="DashboardsView.setActiveQuarterCard(${index})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();DashboardsView.setActiveQuarterCard(${index});}">
           <div class="qcard-collapsed-label">
             <span class="qcard-collapsed-year">${currYear}</span>
             <span class="qcard-collapsed-q">Q${qd.quarter}</span>
           </div>
           <div class="qcard-expanded-content">
             <div class="qcard-expanded-header">
-              <span class="eyebrow" style="color: var(--sage);">Resumen Q${qd.quarter} ${currYear}</span>
-              <span class="qcard-title">${qd.quarter === currentQuarter ? 'Resumen Trimestre Actual' : 'Resumen Trimestre Cerrado'}</span>
+              <span class="eyebrow">Q${qd.quarter} ${currYear}</span>
+              <span class="qcard-title">${qd.quarter === currentQuarter ? 'Trimestre en curso' : 'Trimestre cerrado'}</span>
             </div>
             
             <div class="qcard-stats-grid">
               <div class="qcard-stat-item">
-                <span class="qcard-stat-label">Promedio Regional</span>
+                <span class="qcard-stat-label">Promedio</span>
                 <span class="qcard-stat-value num ${qd.totalReviews > 0 && qd.avgRating >= THRESHOLDS.EXCELENTE ? 'gold' : qd.totalReviews > 0 && qd.avgRating < THRESHOLDS.DOWN ? 'down' : ''}">${avgStr}★</span>
               </div>
               <div class="qcard-stat-item">
-                <span class="qcard-stat-label">Total Reseñas</span>
+                <span class="qcard-stat-label">Reseñas</span>
                 <span class="qcard-stat-value num">${reviewsStr}</span>
               </div>
               <div class="qcard-stat-item">
-                <span class="qcard-stat-label">Quejas Críticas</span>
+                <span class="qcard-stat-label">Críticas</span>
                 <span class="qcard-stat-value num ${qd.negativeReviews > 0 ? 'down' : ''}">${negStr}</span>
               </div>
             </div>
@@ -650,8 +600,8 @@ const DashboardsView = {
   setActiveQuarterCard(index) {
     const cards = document.querySelectorAll('.quarter-accordion-card');
     cards.forEach((card, idx) => {
-      if (idx === index) card.classList.add('active');
-      else card.classList.remove('active');
+      card.classList.toggle('active', idx === index);
+      card.setAttribute('aria-expanded', idx === index ? 'true' : 'false');
     });
   },
 
@@ -672,6 +622,88 @@ const DashboardsView = {
         </div>
       </div>
     `;
+  },
+
+  /* ── Heatmap sucursal × mes ── */
+  _matrixMetric: 'rating',
+  _matrixApi: null,
+
+  _matrixLegend(metric) {
+    const meta = EC.metaRating().toFixed(2);
+    const sw = (c, t) => `<span class="mx-key"><i style="background:${c}"></i>${t}</span>`;
+    return metric === 'rating'
+      ? sw('#3D7A55', `≥ ${meta}★ (meta)`) + sw('#6FA27F', `4.40–${meta}`) + sw('#C98A12', '4.00–4.39') + sw('#C62828', '< 4.00') + '<span class="mx-key mx-faint"><i></i>Tenue = menos de 3 reseñas</span>'
+      : sw('#CFE0D5', 'Pocas reseñas') + sw('#7A9E8A', 'Medio') + sw('#2F4A3A', 'Muchas reseñas');
+  },
+
+  _matrixStory(metric) {
+    const mx = this._matrix;
+    if (!mx) return '';
+    const now = new Date();
+    const lastIsCurrent = mx.months.length && mx.months[mx.months.length - 1].y === now.getUTCFullYear() && mx.months[mx.months.length - 1].m === now.getUTCMonth() + 1;
+    return metric === 'rating' ? Narrative.matrix(mx, EC.metaRating(), lastIsCurrent) : Narrative.matrixVolume(mx);
+  },
+
+  /** ¿Cómo evoluciona cada sucursal? Últimos 12 meses (calificación o volumen) */
+  _buildMatrixSection(year, month) {
+    this._matrix = Patterns.branchMonthMatrix(SUCURSALES_META.map(s => ({ id: s.id, abr: s.abr, nombre: s.nombre })), year, month, 12);
+    this._matrixMetric = 'rating';
+    const h = Math.max(240, this._matrix.rows.length * 30 + 70);
+    return `
+        <section class="section r" style="grid-column: 1 / -1;">
+          <div class="section-head">
+            <div class="section-title">¿Cómo evoluciona cada sucursal? <span class="accent">12 meses</span></div>
+            <span class="section-sub">Cada celda es un mes de una sucursal · toca una para ver sus reseñas</span>
+          </div>
+          <p class="story-line story-line--center" id="storyMatrix" aria-live="polite">${escapeHtml(this._matrixStory('rating'))}</p>
+          <div class="filter-row mx-metric" role="group" aria-label="Métrica del mapa">
+            <button type="button" class="chip active" onclick="DashboardsView.setMatrixMetric('rating', this)">Calificación</button>
+            <button type="button" class="chip" onclick="DashboardsView.setMatrixMetric('volume', this)">Volumen</button>
+          </div>
+          <div class="chart-card chart-card--auto"><div class="chart-wrap" style="height:${h}px"><div id="branchMonthMatrix" style="width:100%;height:100%"></div></div></div>
+          <div class="mx-legend" id="matrixLegend">${this._matrixLegend('rating')}</div>
+        </section>`;
+  },
+
+  _initMatrix() {
+    const el = document.getElementById('branchMonthMatrix');
+    if (!el || !this._matrix) return;
+    if (this._matrixApi) { try { this._matrixApi.dispose(); } catch (e) {} }
+    this._matrixApi = EtoileCharts.branchMonthHeatmap(el, this._matrix, {
+      metric: this._matrixMetric,
+      onSelect: (ri, mi) => DashboardsView.openMatrixCell(ri, mi)
+    });
+  },
+
+  setMatrixMetric(metric, btn) {
+    this._matrixMetric = metric;
+    document.querySelectorAll('.mx-metric .chip').forEach(c => c.classList.toggle('active', c === btn));
+    const st = document.getElementById('storyMatrix'); if (st) st.textContent = this._matrixStory(metric);
+    const lg = document.getElementById('matrixLegend'); if (lg) lg.innerHTML = this._matrixLegend(metric);
+    this._initMatrix();
+  },
+
+  /** Las reseñas de una sucursal en un mes, en el drawer único (las peores primero) */
+  openMatrixCell(rowIdx, monthIdx) {
+    const r = this._matrix.rows[rowIdx], mo = this._matrix.months[monthIdx];
+    if (!r || !mo) return;
+    const list = DataLoader.getReviewsForBranch(mo.y, mo.m, r.id)
+      .filter(x => x.text && x.text.trim().length > 0)
+      .sort((a, b) => a.stars - b.stars || Date.parse(b.publishedAtDate) - Date.parse(a.publishedAtDate));
+    const all = DataLoader.getReviewsForBranch(mo.y, mo.m, r.id);
+    const avg = r.values[monthIdx];
+    Drawer.open({
+      id: 'matrixDrawer',
+      title: escapeHtml(r.nombre),
+      subtitle: `${mo.full} · ${all.length} reseña${all.length === 1 ? '' : 's'} (${list.length} con texto)${avg != null ? ` · promedio ${Number(avg).toFixed(2)}★` : ''}`,
+      bodyHtml: list.length ? ReviewCard.list(list) : '<p class="drawer-empty">Sin reseñas con texto en este mes.</p>',
+      footerHtml: `<button type="button" class="modal-shortcut-btn" onclick="DashboardsView.goBranchMonth('${r.id}', ${mo.y}, ${mo.m})">Ver ficha de ${escapeHtml(r.abr)} en ${escapeHtml(mo.full)} →</button>`
+    });
+  },
+
+  goBranchMonth(branchId, y, m) {
+    DataLoader.setMonth(y, m);
+    Drawer.navigate(`#/sucursal/${branchId}`);
   },
 
   /** ¿A qué hora llegan las quejas en la región? Últimos 12 meses, hora local de cada tienda */

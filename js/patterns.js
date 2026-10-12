@@ -27,18 +27,53 @@ const Patterns = {
     return out;
   },
 
+  /** Los últimos `months` meses terminando en (endYear, endMonth), del más antiguo al más reciente: [{ y, m, label, full }] */
+  monthSpan(endYear, endMonth, months = 12) {
+    const out = [];
+    let y = endYear, m = endMonth;
+    for (let i = 0; i < months; i++) {
+      out.unshift({ y, m, label: `${BranchTime.MESES_CAP[m - 1]} ${String(y).slice(2)}`, full: `${BranchTime.MESES_CAP[m - 1]} ${y}` });
+      m--; if (m === 0) { m = 12; y--; }
+    }
+    return out;
+  },
+
+  /**
+   * Matriz sucursal × mes de calificación y volumen (EDA: ¿quién cae, quién mejora, es una tienda o toda la región?).
+   * branches: [{ id, abr, nombre }]. Devuelve { months, rows: [{ id, abr, nombre, values, counts, total, mean }] }
+   * con las filas ordenadas de mejor a peor calificación media ponderada; las sucursales sin reseñas en la ventana se omiten.
+   */
+  branchMonthMatrix(branches, endYear, endMonth, months = 12) {
+    const span = this.monthSpan(endYear, endMonth, months);
+    const rows = [];
+    for (const b of branches) {
+      const values = [], counts = [];
+      let total = 0, sum = 0;
+      for (const { y, m } of span) {
+        const st = DataLoader.computeBranchStats(y, m, b.id);
+        counts.push(st.count);
+        values.push(st.count > 0 ? st.avg : null);
+        total += st.count; sum += st.avg * st.count;
+      }
+      if (total > 0) rows.push({ id: b.id, abr: b.abr, nombre: b.nombre || b.abr, values, counts, total, mean: sum / total });
+    }
+    rows.sort((a, b) => b.mean - a.mean);
+    return { months: span, rows };
+  },
+
   /** Quejas (≤ 2★) y reseñas con texto por hora local (0-23) */
   hourly(reviews) {
     const neg = Array(24).fill(0), tot = Array(24).fill(0);
+    const negReviews = Array.from({ length: 24 }, () => []);   // las quejas de cada hora (para abrirlas desde la gráfica)
     let n = 0, nNeg = 0;
     for (const r of reviews) {
       if (!r || !r.text || r.text.trim().length === 0) continue;   // Regla LCP #11
       const p = BranchTime.partsFor(r.publishedAtDate, r);
       if (!p) continue;
       tot[p.hour]++; n++;
-      if (r.stars <= 2) { neg[p.hour]++; nNeg++; }
+      if (r.stars <= 2) { neg[p.hour]++; nNeg++; negReviews[p.hour].push(r); }
     }
-    return { neg, tot, n, nNeg };
+    return { neg, tot, n, nNeg, negReviews };
   },
 
   /** Ventana de `width` horas consecutivas con más quejas: { start, end, count } o null si no hay quejas */

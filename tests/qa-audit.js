@@ -142,9 +142,10 @@ if (fs.existsSync(path.join(rootDir, 'netlify.toml'))) {
 
 // 10. Verificación de Reglas Operativas LCP (Turnos y Exclusión de Reseñas Sin Texto)
 const branchJs = fs.readFileSync(path.join(rootDir, 'js/views/branch.js'), 'utf8');
-assert(!branchJs.includes("label: 'Merienda'"), 'branch.js no incluye turno Merienda');
-assert(branchJs.includes("label: 'Desayuno'") && branchJs.includes("label: 'Comida'") && branchJs.includes("label: 'Cena'"), 'branch.js define exactamente los 3 turnos (Desayuno, Comida, Cena)');
-assert(branchJs.includes('reviews.filter(r => r.text && r.text.trim().length > 0)'), 'branch.js omite estrictamente reseñas sin texto en el heatmap');
+const patternsJs = fs.readFileSync(path.join(rootDir, 'js/patterns.js'), 'utf8');
+assert(!patternsJs.includes("label: 'Merienda'") && !branchJs.includes("label: 'Merienda'"), 'no existe el turno Merienda');
+assert(patternsJs.includes("label: 'Desayuno'") && patternsJs.includes("label: 'Comida'") && patternsJs.includes("label: 'Cena'"), 'patterns.js define exactamente los 3 turnos (Desayuno, Comida, Cena)');
+assert(!branchJs.includes('_buildShiftHeatmap'), 'la ficha de sucursal ya no incluye el heatmap de turnos (retirado en beta.6)');
 
 const compareJs = fs.readFileSync(path.join(rootDir, 'js/views/compare.js'), 'utf8');
 assert(compareJs.includes('bReviews.filter(r => r.text && r.text.trim().length > 0)'), 'compare.js omite estrictamente reseñas sin texto en métricas cualitativas y quejas');
@@ -153,10 +154,12 @@ assert(compareJs.includes('bReviews.filter(r => r.text && r.text.trim().length >
 const cssFile = fs.readFileSync(path.join(rootDir, 'css/styles.css'), 'utf8');
 assert(cssFile.includes('--dv-oro:') && cssFile.includes('--dv-sage:'), 'styles.css contiene tokens de paleta DataViz de lujo (--dv-oro, --dv-sage)');
 assert(cssFile.includes('--text-dim:     #8E9D93;'), 'styles.css eleva contraste de textos secundarios a ratio WCAG AAA (#8E9D93)');
-assert(cssFile.includes('.heatmap-cell-marginal') && cssFile.includes('.heatmap-col-marginal'), 'styles.css contiene estilos para totales marginales del heatmap');
 assert(cssFile.includes('.bayes-uncertainty-bar'), 'styles.css contiene micro-indicador de incertidumbre bayesiana');
 
-assert(branchJs.includes('Total Turno') && branchJs.includes('Total Día'), 'branch.js implementa totales marginales en el Heatmap Operativo');
+assert(!/border-(left|right|top)\s*:\s*[2-9]px/.test(cssFile), 'styles.css no usa acentos de borde de un solo lado (>= 2px) en tarjetas');
+const blurOk = ['.sidebar-overlay','.bottom-sheet-overlay','.onboarding-welcome-overlay','.login-panel-overlay','.cmd-palette-backdrop','.etoile-tip-card','.offline-banner-floating'];
+const blurRules = [...cssFile.matchAll(/([^{}]+)\{[^{}]*backdrop-filter[^{}]*\}/g)].map(m => m[1].trim().split('*/').pop().trim());
+assert(blurRules.every(s => blurOk.some(k => s.includes(k))), 'backdrop-filter solo en overlays y flotantes (el desenfoque sobre tarjetas costaba la fluidez del scroll)', blurRules.filter(s => !blurOk.some(k => s.includes(k))).join(' | '));
 assert(compareJs.includes('compareRadarChart'), 'compare.js renderiza el radar de 5 dimensiones limpio');
 
 const selectRegionJs = fs.readFileSync(path.join(rootDir, 'js/views/select-region.js'), 'utf8');

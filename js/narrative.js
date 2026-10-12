@@ -68,6 +68,43 @@ const Narrative = {
     return `${range} ${last.label} ${dir} frente a ${prev.label}${tail}.${metaTxt}`;
   },
 
+  /**
+   * Matriz sucursal × mes (calificación). mx = Patterns.branchMonthMatrix(...); meta = calificación mínima;
+   * partialLast: el último mes es el mes en curso. Solo compara sucursales con muestra suficiente en ambos meses.
+   */
+  matrix(mx, meta, partialLast = false) {
+    const n = mx.months.length;
+    if (!n || !mx.rows.length) return 'Aún no hay reseñas para comparar sucursales.';
+    const last = n - 1, prev = n - 2;
+    const lastLabel = mx.months[last].full + (partialLast ? ' (en curso)' : '');
+    const ok = mx.rows.filter(r => r.counts[last] >= this.MIN_SAMPLE);
+    if (ok.length === 0) return `Aún hay pocas reseñas en ${lastLabel} para comparar sucursales.`;
+    const below = ok.filter(r => r.values[last] < meta);
+    let s = `${below.length} de ${ok.length} sucursales con reseñas suficientes están bajo la meta de ${this.fmt(meta)}★ en ${lastLabel}.`;
+    // Calificaciones muy bajas pero con pocas reseñas: no se afirma nada de ellas, pero tampoco se callan
+    const watch = mx.rows.filter(r => r.counts[last] > 0 && r.counts[last] < this.MIN_SAMPLE && r.values[last] < 4.0)
+      .sort((a, b) => a.values[last] - b.values[last]).slice(0, 3);
+    const watchTxt = watch.length ? ` A vigilar (pocas reseñas): ${watch.map(r => `${r.nombre} (${this.fmt(r.values[last])}★, ${r.counts[last]} ${this.plural(r.counts[last], 'reseña', 'reseñas')})`).join(', ')}.` : '';
+    if (prev < 0) return s + watchTxt;
+    const ch = ok.filter(r => r.counts[prev] >= this.MIN_SAMPLE).map(r => ({ r, d: r.values[last] - r.values[prev] }));
+    const worst = ch.reduce((a, b) => (!a || b.d < a.d ? b : a), null);
+    const best = ch.reduce((a, b) => (!a || b.d > a.d ? b : a), null);
+    const prevLabel = mx.months[prev].label;
+    if (worst && worst.d <= -0.1) s += ` Mayor caída: ${worst.r.nombre} (${this.fmt(worst.d)}★ frente a ${prevLabel}: ${this.fmt(worst.r.values[prev])} → ${this.fmt(worst.r.values[last])}).`;
+    if (best && best.d >= 0.1) s += ` Mayor mejora: ${best.r.nombre} (+${this.fmt(best.d)}★).`;
+    if (!(worst && worst.d <= -0.1) && !(best && best.d >= 0.1)) s += ` Ninguna sucursal se movió más de 0.10★ frente a ${prevLabel}.`;
+    return s + watchTxt;
+  },
+
+  /** Matriz sucursal × mes (volumen) */
+  matrixVolume(mx) {
+    if (!mx.rows.length) return 'Aún no hay reseñas para comparar sucursales.';
+    const months = mx.months.map((m, i) => ({ m, tot: mx.rows.reduce((s, r) => s + r.counts[i], 0) }));
+    const topMonth = months.reduce((a, b) => (b.tot > a.tot ? b : a));
+    const top = [...mx.rows].sort((a, b) => b.total - a.total)[0];
+    return `El mes con más reseñas fue ${topMonth.m.full} (${topMonth.tot}). ${top.nombre} es la sucursal con más volumen: ${top.total} reseñas en ${mx.months.length} meses (${Math.round(top.total / mx.months.length)} al mes).`;
+  },
+
   /** Tendencia de volumen. partialLast: el último punto es el mes en curso (no se compara contra un mes completo). */
   volumeTrend(labels, values, partialLast = false) {
     const pts = values.map((v, i) => ({ v, label: labels[i] })).filter(p => typeof p.v === 'number');
