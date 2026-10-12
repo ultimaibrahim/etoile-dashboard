@@ -5,6 +5,11 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 
 ---
 
+## Versión 2.0.0 beta 8 Eltanin — Briefing de turno (Octubre 2026) [PREVIEW]
+* 📝 **Lo primero que lees ahora es una frase**: qué tan bien va tu sucursal (o tu región) frente a la meta y a quién hay que atender, con la cifra grande al lado. Si tu cuenta es de una tienda, abre directo con **tu sucursal**; las demás de la región siguen más abajo para comparar.
+* ✅ **"Por atender"**: las quejas sin respuesta de los últimos 30 días, las graves primero, cada una con hace cuánto llegó. Un toque abre la reseña.
+* 🕒 **Las gráficas por hora ya no se dividen en Desayuno, Comida y Cena**: los turnos reales se traslapan y cada tienda abre y cierra distinto, así que se lee la hora tal cual.
+
 ## Versión 2.0.0 beta 7a Eltanin — Correcciones (Octubre 2026) [PREVIEW]
 * 🌐 **Página pública de Étoile** (`/info/`) con qué es, cómo se usan los datos de Google, privacidad y condiciones; necesaria para la verificación con Google.
 * 🎯 **Las quejas se cuentan igual en todas las pantallas**: una queja es una reseña de 1 o 2 estrellas con comentario. Las calificaciones de 1–2★ sin texto ya no se cuentan como queja, así que Inicio, Dashboards, Trimestre y Marca muestran la misma cifra.

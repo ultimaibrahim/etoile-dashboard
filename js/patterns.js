@@ -7,12 +7,6 @@ const Patterns = {
   MIN_COMPLAINTS: 5,     // por debajo de esto no se afirma ningún patrón
   WINDOW: 3,             // ancho (en horas) de la ventana pico
   CONCENTRATION_GAP: 10, // puntos porcentuales sobre el volumen para decir que "se concentra"
-  TURNOS: [
-    { id: 'desayuno', label: 'Desayuno', from: 9, to: 12 },
-    { id: 'comida', label: 'Comida', from: 13, to: 16 },
-    { id: 'cena', label: 'Cena', from: 17, to: 22 }
-  ],
-
   pad(h) { return String(h).padStart(2, '0'); },
 
   /** Reseñas de los últimos `months` meses (hasta el mes dado), opcionalmente filtradas, desde la caché del DataLoader */

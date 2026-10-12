@@ -493,7 +493,7 @@ const EtoileCharts = {
   /**
    * Quejas por hora local (0-23) — complejidad adaptativa:
    *  · móvil/angosto: solo barras de quejas + franja pico (se lee en 3 segundos);
-   *  · ancho (≥ 560 px): suma las franjas de turno y la tasa de queja por hora (quejas / reseñas con texto).
+   *  · ancho (≥ 560 px): suma la tasa de queja por hora (quejas / reseñas con texto).
    * h = Patterns.hourly(...), hl = Patterns.headline(h)
    */
   hourComplaints(el, h, hl, onSelect) {
@@ -505,12 +505,7 @@ const EtoileCharts = {
     const gold = p.dark ? '#E5B842' : '#B8902F';
     const rate = h.tot.map((t, i) => (t >= 3 ? Math.round((1000 * h.neg[i]) / t) / 10 : null));   // solo con muestra mínima
 
-    // Tinte alterno para que cada turno se distinga del contiguo
-    const tint = (i) => (p.dark ? [0.03, 0.075, 0.03][i] : [0.05, 0.11, 0.05][i]);
-    const bands = rich ? Patterns.TURNOS.map((t, i) => [
-      { xAxis: pad(t.from), name: t.label, itemStyle: { color: p.dark ? `rgba(255,255,255,${tint(i)})` : `rgba(184,144,47,${tint(i)})` }, label: { position: 'insideTop', distance: 4, color: p.axisSans, fontSize: 10, fontWeight: 600, fontFamily: EC.sans } },
-      { xAxis: pad(t.to) }
-    ]) : [];
+    // Solo horas: los turnos reales se traslapan y cada tienda abre y cierra distinto, así que no hay franjas de turno
     const w = hl && hl.enough ? hl.window : null;
     const peak = w ? [[
       { xAxis: pad(w.start), name: `Pico ${pad(w.start)}–${pad(w.end + 1)} h`, itemStyle: { color: p.dark ? 'rgba(244,144,144,0.14)' : 'rgba(198,40,40,0.10)' }, label: { position: 'insideTop', distance: 20, color: red, fontWeight: 'bold', fontSize: 10, fontFamily: EC.sans } },
@@ -521,7 +516,7 @@ const EtoileCharts = {
       name: 'Quejas', type: 'bar', barMaxWidth: 22, data: h.neg, cursor: onSelect ? 'pointer' : 'default',
       emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(198,40,40,.45)' } },
       itemStyle: { color: red, borderRadius: [4, 4, 0, 0] },
-      markArea: { silent: true, data: [...bands, ...peak] }
+      markArea: { silent: true, data: [...peak] }
     }];
     if (rich) {
       series.push({

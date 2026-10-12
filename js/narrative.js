@@ -126,6 +126,49 @@ const Narrative = {
     return s;
   },
 
+  /**
+   * Titular del briefing de una región (o de la marca). Devuelve segmentos para que la vista les dé forma y enlace:
+   * { k: 't' texto | 'n' cifra | 'ev' sucursal (clicable) | 'good' todo bien, v, id? }.
+   * attention: [{ id, nombre, avg, count, unreplied }] ya ordenadas por urgencia.
+   */
+  briefingRegion({ name, avg, goal, count, attention }) {
+    if (!count) return [{ k: 't', v: `${name} aún no tiene reseñas este mes.` }];
+    const seg = [], T = v => seg.push({ k: 't', v });
+    const d = avg - goal;
+    // La calificación ya está en grande junto al titular; aquí solo su relación con la meta
+    T(`${name} está `); seg.push({ k: 'n', v: `${this.fmt(Math.abs(d))}★` });
+    T(` ${d >= 0 ? 'sobre' : 'bajo'} la meta. `);
+    if (!attention.length) { seg.push({ k: 'good', v: 'Sin quejas abiertas ni sucursales bajo la meta.' }); return seg; }
+    const top = attention.slice(0, 2);
+    T(top.length === 1 ? 'Necesita atención: ' : 'Necesitan atención: ');
+    top.forEach((a, i) => {
+      if (i) T(i === top.length - 1 ? ' y ' : ', ');
+      seg.push({ k: 'ev', v: a.nombre, id: a.id });
+      const bits = [];
+      if (a.count > 0) bits.push(`${this.fmt(a.avg)}★${a.count < this.MIN_SAMPLE ? ', pocas reseñas' : ''}`);
+      if (a.unreplied) bits.push(`${a.unreplied} ${this.plural(a.unreplied, 'queja', 'quejas')} sin respuesta`);
+      if (bits.length) T(` (${bits.join(', ')})`);
+    });
+    if (attention.length > 2) T(`, y ${attention.length - 2} más`);
+    T('.');
+    return seg;
+  },
+
+  /** Titular del briefing de una sucursal (la primera pantalla del gerente de tienda) */
+  briefingBranch({ nombre, avg, count, rank, of, regionName, unreplied, oldestDays }) {
+    if (!count && !unreplied) return [{ k: 't', v: `${nombre} aún no tiene reseñas este mes.` }];
+    const seg = [], T = v => seg.push({ k: 't', v });
+    T(`${nombre} va en `); seg.push({ k: 'n', v: `${this.fmt(avg)}★` });
+    T(` este mes (${count} ${this.plural(count, 'reseña', 'reseñas')}). `);
+    if (count >= this.MIN_SAMPLE && rank && of > 1) T(`Es la ${rank}.ª de ${of} en ${regionName}. `);
+    if (count < this.MIN_SAMPLE) T(`Con tan pocas reseñas, una sola calificación mueve el promedio. `);
+    if (unreplied) {
+      T('Tienes '); seg.push({ k: 'ev', v: `${unreplied} ${this.plural(unreplied, 'queja', 'quejas')} sin respuesta` });
+      T(oldestDays > 0 ? `, la más antigua de hace ${oldestDays} ${this.plural(oldestDays, 'día', 'días')}.` : ', la más antigua de hoy.');
+    } else seg.push({ k: 'good', v: 'No tienes quejas abiertas.' });
+    return seg;
+  },
+
   /** Matriz sucursal × mes (volumen) */
   matrixVolume(mx) {
     if (!mx.rows.length) return 'Aún no hay reseñas para comparar sucursales.';

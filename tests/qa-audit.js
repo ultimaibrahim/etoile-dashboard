@@ -144,7 +144,7 @@ if (fs.existsSync(path.join(rootDir, 'netlify.toml'))) {
 const branchJs = fs.readFileSync(path.join(rootDir, 'js/views/branch.js'), 'utf8');
 const patternsJs = fs.readFileSync(path.join(rootDir, 'js/patterns.js'), 'utf8');
 assert(!patternsJs.includes("label: 'Merienda'") && !branchJs.includes("label: 'Merienda'"), 'no existe el turno Merienda');
-assert(patternsJs.includes("label: 'Desayuno'") && patternsJs.includes("label: 'Comida'") && patternsJs.includes("label: 'Cena'"), 'patterns.js define exactamente los 3 turnos (Desayuno, Comida, Cena)');
+assert(!patternsJs.includes('TURNOS') && !fs.readFileSync(path.join(rootDir, 'js/charts-echarts.js'), 'utf8').includes('Patterns.TURNOS'), 'las series por hora ya no usan turnos fijos (se traslapan y cada tienda abre distinto): solo horas');
 assert(!branchJs.includes('_buildShiftHeatmap'), 'la ficha de sucursal ya no incluye el heatmap de turnos (retirado en beta.6)');
 
 // Texto de reseñas (contenido de terceros) nunca se interpola en HTML sin escapar

@@ -277,7 +277,7 @@ const HomeView = {
       </div>
     `;
 
-    const trendHtml = hasPrevMonth
+    let trendHtml = hasPrevMonth
       ? `<span class="hero-trend" style="${currGlobal.avgRating >= prevGlobal.avgRating ? 'background:rgba(122,216,154,.12);border-color:rgba(122,216,154,.25);color:#A7DBB9;' : 'background:rgba(178,58,43,.12);border-color:rgba(178,58,43,.25);color:#F4A090;'}">${currGlobal.avgRating >= prevGlobal.avgRating ? '↑' : '↓'} ${Math.abs(currGlobal.avgRating - prevGlobal.avgRating).toFixed(2)} vs ${capitalizedPrevMonth} (${prevGlobal.avgRating.toFixed(2)})</span>`
       : `<span class="hero-trend" style="background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.1);color:#FAF5EB;">Meta: 4.50★</span>`;
 
@@ -285,13 +285,33 @@ const HomeView = {
       ? `<span class="hero-stat-sub">${prevGlobal.totalReviews} en ${capitalizedPrevMonth.toLowerCase()}</span>`
       : `<span class="hero-stat-sub">Meta: 4.5+ estrellas</span>`;
 
-    // Atención inmediata: reseñas críticas de los últimos días en la región (independiente del mes que se esté viendo)
-    const nowUtc = (() => { const n = BranchTime.nowMonth(); return { getUTCFullYear: () => n.y, getUTCMonth: () => n.m - 1 }; })();   // mes en curso en hora de CDMX
-    const recentCritical = Severity.criticalIn(Patterns.collect(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth() + 1, 2), Severity.RECENT_DAYS);
-    const attentionHtml = AttentionCard.html(Incidents.unresolved(recentCritical), {
-      key: 'home', scope: getRegionName(activeRegion),
-      incidentFilter: i => { const m = resolveBranchMeta(i.location_id); return !!m && m.region === activeRegion; }
-    });
+    // Briefing: lo que lee primero cada rol (la sucursal propia si la cuenta es de tienda; si no, la región)
+    const goal = EC.metaRating();
+    const userBranch = (typeof AppAuth !== 'undefined' && AppAuth.getUserRole() === 'gerente') ? AppAuth.getUserSucursal() : null;
+    const branchRows = branches.map(b => ({ id: b.id, nombre: b.nombre, avg: b.curr.score, count: b.curr.count }));
+    const scopeIds = userBranch ? [userBranch] : branches.map(b => b.id);
+    const pendingAll = Briefing.pending(branches.map(b => b.id));
+    const pending = userBranch ? pendingAll.filter(r => isSameBranch(r.sucursal, userBranch)) : pendingAll;
+    let heroAvg = currGlobal.avgRating, briefSegs, briefKicker, branchHero = null;
+    const nowLong = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', timeZone: BranchTime.MONTH_TZ });
+    if (userBranch && resolveBranchMeta(userBranch)) {
+      const me = branchRows.find(b => isSameBranch(b.id, userBranch)) || { id: userBranch, nombre: resolveBranchMeta(userBranch).nombre, avg: 0, count: 0 };
+      const ranked = branchRows.filter(b => b.count > 0).sort((a, b) => b.avg - a.avg);
+      const rank = ranked.findIndex(b => b.id === me.id) + 1;
+      heroAvg = me.avg;
+      branchHero = { me, rank, nRanked: ranked.length, prev: prevStats[me.id] || { avg: 0, count: 0 } };
+      // La flecha compara a la sucursal con su propio mes anterior (no con la región)
+      trendHtml = branchHero.prev.count > 0 && me.count > 0
+        ? `<span class="hero-trend" style="${me.avg >= branchHero.prev.avg ? 'background:rgba(122,216,154,.12);border-color:rgba(122,216,154,.25);color:#A7DBB9;' : 'background:rgba(178,58,43,.12);border-color:rgba(178,58,43,.25);color:#F4A090;'}">${me.avg >= branchHero.prev.avg ? '↑' : '↓'} ${Math.abs(me.avg - branchHero.prev.avg).toFixed(2)} vs ${capitalizedPrevMonth} (${branchHero.prev.avg.toFixed(2)})</span>`
+        : `<span class="hero-trend" style="background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.1);color:#FAF5EB;">Sin reseñas en ${capitalizedPrevMonth.toLowerCase()}</span>`;
+      briefSegs = Narrative.briefingBranch({ nombre: me.nombre, avg: me.avg, count: me.count, rank: rank || null, of: ranked.length, regionName: getRegionName(activeRegion), unreplied: pending.length, oldestDays: pending.length ? Briefing.ageDays(pending[0]) : 0 });
+      briefKicker = `${me.nombre} · ${nowLong}`;
+    } else {
+      briefSegs = Narrative.briefingRegion({ name: getRegionName(activeRegion), avg: currGlobal.avgRating, goal, count: currGlobal.totalReviews, attention: Briefing.attention(branchRows, pendingAll, goal) });
+      briefKicker = `${getRegionName(activeRegion)} · ${nowLong}`;
+    }
+    const briefingHeadHtml = `<div class="brf-kicker">${escapeHtml(briefKicker)}</div><h1 class="brf-head" id="briefHead">${Briefing.headline(briefSegs)}</h1>`;
+    const pendingHtml = Briefing.rowsHtml(pending, scopeIds);
 
     const concluded = getConcludedMonthInfo();
     let concludedBannerHtml = '';
@@ -308,21 +328,6 @@ const HomeView = {
       `;
     }
 
-    // Mensaje de bienvenida personalizado para roles corporativos / regionales (Idea 4)
-    const userName = (typeof AppAuth !== 'undefined' && AppAuth.profile?.nombre) || 'Usuario';
-    const userRole = (typeof AppAuth !== 'undefined' && AppAuth.getUserRole()) || 'admin';
-    const roleMap = { corporate: 'Corporativo', admin: 'Administrador', director: 'Director', regional: 'Gerente Regional', zonal: 'Gerente Zonal' };
-    const roleLabel = roleMap[userRole] || userRole;
-
-    const welcomeBannerHtml = `
-      <div class="welcome-banner-home" style="margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 14px; width: 100%;">
-        <div style="font-family: var(--sans); font-size: 18px; font-weight: 700; color: #FAF5EB; margin-bottom: 4px;">¡Hola, ${userName}!</div>
-        <div style="font-size: 12.5px; color: rgba(245, 239, 230, 0.75); line-height: 1.4;">
-          Bienvenido al portal regional (${roleLabel}). Actualmente hay <strong>${totalNegativasActivas}</strong> quejas críticas activas en la región.
-        </div>
-      </div>
-    `;
-
     document.getElementById('app').innerHTML = `
       ${concludedBannerHtml}
       ${buildTopbar()}
@@ -332,21 +337,15 @@ const HomeView = {
         </div>
         <div class="hero-inner" style="position: relative; z-index: 2;">
           <div class="hero-left">
-            ${welcomeBannerHtml}
             <div class="hero-label-row" style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:16px;">
-              <span class="eyebrow" style="color:rgba(245,239,230,.55);">Promedio Regional</span>
+              <span class="eyebrow" style="color:rgba(245,239,230,.55);">${userBranch ? 'Promedio de tu sucursal' : 'Promedio Regional'}</span>
               ${dropdownHtml}
             </div>
-            <!-- NOTA DE DISEÑO (Ibrahim): Encabezado semántico H1 añadido en v3.4.5 Izar para SEO/accesibilidad.
-                 Si en el futuro se prefiere recuperar el Hero minimalista original (solo dropdown y score grande),
-                 comentar este bloque <h1 class="hero-main-title"> o asignarle la clase 'visually-hidden'. -->
-            <h1 class="hero-main-title" style="font-family:var(--serif); font-size:clamp(28px, 5vw, 42px); color:#FAF5EB; line-height:1.15; margin: 4px 0 14px 0; font-weight:normal;">
-              Monitoreo Regional <span style="font-style:italic; color:var(--sage);">${getRegionName(activeRegion)}</span>
-            </h1>
+            ${briefingHeadHtml}
             <div class="hero-score hero-link" role="button" tabindex="0" aria-label="Ver el desglose de la calificación" onclick="HomeView.openRatingDrawer()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();HomeView.openRatingDrawer();}">
-              <span class="hero-score-num num" id="heroNum">${currGlobal.avgRating.toFixed(2)}</span>
+              <span class="hero-score-num num" id="heroNum">${heroAvg.toFixed(2)}</span>
               <div class="hero-score-side">
-                <span class="hero-stars">${starStr(Math.round(currGlobal.avgRating))}</span>
+                <span class="hero-stars">${starStr(Math.round(heroAvg))}</span>
                 <span class="hero-of">de 5.00</span>
                 ${trendHtml}
                 <span class="hero-scrub" id="heroScrub" aria-live="polite"></span>
@@ -354,7 +353,20 @@ const HomeView = {
             </div>
           </div>
           <div class="hero-right">
+            ${branchHero ? `
             <div class="hero-stat hero-link" role="button" tabindex="0" onclick="HomeView.openFullFeedModal('todas')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();HomeView.openFullFeedModal('todas');}">
+              <span class="hero-stat-val num">${branchHero.me.count}</span>
+              <div class="hero-stat-info"><span class="hero-stat-label">Reseñas ${capitalizedCurrMonth}</span><span class="hero-stat-sub">${branchHero.prev.count} en ${capitalizedPrevMonth.toLowerCase()}</span></div>
+            </div>
+            <div class="hero-stat hero-link" role="button" tabindex="0" onclick="HomeView.openBranchesDrawer()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();HomeView.openBranchesDrawer();}">
+              <span class="hero-stat-val num">${branchHero.rank ? branchHero.rank + '.º' : '—'}</span>
+              <div class="hero-stat-info"><span class="hero-stat-label">Posición en la región</span><span class="hero-stat-sub">de ${branchHero.nRanked} con reseñas</span></div>
+            </div>
+            <div class="hero-stat hero-link ${pending.length ? 'warn' : ''}" role="button" tabindex="0" onclick="Briefing.openFor('')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Briefing.openFor('');}">
+              <span class="hero-stat-val num">${pending.length}</span>
+              <div class="hero-stat-info"><span class="hero-stat-label">Quejas sin respuesta</span><span class="hero-stat-sub">últimos 30 días</span></div>
+            </div>`
+            : `            <div class="hero-stat hero-link" role="button" tabindex="0" onclick="HomeView.openFullFeedModal('todas')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();HomeView.openFullFeedModal('todas');}">
               <span class="hero-stat-val num">${currGlobal.totalReviews}</span>
               <div class="hero-stat-info">
                 <span class="hero-stat-label">Reseñas ${capitalizedCurrMonth}</span>
@@ -374,13 +386,12 @@ const HomeView = {
                 <span class="hero-stat-label">Negativas Activas</span>
                 <span class="hero-stat-sub">De ${totalNegativasTotal} totales</span>
               </div>
-            </div>
+            </div>`}
           </div>
-          ${this._buildHeroDiagnosis(conAlerta, currGlobal, branches, currStats)}
         </div>
       </section>
 
-      ${attentionHtml}
+      ${pendingHtml}
 
       <div class="home-grid-2" style="margin-top: 24px; margin-bottom: 24px;">
         ${alertBannerHtml}
@@ -456,7 +467,7 @@ const HomeView = {
       // Counting animation for hero rating
       const heroNumEl = document.getElementById('heroNum');
       if (heroNumEl) {
-        const targetVal = currGlobal.avgRating;
+        const targetVal = heroAvg;
         let startVal = 3.0;
         const duration = 1800;
         let startTimestamp = null;
@@ -505,7 +516,7 @@ const HomeView = {
           }
         }
         EtoileCharts.heroTrend(heroChartEl, trendLabels, trendData);
-        HomeView._initHeroScrub(trendLabels, trendData, sortedMonths, currYear, currGlobal.avgRating);
+        if (!userBranch) HomeView._initHeroScrub(trendLabels, trendData, sortedMonths, currYear, currGlobal.avgRating);
       }
 
       // Start Carousel Autoplay

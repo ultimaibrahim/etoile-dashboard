@@ -50,7 +50,8 @@ Ninguna gráfica entra "por poner gráficas". Cada una debe tener:
 
 ## 4. Reglas de datos (vigentes)
 - **Regla LCP #11**: las reseñas sin texto solo cuentan para volumen bruto y promedio global; jamás en heatmap, quejas críticas ni análisis de temas.
-- **Turnos reales**: Desayuno 09:00–12:59 · Comida 13:00–16:59 · Cena 17:00–22:00.
+- **Horas, no turnos (2026-10-12)**: dos turnos reales de 8 h (matutino/vespertino) que se traslapan 14–16 h; cada tienda abre a las 9 u 11 h y cierra servicio 21:30–22:00. Series y heatmaps se leen por **hora local de la sucursal**, sin franjas. La hora de una reseña es cuándo se escribió, no cuándo fue la visita.
+- **Queja = 1–2★ con texto** (`Metrics.isComplaint`); las de 1–2★ sin texto se descartan como queja. **Corte de mes = hora de CDMX** para todas las regiones.
 - **Fuente**: API oficial de Google Business Profile (sync cada 30 min). Sin scrapers (Apify retirado).
 - **Clasificación**: motor local sin LLM; las quejas ≤ 2★ con texto se clasifican al ingresar.
 

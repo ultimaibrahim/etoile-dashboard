@@ -77,5 +77,21 @@ t('duelo: una sin reseñas', /X no tiene reseñas en este periodo/.test(N.compar
 s = N.compare(D('A', { above: 11 }), D('B', { avg: 4.6, above: 5 }), 4.6);
 t('duelo: meses sobre la meta en el año', /A estuvo sobre la meta 11 de 12 meses; B, 5 de 12/.test(s), s);
 
+// briefing (titular del turno)
+const txt = seg => seg.map(x => x.v).join('');
+let b = N.briefingRegion({ name: 'CDMX', avg: 4.82, goal: 4.6, count: 74, attention: [{ id: 'carso', nombre: 'Plaza Carso', avg: 2.33, count: 3, unreplied: 2 }, { id: 'tep', nombre: 'Tepeyac', avg: 3, count: 2, unreplied: 1 }] });
+t('briefing región: relación con la meta y a quién atender', /^CDMX está 0.22★ sobre la meta\. Necesitan atención: Plaza Carso \(2.33★, pocas reseñas, 2 quejas sin respuesta\) y Tepeyac \(3.00★, pocas reseñas, 1 queja sin respuesta\)\.$/.test(txt(b)), txt(b));
+t('briefing región: las sucursales llevan id para enlazar', b.filter(x => x.k === 'ev').map(x => x.id).join() === 'carso,tep');
+b = N.briefingRegion({ name: 'CDMX', avg: 4.82, goal: 4.6, count: 74, attention: [] });
+t('briefing región: todo en línea', /Sin quejas abiertas ni sucursales bajo la meta\.$/.test(txt(b)) && b[b.length - 1].k === 'good');
+b = N.briefingRegion({ name: 'GDL', avg: 4.4, goal: 4.6, count: 30, attention: [1, 2, 3, 4, 5].map(i => ({ id: 's' + i, nombre: 'S' + i, avg: 4.2, count: 9, unreplied: 0 })) });
+t('briefing región: bajo la meta y recorta a 2 con "y N más"', /0.20★ bajo la meta/.test(txt(b)) && /S1 \(4.20★\) y S2 \(4.20★\), y 3 más\./.test(txt(b)), txt(b));
+t('briefing región: sin reseñas', /aún no tiene reseñas/.test(txt(N.briefingRegion({ name: 'TOL', avg: 0, goal: 4.6, count: 0, attention: [] }))));
+b = N.briefingBranch({ nombre: 'Plaza Carso', avg: 2.33, count: 3, rank: 9, of: 9, regionName: 'CDMX', unreplied: 2, oldestDays: 9 });
+t('briefing tienda: pocas reseñas avisa y cuenta quejas con antigüedad', /Plaza Carso va en 2.33★ este mes \(3 reseñas\)\. Con tan pocas reseñas.* Tienes 2 quejas sin respuesta, la más antigua de hace 9 días\./.test(txt(b)) && !/Es la/.test(txt(b)), txt(b));
+b = N.briefingBranch({ nombre: 'Aztlán', avg: 5, count: 25, rank: 1, of: 9, regionName: 'CDMX', unreplied: 0, oldestDays: 0 });
+t('briefing tienda: posición y sin quejas abiertas', /Es la 1\.ª de 9 en CDMX\. No tienes quejas abiertas\.$/.test(txt(b)), txt(b));
+t('briefing tienda: una queja de hoy', /Tienes 1 queja sin respuesta, la más antigua de hoy\./.test(txt(N.briefingBranch({ nombre: 'X', avg: 4, count: 8, rank: 3, of: 9, regionName: 'R', unreplied: 1, oldestDays: 0 }))));
+
 console.log(`\n${fail === 0 ? '✅ TODAS LAS PRUEBAS PASARON' : '❌ HAY FALLAS'} — ${pass} ok, ${fail} fallas`);
 process.exit(fail === 0 ? 0 : 1);

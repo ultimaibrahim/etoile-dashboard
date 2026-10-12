@@ -3,10 +3,8 @@
  */
 
 const BranchView = {
-  feedShiftFilter: null,
   async render(params, isHomeMode = false) {
     this.activeParams = params;
-    this.feedShiftFilter = null;
     const meta = getBranchById(params.id);
     if (!meta) {
       window.location.hash = '#/404';
@@ -525,7 +523,6 @@ const BranchView = {
           </div>
         </div>
         <div class="reviews-panel">
-          <div id="shiftFilterBannerWrap">${this._buildShiftFilterBanner()}</div>
           <div class="branch-feed-controls" style="display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border: 1px solid var(--border);">
             <div class="search-wrapper" style="max-width: 280px; width: 100%;">
               <span class="search-icon-svg">${svgIcon('search')}</span>
@@ -889,20 +886,7 @@ const BranchView = {
       const q = this.feedSearchQuery.toLowerCase();
       list = list.filter(r => r.text.toLowerCase().includes(q));
     }
-    if (this.feedShiftFilter) {
-      const { day, shift } = this.feedShiftFilter;
-      list = list.filter(r => {
-        if (!r.publishedAtDate) return false;
-        const pt = BranchTime.partsFor(r.publishedAtDate, r); // hora local de la tienda, no la del navegador
-        if (!pt || pt.dow !== day) return false;
-        const h = pt.hour;
-        if (shift === 0) return h < 13;
-        if (shift === 1) return h >= 13 && h < 17;
-        if (shift === 2) return h >= 17;
-        return true;
-      });
-    }
-    return (this.feedSearchQuery || (this.feedStarFilter && this.feedStarFilter !== 'all') || this.feedShiftFilter) ? list : list.slice(0, 5);
+    return (this.feedSearchQuery || (this.feedStarFilter && this.feedStarFilter !== 'all') ) ? list : list.slice(0, 5);
   },
 
   filterBranchFeed(query) {
@@ -924,10 +908,6 @@ const BranchView = {
     const container = document.getElementById('revList');
     if (container) {
       container.innerHTML = this._buildRevList(this._getFilteredReviews(reviews));
-    }
-    const bannerContainer = document.getElementById('shiftFilterBannerWrap');
-    if (bannerContainer) {
-      bannerContainer.innerHTML = this._buildShiftFilterBanner();
     }
     const chipRow = document.querySelector('.branch-feed-controls .filter-row');
     if (chipRow) {
@@ -960,44 +940,6 @@ const BranchView = {
         <div class="chart-card"><div class="chart-wrap" style="height:260px"><div id="branchHourChart" style="width:100%;height:100%"></div></div></div>
         <div class="story-foot">${h.nNeg} quejas de ${h.n} reseñas con texto · las horas son las de la tienda, no las de tu dispositivo</div>
       </section>`;
-  },
-
-  _buildShiftFilterBanner() {
-    if (!this.feedShiftFilter) return '';
-    const { dayName, shiftName } = this.feedShiftFilter;
-    return `
-      <div class="shift-filter-banner">
-        <div class="sfb-left">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--oro);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          <span>Turno Activo: <strong>${escapeHtml(dayName)} · ${escapeHtml(shiftName)}</strong></span>
-        </div>
-        <button class="sfb-reset-btn" onclick="BranchView.clearShiftFilter()">✕ Restablecer a todas las reseñas</button>
-      </div>
-    `;
-  },
-
-  filterShift(dayKey, shiftId, dayName, shiftName) {
-    if (this.feedShiftFilter && this.feedShiftFilter.day === dayKey && this.feedShiftFilter.shift === shiftId) {
-      this.clearShiftFilter();
-      return;
-    }
-    this.feedShiftFilter = { day: dayKey, shift: shiftId, dayName, shiftName };
-    this._updateRevListDOM();
-    
-    document.querySelectorAll('.heatmap-cell').forEach(cell => cell.classList.remove('selected'));
-    const targetCell = document.querySelector(`.heatmap-cell[onclick*="${dayKey}, ${shiftId}"]`);
-    if (targetCell) targetCell.classList.add('selected');
-
-    const reviewsSec = document.getElementById('reviewsSection');
-    if (reviewsSec) {
-      reviewsSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  },
-
-  clearShiftFilter() {
-    this.feedShiftFilter = null;
-    this._updateRevListDOM();
-    document.querySelectorAll('.heatmap-cell').forEach(cell => cell.classList.remove('selected'));
   },
 
   openProblemDetailModal(title, reviews) {
