@@ -296,7 +296,7 @@ const QuarterView = {
             <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 24px;">
               Puede que no haya datos suficientes para este trimestre en la región seleccionada, o que la conexión a la base de datos haya fallado.
             </p>
-            <a href="#/" class="reporte-especial-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: var(--verde); color: #fff; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 13px;">
+            <a href="#/" class="reporte-especial-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: var(--verde); color: #FAF5EB; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 13px;">
               ← Volver al inicio
             </a>
           </div>

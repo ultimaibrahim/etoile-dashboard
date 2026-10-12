@@ -1223,7 +1223,7 @@ const BrandView = {
       }
       .brand-audit-btn:hover {
         background: var(--alerta);
-        color: #fff;
+        color: #FAF5EB;
         transform: translateY(-1px);
         box-shadow: 0 4px 10px rgba(178,58,43,0.2);
       }
@@ -1630,7 +1630,7 @@ const BrandView = {
       .modal-shortcut-btn {
         background: var(--ok);
         border: 1px solid var(--ok);
-        color: #fff;
+        color: #FAF5EB;
         padding: 8px 16px;
         border-radius: 12px;
         font-size: 12px;

@@ -325,7 +325,7 @@ const AboutView = {
               Herramienta operativa para el seguimiento y análisis de reseñas de Google Maps de las sucursales de La Crêpe Parisienne en la región ${getRegionName(activeRegion)}.
             </p>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
-              <a href="#/" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:12px;background:var(--oro);color:#FFFFFF;font-size:13px;font-weight:700;text-decoration:none;transition:all 0.2s;">
+              <a href="#/" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:12px;background:var(--oro);color:#FAF5EB;font-size:13px;font-weight:700;text-decoration:none;transition:all 0.2s;">
                 <span>Explorar Monitoreo Activo →</span>
               </a>
               <a href="#/dashboards" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#FAF5EB;font-size:13px;font-weight:600;text-decoration:none;">
@@ -341,7 +341,7 @@ const AboutView = {
               </div>
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Guía de Introducción</div>
-                <button onclick="localStorage.removeItem('lcp_walkthrough_seen'); Router.navigate('#/');" style="background:var(--oro);border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:700;color:#FFFFFF;text-align:center;transition:background 0.2s;" onmouseover="this.style.background='#a37b22'" onmouseout="this.style.background='var(--oro)'">Iniciar Tour de Bienvenida</button>
+                <button onclick="localStorage.removeItem('lcp_walkthrough_seen'); Router.navigate('#/');" style="background:var(--oro);border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:700;color:#FAF5EB;text-align:center;transition:background 0.2s;" onmouseover="this.style.background='#a37b22'" onmouseout="this.style.background='var(--oro)'">Iniciar Tour de Bienvenida</button>
               </div>
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Cobertura</div>

@@ -446,7 +446,7 @@ function initCookieBanner() {
       }
       .cookie-btn.accept {
         background: var(--verde);
-        color: #fff;
+        color: #FAF5EB;
       }
       .cookie-btn.accept:hover {
         background: var(--verde-soft);

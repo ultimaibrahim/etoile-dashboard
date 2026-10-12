@@ -20,7 +20,7 @@ const EC = {
       gridSoft: d ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)',
       goalText: d ? '#DFC176' : '#826419',
       goalLine: d ? '#9AA59D' : '#68625C',   // la meta es referencia, no alerta: gris punteado
-      ptBorder: d ? '#1C2220' : '#fff'
+      ptBorder: d ? '#1C2220' : '#FDF9F4'
     };
   },
 
@@ -37,7 +37,7 @@ const EC = {
   ratingScale(dark = this.isDark()) {
     return dark
       ? [{ id: 'meta', fill: '#7FBB93', ink: '#10140F' }, { id: 'cerca', fill: '#4E6B59', ink: '#F2EEE4' }, { id: 'riesgo', fill: '#5E4A14', ink: '#F2EEE4' }, { id: 'critico', fill: '#DF6862', ink: '#10140F' }]
-      : [{ id: 'meta', fill: '#3D5A47', ink: '#FFFFFF' }, { id: 'cerca', fill: '#A8C5B4', ink: '#1E1A15' }, { id: 'riesgo', fill: '#F0D58C', ink: '#1E1A15' }, { id: 'critico', fill: '#E0524A', ink: '#1E1A15' }];
+      : [{ id: 'meta', fill: '#3D5A47', ink: '#FDF9F4' }, { id: 'cerca', fill: '#A8C5B4', ink: '#1E1A15' }, { id: 'riesgo', fill: '#F0D58C', ink: '#1E1A15' }, { id: 'critico', fill: '#E0524A', ink: '#1E1A15' }];
   },
   ratingTier(v, meta) { return v >= meta ? 0 : v >= 4.4 ? 1 : v >= 4.0 ? 2 : 3; },
 
@@ -177,7 +177,7 @@ const EC = {
       // Mejor y peor punto con su valor: el hallazgo queda señalado en la propia gráfica
       markPoint: marks ? {
         symbol: 'pin', symbolSize: 40, animationDelay: 600, silent: true,
-        label: { color: this.isDark() ? '#10140F' : '#fff', fontSize: 10, fontWeight: 700, fontFamily: this.sans, formatter: pt => Number(pt.value).toFixed(2) },
+        label: { color: this.isDark() ? '#10140F' : '#FDF9F4', fontSize: 10, fontWeight: 700, fontFamily: this.sans, formatter: pt => Number(pt.value).toFixed(2) },
         data: [
           { type: 'max', name: 'Mejor', itemStyle: { color: this.isDark() ? '#7FBB93' : '#3D5A47' } },
           { type: 'min', name: 'Más bajo', itemStyle: { color: this.isDark() ? '#E66E68' : '#BE2425' } }
@@ -290,7 +290,7 @@ const EtoileCharts = {
           emphasis: { focus: 'self' }, blur: EC.blur(),
           data: data.map((v, i) => ({ value: v, itemStyle: { color: colors[i], borderRadius: 4 } })),
           label: {
-            show: true, position: 'insideLeft', distance: 8, color: '#ffffff', fontWeight: 'bold', fontSize: 10, fontFamily: EC.sans,
+            show: true, position: 'insideLeft', distance: 8, color: '#FDF9F4', fontWeight: 'bold', fontSize: 10, fontFamily: EC.sans,
             formatter: e => {
               const v = e.value;
               if (v === undefined || v === null || v === 0) return '';
@@ -322,7 +322,7 @@ const EtoileCharts = {
         }, 'item'),
         series: [{
           type: 'pie', radius: ['59%', '98%'], center: ['40%', '50%'], label: { show: false }, labelLine: { show: false },
-          itemStyle: { borderWidth: p.dark ? 2 : 1, borderColor: p.dark ? '#1C2220' : '#fff' },
+          itemStyle: { borderWidth: p.dark ? 2 : 1, borderColor: p.dark ? '#1C2220' : '#FDF9F4' },
           emphasis: { scaleSize: 4 },
           data: labels.map((l, i) => ({ name: l, value: data[i], itemStyle: { color: colors[i] } }))
         }]
@@ -407,7 +407,7 @@ const EtoileCharts = {
         xAxis: EC.catAxis(labels, p, { boundaryGap: false, axisLabel: EC.xLabels(el, labels, p, EC.isMobile()) }),
         yAxis: EC.valAxis(p, { min: 2.0, max: 5.2, interval: 0.5, axisLabel: { fontSize: 10, fontFamily: EC.mono, color: p.axisMono, formatter: v => v.toFixed(1) } }),
         series: [EC.trendSeries({
-          data, color, border: p.dark ? '#151725' : '#fff', clickable: !!onSelect,
+          data, color, border: p.dark ? '#151725' : '#FDF9F4', clickable: !!onSelect,
           marks: data.filter(v => typeof v === 'number').length >= 4,
           goal: EC.goalLine('yAxis', meta, 'Meta 4.60', p.goalLine, 1.5, [5, 5], p, 'insideEndBottom')
         })]
@@ -432,7 +432,7 @@ const EtoileCharts = {
         // +10% de holgura sobre el máximo y la meta siempre visible (antes la línea de meta podía quedar fuera del eje)
         yAxis: EC.valAxis(p, { min: 0, minInterval: 1, max: Math.ceil(Math.max(maxData, meta) * 1.1) }),
         series: [EC.trendSeries({
-          data, color, border: p.dark ? '#151725' : '#fff', clickable: !!onSelect,
+          data, color, border: p.dark ? '#151725' : '#FDF9F4', clickable: !!onSelect,
           area: EC.rgba(color, 0.15, 'rgba(107, 144, 125, 0.1)'),
           goal: EC.goalLine('yAxis', meta, `Meta ${meta}`, EC.oro, 1.5, [5, 5], p, 'insideEndTop')
         })]
@@ -490,8 +490,8 @@ const EtoileCharts = {
             name: s.name, value: s.data,
             lineStyle: { color: s.color, width: 2.5, type: s.dash ? [5, 4] : 'solid' },
             areaStyle: { color: s.fill },
-            itemStyle: { color: s.point, borderColor: '#ffffff', borderWidth: 2 },
-            emphasis: { itemStyle: { color: '#ffffff', borderColor: s.color } }
+            itemStyle: { color: s.point, borderColor: '#FDF9F4', borderWidth: 2 },
+            emphasis: { itemStyle: { color: '#FDF9F4', borderColor: s.color } }
           }))
         }]
       }

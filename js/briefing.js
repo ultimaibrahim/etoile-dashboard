@@ -33,12 +33,12 @@ const Briefing = {
   },
 
   /** Segmentos del titular → HTML (cifras destacadas, sucursales y pendientes clicables) */
-  headline(segments) {
+  headline(segments, evHandler = id => `Briefing.openFor('${id}')`) {
     return segments.map(s => {
       const v = escapeHtml(s.v);
       if (s.k === 'n') return `<span class="brf-n">${v}</span>`;
       if (s.k === 'good') return `<span class="brf-good">${v}</span>`;
-      if (s.k === 'ev') return `<button class="brf-ev" onclick="Briefing.openFor('${escapeHtml(s.id || '')}')">${v}</button>`;
+      if (s.k === 'ev') return `<button class="brf-ev" onclick="${escapeHtml(evHandler(s.id || ''))}">${v}</button>`;
       return v;
     }).join('');
   },
@@ -56,7 +56,7 @@ const Briefing = {
         <span class="brf-st">${r.stars}★</span></button>`;
     }).join('');
     const more = pendingReviews.length > this.MAX_ROWS ? `<button class="show-all-btn-link" onclick="Briefing.openFor('')">Ver las ${pendingReviews.length} →</button>` : '';
-    return `<section class="section r brf-sec" id="porAtender"><div class="section-head"><div class="section-title">Por atender</div><span class="section-sub">Quejas sin respuesta de los últimos 30 días: las graves primero, luego la más antigua</span></div><div class="brf-list">${rows}</div>${more}</section>`;
+    return `<section class="section brf-sec" id="porAtender"><div class="section-head"><div class="section-title">Por atender</div><span class="section-sub">Quejas sin respuesta de los últimos 30 días: las graves primero, luego la más antigua</span></div><div class="brf-list">${rows}</div>${more}</section>`;
   },
 
   openReview(i) {

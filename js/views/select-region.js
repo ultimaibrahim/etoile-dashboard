@@ -7,7 +7,7 @@ const SelectRegionView = {
   selectedYear: null,
   selectedMonth: null,
   filterStatus: 'all', // 'all' | 'critical' | 'optimal'
-  sortBy: 'adjusted',  // 'adjusted' | 'rating-desc' | 'rating-asc' | 'volume-desc' | 'delta-desc'
+  sortBy: 'urgency',  // 'urgency' | 'adjusted' | 'rating-desc' | 'rating-asc' | 'volume-desc' | 'delta-desc'
   searchQuery: '',
   _documentClickBound: false,
 
@@ -221,7 +221,7 @@ const SelectRegionView = {
         }
         .srv-compact-select .custom-option.active {
           font-weight: 700;
-          color: #FFFFFF !important;
+          color: #FAF5EB !important;
           background: var(--verde) !important;
           box-shadow: 0 2px 8px rgba(61, 90, 71, 0.25);
         }
@@ -300,7 +300,7 @@ const SelectRegionView = {
         }
         .srv-month-pill.active {
           background: var(--verde) !important;
-          color: #FFFFFF !important;
+          color: #FAF5EB !important;
           border-color: var(--verde) !important;
           font-weight: 700;
           box-shadow: 0 2px 8px rgba(61, 90, 71, 0.25);
@@ -732,7 +732,7 @@ const SelectRegionView = {
         .brand-shortcut-btn {
           background: var(--verde);
           border: 1px solid var(--verde);
-          color: #fff;
+          color: #FAF5EB;
           padding: 12px 24px;
           border-radius: 14px;
           font-size: 13.5px;
@@ -831,6 +831,7 @@ const SelectRegionView = {
 
     // Opciones de Ordenamiento
     const sortLabels = {
+      'urgency': 'Urgencia (quejas sin respuesta)',
       'adjusted': 'Score Ajustado',
       'rating-desc': 'Rating (Alto a Bajo)',
       'rating-asc': 'Rating (Alertas)',
@@ -882,6 +883,9 @@ const SelectRegionView = {
       <div class="srv-wrapper">
         <div class="srv-container" id="srvContainer">
           
+          <!-- Briefing nacional: lo primero que lee quien ve todas las regiones -->
+          <section class="srv-briefing" id="srvBriefing" aria-live="polite"></section>
+
           <!-- Brand Dashboard Shortcut Banner -->
           ${brandDashboardHtml}
 
@@ -1131,11 +1135,38 @@ const SelectRegionView = {
     this.loadRatingsAndRankings();
   },
 
+  /** Titular nacional + "Por atender": lo primero que lee un rol que ve todas las regiones */
+  _renderBriefing(reviews, regionStats, recent) {
+    const el = document.getElementById('srvBriefing');
+    if (!el || typeof Briefing === 'undefined') return;
+    const goal = EC.metaRating();
+    const rows = Object.values(regionStats).filter(s => s.count > 0);   // regiones con reseñas este mes
+    const count = reviews.length;
+    const avg = count ? reviews.reduce((s, r) => s + r.stars, 0) / count : 0;
+    // Una región sin reseñas este mes puede tener quejas pendientes del mes pasado: también cuenta
+    const attention = Object.values(regionStats)
+      .filter(s => s.unreplied > 0 || (s.count >= Narrative.MIN_SAMPLE && s.avg < goal))
+      .sort((a, b) => (b.unreplied - a.unreplied) || (a.avg - b.avg))
+      .map(s => ({ id: s.id, nombre: s.name, avg: s.avg, count: s.count, unreplied: s.unreplied }));
+    const segs = Narrative.briefingRegion({ name: 'La marca', avg, goal, count, attention });
+    const sorted = [...recent].sort((a, b) => (Severity.isCritical(b) - Severity.isCritical(a)) || (Date.parse(a.publishedAtDate) - Date.parse(b.publishedAtDate)));
+    const nowLong = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', timeZone: BranchTime.MONTH_TZ });
+    const noData = Object.values(regionStats).filter(s => s.count === 0).length;
+    el.innerHTML = `
+      <div class="srv-brf-head">
+        <div class="srv-brf-kicker">Nacional · ${escapeHtml(nowLong)}</div>
+        <h2 class="srv-brf-text">${Briefing.headline(segs, id => `SelectRegionView.handleSelect('${id}')`)}</h2>
+        <p class="srv-brf-sub">${count} ${count === 1 ? 'reseña' : 'reseñas'} este mes en ${rows.length} de ${Object.keys(regionStats).length} regiones${noData ? ` (${noData} sin reseñas)` : ''}. Las regiones de abajo van por urgencia.</p>
+      </div>
+      ${Briefing.rowsHtml(sorted, null)}`;
+  },
+
   onSortOptionClick(sortKey, event) {
     if (event) event.stopPropagation();
     this.sortBy = sortKey;
     
     const sortLabels = {
+      'urgency': 'Urgencia (quejas sin respuesta)',
       'adjusted': 'Score Ajustado',
       'rating-desc': 'Rating (Alto a Bajo)',
       'rating-asc': 'Rating (Alertas)',
@@ -1206,6 +1237,7 @@ const SelectRegionView = {
 
     // 3. Ordenamiento
     statsArray.sort((a, b) => {
+      if (this.sortBy === 'urgency') return (((a.count > 0 || a.unreplied > 0) ? 0 : 1) - ((b.count > 0 || b.unreplied > 0) ? 0 : 1)) || ((b.unreplied || 0) - (a.unreplied || 0)) || (a.avg - b.avg);
       if (this.sortBy === 'rating-desc') return b.avg - a.avg;
       if (this.sortBy === 'rating-asc') return a.avg - b.avg;
       if (this.sortBy === 'volume-desc') return b.count - a.count;
@@ -1371,7 +1403,11 @@ const SelectRegionView = {
           };
         }
 
+        // Quejas sin respuesta de los últimos 30 días por región (mes actual + anterior), las graves primero
+        const recent = Metrics.unrepliedComplaints(currReviews.concat(prevReviews)).filter(r => Briefing.ageDays(r) <= Briefing.WINDOW_DAYS);
+        for (const id of Object.keys(regionStats)) regionStats[id].unreplied = recent.filter(r => r.region === id).length;
         this._cachedRegionStats = regionStats;
+        this._renderBriefing(currReviews, regionStats, recent);
 
         const rankedPrev = Object.values(prevRegionStats)
           .filter(s => s.count > 0)
