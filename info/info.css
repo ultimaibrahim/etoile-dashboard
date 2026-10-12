@@ -1,0 +1,47 @@
+/* Páginas públicas de Étoile (info/): presentación, privacidad y condiciones. Mismo sistema que la app: verde, oro, crema. */
+@font-face { font-family: 'Giaza'; src: url('../fonts/Giaza-Font/Giaza Font/Giaza.otf') format('opentype'); font-display: swap; }
+:root {
+  --bg: #F5EFE6; --surface: #FFFCF7; --ink: #1E2521; --mute: #5C665F; --line: #E0D6C4; --green: #3D5A47; --gold: #8A6A18; --hero: #2F4A3A; --hero-ink: #F5EFE6;
+  --serif: 'Playfair Display', Georgia, serif; --sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root { --bg: #121715; --surface: #1B221F; --ink: #ECE6D9; --mute: #A3AEA6; --line: #2B3530; --green: #8DBF9F; --gold: #E5B842; --hero: #1B2A22; color-scheme: dark; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(--sans); }
+a { color: var(--green); text-underline-offset: 3px; }
+a:focus-visible, .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
+.top { background: var(--hero); color: var(--hero-ink); }
+.top .in { max-width: 1040px; margin: 0 auto; padding: 14px clamp(16px, 4vw, 32px); display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.logo { font-family: 'Giaza', var(--serif); font-size: 26px; color: var(--hero-ink); text-decoration: none; margin-right: auto; }
+.top nav { display: flex; gap: 20px; font-size: 14px; flex-wrap: wrap; }
+.top nav a { color: var(--hero-ink); opacity: .8; text-decoration: none; }
+.top nav a:hover, .top nav a[aria-current] { opacity: 1; text-decoration: underline; }
+.hero { background: var(--hero); color: var(--hero-ink); }
+.hero .in { max-width: 1040px; margin: 0 auto; padding: clamp(36px, 8vw, 84px) clamp(16px, 4vw, 32px); display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 36px; align-items: end; }
+.kicker { font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; opacity: .7; }
+.hero h1 { font-family: var(--serif); font-size: clamp(34px, 6vw, 58px); line-height: 1.06; margin: 10px 0 18px; text-wrap: balance; }
+.hero p { margin: 0 0 24px; max-width: 52ch; opacity: .88; }
+.btn { display: inline-block; background: var(--hero-ink); color: #1E2521; font-weight: 700; padding: 12px 22px; border-radius: 10px; text-decoration: none; transition: transform .15s; }
+.btn:hover { transform: translateY(-1px); } .btn:active { transform: scale(.97); }
+.facts { display: grid; gap: 0; border: 1px solid rgba(245,239,230,.25); border-radius: 12px; overflow: hidden; }
+.facts div { padding: 14px 18px; display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid rgba(245,239,230,.18); font-size: 14px; }
+.facts div:first-child { border-top: 0; } .facts b { font-variant-numeric: tabular-nums; }
+main { max-width: 1040px; margin: 0 auto; padding: clamp(28px, 6vw, 56px) clamp(16px, 4vw, 32px) 64px; display: flex; flex-direction: column; gap: clamp(30px, 6vw, 52px); }
+h2 { font-family: var(--serif); font-size: clamp(24px, 3.4vw, 32px); margin: 0 0 14px; text-wrap: balance; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 22px 40px; }
+.cols h3 { font-size: 15px; margin: 0 0 6px; }
+.cols p { margin: 0; color: var(--mute); font-size: 15px; }
+.roles { border-top: 1px solid var(--line); }
+.roles div { display: grid; grid-template-columns: 170px 1fr; gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.roles b { font-size: 14px; } .roles span { color: var(--mute); font-size: 15px; }
+.legal { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: clamp(18px, 3vw, 28px); }
+.legal p { margin: 0 0 12px; } .legal p:last-child { margin: 0; }
+.prose { max-width: 720px; }
+.prose h1 { font-family: var(--serif); font-size: clamp(30px, 5vw, 44px); line-height: 1.1; margin: 0 0 6px; }
+.prose h2 { font-size: 21px; margin: 30px 0 8px; }
+.prose p, .prose li { margin: 0 0 12px; } .prose ul { padding-left: 20px; }
+.meta { color: var(--mute); font-size: 14px; margin: 0 0 20px; }
+footer { border-top: 1px solid var(--line); }
+footer .in { max-width: 1040px; margin: 0 auto; padding: 22px clamp(16px, 4vw, 32px); display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 14px; color: var(--mute); }
+footer .logo { color: var(--ink); font-size: 20px; margin-right: auto; }
+@media (max-width: 760px) { .hero .in { grid-template-columns: 1fr; } .roles div { grid-template-columns: 1fr; gap: 2px; } }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
