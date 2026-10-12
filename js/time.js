@@ -62,6 +62,27 @@ const BranchTime = {
     return res;
   },
 
+  /**
+   * Corte de mes: SIEMPRE en hora de CDMX (decisión de Ibrahim, 2026-10-12), para todas las regiones. Así una reseña de
+   * la cena del último día no salta al mes siguiente y todas las vistas cortan igual. Zona IANA (no un -06:00 fijo)
+   * para que el historial anterior a 2022 (con horario de verano) también cuadre.
+   */
+  MONTH_TZ: 'America/Mexico_City',
+  /** Instante UTC (ISO) en que empieza el mes `month` (1-12) de `year` a medianoche de CDMX */
+  monthStartIso(year, month) {
+    const guess = Date.UTC(year, month - 1, 1);
+    const p = this.parts(new Date(guess).toISOString(), this.MONTH_TZ);
+    const asLocal = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute);
+    let start = guess - (asLocal - guess);
+    const q = this.parts(new Date(start).toISOString(), this.MONTH_TZ);   // por si el desfase cambió entre el cálculo y el instante real
+    start -= Date.UTC(q.year, q.month - 1, q.day, q.hour, q.minute) - Date.UTC(year, month - 1, 1);
+    return new Date(start).toISOString();
+  },
+  /** { y, m } del mes (hora de CDMX) al que pertenece un instante */
+  monthOf(iso) { const p = this.parts(iso, this.MONTH_TZ); return p ? { y: p.year, m: p.month } : null; },
+  /** { y, m } del mes en curso (hora de CDMX) */
+  nowMonth() { return this.monthOf(new Date().toISOString()); },
+
   /** Partes en la zona horaria de la reseña (o del id de sucursal/región que se pase) */
   partsFor(iso, x) { return this.parts(iso, this.tzFor(x)); },
 

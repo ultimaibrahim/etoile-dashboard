@@ -451,7 +451,7 @@ const DashboardsView = {
           }
         }
         const color = darkMode ? '#7A9E8A' : '#3D5A47';
-        const nowUtc = new Date();
+        const nowUtc = (() => { const n = BranchTime.nowMonth(); return { getUTCFullYear: () => n.y, getUTCMonth: () => n.m - 1 }; })();   // mes en curso en hora de CDMX
         const lastIsCurrentMonth = currYear === nowUtc.getUTCFullYear() && sortedMonths[sortedMonths.length - 1] === nowUtc.getUTCMonth() + 1;
         story('storyTrend', Narrative.ratingTrend(trendLabels, trendData, KpiMeta.ratingMinimo, lastIsCurrentMonth));
         EtoileCharts.lineTrend(ctxTrend, trendLabels, trendData, 'Promedio Regional', color, i => DashboardsView.selectMonthOption(sortedMonths[i]));
@@ -615,7 +615,7 @@ const DashboardsView = {
   _matrixStory(metric) {
     const mx = this._matrix;
     if (!mx) return '';
-    const now = new Date();
+    const now = (() => { const n = BranchTime.nowMonth(); return { getUTCFullYear: () => n.y, getUTCMonth: () => n.m - 1 }; })();   // hora de CDMX
     const lastIsCurrent = mx.months.length && mx.months[mx.months.length - 1].y === now.getUTCFullYear() && mx.months[mx.months.length - 1].m === now.getUTCMonth() + 1;
     return metric === 'rating' ? Narrative.matrix(mx, EC.metaRating(), lastIsCurrent) : Narrative.matrixVolume(mx);
   },

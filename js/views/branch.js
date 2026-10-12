@@ -281,7 +281,7 @@ const BranchView = {
       ratingTrendData.push(statsM.count > 0 ? statsM.avg : null);
       volumeTrendData.push(statsM.count);
     }
-    const nowUtcT = new Date();
+    const nowUtcT = (() => { const n = BranchTime.nowMonth(); return { getUTCFullYear: () => n.y, getUTCMonth: () => n.m - 1 }; })();   // mes en curso en hora de CDMX
     const lastIsCurrentMonth = activeYear === nowUtcT.getUTCFullYear() && sortedMonths[sortedMonths.length - 1] === nowUtcT.getUTCMonth() + 1;
     const ratingStory = Narrative.ratingTrend(trendLabels, ratingTrendData, KpiMeta.ratingMinimo, lastIsCurrentMonth);
     const volumeStory = Narrative.volumeTrend(trendLabels, volumeTrendData, lastIsCurrentMonth);
@@ -312,7 +312,7 @@ const BranchView = {
     const userName = (typeof AppAuth !== 'undefined' && AppAuth.profile?.nombre) || 'Usuario';
     const userRole = (typeof AppAuth !== 'undefined' && AppAuth.getUserRole()) || 'gerente';
     // Atención inmediata: críticas recientes de esta sucursal (independiente del mes elegido)
-    const nowUtc = new Date();
+    const nowUtc = (() => { const n = BranchTime.nowMonth(); return { getUTCFullYear: () => n.y, getUTCMonth: () => n.m - 1 }; })();   // mes en curso en hora de CDMX
     const recentCritical = Severity.criticalIn(
       Patterns.collect(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth() + 1, 2, r => isSameBranch(r.sucursal, meta.id)), Severity.RECENT_DAYS);
     const attentionHtml = AttentionCard.html(Incidents.unresolved(recentCritical), { key: 'branch', scope: meta.nombre, incidentFilter: i => i.location_id === meta.id });

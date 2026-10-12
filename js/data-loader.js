@@ -255,10 +255,10 @@ const DataLoader = {
   async _fetchMonthFromSupabase(year, month, key, storageKey) {
     if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
-        const startIso = `${year}-${String(month).padStart(2, '0')}-01T00:00:00.000Z`;
+        const startIso = BranchTime.monthStartIso(year, month);
         const nextM = month === 12 ? 1 : month + 1;
         const nextY = month === 12 ? year + 1 : year;
-        const endIso = `${nextY}-${String(nextM).padStart(2, '0')}-01T00:00:00.000Z`;
+        const endIso = BranchTime.monthStartIso(nextY, nextM);
 
         let allData = [];
         let page = 0;
@@ -354,10 +354,10 @@ const DataLoader = {
 
     if (typeof supabaseClient !== 'undefined' && supabaseClient !== null) {
       try {
-        const startIso = `${year}-${String(month).padStart(2, '0')}-01T00:00:00.000Z`;
+        const startIso = BranchTime.monthStartIso(year, month);
         const nextM = month === 12 ? 1 : month + 1;
         const nextY = month === 12 ? year + 1 : year;
-        const endIso = `${nextY}-${String(nextM).padStart(2, '0')}-01T00:00:00.000Z`;
+        const endIso = BranchTime.monthStartIso(nextY, nextM);
 
         let allData = [];
         let page = 0;
@@ -561,8 +561,9 @@ const DataLoader = {
           }
 
           const date = new Date(r.published_at_date);
-          const y = String(date.getUTCFullYear());
-          const m = date.getUTCMonth() + 1;
+          const mo = BranchTime.monthOf(r.published_at_date) || { y: date.getUTCFullYear(), m: date.getUTCMonth() + 1 };
+          const y = String(mo.y);
+          const m = mo.m;
           const mStr = String(m).padStart(2, '0');
           const key = `${y}-${mStr}`;
 

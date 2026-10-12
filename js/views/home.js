@@ -286,7 +286,7 @@ const HomeView = {
       : `<span class="hero-stat-sub">Meta: 4.5+ estrellas</span>`;
 
     // Atención inmediata: reseñas críticas de los últimos días en la región (independiente del mes que se esté viendo)
-    const nowUtc = new Date();
+    const nowUtc = (() => { const n = BranchTime.nowMonth(); return { getUTCFullYear: () => n.y, getUTCMonth: () => n.m - 1 }; })();   // mes en curso en hora de CDMX
     const recentCritical = Severity.criticalIn(Patterns.collect(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth() + 1, 2), Severity.RECENT_DAYS);
     const attentionHtml = AttentionCard.html(Incidents.unresolved(recentCritical), {
       key: 'home', scope: getRegionName(activeRegion),

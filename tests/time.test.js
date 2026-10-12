@@ -38,5 +38,12 @@ t("etiqueta 'time' = '21:00'", rw({ publishedAtDate: iso, sucursal: 'andares' },
 t('medianoche local es 00:00 (no 24:00)', BT.partsFor('2026-10-10T06:00:00Z', 'andares').hour === 0 && rw({ publishedAtDate: '2026-10-10T06:05:00Z', sucursal: 'andares' }, 'time') === '00:05');
 t('sin fecha → texto de respaldo; fecha inválida → vacío', rw({}, 'short') === 'Reciente' && rw({}, 'long') === 'Sin fecha' && BT.label('basura', 'andares') === '');
 
+// corte de mes en hora de CDMX
+t('corte de mes: octubre 2026 empieza a las 06:00 UTC (CDMX UTC-6)', BT.monthStartIso(2026, 10) === '2026-10-01T06:00:00.000Z', BT.monthStartIso(2026, 10));
+t('corte de mes: mayo 2020 con horario de verano empieza a las 05:00 UTC', BT.monthStartIso(2020, 5) === '2020-05-01T05:00:00.000Z', BT.monthStartIso(2020, 5));
+t('corte de mes: la cena del 31 pertenece a octubre aunque en UTC ya sea noviembre', JSON.stringify(BT.monthOf('2026-11-01T05:30:00Z')) === '{"y":2026,"m":10}');
+t('corte de mes: el 1 a las 00:10 de CDMX ya es noviembre', JSON.stringify(BT.monthOf('2026-11-01T06:10:00Z')) === '{"y":2026,"m":11}');
+t('corte de mes: diciembre → enero cruza de año', BT.monthStartIso(2027, 1) === '2027-01-01T06:00:00.000Z');
+
 console.log(`\n${fail === 0 ? '✅ TODAS LAS PRUEBAS PASARON' : '❌ HAY FALLAS'} — ${pass} ok, ${fail} fallas`);
 process.exit(fail === 0 ? 0 : 1);

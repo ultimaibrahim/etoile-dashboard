@@ -6,6 +6,7 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 ---
 
 ## Versión 2.0.0 beta 7a Eltanin — Correcciones (Octubre 2026) [PREVIEW]
+* 🕐 **Cada mes empieza y termina en hora de Ciudad de México**: las reseñas de la cena del último día ya no se cuentan en el mes siguiente.
 * 🔒 **Seguridad**: se reforzó cómo se muestran los textos de las reseñas para que ninguna reseña pueda ejecutar código dentro de la página.
 * 🐛 El resumen trimestral marcaba el trimestre en curso equivocado; las sucursales sin reseñas ya no muestran una comparación inventada; Comparar ya no permite elegir la misma sucursal dos veces.
 
