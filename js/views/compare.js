@@ -62,6 +62,7 @@ const CompareView = {
       metaA = metaA || (regional[0] ? regional[0].b : branches[0]);
       metaB = metaB || (regional.length > 1 ? regional[regional.length - 1].b : (branches.find(b => b.id !== metaA.id) || branches[0]));
     }
+    if (metaA.id === metaB.id) metaB = branches.find(b => b.id !== metaA.id) || metaB;   // comparar una sucursal consigo misma no dice nada
     this.branchA = metaA.id; this.branchB = metaB.id;
 
     const sA = this._stats(metaA, allReviews), sB = this._stats(metaB, allReviews);

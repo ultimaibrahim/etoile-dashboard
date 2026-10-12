@@ -147,6 +147,16 @@ assert(!patternsJs.includes("label: 'Merienda'") && !branchJs.includes("label: '
 assert(patternsJs.includes("label: 'Desayuno'") && patternsJs.includes("label: 'Comida'") && patternsJs.includes("label: 'Cena'"), 'patterns.js define exactamente los 3 turnos (Desayuno, Comida, Cena)');
 assert(!branchJs.includes('_buildShiftHeatmap'), 'la ficha de sucursal ya no incluye el heatmap de turnos (retirado en beta.6)');
 
+// Texto de reseñas (contenido de terceros) nunca se interpola en HTML sin escapar
+for (const rel of ['js/views/quarter.js', 'js/views/home.js', 'js/views/branch.js', 'js/views/dashboards.js', 'js/views/brand.js', 'js/components/review-card.js', 'js/components/attention-card.js']) {
+  const src = fs.readFileSync(path.join(rootDir, rel), 'utf8');
+  // se ignoran las líneas que arman texto plano (portapapeles, textContent), que no son HTML
+  const raw = src.split('\n').filter(l => !/textContent|^\s*text \+=|navigator\.clipboard/.test(l))
+    .flatMap(l => [...l.matchAll(/\$\{\s*\(?(?:rev|r|review|mBest|mWorst)\.text\b[^}]*\}/g)].map(m => m[0]))
+    .filter(x => !/escapeHtml|\.trim\(\)|\.length|toLowerCase|\.match|\.test|\.replace/.test(x));
+  assert(raw.length === 0, `${rel}: texto de reseña sin escapar en plantillas`);
+}
+
 const compareJs = fs.readFileSync(path.join(rootDir, 'js/views/compare.js'), 'utf8');
 assert(compareJs.includes('withText = rv.filter(r => r.text && r.text.trim())') && compareJs.includes('neg = withText.filter'), 'compare.js calcula las quejas solo sobre reseñas con texto (Regla LCP #11)');
 

@@ -5,6 +5,10 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 
 ---
 
+## Versión 2.0.0 beta 7a Eltanin — Correcciones (Octubre 2026) [PREVIEW]
+* 🔒 **Seguridad**: se reforzó cómo se muestran los textos de las reseñas para que ninguna reseña pueda ejecutar código dentro de la página.
+* 🐛 El resumen trimestral marcaba el trimestre en curso equivocado; las sucursales sin reseñas ya no muestran una comparación inventada; Comparar ya no permite elegir la misma sucursal dos veces.
+
 ## Versión 2.0.0 beta 7 Eltanin — Qué atender, inicio interactivo y Comparar renovado (Octubre 2026) [PREVIEW]
 * ✅ **"Qué atender"** reemplaza a las alertas escondidas: una lista corta, siempre visible y ordenada por urgencia; un toque lleva a la sucursal.
 * 👆 **El inicio responde al tacto**: toca la calificación para ver cuántas reseñas hay de cada estrella; toca Reseñas, Sucursales o Negativas para ver el detalle; y en computadora, al mover el cursor por la portada, la calificación recorre los meses del año.

@@ -163,8 +163,9 @@ const HomeView = {
     const avgRating = currGlobal.avgRating;
     const cards = sorted.map(s => {
       const delta = (s.curr.score - s.historico);
-      const dClass = delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : 'flat';
-      const dStr = delta > 0 ? `+${delta.toFixed(2)}` : delta.toFixed(2);
+      const noData = !(s.curr.count > 0);   // sin reseñas en el mes no hay con qué comparar: un delta contra nada es ficción
+      const dClass = noData ? 'flat' : delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : 'flat';
+      const dStr = noData ? 'sin reseñas' : delta > 0 ? `+${delta.toFixed(2)}` : delta.toFixed(2);
       const currScoreStr = s.curr.score > 0 ? s.curr.score.toFixed(2) : '—';
       const mayoBlock = s.hasAlert
         ? `<div class="bc-mayo warn"><span class="mono">${currMonthShort}</span> <span>${s.curr.negativeCount} negativa${s.curr.negativeCount !== 1 ? 's' : ''}</span></div>`
@@ -206,7 +207,7 @@ const HomeView = {
         </div>
         <div class="bc-meta">
           <span><strong>${s.curr.count}</strong> reseña${s.curr.count !== 1 ? 's' : ''} ${capitalizedCurrMonth.substring(0,3).toLowerCase()}</span>
-          <span class="bc-delta ${dClass} num">${dStr} vs hist</span>
+          <span class="bc-delta ${dClass} num">${noData ? dStr : dStr + ' vs hist'}</span>
         </div>
         ${cardMayoBlock}
       </a>`;
@@ -1282,7 +1283,7 @@ const HomeView = {
           </div>
           <div class="highlight-title" style="font-weight:700; font-size:14px; color:var(--sage); text-transform:uppercase; letter-spacing:.06em; margin-bottom:0;">Lo más destacado</div>
         </div>
-        <div style="font-size: 15px; line-height: 1.5; font-style:italic; margin-bottom: 12px; position: relative; z-index: 1; flex-grow:1;" data-rev-text>"${rev.text}"</div>
+        <div style="font-size: 15px; line-height: 1.5; font-style:italic; margin-bottom: 12px; position: relative; z-index: 1; flex-grow:1;" data-rev-text>"${escapeHtml(rev.text)}"</div>
         <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; margin-top: auto; padding-top:12px; border-top: 1px solid var(--border);">
           <span style="font-size: 13px; font-weight: 500; color: var(--text-muted); display:flex; align-items:center; gap:6px;"><span style="display:inline-block;width:12px;height:1px;background:var(--border);"></span>${branchDisplayName}</span>
           <div style="display:flex;align-items:center;gap:10px;">

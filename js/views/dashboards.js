@@ -522,7 +522,7 @@ const DashboardsView = {
   },
 
   _buildQuarterAccordion(quarterData, currYear) {
-    const currentQuarter = Math.ceil(new Date().getMonth() / 3) || 1;
+    const currentQuarter = Math.floor(new Date().getMonth() / 3) + 1;
     const cardsHtml = quarterData.map((qd, index) => {
       const isActive = index === 0 ? ' active' : ''; // Q1 activo por defecto
       const avgStr = qd.totalReviews > 0 ? qd.avgRating.toFixed(2) : '—';
