@@ -197,7 +197,7 @@ const DataLoader = {
           const branchRevs = monthData.reviews.filter(r => typeof isSameBranch === 'function' ? isSameBranch(r.sucursal, s.id) : r.sucursal === s.id);
           totalStars += branchRevs.reduce((sum, r) => sum + r.stars, 0);
           totalCount += branchRevs.length;
-          totalNeg += branchRevs.filter(r => r.stars <= 2).length;
+          totalNeg += branchRevs.filter(r => Metrics.isComplaint(r)).length;
         }
       }
 
@@ -471,7 +471,7 @@ const DataLoader = {
     }
     const count = reviews.length;
     const avg = reviews.reduce((a, r) => a + r.stars, 0) / count;
-    const negativeCount = reviews.filter(r => r.stars <= 2).length;
+    const negativeCount = reviews.filter(r => Metrics.isComplaint(r)).length;
     const guideCount = reviews.filter(r => r.isLocalGuide).length;
     return { count, avg, negativeCount, guideCount };
   },

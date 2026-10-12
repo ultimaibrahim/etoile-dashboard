@@ -912,8 +912,8 @@ function showConcludedMonthModal(year, month) {
   // Contador de quejas desatendidas
   const data = DataLoader.getMonth(year, month);
   const reviews = data ? data.reviews : [];
-  const unrepliedCount = reviews.filter(r => r.stars <= 2 && (!r.responseFromOwnerText || r.responseFromOwnerText.trim() === '')).length;
-  const totalNegatives = reviews.filter(r => r.stars <= 2).length;
+  const unrepliedCount = reviews.filter(r => Metrics.isComplaint(r) && (!r.responseFromOwnerText || r.responseFromOwnerText.trim() === '')).length;
+  const totalNegatives = reviews.filter(r => Metrics.isComplaint(r)).length;
 
   // Comparativas de KPIs
   const scoreDiff = currGlobal.avgRating - prevGlobal.avgRating;

@@ -96,7 +96,7 @@ const DashboardsView = {
 
       // Count unreplied negative reviews in current month
       const bReviews = DataLoader.getReviewsForBranch(currYear, currMonth, b.id);
-      const unrepliedCount = bReviews.filter(r => r.stars <= 2 && (!r.responseFromOwnerText || r.responseFromOwnerText.trim() === '')).length;
+      const unrepliedCount = bReviews.filter(r => Metrics.isComplaint(r) && (!r.responseFromOwnerText || r.responseFromOwnerText.trim() === '')).length;
 
       // 1. Rating Drop: currScore < ytdAvg - 0.20
       if (currCount > 0 && ytdAvg > 0 && currScore < ytdAvg - 0.20) {
@@ -368,7 +368,7 @@ const DashboardsView = {
 
         sortedVol.forEach(s => {
           const bReviews = DataLoader.getReviewsForBranch(currYear, currMonth, s.id);
-          const negatives = bReviews.filter(r => r.stars <= 2).length;
+          const negatives = bReviews.filter(r => Metrics.isComplaint(r)).length;
           const neutrals = bReviews.filter(r => r.stars === 3).length;
           const positives = bReviews.filter(r => r.stars >= 4).length;
 

@@ -157,6 +157,13 @@ for (const rel of ['js/views/quarter.js', 'js/views/home.js', 'js/views/branch.j
   assert(raw.length === 0, `${rel}: texto de reseña sin escapar en plantillas`);
 }
 
+// Una sola definición de queja: ninguna vista cuenta ≤2★ por su cuenta (usa Metrics.isComplaint)
+for (const rel of fs.readdirSync(path.join(rootDir, 'js/views')).map(f => 'js/views/' + f).concat(['js/kpis.js', 'js/utils.js', 'js/data-loader.js'])) {
+  const src = fs.readFileSync(path.join(rootDir, rel), 'utf8');
+  const raw = src.split('\n').filter(l => /\.stars\s*<=\s*2\b/.test(l) && !/withText|text &&|\.text/.test(l));
+  assert(raw.length === 0, `${rel}: cuenta quejas con stars <= 2 en vez de Metrics.isComplaint`);
+}
+
 const compareJs = fs.readFileSync(path.join(rootDir, 'js/views/compare.js'), 'utf8');
 assert(compareJs.includes('withText = rv.filter(r => r.text && r.text.trim())') && compareJs.includes('neg = withText.filter'), 'compare.js calcula las quejas solo sobre reseñas con texto (Regla LCP #11)');
 

@@ -80,7 +80,7 @@ const Kpis = {
     const belowMin = ratings.filter(r => r.avg > 0 && r.avg < KpiMeta.ratingMinimo);
 
     // Negativas
-    const negativasReviews = reviews.filter(r => r.stars <= 2);
+    const negativasReviews = reviews.filter(r => Metrics.isComplaint(r));
     const totalNegativas = negativasReviews.length;
 
     // Tasa de respuesta

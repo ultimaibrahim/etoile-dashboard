@@ -68,8 +68,8 @@ const BrandView = {
       ? `${ratingDelta >= 0 ? '↑' : '↓'} ${Math.abs(ratingDelta).toFixed(2)} vs mes ant.`
       : 'Sin datos comp.';
 
-    const activeAlerts = brandReviews.filter(r => r.stars <= 2).length;
-    const prevActiveAlerts = prevBrandReviews.filter(r => r.stars <= 2).length;
+    const activeAlerts = brandReviews.filter(r => Metrics.isComplaint(r)).length;
+    const prevActiveAlerts = prevBrandReviews.filter(r => Metrics.isComplaint(r)).length;
     const alertsDelta = activeAlerts - prevActiveAlerts;
     const alertsDeltaStr = alertsDelta !== 0
       ? `${alertsDelta > 0 ? '+' : ''}${alertsDelta} vs mes ant.`
@@ -89,7 +89,7 @@ const BrandView = {
       const prevAvg = prevCount ? prevRegionReviews.reduce((sum, r) => sum + r.stars, 0) / prevCount : 0;
       const delta = avg - prevAvg;
 
-      const alerts = regionReviews.filter(r => r.stars <= 2).length;
+      const alerts = regionReviews.filter(r => Metrics.isComplaint(r)).length;
 
       // Aplicar factor de complejidad operativa
       const branchCount = regionBranches.length;
@@ -122,7 +122,7 @@ const BrandView = {
       const bReviews = brandReviews.filter(r => r.sucursal === s.id);
       const count = bReviews.length;
       const avg = count ? bReviews.reduce((sum, r) => sum + r.stars, 0) / count : 0;
-      const alerts = bReviews.filter(r => r.stars <= 2).length;
+      const alerts = bReviews.filter(r => Metrics.isComplaint(r)).length;
 
       if (count > 0) {
         const score = avg + 0.15 * Math.log2(count);
@@ -147,7 +147,7 @@ const BrandView = {
 
     // ── 5. CÁLCULO DE ALERTAS OPERATIVAS Y DÉFICITS ──
     const criticalBranchesCount = branchStats.filter(b => b.avg < THRESHOLDS.CRITICO && b.alerts > 0).length;
-    const unansweredCriticalNegatives = brandReviews.filter(r => r.stars <= 2 && (!r.responseText || r.responseText.trim() === '')).length;
+    const unansweredCriticalNegatives = brandReviews.filter(r => Metrics.isComplaint(r) && (!r.responseText || r.responseText.trim() === '')).length;
     const monthName = MONTH_NAMES[month - 1];
     const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
@@ -385,7 +385,7 @@ const BrandView = {
       const qualityRegex = /sabor|fr[ií]o|sucio|malo|crudo|calidad|ingrediente|pelo/i;
       const valueRegex = /caro|precio|porci[oó]n|costo|tama[ño]|car[ií]simo|cantidad/i;
 
-      const negativeReviews = brandReviews.filter(r => r.stars <= 2);
+      const negativeReviews = brandReviews.filter(r => Metrics.isComplaint(r));
       negativeReviews.forEach(r => {
         if (r.classification && typeof r.classification.es_queja === 'boolean') {
           if (r.classification.es_queja) {
@@ -404,7 +404,7 @@ const BrandView = {
         }
       });
 
-      const unrepliedList = brandReviews.filter(r => r.stars <= 2 && (!r.responseText || r.responseText.trim() === ''));
+      const unrepliedList = brandReviews.filter(r => Metrics.isComplaint(r) && (!r.responseText || r.responseText.trim() === ''));
       const unrepliedListHtml = unrepliedList.length ? ReviewCard.list(unrepliedList, { onclick: r => `BrandView.openBranchSummaryModal('${r.sucursal}')` }) : '<p class="drawer-empty">100% de quejas respondidas. ¡Buen trabajo de operación!</p>';
 
       tabContentHtml = `
@@ -562,7 +562,7 @@ const BrandView = {
     const month = DataLoader.currentMonth;
     const brandReviews = await DataLoader.loadBrandData(year, month);
     
-    let alertReviews = brandReviews.filter(r => r.stars <= 2);
+    let alertReviews = brandReviews.filter(r => Metrics.isComplaint(r));
     
     if (onlyUnreplied) {
       alertReviews = alertReviews.filter(r => !r.responseText || r.responseText.trim() === '');
@@ -591,7 +591,7 @@ const BrandView = {
 
     let filtered = [...this.activeModalReviews];
     if (tab === 'alerts') {
-      filtered = filtered.filter(r => r.stars <= 2);
+      filtered = filtered.filter(r => Metrics.isComplaint(r));
     } else if (tab === 'positives') {
       filtered = filtered.filter(r => r.stars >= 4);
     }
@@ -612,7 +612,7 @@ const BrandView = {
           
           <div class="brand-modal-tabs">
             <button class="brand-tab-btn ${tab === 'all' ? 'active' : ''}" onclick="BrandView.renderModal('all')">Todas (${this.activeModalReviews.length})</button>
-            <button class="brand-tab-btn ${tab === 'alerts' ? 'active' : ''}" onclick="BrandView.renderModal('alerts')">Quejas 1-2★ (${this.activeModalReviews.filter(r => r.stars <= 2).length})</button>
+            <button class="brand-tab-btn ${tab === 'alerts' ? 'active' : ''}" onclick="BrandView.renderModal('alerts')">Quejas 1-2★ (${this.activeModalReviews.filter(r => Metrics.isComplaint(r)).length})</button>
             <button class="brand-tab-btn ${tab === 'positives' ? 'active' : ''}" onclick="BrandView.renderModal('positives')">Positivas 4-5★ (${this.activeModalReviews.filter(r => r.stars >= 4).length})</button>
           </div>
 
@@ -658,8 +658,8 @@ const BrandView = {
       const bReviews = brandReviews.filter(r => r.sucursal === s.id);
       const count = bReviews.length;
       const avg = count ? bReviews.reduce((sum, r) => sum + r.stars, 0) / count : 0;
-      const alerts = bReviews.filter(r => r.stars <= 2).length;
-      const unreplied = bReviews.filter(r => r.stars <= 2 && (!r.responseText || r.responseText.trim() === '')).length;
+      const alerts = bReviews.filter(r => Metrics.isComplaint(r)).length;
+      const unreplied = bReviews.filter(r => Metrics.isComplaint(r) && (!r.responseText || r.responseText.trim() === '')).length;
 
       if (count > 0) {
         if (avg < THRESHOLDS.CRITICO && alerts > 0) {
@@ -763,7 +763,7 @@ const BrandView = {
     const branchReviews = brandReviews.filter(r => r.sucursal === branchId);
     const count = branchReviews.length;
     const avg = count ? branchReviews.reduce((sum, r) => sum + r.stars, 0) / count : 0;
-    const alerts = branchReviews.filter(r => r.stars <= 2);
+    const alerts = branchReviews.filter(r => Metrics.isComplaint(r));
     const unreplied = alerts.filter(r => !r.responseText || r.responseText.trim() === '').length;
 
     let reasons = [];
@@ -915,7 +915,7 @@ const BrandView = {
     const avg = count ? branchReviews.reduce((sum, r) => sum + r.stars, 0) / count : 0;
     
     // Categorize negative reviews (1-2 stars)
-    const negatives = branchReviews.filter(r => r.stars <= 2);
+    const negatives = branchReviews.filter(r => Metrics.isComplaint(r));
     const alertsCount = negatives.length;
     
     let serviceCount = 0;

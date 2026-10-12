@@ -13,6 +13,6 @@
   },
   "scripts": {
     "build:echarts": "node scripts/build-echarts.js",
-    "test": "node tests/qa-audit.js && node tests/gbp-sync.test.js && node tests/time.test.js && node tests/patterns.test.js && node tests/severity.test.js && node tests/narrative.test.js && node tests/incidents.test.js"
+    "test": "node tests/qa-audit.js && node tests/gbp-sync.test.js && node tests/time.test.js && node tests/metrics.test.js && node tests/patterns.test.js && node tests/severity.test.js && node tests/narrative.test.js && node tests/incidents.test.js"
   }
 }

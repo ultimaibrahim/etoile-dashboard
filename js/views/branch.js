@@ -317,7 +317,7 @@ const BranchView = {
       Patterns.collect(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth() + 1, 2, r => isSameBranch(r.sucursal, meta.id)), Severity.RECENT_DAYS);
     const attentionHtml = AttentionCard.html(Incidents.unresolved(recentCritical), { key: 'branch', scope: meta.nombre, incidentFilter: i => i.location_id === meta.id });
 
-    const pendingCritical = reviews.filter(r => r.stars <= 2 && (!r.responseFromOwnerText || r.responseFromOwnerText.trim() === '')).length;
+    const pendingCritical = reviews.filter(r => Metrics.isComplaint(r) && (!r.responseFromOwnerText || r.responseFromOwnerText.trim() === '')).length;
 
     let welcomeBannerHtml = '';
     if (userRole === 'gerente') {
@@ -533,7 +533,7 @@ const BranchView = {
             </div>
             <div class="filter-row" style="margin: 0;">
               <button class="chip ${(!this.feedStarFilter || this.feedStarFilter === 'all') ? 'active' : ''}" onclick="BranchView.filterBranchStars('all')">Todas (${reviews.filter(r => r.text && r.text.trim().length > 0).length})</button>
-              <button class="chip ${this.feedStarFilter === 'critical' ? 'active' : ''}" onclick="BranchView.filterBranchStars('critical')">Quejas ≤2★ (${reviews.filter(r => r.stars <= 2 && r.text && r.text.trim().length > 0).length})</button>
+              <button class="chip ${this.feedStarFilter === 'critical' ? 'active' : ''}" onclick="BranchView.filterBranchStars('critical')">Quejas ≤2★ (${reviews.filter(r => Metrics.isComplaint(r) && r.text && r.text.trim().length > 0).length})</button>
               <button class="chip ${this.feedStarFilter === '5' ? 'active' : ''}" onclick="BranchView.filterBranchStars('5')">5 ★ (${reviews.filter(r => r.stars === 5 && r.text && r.text.trim().length > 0).length})</button>
             </div>
           </div>
@@ -881,7 +881,7 @@ const BranchView = {
   _getFilteredReviews(reviews) {
     let list = reviews.filter(r => r.text && r.text.trim().length > 0);
     if (this.feedStarFilter === 'critical') {
-      list = list.filter(r => r.stars <= 2);
+      list = list.filter(r => Metrics.isComplaint(r));
     } else if (this.feedStarFilter === '5') {
       list = list.filter(r => r.stars === 5);
     }

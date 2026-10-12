@@ -69,7 +69,7 @@ const HomeView = {
       const p = prevStats[meta.id] || { avg: 0, count: 0 };
       const c = currStats[meta.id] || { avg: 0, count: 0, negativeCount: 0 };
       const branchReviews = DataLoader.getReviewsForBranch(currYear, currMonth, meta.id);
-      const negativeWithTextCount = branchReviews.filter(r => r.stars <= 2 && r.text && r.text.trim().length > 0).length;
+      const negativeWithTextCount = branchReviews.filter(r => Metrics.isComplaint(r) && r.text && r.text.trim().length > 0).length;
       const hasAlert = negativeWithTextCount > 0;
       return {
         ...meta,
@@ -126,7 +126,7 @@ const HomeView = {
 
     // Set up infinite carousel pool
     const textReviews = reviewsList.filter(r => r.text && r.text.trim().length > 5);
-    const negativesPool = textReviews.filter(r => r.stars <= 2 && r.text.length > 10);
+    const negativesPool = textReviews.filter(r => Metrics.isComplaint(r) && r.text.length > 10);
     const positivesPool = textReviews.filter(r => r.stars === 5 && r.text.length > 20);
     const restPool = textReviews.filter(r => !negativesPool.includes(r) && !positivesPool.includes(r));
     
@@ -692,7 +692,7 @@ const HomeView = {
     let branches = SUCURSALES_META.map(meta => {
       const c = currStats[meta.id] || { avg: 0, count: 0, negativeCount: 0 };
       const branchReviews = DataLoader.getReviewsForBranch(currYear, currMonth, meta.id);
-      const negativeWithTextCount = branchReviews.filter(r => r.stars <= 2 && r.text && r.text.trim().length > 0).length;
+      const negativeWithTextCount = branchReviews.filter(r => Metrics.isComplaint(r) && r.text && r.text.trim().length > 0).length;
       return { ...meta, curr: { score: c.avg, count: c.count, negativeCount: negativeWithTextCount }, alerta: negativeWithTextCount > 0 };
     });
 
@@ -1078,7 +1078,7 @@ const HomeView = {
     } else if (sentiment === 'neutras') {
       filtered = filtered.filter(r => r.stars === 3);
     } else if (sentiment === 'negativas') {
-      filtered = filtered.filter(r => r.stars <= 2);
+      filtered = filtered.filter(r => Metrics.isComplaint(r));
     }
 
     if (branchNameFilter !== 'todas') {

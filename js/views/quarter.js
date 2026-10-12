@@ -122,8 +122,9 @@ const QuarterView = {
       
       const monthData = DataLoader.getMonth(year, m);
       const mReviews = monthData ? monthData.reviews : [];
-      const mBest = mReviews.length ? mReviews.reduce((a, b) => a.stars >= b.stars ? a : b) : null;
-      const mWorst = mReviews.length ? mReviews.reduce((a, b) => a.stars <= b.stars ? a : b) : null;
+      const mTexted = mReviews.filter(r => Metrics.hasText(r));   // la cita destacada siempre es una reseña con texto
+      const mBest = mTexted.length ? mTexted.reduce((a, b) => a.stars >= b.stars ? a : b) : null;
+      const mWorst = mTexted.length ? mTexted.reduce((a, b) => a.stars <= b.stars ? a : b) : null;
 
       const bestBlock = mBest ? `
         <div class="quote-block">
@@ -131,7 +132,7 @@ const QuarterView = {
           "${escapeHtml((mBest.text || '').substring(0, 200))}${(mBest.text || '').length > 200 ? '...' : ''}"
         </div>` : '<p style="color:var(--text-muted);font-size:13px;">Sin reseñas destacadas</p>';
       
-      const worstBlock = mWorst && mWorst.stars <= 2 ? `
+      const worstBlock = mWorst && Metrics.isComplaint(mWorst) ? `
         <div class="quote-block warn">
           <div class="quote-meta">★ ${mWorst.stars} · ${escapeHtml(mWorst.sucursal)} · ${reviewWhen(mWorst, 'long')}</div>
           "${escapeHtml((mWorst.text || '').substring(0, 200))}${(mWorst.text || '').length > 200 ? '...' : ''}"
