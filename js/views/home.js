@@ -342,31 +342,32 @@ const HomeView = {
             <h1 class="hero-main-title" style="font-family:var(--serif); font-size:clamp(28px, 5vw, 42px); color:#FAF5EB; line-height:1.15; margin: 4px 0 14px 0; font-weight:normal;">
               Monitoreo Regional <span style="font-style:italic; color:var(--sage);">${getRegionName(activeRegion)}</span>
             </h1>
-            <div class="hero-score">
+            <div class="hero-score hero-link" role="button" tabindex="0" aria-label="Ver el desglose de la calificación" onclick="HomeView.openRatingDrawer()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();HomeView.openRatingDrawer();}">
               <span class="hero-score-num num" id="heroNum">${currGlobal.avgRating.toFixed(2)}</span>
               <div class="hero-score-side">
                 <span class="hero-stars">${starStr(Math.round(currGlobal.avgRating))}</span>
                 <span class="hero-of">de 5.00</span>
                 ${trendHtml}
+                <span class="hero-scrub" id="heroScrub" aria-live="polite"></span>
               </div>
             </div>
           </div>
           <div class="hero-right">
-            <div class="hero-stat">
+            <div class="hero-stat hero-link" role="button" tabindex="0" onclick="HomeView.openFullFeedModal('todas')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();HomeView.openFullFeedModal('todas');}">
               <span class="hero-stat-val num">${currGlobal.totalReviews}</span>
               <div class="hero-stat-info">
                 <span class="hero-stat-label">Reseñas ${capitalizedCurrMonth}</span>
                 ${prevVolSubHtml}
               </div>
             </div>
-            <div class="hero-stat">
+            <div class="hero-stat hero-link" role="button" tabindex="0" onclick="HomeView.openBranchesDrawer()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();HomeView.openBranchesDrawer();}">
               <span class="hero-stat-val num">${branches.length}</span>
               <div class="hero-stat-info">
                 <span class="hero-stat-label">Sucursales</span>
                 <span class="hero-stat-sub">Región ${activeRegion}</span>
               </div>
             </div>
-            <div class="hero-stat ${totalNegativasActivas > 0 ? 'warn' : ''}">
+            <div class="hero-stat hero-link ${totalNegativasActivas > 0 ? 'warn' : ''}" role="button" tabindex="0" onclick="HomeView.openFullFeedModal('negativas')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();HomeView.openFullFeedModal('negativas');}">
               <span class="hero-stat-val num">${totalNegativasActivas}</span>
               <div class="hero-stat-info">
                 <span class="hero-stat-label">Negativas Activas</span>
@@ -503,6 +504,7 @@ const HomeView = {
           }
         }
         EtoileCharts.heroTrend(heroChartEl, trendLabels, trendData);
+        HomeView._initHeroScrub(trendLabels, trendData, sortedMonths, currYear, currGlobal.avgRating);
       }
 
       // Start Carousel Autoplay
@@ -875,6 +877,52 @@ const HomeView = {
         </div>
       </section>
     `;
+  },
+
+  /** Al pasar el puntero por el hero, la calificación "viaja" por los meses del año; al salir vuelve al mes actual */
+  _initHeroScrub(labels, data, months, year, currentAvg) {
+    const hero = document.querySelector('.hero');
+    const num = document.getElementById('heroNum'), tag = document.getElementById('heroScrub');
+    if (!hero || !num || !tag || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    const left = hero.querySelector('.hero-left');
+    let last = -1;
+    const reset = () => { last = -1; num.textContent = currentAvg.toFixed(2); tag.textContent = ''; tag.classList.remove('on'); hero.classList.remove('scrubbing'); };
+    hero.addEventListener('mousemove', e => {
+      const r = left.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) { if (last !== -1) reset(); return; }
+      const i = Math.max(0, Math.min(data.length - 1, Math.round(((e.clientX - r.left) / r.width) * (data.length - 1))));
+      if (i === last || typeof data[i] !== 'number') return;
+      last = i;
+      const d = DataLoader.getMonth(year, months[i]);
+      num.textContent = data[i].toFixed(2);
+      tag.textContent = `${labels[i]} · ${d && d.reviews ? d.reviews.length : 0} reseñas`;
+      tag.classList.add('on'); hero.classList.add('scrubbing');
+    });
+    hero.addEventListener('mouseleave', reset);
+  },
+
+  /** Desglose de la calificación del mes: cuántas reseñas de cada estrella, contra la meta */
+  openRatingDrawer() {
+    const y = DataLoader.currentYear, m = DataLoader.currentMonth;
+    const revs = SUCURSALES_META.flatMap(s => DataLoader.getReviewsForBranch(y, m, s.id));
+    const counts = [0, 0, 0, 0, 0, 0];
+    revs.forEach(r => { if (r.stars >= 1 && r.stars <= 5) counts[r.stars]++; });
+    const total = revs.length, max = Math.max(1, ...counts);
+    const avg = total ? revs.reduce((s, r) => s + r.stars, 0) / total : 0;
+    const goal = EC.metaRating();
+    const bar = s => `<div class="rd-row"><span class="rd-star">${s}★</span><div class="rd-track"><i class="${s <= 2 ? 'neg' : ''}" style="width:${Math.round((100 * counts[s]) / max)}%"></i></div><span class="rd-n num">${counts[s]}</span><span class="rd-pct">${total ? Math.round((100 * counts[s]) / total) : 0}%</span></div>`;
+    const verdict = !total ? 'Aún no hay reseñas este mes.' : avg >= goal ? `La región está ${(avg - goal).toFixed(2)}★ sobre la meta de ${goal.toFixed(2)}★.` : `La región está ${(goal - avg).toFixed(2)}★ bajo la meta de ${goal.toFixed(2)}★.`;
+    Drawer.open({ id: 'ratingDrawer', title: 'Calificación regional', subtitle: `${getRegionName(activeRegion)} · ${total} reseñas`, bodyHtml: `<p class="story-line">${verdict} ${total ? `El ${Math.round((100 * (counts[1] + counts[2])) / total)}% de las reseñas son quejas (1–2★).` : ''}</p><div class="rd">${[5, 4, 3, 2, 1].map(bar).join('')}</div>` });
+  },
+
+  /** Sucursales de la región ordenadas por calificación del mes, con clic a su ficha */
+  openBranchesDrawer() {
+    const y = DataLoader.currentYear, m = DataLoader.currentMonth;
+    const rows = SUCURSALES_META.map(s => { const st = DataLoader.computeBranchStats(y, m, s.id); return { s, st }; })
+      .sort((a, b) => (b.st.count ? b.st.avg : -1) - (a.st.count ? a.st.avg : -1));
+    const goal = EC.metaRating();
+    const body = rows.map(({ s, st }) => `<button class="attend-row ${st.count && st.avg < goal ? 'attention' : ''}" onclick="Drawer.navigate('#/sucursal/${s.id}')"><span class="attend-dot" aria-hidden="true"></span><span class="attend-main"><strong>${escapeHtml(s.nombre)}</strong><span class="attend-kind">${st.count ? st.avg.toFixed(2) + '★ · ' + st.count + ' reseñas' : 'sin reseñas este mes'}</span></span><span class="attend-go" aria-hidden="true">→</span></button>`).join('');
+    Drawer.open({ id: 'branchesDrawer', title: 'Sucursales', subtitle: `${getRegionName(activeRegion)} · de mejor a peor calificación`, bodyHtml: `<div class="attend-list">${body}</div>` });
   },
 
   openFullFeedModal(initialSentiment = 'todas', onlyUnreplied = false) {

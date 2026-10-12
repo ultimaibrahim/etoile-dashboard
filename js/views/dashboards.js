@@ -165,26 +165,36 @@ const DashboardsView = {
         type: 'optimal',
         title: 'Operación Estable',
         tag: 'Estable',
-        branch: 'General GDL',
+        branch: getRegionName(activeRegion),
         icon: 'check',
         desc: 'Sin desviaciones críticas ni alertas de desempeño detectadas en las sucursales para este periodo.'
       });
     }
 
-    const activeAlertsCount = alerts.filter(a => a.tag !== 'Estable').length;
-
-    const alertsHtml = alerts.map(a => `
-      <div class="proactive-alert-card ${a.type}">
-        <div class="pac-header">
-          <div class="pac-title-wrap">
-            <span class="pac-icon">${svgIcon(a.icon)}</span>
-            <span class="pac-branch">${a.branch}</span>
-          </div>
-          <span class="pac-tag">${a.tag}</span>
+    // "Qué atender": solo lo accionable, por gravedad; los destacados (positivos) van aparte como contexto
+    const idByName = Object.fromEntries(branches.map(b => [b.nombre, b.id]));
+    const SEV = { critical: 0, attention: 1, optimal: 2 };
+    const actionable = alerts.filter(a => a.type !== 'optimal').sort((x, y) => SEV[x.type] - SEV[y.type]);
+    const leaders = alerts.filter(a => a.title === 'Líder Regional').map(a => a.branch);
+    const activeAlertsCount = actionable.length;
+    const attendRow = a => `
+      <button class="attend-row ${a.type}" onclick="${idByName[a.branch] ? `DashboardsView.goAttend('${idByName[a.branch]}')` : ''}">
+        <span class="attend-dot" aria-hidden="true"></span>
+        <span class="attend-main"><strong>${a.branch}</strong><span class="attend-kind">${a.title}</span><span class="attend-desc">${a.desc}</span></span>
+        <span class="attend-go" aria-hidden="true">→</span>
+      </button>`;
+    DashboardsView._attendRows = actionable.map(attendRow);
+    const attendHtml = `
+      <section class="section r" id="attendSection">
+        <div class="section-head">
+          <div class="section-title">Qué atender <span class="accent">${capitalizedCurrMonth}</span></div>
+          <span class="section-sub">${actionable.length ? 'Ordenado por gravedad. Clic para abrir la ficha de la sucursal.' : 'Sin desviaciones que requieran acción este mes.'}</span>
         </div>
-        <p class="pac-desc">${a.desc}</p>
-      </div>
-    `).join('');
+        ${actionable.length ? `<div class="attend-list">${DashboardsView._attendRows.slice(0, 4).join('')}</div>
+          ${actionable.length > 4 ? `<button class="show-all-btn-link" onclick="DashboardsView.openAttendAll()">Ver las ${actionable.length} →</button>` : ''}`
+          : `<p class="attend-calm">Operación estable en ${getRegionName(activeRegion)}.</p>`}
+        ${leaders.length ? `<p class="attend-lead">Destacan este mes: <strong>${leaders.join(', ')}</strong> (≥ 4.80★ con muestra suficiente).</p>` : ''}
+      </section>`;
 
     const concluded = getConcludedMonthInfo();
     let concludedBannerHtml = '';
@@ -205,7 +215,7 @@ const DashboardsView = {
     const dashTakeaways = [
       `Volumen total acumulado de <strong>${currGlobal.totalReviews} reseñas</strong> en ${capitalizedCurrMonth} ${currYear}.`,
       `Calificación regional promedio de <strong>${currGlobal.avgRating.toFixed(2)}★</strong> para ${getRegionName(activeRegion)}.`,
-      `Se detectaron <strong>${activeAlertsCount} alertas operativas activas</strong> que requieren seguimiento de gerencias.`
+      activeAlertsCount ? `<strong>${activeAlertsCount} punto${activeAlertsCount === 1 ? '' : 's'} por atender</strong>, el más urgente en ${actionable[0].branch}.` : 'Sin desviaciones que requieran acción este mes.'
     ];
 
     const dashTakeawaysHtml = `
@@ -281,6 +291,7 @@ const DashboardsView = {
       </div>
 
       ${dashTakeawaysHtml}
+      ${attendHtml}
 
       <div class="home-grid-2">
         <section class="section r">
@@ -322,26 +333,6 @@ const DashboardsView = {
         </section>
 
         ${this._buildRegionHourSection(currYear, currMonth)}
-      </div>
-
-      <div class="proactive-alerts-container">
-        <div class="proactive-alerts-toggle-container">
-          <button class="alerts-toggle-btn ${alerts.some(a => a.type === 'critical') ? 'has-critical' : ''}" data-count="${activeAlertsCount}" onclick="DashboardsView.toggleAlerts(event)">
-            <span class="toggle-icon-wrap">${svgIcon('alert')}</span>
-            <span class="toggle-text">Ver Alertas Operativas Proactivas (${activeAlertsCount})</span>
-            <span class="toggle-arrow">
-              <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </button>
-        </div>
-        <div class="proactive-alerts-wrapper" id="proactiveAlertsWrapper">
-          <h2 class="proactive-alerts-title">${svgIcon('alert')} Alertas Operativas Proactivas</h2>
-          <div class="proactive-alerts-grid">
-            ${alertsHtml}
-          </div>
-        </div>
       </div>
 
       <footer class="footer">
@@ -479,27 +470,12 @@ const DashboardsView = {
     });
   },
 
-  toggleAlerts(event) {
-    const btn = event.currentTarget;
-    const wrapper = document.getElementById('proactiveAlertsWrapper');
-    if (!btn || !wrapper) return;
+  goAttend(id) { location.hash = '#/sucursal/' + id; },
 
-    const isExpanded = btn.classList.toggle('expanded');
-    wrapper.classList.toggle('expanded');
-
-    const textEl = btn.querySelector('.toggle-text');
-    const count = btn.dataset.count || '0';
-
-    if (isExpanded) {
-      textEl.textContent = 'Ocultar Alertas Operativas Proactivas';
-    } else {
-      if (count === '0') {
-        textEl.textContent = 'Ver Estado de Operación (Estable)';
-      } else {
-        textEl.textContent = `Ver Alertas Operativas Proactivas (${count})`;
-      }
-    }
+  openAttendAll() {
+    Drawer.open({ id: 'attendAll', title: 'Qué atender', subtitle: `${(this._attendRows || []).length} puntos, por gravedad`, bodyHtml: `<div class="attend-list">${(this._attendRows || []).join('')}</div>` });
   },
+
 
   toggleMonthDropdown(event) {
     event.stopPropagation();

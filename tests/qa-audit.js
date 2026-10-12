@@ -148,7 +148,7 @@ assert(patternsJs.includes("label: 'Desayuno'") && patternsJs.includes("label: '
 assert(!branchJs.includes('_buildShiftHeatmap'), 'la ficha de sucursal ya no incluye el heatmap de turnos (retirado en beta.6)');
 
 const compareJs = fs.readFileSync(path.join(rootDir, 'js/views/compare.js'), 'utf8');
-assert(compareJs.includes('bReviews.filter(r => r.text && r.text.trim().length > 0)'), 'compare.js omite estrictamente reseñas sin texto en métricas cualitativas y quejas');
+assert(compareJs.includes('withText = rv.filter(r => r.text && r.text.trim())') && compareJs.includes('neg = withText.filter'), 'compare.js calcula las quejas solo sobre reseñas con texto (Regla LCP #11)');
 
 // 11. Verificación de Luxury DataViz & Óptica Visual
 const cssFile = fs.readFileSync(path.join(rootDir, 'css/styles.css'), 'utf8');
@@ -160,7 +160,7 @@ assert(!/border-(left|right|top)\s*:\s*[2-9]px/.test(cssFile), 'styles.css no us
 const blurOk = ['.sidebar-overlay','.bottom-sheet-overlay','.onboarding-welcome-overlay','.login-panel-overlay','.cmd-palette-backdrop','.etoile-tip-card','.offline-banner-floating'];
 const blurRules = [...cssFile.matchAll(/([^{}]+)\{[^{}]*backdrop-filter[^{}]*\}/g)].map(m => m[1].trim().split('*/').pop().trim());
 assert(blurRules.every(s => blurOk.some(k => s.includes(k))), 'backdrop-filter solo en overlays y flotantes (el desenfoque sobre tarjetas costaba la fluidez del scroll)', blurRules.filter(s => !blurOk.some(k => s.includes(k))).join(' | '));
-assert(compareJs.includes('compareRadarChart'), 'compare.js renderiza el radar de 5 dimensiones limpio');
+assert(!compareJs.includes('compareRadarChart') && compareJs.includes('compareDuel') && compareJs.includes('compareHours'), 'compare.js usa el duelo de 12 meses y las quejas por hora (el radar de índices inventados se retiró)');
 
 const selectRegionJs = fs.readFileSync(path.join(rootDir, 'js/views/select-region.js'), 'utf8');
 assert(selectRegionJs.includes('bayes-uncertainty-wrap'), 'select-region.js muestra el intervalo de credibilidad bayesiana');

@@ -1,411 +1,159 @@
 /**
- * views/compare.js — Módulo Comparador Head-to-Head de Sucursales (#/comparar)
- * Permite enfrentar dos tiendas frente a frente con estética Crystal & Squircle,
- * contrastando calificaciones, deltas porcentuales, Radar Operativo de 5 dimensiones
- * y veredicto ejecutivo automatizado.
+ * views/compare.js — Cara a cara de dos sucursales (#/comparar?a=&b=)
+ *
+ * Una pregunta por pieza: ¿quién va mejor y por cuánto? (titular por reglas), ¿en qué más se separan? (filas de
+ * contraste), ¿cómo han evolucionado en el año? (duelo de 12 meses, clic para cambiar de mes) y ¿a qué hora se quejan
+ * sus clientes? (quejas por hora, lado a lado). Todo con los datos reales: nada de índices inventados.
  */
-
 const CompareView = {
   branchA: null,
   branchB: null,
-  radarChartInstance: null,
+  COLOR_A: () => (document.documentElement.getAttribute('data-theme') === 'dark' ? '#7FB394' : '#3D5A47'),
+  COLOR_B: () => (document.documentElement.getAttribute('data-theme') === 'dark' ? '#E5B842' : '#B8902F'),
+
+  _branches() {
+    return (typeof SUCURSALES_META_ALL !== 'undefined' && Array.isArray(SUCURSALES_META_ALL))
+      ? SUCURSALES_META_ALL
+      : (typeof SUCURSALES_META !== 'undefined' && Array.isArray(SUCURSALES_META) ? SUCURSALES_META : []);
+  },
+
+  _same(r, id) { return typeof isSameBranch === 'function' ? isSameBranch(r.sucursal, id) : (r.sucursal || '').toLowerCase() === (id || '').toLowerCase(); },
+
+  /** Estadísticas del mes de una sucursal: solo cifras reales (Regla LCP #11 para las quejas) */
+  _stats(meta, allReviews) {
+    const rv = allReviews.filter(r => this._same(r, meta.id));
+    const count = rv.length;
+    const avg = count ? rv.reduce((s, r) => s + (r.stars || 0), 0) / count : 0;
+    const withText = rv.filter(r => r.text && r.text.trim());
+    const neg = withText.filter(r => r.stars <= 2);
+    const replied = rv.filter(r => r.responseFromOwnerText && r.responseFromOwnerText.trim()).length;
+    const graves = (typeof Severity !== 'undefined') ? Severity.criticalIn(rv).length : 0;
+    return {
+      nombre: meta.nombre, count, avg,
+      negCount: neg.length, negPct: withText.length ? (100 * neg.length) / withText.length : 0,
+      resp: count ? (100 * replied) / count : 0, graves
+    };
+  },
 
   async render(params = {}) {
     Charts.destroyAll();
-    this.radarChartInstance = null; // el ChartWrapper lo libera Charts.destroyAll()
-
     const app = document.getElementById('app');
     if (!app) return;
 
-    const currYear = DataLoader.currentYear;
-    const currMonth = DataLoader.currentMonth;
-    const monthData = await DataLoader.loadMonth(currYear, currMonth);
-    const allReviews = (monthData && monthData.reviews) ? monthData.reviews : [];
+    const y = DataLoader.currentYear, m = DataLoader.currentMonth;
+    // Ventana de 12 meses: se cargan los que existan para que el duelo anual tenga datos
+    const span = Patterns.monthSpan(y, m, 12);
+    await Promise.all(span.filter(s => DataLoader.hasMonth(s.y, s.m)).map(s => DataLoader.loadMonth(s.y, s.m)));
+    const monthData = DataLoader.getMonth(y, m);
+    const allReviews = (monthData && monthData.reviews) || [];
+    const monthName = BranchTime.MESES_CAP[m - 1];
 
-    const monthName = new Date(currYear, currMonth - 1).toLocaleString('es-ES', { month: 'long' });
-    const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    const branches = this._branches();
+    if (!branches.length) { app.innerHTML = '<div class="empty-state">No se encontró catálogo de sucursales.</div>'; return; }
 
-    // Obtener catálogo unificado de sucursales
-    const branches = (typeof SUCURSALES_META_ALL !== 'undefined' && Array.isArray(SUCURSALES_META_ALL))
-      ? SUCURSALES_META_ALL
-      : (typeof SUCURSALES_META !== 'undefined' && Array.isArray(SUCURSALES_META) ? SUCURSALES_META : []);
-
-    if (branches.length === 0) {
-      app.innerHTML = `<div class="empty-state">No se encontró catálogo de sucursales.</div>`;
-      return;
+    const qs = new URLSearchParams(window.location.hash.split('?')[1] || '');
+    const pa = params.a || qs.get('a'), pb = params.b || qs.get('b');
+    let metaA = pa ? branches.find(b => b.id === pa) : null;
+    let metaB = pb ? branches.find(b => b.id === pb) : null;
+    if (!metaA || !metaB) {
+      // Por defecto: la mejor y la peor sucursal de la región en el mes (lo que un gerente querría contrastar)
+      const regional = (typeof SUCURSALES_META !== 'undefined' ? SUCURSALES_META : branches)
+        .map(b => ({ b, s: this._stats(b, allReviews) })).filter(x => x.s.count >= Narrative.MIN_SAMPLE).sort((p, q) => q.s.avg - p.s.avg);
+      metaA = metaA || (regional[0] ? regional[0].b : branches[0]);
+      metaB = metaB || (regional.length > 1 ? regional[regional.length - 1].b : (branches.find(b => b.id !== metaA.id) || branches[0]));
     }
+    this.branchA = metaA.id; this.branchB = metaB.id;
 
-    // Determinar sucursales a comparar
-    const paramA = params.a || (new URLSearchParams(window.location.hash.split('?')[1] || '')).get('a');
-    const paramB = params.b || (new URLSearchParams(window.location.hash.split('?')[1] || '')).get('b');
+    const sA = this._stats(metaA, allReviews), sB = this._stats(metaB, allReviews);
+    const goal = EC.metaRating();
+    const series = (meta) => span.map(s => { const st = DataLoader.computeBranchStats(s.y, s.m, meta.id); return st.count > 0 ? st.avg : null; });
+    const vA = series(metaA), vB = series(metaB);
+    const above = v => v.filter(x => typeof x === 'number' && x >= goal).length;
+    const withData = v => v.filter(x => typeof x === 'number').length;
+    const story = Narrative.compare(
+      { ...sA, above: above(vA), withData: withData(vA) },
+      { ...sB, above: above(vB), withData: withData(vB) }, goal);
 
-    const defaultA = branches.find(b => b.id === 'andares') || branches[0];
-    const defaultB = branches.find(b => b.id === 'gal-gdl' || b.id === 'galerias-gdl') || branches[1] || branches[0];
+    const opts = (sel) => branches.map(b => `<option value="${b.id}" ${b.id === sel ? 'selected' : ''}>${escapeHtml(b.nombre)} · ${typeof getRegionName === 'function' ? getRegionName(b.region) : b.region}</option>`).join('');
 
-    const metaA = (paramA ? branches.find(b => b.id === paramA) : null) || defaultA;
-    const metaB = (paramB ? branches.find(b => b.id === paramB) : null) || defaultB;
+    // Fila de contraste: valor A | barra repartida | valor B. "better" = cuál gana (menor o mayor es mejor)
+    const row = (label, a, b, fmt, higherIsBetter = true) => {
+      const mx = Math.max(Math.abs(a), Math.abs(b)) || 1;   // cada barra crece desde el centro en proporción al mayor de los dos
+      const wa = Math.round((100 * Math.abs(a)) / mx), wb = Math.round((100 * Math.abs(b)) / mx);
+      const win = a === b ? '' : ((a > b) === higherIsBetter ? 'a' : 'b');
+      return `<div class="cmp-row">
+        <span class="cmp-val a ${win === 'a' ? 'win' : ''}">${fmt(a)}</span>
+        <div class="cmp-mid"><span class="cmp-label">${label}</span><div class="cmp-bar"><span class="half l"><i class="a" style="width:${wa}%"></i></span><span class="half r"><i class="b" style="width:${wb}%"></i></span></div></div>
+        <span class="cmp-val b ${win === 'b' ? 'win' : ''}">${fmt(b)}</span>
+      </div>`;
+    };
+    const side = (meta, s, k) => `
+      <div class="cmp-side ${k}">
+        <a class="cmp-name" href="#/sucursal/${meta.id}"><i class="cmp-dot ${k}"></i>${escapeHtml(meta.nombre)}<span class="cmp-go">Ver ficha →</span></a>
+        <div class="cmp-score num">${s.count ? s.avg.toFixed(2) : '—'}<small>★</small></div>
+        <div class="cmp-sub">${s.count} ${s.count === 1 ? 'reseña' : 'reseñas'} en ${monthName}</div>
+      </div>`;
 
-    this.branchA = metaA.id;
-    this.branchB = metaB.id;
+    app.innerHTML = `
+      ${buildTopbar(false, 'Comparar')}
+      <div class="cmp">
+        <header class="cmp-head">
+          <div class="cmp-kicker">Comparar · ${monthName} ${y}</div>
+          <h1 class="cmp-title">Cara a cara</h1>
+        </header>
 
-    // Métricas para Sucursal A
-    const statsA = this._computeBranchStats(metaA, allReviews, currYear, currMonth);
-    // Métricas para Sucursal B
-    const statsB = this._computeBranchStats(metaB, allReviews, currYear, currMonth);
-
-    // Deltas comparativos
-    const ratingDelta = (statsA.avg - statsB.avg).toFixed(2);
-    const ratingDeltaAbs = Math.abs(Number(ratingDelta)).toFixed(2);
-    const volumeDelta = statsA.count - statsB.count;
-    const volumeDeltaAbs = Math.abs(volumeDelta);
-    const responseDelta = (statsA.responseRate - statsB.responseRate).toFixed(1);
-
-    // Veredicto Ejecutivo Automatizado
-    const verdictHtml = this._generateVerdict(metaA, statsA, metaB, statsB, ratingDelta);
-
-    // Selector options
-    const optionsA = branches.map(b => {
-      const isSel = b.id === metaA.id ? 'selected' : '';
-      const reg = typeof getRegionName === 'function' ? getRegionName(b.region) : b.region;
-      return `<option value="${b.id}" ${isSel}>${escapeHtml(b.nombre)} (${reg})</option>`;
-    }).join('');
-
-    const optionsB = branches.map(b => {
-      const isSel = b.id === metaB.id ? 'selected' : '';
-      const reg = typeof getRegionName === 'function' ? getRegionName(b.region) : b.region;
-      return `<option value="${b.id}" ${isSel}>${escapeHtml(b.nombre)} (${reg})</option>`;
-    }).join('');
-
-    const html = `
-      ${buildTopbar(false, 'Comparador Head-to-Head')}
-      
-      <div class="compare-view-container">
-        <!-- Encabezado de la Vista -->
-        <div class="compare-header">
-          <div class="compare-eyebrow">Analítica Comparativa Avanzada · ${capitalizedMonth} ${currYear}</div>
-          <h1 class="compare-title">Comparador Head-to-Head</h1>
-          <p class="compare-subtitle">Contraste operativo entre tiendas, matrices de fricción y radar de 5 dimensiones del servicio.</p>
+        <div class="cmp-pick">
+          <label class="cmp-sel a"><span>Sucursal A</span><select id="compareSelectA" onchange="CompareView.onSelectChange()">${opts(metaA.id)}</select></label>
+          <button class="cmp-swap" onclick="CompareView.swap()" aria-label="Intercambiar sucursales" title="Intercambiar">⇄</button>
+          <label class="cmp-sel b"><span>Sucursal B</span><select id="compareSelectB" onchange="CompareView.onSelectChange()">${opts(metaB.id)}</select></label>
         </div>
 
-        <!-- Selectores de Sucursales -->
-        <div class="compare-selectors-bar">
-          <div class="compare-sel-box box-a">
-            <span class="sel-indicator-dot dot-a"></span>
-            <label for="compareSelectA" class="compare-sel-label">Tienda A (Esmeralda):</label>
-            <select id="compareSelectA" class="compare-select" onchange="CompareView.onSelectChange()">
-              ${optionsA}
-            </select>
-          </div>
+        <p class="story-line" id="cmpStory">${story}</p>
 
-          <div class="compare-vs-badge">VS</div>
+        <div class="cmp-duel">${side(metaA, sA, 'a')}<span class="cmp-vs">vs</span>${side(metaB, sB, 'b')}</div>
 
-          <div class="compare-sel-box box-b">
-            <span class="sel-indicator-dot dot-b"></span>
-            <label for="compareSelectB" class="compare-sel-label">Tienda B (Oro Champagne):</label>
-            <select id="compareSelectB" class="compare-select" onchange="CompareView.onSelectChange()">
-              ${optionsB}
-            </select>
-          </div>
-        </div>
+        <section class="cmp-card">
+          <h2 class="cmp-h">En qué se separan <span class="cmp-hint">${monthName}</span></h2>
+          ${row('Calificación', sA.avg, sB.avg, v => v ? v.toFixed(2) + '★' : '—')}
+          ${row('Reseñas', sA.count, sB.count, v => v, true)}
+          ${row('Quejas (≤ 2★, con texto)', sA.negPct, sB.negPct, v => v.toFixed(1) + ' %', false)}
+          ${row('Reseñas graves', sA.graves, sB.graves, v => v, false)}
+          ${row('Respuesta del propietario', sA.resp, sB.resp, v => Math.round(v) + ' %', true)}
+        </section>
 
-        <!-- Split Hero Cards -->
-        <div class="compare-hero-split">
-          <!-- Card Tienda A -->
-          <div class="compare-branch-card card-a">
-            <div class="cbc-header">
-              <span class="cbc-tag tag-a">Tienda A</span>
-              <span class="cbc-region">${metaA.region || 'GDL'}</span>
-            </div>
-            <h2 class="cbc-name">${escapeHtml(metaA.nombre)}</h2>
-            <div class="cbc-rating-row">
-              <span class="cbc-score">${statsA.avg > 0 ? statsA.avg.toFixed(2) : '—'}</span>
-              <div class="cbc-stars-wrap">
-                <span class="cbc-stars">${statsA.avg > 0 ? starStr(Math.round(statsA.avg)) : ''}</span>
-                <span class="cbc-reviews-count">${statsA.count} opiniones en el mes</span>
-              </div>
-            </div>
-            <div class="cbc-meta-grid">
-              <div class="cbc-meta-item">
-                <span class="cmi-label">Histórico</span>
-                <span class="cmi-val">${metaA.historico ? metaA.historico.toFixed(2) : '—'}★</span>
-              </div>
-              <div class="cbc-meta-item">
-                <span class="cmi-label">Respuesta Propietario</span>
-                <span class="cmi-val">${statsA.responseRate}%</span>
-              </div>
-              <div class="cbc-meta-item">
-                <span class="cmi-label">Quejas (≤2★)</span>
-                <span class="cmi-val ${statsA.negativeCount > 0 ? 'alert-val' : 'ok-val'}">${statsA.negativeCount}</span>
-              </div>
-            </div>
-            <a href="#/sucursal/${metaA.id}" class="cbc-view-link">Ver ficha completa de ${escapeHtml(metaA.nombre)} →</a>
-          </div>
+        <section class="cmp-card">
+          <h2 class="cmp-h">Los últimos 12 meses <span class="cmp-hint">clic en un mes para verlo</span></h2>
+          <div class="chart-wrap cmp-chart"><div id="cmpDuelChart" style="width:100%;height:100%"></div></div>
+        </section>
 
-          <!-- Delta Central Flotante -->
-          <div class="compare-delta-pill">
-            <div class="cdp-title">Diferencial</div>
-            <div class="cdp-main ${Number(ratingDelta) >= 0 ? 'positive' : 'negative'}">
-              ${Number(ratingDelta) > 0 ? `+${ratingDeltaAbs}★ A` : (Number(ratingDelta) < 0 ? `+${ratingDeltaAbs}★ B` : '= Paridad')}
-            </div>
-            <div class="cdp-sub">
-              ${volumeDelta > 0 ? `+${volumeDeltaAbs} res. en A` : (volumeDelta < 0 ? `+${volumeDeltaAbs} res. en B` : 'Mismo volumen')}
-            </div>
-          </div>
+        <section class="cmp-card">
+          <h2 class="cmp-h">A qué hora se quejan <span class="cmp-hint">quejas de 1–2★, últimos 12 meses, hora local</span></h2>
+          <p class="story-line story-line--sm" id="cmpHourStory"></p>
+          <div class="chart-wrap cmp-chart"><div id="cmpHourChart" style="width:100%;height:100%"></div></div>
+        </section>
+      </div>`;
 
-          <!-- Card Tienda B -->
-          <div class="compare-branch-card card-b">
-            <div class="cbc-header">
-              <span class="cbc-tag tag-b">Tienda B</span>
-              <span class="cbc-region">${metaB.region || 'GDL'}</span>
-            </div>
-            <h2 class="cbc-name">${escapeHtml(metaB.nombre)}</h2>
-            <div class="cbc-rating-row">
-              <span class="cbc-score">${statsB.avg > 0 ? statsB.avg.toFixed(2) : '—'}</span>
-              <div class="cbc-stars-wrap">
-                <span class="cbc-stars">${statsB.avg > 0 ? starStr(Math.round(statsB.avg)) : ''}</span>
-                <span class="cbc-reviews-count">${statsB.count} opiniones en el mes</span>
-              </div>
-            </div>
-            <div class="cbc-meta-grid">
-              <div class="cbc-meta-item">
-                <span class="cmi-label">Histórico</span>
-                <span class="cmi-val">${metaB.historico ? metaB.historico.toFixed(2) : '—'}★</span>
-              </div>
-              <div class="cbc-meta-item">
-                <span class="cmi-label">Respuesta Propietario</span>
-                <span class="cmi-val">${statsB.responseRate}%</span>
-              </div>
-              <div class="cbc-meta-item">
-                <span class="cmi-label">Quejas (≤2★)</span>
-                <span class="cmi-val ${statsB.negativeCount > 0 ? 'alert-val' : 'ok-val'}">${statsB.negativeCount}</span>
-              </div>
-            </div>
-            <a href="#/sucursal/${metaB.id}" class="cbc-view-link">Ver ficha completa de ${escapeHtml(metaB.nombre)} →</a>
-          </div>
-        </div>
-
-        <!-- Radar Chart de 5 Dimensiones + Tabla Matriz -->
-        <div class="compare-analytics-grid">
-          <div class="compare-chart-card">
-            <div class="ccc-head">
-              <h3 class="ccc-title">Radar de Equilibrio Operativo (5 Ejes)</h3>
-              <span class="ccc-sub">Índices normalizados (0-100) en pilares clave de experiencia del cliente</span>
-            </div>
-            <div class="compare-radar-wrap">
-              <div id="compareRadarChart" style="width:100%;height:100%"></div>
-            </div>
-            <div class="compare-radar-legend">
-              <div class="crl-item"><span class="crl-color color-a"></span> ${escapeHtml(metaA.nombre)}</div>
-              <div class="crl-item"><span class="crl-color color-b"></span> ${escapeHtml(metaB.nombre)}</div>
-            </div>
-          </div>
-
-          <div class="compare-table-card">
-            <div class="ccc-head">
-              <h3 class="ccc-title">Contraste Numérico Directo</h3>
-              <span class="ccc-sub">Comparativa dimensional parámetro por parámetro</span>
-            </div>
-            <div class="compare-matrix-table-wrap">
-              <table class="compare-matrix-table">
-                <thead>
-                  <tr>
-                    <th>Métrica</th>
-                    <th>${escapeHtml(metaA.nombre)}</th>
-                    <th>${escapeHtml(metaB.nombre)}</th>
-                    <th>Líder</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>Calificación Mes</strong></td>
-                    <td><strong>${statsA.avg.toFixed(2)}★</strong></td>
-                    <td><strong>${statsB.avg.toFixed(2)}★</strong></td>
-                    <td><span class="win-badge ${statsA.avg >= statsB.avg ? 'win-a' : 'win-b'}">${statsA.avg >= statsB.avg ? metaA.nombre : metaB.nombre}</span></td>
-                  </tr>
-                  <tr>
-                    <td>Calificación Histórica</td>
-                    <td>${metaA.historico ? metaA.historico.toFixed(2) : '—'}★</td>
-                    <td>${metaB.historico ? metaB.historico.toFixed(2) : '—'}★</td>
-                    <td><span class="win-badge ${(metaA.historico || 0) >= (metaB.historico || 0) ? 'win-a' : 'win-b'}">${(metaA.historico || 0) >= (metaB.historico || 0) ? metaA.nombre : metaB.nombre}</span></td>
-                  </tr>
-                  <tr>
-                    <td>Volumen Opiniones</td>
-                    <td>${statsA.count}</td>
-                    <td>${statsB.count}</td>
-                    <td><span class="win-badge ${statsA.count >= statsB.count ? 'win-a' : 'win-b'}">${statsA.count >= statsB.count ? metaA.nombre : metaB.nombre}</span></td>
-                  </tr>
-                  <tr>
-                    <td>Tasa Quejas Críticas (≤2★)</td>
-                    <td>${statsA.negativePct}%</td>
-                    <td>${statsB.negativePct}%</td>
-                    <td><span class="win-badge ${statsA.negativePct <= statsB.negativePct ? 'win-a' : 'win-b'}">${statsA.negativePct <= statsB.negativePct ? metaA.nombre : metaB.nombre}</span></td>
-                  </tr>
-                  <tr>
-                    <td>Tasa Respuesta Propietario</td>
-                    <td>${statsA.responseRate}%</td>
-                    <td>${statsB.responseRate}%</td>
-                    <td><span class="win-badge ${statsA.responseRate >= statsB.responseRate ? 'win-a' : 'win-b'}">${statsA.responseRate >= statsB.responseRate ? metaA.nombre : metaB.nombre}</span></td>
-                  </tr>
-                  <tr>
-                    <td>Satisfacción en Servicio</td>
-                    <td>${statsA.serviceScore}%</td>
-                    <td>${statsB.serviceScore}%</td>
-                    <td><span class="win-badge ${statsA.serviceScore >= statsB.serviceScore ? 'win-a' : 'win-b'}">${statsA.serviceScore >= statsB.serviceScore ? metaA.nombre : metaB.nombre}</span></td>
-                  </tr>
-                  <tr>
-                    <td>Calidad de Producto</td>
-                    <td>${statsA.qualityScore}%</td>
-                    <td>${statsB.qualityScore}%</td>
-                    <td><span class="win-badge ${statsA.qualityScore >= statsB.qualityScore ? 'win-a' : 'win-b'}">${statsA.qualityScore >= statsB.qualityScore ? metaA.nombre : metaB.nombre}</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Veredicto Automatizado -->
-        <div class="compare-verdict-box">
-          <div class="cvb-header">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--oro);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            <h3 class="cvb-title">Veredicto Ejecutivo de Desempeño</h3>
-          </div>
-          <div class="cvb-content">
-            ${verdictHtml}
-          </div>
-        </div>
-      </div>
-    `;
-
-    app.innerHTML = html;
-
-    // Renderizar Radar Chart tras inyección DOM
     requestAnimationFrame(() => {
-      this._renderRadarChart(metaA, statsA, metaB, statsB);
+      const cA = this.COLOR_A(), cB = this.COLOR_B();
+      EtoileCharts.compareDuel(document.getElementById('cmpDuelChart'), span.map(s => s.label), vA, vB,
+        { nameA: metaA.nombre, nameB: metaB.nombre, colorA: cA, colorB: cB },
+        i => { DataLoader.setMonth(span[i].y, span[i].m); this.render({ a: metaA.id, b: metaB.id }); });
+      const hA = Patterns.hourly(Patterns.collect(y, m, 12, r => this._same(r, metaA.id)));
+      const hB = Patterns.hourly(Patterns.collect(y, m, 12, r => this._same(r, metaB.id)));
+      const hs = document.getElementById('cmpHourStory');
+      const hl = (h, n) => `${n}: ${Patterns.headline(h).text}`;
+      if (hs) hs.innerHTML = `${escapeHtml(hl(hA, metaA.nombre))}<br>${escapeHtml(hl(hB, metaB.nombre))}`;
+      EtoileCharts.compareHours(document.getElementById('cmpHourChart'), hA, hB, { nameA: metaA.nombre, nameB: metaB.nombre, colorA: cA, colorB: cB });
+      initReveal();
     });
-  },
-
-  _computeBranchStats(meta, allReviews, year, month) {
-    const isBranchMatch = (r) => {
-      if (typeof isSameBranch === 'function') return isSameBranch(r.sucursal, meta.id);
-      return (r.sucursal || '').toLowerCase() === (meta.id || '').toLowerCase();
-    };
-
-    const bReviews = allReviews.filter(isBranchMatch);
-    const count = bReviews.length;
-    const totalStars = bReviews.reduce((sum, r) => sum + (r.stars || 0), 0);
-    const avg = count > 0 ? Number((totalStars / count).toFixed(2)) : (meta.historico || 0);
-
-    // Regla Inamovible LCP: Omitir reviews sin texto fuera de volumen bruto y calidad (avg)
-    const textReviews = bReviews.filter(r => r.text && r.text.trim().length > 0);
-    const textCount = textReviews.length;
-
-    const negatives = textReviews.filter(r => r.stars <= 2);
-    const negativeCount = negatives.length;
-    const negativePct = textCount > 0 ? Number(((negativeCount / textCount) * 100).toFixed(1)) : 0;
-
-    const repliedCount = bReviews.filter(r => r.responseFromOwnerText && r.responseFromOwnerText.trim().length > 0).length;
-    const responseRate = count > 0 ? Number(((repliedCount / count) * 100).toFixed(1)) : 0;
-
-    // Menciones de servicio, calidad y precio (exclusivo sobre opiniones con texto)
-    let serviceComplaints = 0;
-    let qualityComplaints = 0;
-    let valueComplaints = 0;
-
-    negatives.forEach(r => {
-      const text = (r.text || '').toLowerCase();
-      if (/mesero|lento|espera|atenci[oó]n|servicio|tarde|tardaron|trato|amabilidad/i.test(text)) serviceComplaints++;
-      if (/sabor|fr[ií]o|sucio|malo|crudo|calidad|ingrediente|pelo/i.test(text)) qualityComplaints++;
-      if (/caro|precio|porci[oó]n|costo|tama[ñn]o|car[ií]simo|cantidad/i.test(text)) valueComplaints++;
-    });
-
-    // Puntuaciones normalizadas 0-100 para el radar
-    const csatScore = Math.min(100, Math.max(0, Math.round((avg / 5) * 100)));
-    const serviceScore = textCount > 0 ? Math.max(20, Math.round(100 - (serviceComplaints / textCount) * 150)) : 85;
-    const qualityScore = textCount > 0 ? Math.max(20, Math.round(100 - (qualityComplaints / textCount) * 150)) : 85;
-    const valueScore = textCount > 0 ? Math.max(20, Math.round(100 - (valueComplaints / textCount) * 150)) : 85;
-
-    return {
-      avg,
-      count,
-      negativeCount,
-      negativePct,
-      responseRate,
-      csatScore,
-      serviceScore,
-      qualityScore,
-      valueScore
-    };
-  },
-
-  _generateVerdict(metaA, statsA, metaB, statsB, delta) {
-    const deltaNum = Number(delta);
-    let leadText = '';
-
-    if (deltaNum > 0.05) {
-      leadText = `<strong>${escapeHtml(metaA.nombre)}</strong> supera a <strong>${escapeHtml(metaB.nombre)}</strong> con una ventaja de <strong>+${deltaNum.toFixed(2)}★</strong> en calificación promedio durante el periodo.`;
-    } else if (deltaNum < -0.05) {
-      leadText = `<strong>${escapeHtml(metaB.nombre)}</strong> aventaja a <strong>${escapeHtml(metaA.nombre)}</strong> con una diferencia de <strong>+${Math.abs(deltaNum).toFixed(2)}★</strong> en calificación del cliente.`;
-    } else {
-      leadText = `Ambas sucursales se encuentran en <strong>paridad técnica de satisfacción</strong> con una diferencia mínima de ${Math.abs(deltaNum).toFixed(2)}★.`;
-    }
-
-    const respAdvantage = statsA.responseRate > statsB.responseRate + 5
-      ? `${metaA.nombre} destaca notablemente en protocolo post-servicio con una tasa de respuesta del ${statsA.responseRate}% (vs ${statsB.responseRate}% en ${metaB.nombre}).`
-      : statsB.responseRate > statsA.responseRate + 5
-        ? `${metaB.nombre} muestra mayor rigor en seguimiento a quejas con un ${statsB.responseRate}% de respuestas activas.`
-        : `Ambas tiendas mantienen una tasa de respuesta a opiniones alineada (${statsA.responseRate}% vs ${statsB.responseRate}%).`;
-
-    const frictionAdvantage = statsA.negativePct < statsB.negativePct
-      ? `En control de incidencias críticas, ${metaA.nombre} presenta menor tasa de quejas (solo el ${statsA.negativePct}% del total de sus opiniones).`
-      : statsB.negativePct < statsA.negativePct
-        ? `En resiliencia operativa, ${metaB.nombre} registra una menor proporción de opiniones negativas (${statsB.negativePct}% vs ${statsA.negativePct}%).`
-        : `Ambas tiendas registran una proporción semejante de incidencias críticas.`;
-
-    return `<p>${leadText} ${frictionAdvantage} ${respAdvantage}</p>`;
-  },
-
-  _renderRadarChart(metaA, statsA, metaB, statsB) {
-    const el = document.getElementById('compareRadarChart');
-    if (!el || typeof EtoileCharts === 'undefined') return;
-
-    const labels = [
-      'CSAT General',
-      'Servicio & Atención',
-      'Calidad Producto',
-      'Percepción Valor',
-      'Tasa de Respuesta'
-    ];
-
-    const dataA = [
-      statsA.csatScore,
-      statsA.serviceScore,
-      statsA.qualityScore,
-      statsA.valueScore,
-      statsA.responseRate
-    ];
-
-    const dataB = [
-      statsB.csatScore,
-      statsB.serviceScore,
-      statsB.qualityScore,
-      statsB.valueScore,
-      statsB.responseRate
-    ];
-
-    this.radarChartInstance = EtoileCharts.radar(el, labels, [
-      { name: metaA.nombre, data: dataA, color: '#E5B842', fill: 'rgba(229, 184, 66, 0.22)', point: '#F7D779' },
-      { name: metaB.nombre, data: dataB, color: '#5CE1A6', fill: 'rgba(92, 225, 166, 0.2)', point: '#A7F3D0', dash: true }
-    ]);
   },
 
   onSelectChange() {
-    const selA = document.getElementById('compareSelectA');
-    const selB = document.getElementById('compareSelectB');
-    if (!selA || !selB) return;
+    const a = document.getElementById('compareSelectA'), b = document.getElementById('compareSelectB');
+    if (a && b) window.location.hash = `#/comparar?a=${encodeURIComponent(a.value)}&b=${encodeURIComponent(b.value)}`;
+  },
 
-    const valA = selA.value;
-    const valB = selB.value;
-    window.location.hash = `#/comparar?a=${encodeURIComponent(valA)}&b=${encodeURIComponent(valB)}`;
+  swap() {
+    if (this.branchA && this.branchB) window.location.hash = `#/comparar?a=${encodeURIComponent(this.branchB)}&b=${encodeURIComponent(this.branchA)}`;
   }
 };

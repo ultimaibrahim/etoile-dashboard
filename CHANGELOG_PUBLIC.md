@@ -5,6 +5,11 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 
 ---
 
+## Versión 2.0.0 beta 7 Eltanin — Qué atender, inicio interactivo y Comparar renovado (Octubre 2026) [PREVIEW]
+* ✅ **"Qué atender"** reemplaza a las alertas escondidas: una lista corta, siempre visible y ordenada por urgencia; un toque lleva a la sucursal.
+* 👆 **El inicio responde al tacto**: toca la calificación para ver cuántas reseñas hay de cada estrella; toca Reseñas, Sucursales o Negativas para ver el detalle; y en computadora, al mover el cursor por la portada, la calificación recorre los meses del año.
+* ⚔️ **Comparar, rediseñado "cara a cara"**: elige dos sucursales (por defecto la mejor y la que más trabajo necesita), lee en una frase quién va mejor y en qué se separan, mira los últimos 12 meses de las dos juntas (toca un mes para verlo) y a qué hora se quejan sus clientes.
+
 ## Versión 2.0.0 beta 6 Eltanin — Comparar Sucursales mes a mes (Octubre 2026) [PREVIEW]
 * 🗺️ **"¿Cómo evoluciona cada sucursal?"**: un mapa de colores con todas las tiendas de la región y los últimos 12 meses. De un vistazo se ve qué tienda arrastra problemas todo el año, cuál tuvo un solo mal mes y cuál cae justo ahora. Se puede cambiar entre calificación y volumen de reseñas, y al tocar una celda se abren las reseñas de esa tienda en ese mes. Una frase arriba resume el hallazgo y avisa de las tiendas con calificación muy baja pero pocas reseñas.
 * 🐛 **Corregido (importante)**: la ficha de una sucursal podía no abrir cuando esa tienda aún no tenía reseñas en el mes elegido. Ahora abre y muestra el último mes con reseñas.

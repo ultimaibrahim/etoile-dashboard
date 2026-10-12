@@ -54,6 +54,7 @@ Rama: `feat/v2.0.0-eltanin`. Doble changelog en el mismo commit. Sin commit/push
 - [x] Rendimiento: quitar blur de tarjetas (scroll 79 % → 0 % de cuadros lentos), memoizar `BranchTime.parts`, podar CSS heredado
 - [x] Rediseño anti-vibecoded: sin acentos laterales, Giaza solo en marca, drawer centrado en escritorio, takeaways alineados, acordeón trimestral estable
 - [x] Retirado el heatmap de turnos de la ficha de sucursal
+- [x] beta.7: Qué atender (reemplaza Alertas Proactivas), hero interactivo (stats, desglose, scrub por meses) y Comparar "cara a cara" (duelo 12 meses, quejas por hora)
 - [x] Entrada escalonada de rejillas
 
 ## Betas futuras (guardadas; el corte del 2.0.0 y el orden los decide Ibrahim)

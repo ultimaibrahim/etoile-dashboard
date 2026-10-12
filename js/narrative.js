@@ -96,6 +96,36 @@ const Narrative = {
     return s + watchTxt;
   },
 
+  /**
+   * Duelo entre dos sucursales. a/b: { nombre, avg, count, negPct, resp, above, withData }
+   * (above = meses de la ventana sobre la meta, withData = meses con reseñas).
+   * Solo afirma lo que la muestra sostiene (MIN_SAMPLE reseñas en el mes).
+   */
+  compare(a, b, meta) {
+    if (!a.count || !b.count) return `${!a.count ? a.nombre : b.nombre} no tiene reseñas en este periodo: no hay con qué comparar.`;
+    const small = [a, b].filter(x => x.count < this.MIN_SAMPLE);
+    const d = a.avg - b.avg, ad = Math.abs(d);
+    const [hi, lo] = d >= 0 ? [a, b] : [b, a];
+    let s = ad < 0.05
+      ? `${a.nombre} y ${b.nombre} están empatadas (${this.fmt(a.avg)}★ y ${this.fmt(b.avg)}★).`
+      : `${hi.nombre} supera a ${lo.nombre} por ${this.fmt(ad)}★ (${this.fmt(hi.avg)}★ frente a ${this.fmt(lo.avg)}★).`;
+    if (small.length) {
+      s += ` Cuidado: ${small.map(x => `${x.nombre} tiene solo ${x.count} ${this.plural(x.count, 'reseña', 'reseñas')}`).join(' y ')} en el mes, la diferencia puede ser ruido.`;
+      return s;
+    }
+    // Qué más las separa: quejas (puntos porcentuales) y respuesta al cliente
+    const gaps = [
+      { k: 'neg', g: Math.abs(a.negPct - b.negPct), txt: () => { const [w, l] = a.negPct <= b.negPct ? [a, b] : [b, a]; return `${w.nombre} tiene menos quejas (${this.fmt(w.negPct, 1)} % de sus reseñas con texto frente a ${this.fmt(l.negPct, 1)} %)`; } },
+      { k: 'resp', g: Math.abs(a.resp - b.resp), txt: () => { const [w, l] = a.resp >= b.resp ? [a, b] : [b, a]; return `${w.nombre} responde más (${Math.round(w.resp)} % frente a ${Math.round(l.resp)} %)`; } }
+    ].filter(x => x.g >= 5).sort((x, y) => y.g - x.g);
+    if (gaps.length) s += ` Lo que más las separa: ${gaps[0].txt()}.`;
+    if (a.withData >= 4 && b.withData >= 4 && a.above !== b.above) {
+      const [w, l] = a.above > b.above ? [a, b] : [b, a];
+      s += ` En el año, ${w.nombre} estuvo sobre la meta ${w.above} de ${w.withData} meses; ${l.nombre}, ${l.above} de ${l.withData}.`;
+    }
+    return s;
+  },
+
   /** Matriz sucursal × mes (volumen) */
   matrixVolume(mx) {
     if (!mx.rows.length) return 'Aún no hay reseñas para comparar sucursales.';

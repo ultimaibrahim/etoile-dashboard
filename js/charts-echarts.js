@@ -620,4 +620,51 @@ const EtoileCharts = {
     EC.autoHideTip(api);
     return api;
   },
+  /** Duelo de dos sucursales: calificación mensual de cada una en la misma ventana (huecos = mes sin reseñas) */
+  compareDuel(el, labels, a, b, opts, onSelect) {
+    const p = EC.pal();
+    const meta = EC.metaRating();
+    const nums = a.concat(b).filter(v => typeof v === 'number');
+    const lo = nums.length ? Math.max(1, Math.floor((Math.min(...nums) - 0.1) * 5) / 5) : 4;
+    const ser = (name, data, color) => ({
+      name, type: 'line', data, smooth: 0.25, connectNulls: false, symbol: 'circle', symbolSize: 7, showSymbol: true,
+      lineStyle: { width: 3, color }, itemStyle: { color, borderColor: p.ptBorder, borderWidth: 2 }, emphasis: { focus: 'series', scale: 1.4 }
+    });
+    const sa = ser(opts.nameA, a, opts.colorA);
+    sa.markLine = { silent: true, symbol: 'none', animation: false, label: { formatter: 'Meta ' + meta.toFixed(2), color: '#c97d10', fontSize: 10, position: 'insideEndTop' }, lineStyle: { color: '#c97d10', type: 'dashed', width: 1 }, data: [{ yAxis: meta }] };
+    const api = ChartWrapper.mount(el, {
+      state: nums.length ? 'ready' : 'empty',
+      option: {
+        animationDuration: 900,
+        grid: { left: 8, right: 16, top: 24, bottom: 8, containLabel: true },
+        tooltip: EC.tooltip(items => EC.card(items[0].axisValueLabel, items.filter(i => typeof i.value === 'number').map(i => ({ color: i.color, text: ` ${EC.esc(i.seriesName)}: ${Number(i.value).toFixed(2)}★` })), onSelect ? 'Clic: ver este mes' : '')),
+        xAxis: EC.catAxis(labels, p, { boundaryGap: false, axisLabel: EC.xLabels(el, labels, p, EC.isMobile()) }),
+        yAxis: EC.valAxis(p, { min: lo, max: 5, interval: 0.2, axisLabel: { fontSize: 10, fontFamily: EC.mono, color: p.axisMono, formatter: v => v.toFixed(1) } }),
+        series: [sa, ser(opts.nameB, b, opts.colorB)]
+      }
+    });
+    EC.columnClick(api, labels.length, onSelect, () => true);
+    EC.autoHideTip(api);
+    return api;
+  },
+
+  /** Quejas por hora de dos sucursales, una al lado de la otra */
+  compareHours(el, hA, hB, opts) {
+    const p = EC.pal();
+    const labels = Array.from({ length: 24 }, (_, i) => Patterns.pad(i));
+    const bar = (name, d, color) => ({ name, type: 'bar', data: d.neg, barMaxWidth: 12, barGap: '10%', itemStyle: { color, borderRadius: [4, 4, 0, 0] }, emphasis: { focus: 'series' } });
+    const api = ChartWrapper.mount(el, {
+      state: (hA.nNeg + hB.nNeg) > 0 ? 'ready' : 'empty',
+      option: {
+        animationDuration: 700,
+        grid: { left: 8, right: 8, top: 24, bottom: 8, containLabel: true },
+        tooltip: EC.tooltip(items => EC.card(items[0].axisValueLabel + ' h', items.map(i => ({ color: i.color, text: ` ${EC.esc(i.seriesName)}: ${i.value} queja${i.value === 1 ? '' : 's'}` })), '')),
+        xAxis: EC.catAxis(labels, p, { axisLabel: EC.xLabels(el, labels, p, EC.isMobile()) }),
+        yAxis: EC.valAxis(p, { minInterval: 1, axisLabel: { fontSize: 10, fontFamily: EC.mono, color: p.axisMono } }),
+        series: [bar(opts.nameA, hA, opts.colorA), bar(opts.nameB, hB, opts.colorB)]
+      }
+    });
+    EC.autoHideTip(api);
+    return api;
+  },
 };

@@ -64,5 +64,18 @@ t('matriz: sin datos', N.matrix({ months: [], rows: [] }, 4.6) === 'Aún no hay 
 s = N.matrixVolume(M([row('A', [4, 4, 4], [10, 30, 5]), row('B', [4, 4, 4], [5, 5, 5])]));
 t('matriz de volumen: mes pico y sucursal con más volumen', /El mes con más reseñas fue Sep 26 \(35\)/.test(s) && /A es la sucursal con más volumen: 45 reseñas en 3 meses \(15 al mes\)/.test(s), s);
 
+// duelo entre dos sucursales
+const D = (nombre, o = {}) => ({ nombre, avg: 4.8, count: 20, negPct: 4, resp: 80, above: 10, withData: 12, ...o });
+s = N.compare(D('Aztlán', { avg: 4.9 }), D('Tepeyac', { avg: 4.5, negPct: 14, resp: 78 }), 4.6);
+t('duelo: quién supera y por cuánto', /Aztlán supera a Tepeyac por 0.40★ \(4.90★ frente a 4.50★\)/.test(s), s);
+t('duelo: nombra lo que más las separa (quejas)', /Lo que más las separa: Aztlán tiene menos quejas \(4.0 % .* 14.0 %\)/.test(s), s);
+s = N.compare(D('A', { avg: 4.8 }), D('B', { avg: 4.8, resp: 40 }), 4.6);
+t('duelo: empate de calificación y separa por respuesta', /A y B están empatadas/.test(s) && /B? ?(A )?responde más \(80 % frente a 40 %\)/.test(s), s);
+s = N.compare(D('A', { avg: 5, count: 3 }), D('B', { avg: 4.6 }), 4.6);
+t('duelo: con muestra chica avisa y no afirma más', /Cuidado: A tiene solo 3 reseñas/.test(s) && !/Lo que más/.test(s), s);
+t('duelo: una sin reseñas', /X no tiene reseñas en este periodo/.test(N.compare(D('X', { count: 0 }), D('Y'), 4.6)));
+s = N.compare(D('A', { above: 11 }), D('B', { avg: 4.6, above: 5 }), 4.6);
+t('duelo: meses sobre la meta en el año', /A estuvo sobre la meta 11 de 12 meses; B, 5 de 12/.test(s), s);
+
 console.log(`\n${fail === 0 ? '✅ TODAS LAS PRUEBAS PASARON' : '❌ HAY FALLAS'} — ${pass} ok, ${fail} fallas`);
 process.exit(fail === 0 ? 0 : 1);
