@@ -117,7 +117,7 @@ const BranchView = {
       if (R >= 4.9) {
         progressBannerHtml = `
           <div class="rating-progress-banner" style="background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--sombra-card);">
-            <div class="rpb-icon" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(61, 138, 95, 0.12); color: var(--ok); flex-shrink: 0;">
+            <div class="rpb-icon" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(61, 138, 95, 0.12); color: var(--ok-ink); flex-shrink: 0;">
               ${svgIcon('starFilled')}
             </div>
             <div class="rpb-content" style="flex-grow: 1;">
@@ -135,7 +135,7 @@ const BranchView = {
         const x = Math.ceil((N * (targetRating - R)) / (5 - targetRating));
         progressBannerHtml = `
           <div class="rating-progress-banner" style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--sombra-card);">
-            <div class="rpb-icon" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(212, 175, 55, 0.1); color: var(--oro); flex-shrink: 0;">
+            <div class="rpb-icon" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(212, 175, 55, 0.1); color: var(--oro-ink); flex-shrink: 0;">
               ${svgIcon('starFilled')}
             </div>
             <div class="rpb-content" style="flex-grow: 1;">
@@ -172,7 +172,7 @@ const BranchView = {
           <span class="badge badge-${kpiVolClass}">${kpiVolClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
           <div class="sc-sub" style="margin-top:6px; display:flex; justify-content:space-between; font-size:10px;">
             <span>Meta: ≥${KpiMeta.volumenMeta}</span>
-            <span style="color:${volDiff > 0 ? 'var(--verde)' : volDiff < 0 ? 'var(--rojo-soft)' : 'var(--text-muted)'}; font-weight:600;">
+            <span style="color:${volDiff > 0 ? 'var(--verde-ink)' : volDiff < 0 ? 'var(--alerta-ink)' : 'var(--text-muted)'}; font-weight:600;">
               ${volDiffStr} vs anterior
             </span>
           </div>
@@ -184,7 +184,7 @@ const BranchView = {
           <span class="badge badge-${kpiCalClass}">${kpiCalClass === 'optimal' ? 'Cumple' : 'Atención'}</span>
           <div class="sc-sub" style="margin-top:6px; display:flex; justify-content:space-between; font-size:10px;">
             <span>Meta: ≥${(KpiMeta.calidadTextoMeta * 100).toFixed(0)}%</span>
-            <span style="color:${calDiff > 0.5 ? 'var(--verde)' : calDiff < -0.5 ? 'var(--rojo-soft)' : 'var(--text-muted)'}; font-weight:600;">
+            <span style="color:${calDiff > 0.5 ? 'var(--verde-ink)' : calDiff < -0.5 ? 'var(--alerta-ink)' : 'var(--text-muted)'}; font-weight:600;">
               ${calDiffStr} vs anterior
             </span>
           </div>
@@ -196,7 +196,7 @@ const BranchView = {
           <span class="badge badge-${kpiRatClass}">${kpiRatClass === 'optimal' ? 'Cumple' : 'Crítico'}</span>
           <div class="sc-sub" style="margin-top:6px; display:flex; justify-content:space-between; font-size:10px;">
             <span>Meta: ≥${KpiMeta.ratingMinimo.toFixed(2)}</span>
-            <span style="color:${ratDiff > 0.01 ? 'var(--verde)' : ratDiff < -0.01 ? 'var(--rojo-soft)' : 'var(--text-muted)'}; font-weight:600;">
+            <span style="color:${ratDiff > 0.01 ? 'var(--verde-ink)' : ratDiff < -0.01 ? 'var(--alerta-ink)' : 'var(--text-muted)'}; font-weight:600;">
               ${ratDiffStr} vs anterior
             </span>
           </div>
@@ -321,7 +321,7 @@ const BranchView = {
     if (userRole === 'gerente') {
       welcomeBannerHtml = `
         <div class="welcome-banner-gerente" style="margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 18px;">
-          <div style="font-size: 11px; font-weight: 700; color: var(--oro); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">Estatus de Operación</div>
+          <div style="font-size: 11px; font-weight: 700; color: var(--oro-ink); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">Estatus de Operación</div>
           <div style="font-family: var(--sans); font-size: 18px; font-weight: 700; color: #FAF5EB; margin-bottom: 4px;">¡Hola, ${userName}!</div>
           <div style="font-size: 13px; color: rgba(245, 239, 230, 0.85); line-height: 1.45;">
             Bienvenido, gerente de <strong>${meta.nombre}</strong>. Este mes tienes <strong>${pendingCritical}</strong> opiniones críticas pendientes por responder.
@@ -434,7 +434,7 @@ const BranchView = {
           </div>
           
           <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
-            <a href="#/comparar?a=${meta.id}" class="btn-compare-link" style="padding: 10px 16px; font-size: 13px; height: 40px; border-radius: 12px; background: rgba(184, 144, 47, 0.16); color: var(--oro); border: 1px solid rgba(184, 144, 47, 0.35); font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; transition: all 0.2s ease;">
+            <a href="#/comparar?a=${meta.id}" class="btn-compare-link" style="padding: 10px 16px; font-size: 13px; height: 40px; border-radius: 12px; background: rgba(184, 144, 47, 0.16); color: var(--oro-ink); border: 1px solid rgba(184, 144, 47, 0.35); font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; transition: all 0.2s ease;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="20" x2="18" y2="10"></line>
                 <line x1="12" y1="20" x2="12" y2="4"></line>

@@ -258,7 +258,7 @@ const DashboardsView = {
         <div class="hero-inner dashboards-hero-inner">
           <div class="hero-left">
             <div class="hero-label-row">
-              <span class="eyebrow" style="color:rgba(245,239,230,.55);">Visualización de Datos</span>
+              <span class="eyebrow" style="color:rgba(245,239,230,.8);">Visualización de Datos</span>
             </div>
             <h1 class="display" style="font-size:clamp(36px,8vw,64px);color:#FAF5EB;line-height:1.05;">
               Dashboards Analíticos
@@ -426,8 +426,8 @@ const DashboardsView = {
         story('storyDist', Narrative.distribution(starCounts));
         const labels = ['5 ★', '4 ★', '3 ★', '2 ★', '1 ★'];
         const colors = darkMode 
-          ? ['rgba(122,158,138,0.85)', 'rgba(137,173,152,0.7)', 'rgba(244,201,130,0.85)', 'rgba(244,160,144,0.85)', 'rgba(244,116,116,0.85)']
-          : ['rgba(61,90,71,0.85)', 'rgba(122,158,138,0.7)', 'rgba(201,125,16,0.85)', 'rgba(178,58,43,0.85)', 'rgba(198,40,40,0.85)'];
+          ? ['#7FBB93', '#5E8F72', '#67635C', '#E66E68', '#F07F77']      // un matiz verde, gris para 3★ y rojo solo en 1–2★
+          : ['#3D5A47', '#6F8777', '#B7B0A8', '#E0524A', '#BE2425'];
         EtoileCharts.starDistributionBar(ctxDist, labels, starCounts, colors, (index) => {
           const targetStars = 5 - index;
           DashboardsView.openStarReviewsModal(currYear, currMonth, targetStars);
@@ -608,7 +608,7 @@ const DashboardsView = {
     const meta = EC.metaRating().toFixed(2);
     const sw = (c, t) => `<span class="mx-key"><i style="background:${c}"></i>${t}</span>`;
     return metric === 'rating'
-      ? sw('#3D7A55', `≥ ${meta}★ (meta)`) + sw('#6FA27F', `4.40–${meta}`) + sw('#C98A12', '4.00–4.39') + sw('#C62828', '< 4.00') + '<span class="mx-key mx-faint"><i></i>Tenue = menos de 3 reseñas</span>'
+      ? (() => { const sc = EC.ratingScale(); return sw(sc[0].fill, `≥ ${meta}★ (meta)`) + sw(sc[1].fill, `4.40–${meta}`) + sw(sc[2].fill, '4.00–4.39') + sw(sc[3].fill, '▼ < 4.00'); })() + '<span class="mx-key mx-faint"><i></i>Tenue = menos de 3 reseñas</span>'
       : sw('#CFE0D5', 'Pocas reseñas') + sw('#7A9E8A', 'Medio') + sw('#2F4A3A', 'Muchas reseñas');
   },
 

@@ -338,7 +338,7 @@ const HomeView = {
         <div class="hero-inner" style="position: relative; z-index: 2;">
           <div class="hero-left">
             <div class="hero-label-row" style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:16px;">
-              <span class="eyebrow" style="color:rgba(245,239,230,.55);">${userBranch ? 'Promedio de tu sucursal' : 'Promedio Regional'}</span>
+              <span class="eyebrow" style="color:rgba(245,239,230,.8);">${userBranch ? 'Promedio de tu sucursal' : 'Promedio Regional'}</span>
               ${dropdownHtml}
             </div>
             ${briefingHeadHtml}
@@ -585,8 +585,8 @@ const HomeView = {
     const negSub = `De ${kpi.tasaRespuesta.totalNegativas} negativas totales`;
 
     // Generate sparklines SVGs
-    const volSpark = createSparklineSVG(sparklines?.volumen || [], 110, 32, volClass === 'optimal' ? '#7A9E8A' : '#c97d10');
-    const calSpark = createSparklineSVG(sparklines?.calidad || [], 110, 32, calClass === 'optimal' ? '#7A9E8A' : '#c97d10');
+    const volSpark = createSparklineSVG(sparklines?.volumen || [], 110, 32, volClass === 'optimal' ? EC.cssVar('--sage-ink', '#56705F') : EC.cssVar('--oro-line', '#9E7A24'));
+    const calSpark = createSparklineSVG(sparklines?.calidad || [], 110, 32, calClass === 'optimal' ? EC.cssVar('--sage-ink', '#56705F') : EC.cssVar('--oro-line', '#9E7A24'));
     const ratSpark = createSparklineSVG(sparklines?.rating || [], 110, 32, ratClass === 'optimal' ? '#7A9E8A' : '#c62828');
     const negSpark = createSparklineSVG(sparklines?.respuestas || [], 110, 32, negClass === 'optimal' ? '#7A9E8A' : '#c62828');
 
@@ -1287,18 +1287,18 @@ const HomeView = {
 
     return `
       <div class="chart-card highlight-box r" id="highlightCard" style="display:flex; flex-direction:column; justify-content:space-between; position:relative; min-height:220px; overflow:hidden;">
-        <div class="watermark-stars" style="position:absolute; right:-20px; bottom:-20px; font-size:120px; opacity:0.08; color:var(--oro); pointer-events:none;">★</div>
+        <div class="watermark-stars" style="position:absolute; right:-20px; bottom:-20px; font-size:120px; opacity:0.08; color:var(--oro-ink); pointer-events:none;">★</div>
         <div class="highlight-header-row" style="display:flex; align-items:center; gap:12px; margin-bottom:12px; z-index:1; position:relative;">
-          <div class="highlight-icon-box" style="width:36px; height:36px; border-radius:50%; background:rgba(184,144,47,0.1); color:var(--oro); display:grid; place-items:center; flex-shrink:0;">
+          <div class="highlight-icon-box" style="width:36px; height:36px; border-radius:50%; background:rgba(184,144,47,0.1); color:var(--oro-ink); display:grid; place-items:center; flex-shrink:0;">
             ${svgIcon('starFilled')}
           </div>
-          <div class="highlight-title" style="font-weight:700; font-size:14px; color:var(--sage); text-transform:uppercase; letter-spacing:.06em; margin-bottom:0;">Lo más destacado</div>
+          <div class="highlight-title" style="font-weight:700; font-size:14px; color:var(--sage-ink); text-transform:uppercase; letter-spacing:.06em; margin-bottom:0;">Lo más destacado</div>
         </div>
         <div style="font-size: 15px; line-height: 1.5; font-style:italic; margin-bottom: 12px; position: relative; z-index: 1; flex-grow:1;" data-rev-text>"${escapeHtml(rev.text)}"</div>
         <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; margin-top: auto; padding-top:12px; border-top: 1px solid var(--border);">
           <span style="font-size: 13px; font-weight: 500; color: var(--text-muted); display:flex; align-items:center; gap:6px;"><span style="display:inline-block;width:12px;height:1px;background:var(--border);"></span>${branchDisplayName}</span>
           <div style="display:flex;align-items:center;gap:10px;">
-            <span style="color:var(--oro);font-size:13px;letter-spacing:1px;">${'★'.repeat(5)}</span>
+            <span style="color:var(--oro-ink);font-size:13px;letter-spacing:1px;">${'★'.repeat(5)}</span>
             ${hasMore ? `<button onclick="HomeView.nextHighlight()" style="background:transparent;border:1px solid var(--border);color:var(--text);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;letter-spacing:.03em;transition:background .15s, border-color .15s;display:flex;align-items:center;gap:4px;" onmouseover="this.style.background='var(--bg)';this.style.borderColor='var(--text-dim)'" onmouseout="this.style.background='transparent';this.style.borderColor='var(--border)'">Siguiente ›</button>` : ''}
           </div>
         </div>

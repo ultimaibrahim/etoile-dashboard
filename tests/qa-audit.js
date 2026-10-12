@@ -175,7 +175,10 @@ assert(compareJs.includes('withText = rv.filter(r => r.text && r.text.trim())') 
 // 11. Verificación de Luxury DataViz & Óptica Visual
 const cssFile = fs.readFileSync(path.join(rootDir, 'css/styles.css'), 'utf8');
 assert(cssFile.includes('--dv-oro:') && cssFile.includes('--dv-sage:'), 'styles.css contiene tokens de paleta DataViz de lujo (--dv-oro, --dv-sage)');
-assert(cssFile.includes('--text-dim:     #8E9D93;'), 'styles.css eleva contraste de textos secundarios a ratio WCAG AAA (#8E9D93)');
+assert(cssFile.includes('--text-dim:     #68625C;') && cssFile.includes('--text-dim:     #9AA59D;'), 'styles.css: textos secundarios con contraste WCAG AA (claro #68625C 5.3:1, oscuro #9AA59D 6.4:1)');
+assert(['--oro-ink', '--sage-ink', '--verde-ink', '--alerta-ink', '--ok-ink', '--border-control', '--focus'].every(v => cssFile.includes(v + ':')), 'styles.css define las tintas de texto, el borde de controles y el foco (sistema de color 2026-10)');
+assert(!/(^|[^-a-z])color:\s*var\(--(oro|sage)\)/.test(cssFile), 'styles.css no usa el oro ni el sage de marca como color de texto (contraste 2.6:1): usar --oro-ink / --sage-ink');
+assert(!/:focus-visible\{outline:none;\}/.test(cssFile), 'el foco por teclado es visible (WCAG 2.4.7)');
 assert(cssFile.includes('.bayes-uncertainty-bar'), 'styles.css contiene micro-indicador de incertidumbre bayesiana');
 
 assert(!/border-(left|right|top)\s*:\s*[2-9]px/.test(cssFile), 'styles.css no usa acentos de borde de un solo lado (>= 2px) en tarjetas');

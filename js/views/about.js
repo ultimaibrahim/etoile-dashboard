@@ -306,7 +306,7 @@ const AboutView = {
     Charts.destroyAll();
 
     const pill = (label) =>
-      `<span style="display:inline-block;padding:4px 12px;border-radius:20px;background:rgba(61,90,71,0.1);color:var(--verde);font-size:12px;font-weight:600;letter-spacing:.04em;border:1px solid rgba(61,90,71,0.18);">${label}</span>`;
+      `<span style="display:inline-block;padding:4px 12px;border-radius:20px;background:rgba(61,90,71,0.1);color:var(--verde-ink);font-size:12px;font-weight:600;letter-spacing:.04em;border:1px solid rgba(61,90,71,0.18);">${label}</span>`;
 
     document.getElementById('app').innerHTML = `
       ${buildTopbar()}
@@ -316,10 +316,10 @@ const AboutView = {
         <div class="hero-inner">
           <div class="hero-left">
             <div class="hero-label-row">
-              <span class="eyebrow" style="color:rgba(245,239,230,.55);">Acerca de este portal</span>
+              <span class="eyebrow" style="color:rgba(245,239,230,.8);">Acerca de este portal</span>
             </div>
             <h1 style="font-family:var(--serif);font-size:clamp(28px,6vw,48px);color:#FAF5EB;line-height:1.1;margin-bottom:14px;">
-              Dashboard de <span style="font-style:italic;color:var(--sage);">Reseñas</span>
+              Dashboard de <span style="font-style:italic;color:var(--sage-ink);">Reseñas</span>
             </h1>
             <p style="color:rgba(245,239,230,.75);font-size:15px;line-height:1.6;max-width:460px;margin-bottom:18px;">
               Herramienta operativa para el seguimiento y análisis de reseñas de Google Maps de las sucursales de La Crêpe Parisienne en la región ${getRegionName(activeRegion)}.
@@ -364,19 +364,19 @@ const AboutView = {
             ${CHANGELOG_EPOCAS.map(group => `
               <div class="epoch-group">
                 <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:8px;">
-                  <h3 style="font-family:var(--serif);font-size:22px;color:var(--verde);font-weight:700;margin:0;">${group.name}</h3>
+                  <h3 style="font-family:var(--serif);font-size:22px;color:var(--verde-ink);font-weight:700;margin:0;">${group.name}</h3>
                 </div>
                 <div style="font-size:14px;color:var(--text-muted);line-height:1.5;margin-bottom:18px;">${group.description}</div>
                 <div style="display:flex;flex-direction:column;gap:16px;padding-left:8px;">
                   ${group.versions.map((entry, vIdx) => `
                     <div class="chart-card spotlight-card" style="border: 1px solid ${(group.name === 'Altair' && vIdx === 0) ? 'rgba(122,158,138,0.4)' : 'var(--border)'};">
                       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px;">
-                        <span style="font-family:var(--mono);font-weight:700;font-size:14px;color:${(group.name === 'Altair' && vIdx === 0) ? 'var(--verde)' : 'var(--text-muted)'};">${entry.v}</span>
+                        <span style="font-family:var(--mono);font-weight:700;font-size:14px;color:${(group.name === 'Altair' && vIdx === 0) ? 'var(--verde-ink)' : 'var(--text-muted)'};">${entry.v}</span>
                         <span style="font-size:11px;color:var(--text-muted);letter-spacing:.06em;">${entry.date}</span>
-                        ${(group.name === 'Altair' && vIdx === 0) ? '<span style="font-size:10px;background:rgba(61,90,71,0.12);color:var(--verde);padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:.08em;">ACTUAL</span>' : ''}
+                        ${(group.name === 'Altair' && vIdx === 0) ? '<span style="font-size:10px;background:rgba(61,90,71,0.12);color:var(--verde-ink);padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:.08em;">ACTUAL</span>' : ''}
                       </div>
                       <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;">
-                        ${entry.items.map(item => `<li style="font-size:13px;color:var(--text);padding-left:18px;position:relative;line-height:1.5;"><span style="position:absolute;left:0;color:var(--sage);">›</span>${item}</li>`).join('')}
+                        ${entry.items.map(item => `<li style="font-size:13px;color:var(--text);padding-left:18px;position:relative;line-height:1.5;"><span style="position:absolute;left:0;color:var(--sage-ink);">›</span>${item}</li>`).join('')}
                       </ul>
                     </div>`).join('')}
                 </div>
@@ -526,7 +526,7 @@ const AboutView = {
       <section class="section r">
         <div style="border-top:1px solid var(--border);padding-top:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
           <div style="display:flex;align-items:center;gap:14px;">
-            <div style="width:40px;height:40px;background:rgba(61,90,71,0.1);color:var(--verde);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:15px;flex-shrink:0;border:1px solid rgba(61,90,71,0.2);">IG</div>
+            <div style="width:40px;height:40px;background:rgba(61,90,71,0.1);color:var(--verde-ink);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:15px;flex-shrink:0;border:1px solid rgba(61,90,71,0.2);">IG</div>
             <div>
               <div style="font-size:14px;font-weight:600;color:var(--text);">Ibrahim García</div>
               <div style="font-size:12px;color:var(--text-muted);">Product Owner · Dashboard de Reseñas LCP GDL</div>

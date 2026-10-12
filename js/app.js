@@ -368,9 +368,9 @@ function initCookieBanner() {
   banner.innerHTML = `
     <div class="cookie-banner-content">
       <div class="cookie-banner-text">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--oro); flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--oro-ink); flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
         <span>
-          Utilizamos cookies esenciales y almacenamiento local para mantener tu sesión activa y guardar tus preferencias. Consulta nuestro <a href="#/privacidad" style="text-decoration: underline; color: var(--oro); font-weight: 700;">Aviso de Privacidad</a> para más detalles.
+          Utilizamos cookies esenciales y almacenamiento local para mantener tu sesión activa y guardar tus preferencias. Consulta nuestro <a href="#/privacidad" style="text-decoration: underline; color: var(--oro-ink); font-weight: 700;">Aviso de Privacidad</a> para más detalles.
         </span>
       </div>
       <div class="cookie-banner-actions">

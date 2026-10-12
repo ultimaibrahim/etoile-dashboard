@@ -486,7 +486,7 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
     const role = AppAuth.getUserRole();
     if (['corporate', 'admin', 'director', 'regional', 'zonal'].includes(role)) {
       backToSelectBtn = `
-        <a href="#/select-region" class="topbar-link-regions" title="Volver a Selección de Región" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 10px; background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.18); color: var(--oro); text-decoration: none; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-right: 8px;">
+        <a href="#/select-region" class="topbar-link-regions" title="Volver a Selección de Región" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 10px; background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.18); color: var(--oro-ink); text-decoration: none; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; margin-right: 8px;">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
           <span>Regiones</span>
         </a>
@@ -965,10 +965,10 @@ function showConcludedMonthModal(year, month) {
               <div class="proactive-alert-card optimal" style="margin:0; padding:16px;">
                 <div class="pac-header">
                   <div class="pac-title-wrap">
-                    <span class="pac-icon" style="color: var(--verde);">${svgIcon('starFilled')}</span>
+                    <span class="pac-icon" style="color: var(--verde-ink);">${svgIcon('starFilled')}</span>
                     <span class="pac-branch">${sucursalLider.nombre}</span>
                   </div>
-                  <span class="pac-tag" style="background: rgba(61, 90, 71, 0.1); color: var(--verde); font-size: 9px; font-weight: 700;">Líder</span>
+                  <span class="pac-tag" style="background: rgba(61, 90, 71, 0.1); color: var(--verde-ink); font-size: 9px; font-weight: 700;">Líder</span>
                 </div>
                 <p class="pac-desc" style="font-size: 12px; margin-top: 8px; color:var(--text);">
                   Promedio de <strong>${sucursalLider.score.toFixed(2)} ★</strong> en ${sucursalLider.count} opiniones. Máximo desempeño regional del periodo.
@@ -993,10 +993,10 @@ function showConcludedMonthModal(year, month) {
               <div class="proactive-alert-card optimal" style="margin:0; padding:16px;">
                 <div class="pac-header">
                   <div class="pac-title-wrap">
-                    <span class="pac-icon" style="color: var(--verde);">${svgIcon('check')}</span>
+                    <span class="pac-icon" style="color: var(--verde-ink);">${svgIcon('check')}</span>
                     <span class="pac-branch">Cumplimiento Regional</span>
                   </div>
-                  <span class="pac-tag" style="background: rgba(61, 90, 71, 0.1); color: var(--verde); font-size: 9px; font-weight: 700;">100% Ok</span>
+                  <span class="pac-tag" style="background: rgba(61, 90, 71, 0.1); color: var(--verde-ink); font-size: 9px; font-weight: 700;">100% Ok</span>
                 </div>
                 <p class="pac-desc" style="font-size: 12px; margin-top: 8px; color:var(--text);">
                   ¡Felicidades! Todas las sucursales activas superaron el mínimo regional de <strong>${KpiMeta.ratingMinimo.toFixed(2)} ★</strong> en este periodo.
@@ -1440,7 +1440,7 @@ const LcpWalkthrough = {
         <p style="font-size:13.5px; color:var(--text); line-height:1.6; margin-bottom:20px;">
           Tu rol de <strong>Gerente de Sucursal</strong> te permite supervisar la reputación de tu tienda y de tu región. En tu panel podrás medir el volumen de opiniones, la calidad de reseñas y dar seguimiento a alertas operativas.
         </p>
-        <div style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.18); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--oro); line-height:1.5; text-align:left;">
+        <div style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.18); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--oro-ink); line-height:1.5; text-align:left;">
           <strong>Sucursal asignada:</strong> Estás asignado a <strong>${sucursalName || 'tu sucursal'}</strong>. Verás tu tienda y también el resto de las sucursales de tu región para comparar tu desempeño.
         </div>
       `;
@@ -1449,7 +1449,7 @@ const LcpWalkthrough = {
         <p style="font-size:13.5px; color:var(--text); line-height:1.6; margin-bottom:20px;">
           Tu rol de <strong>Gerente Zonal</strong> te permite auditar las sucursales de tu zona de control. Puedes navegar y alternar entre regiones desde el selector del menú superior para comparar desempeños de distintas zonas.
         </p>
-        <div style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.18); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--oro); line-height:1.5; text-align:left;">
+        <div style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.18); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--oro-ink); line-height:1.5; text-align:left;">
           <strong>Tip de navegación:</strong> Puedes ver las métricas de otras regiones mediante los controles del menú superior de la pantalla.
         </div>
       `;
@@ -1460,7 +1460,7 @@ const LcpWalkthrough = {
         <p style="font-size:13.5px; color:var(--text); line-height:1.6; margin-bottom:20px;">
           Tu rol de <strong>${roleLabel}</strong> te otorga acceso al <strong>Dashboard Especial de Marca (étoile Corporate)</strong>. Desde ahí puedes analizar el rendimiento consolidado nacional de todas las regiones, Rankings de complejidad y alertas de incidencias.
         </p>
-        <div style="background:rgba(61,138,95,0.06); border:1px solid rgba(61,138,95,0.15); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--ok); line-height:1.5; text-align:left;">
+        <div style="background:rgba(61,138,95,0.06); border:1px solid rgba(61,138,95,0.15); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--ok-ink); line-height:1.5; text-align:left;">
           <strong>Auditoría global:</strong> Usa los reportes consolidados para reportar focos rojos y coordinar soluciones con los gerentes regionales.
         </div>
       `;
@@ -1468,7 +1468,7 @@ const LcpWalkthrough = {
 
     overlay.innerHTML = `
       <div class="onboarding-welcome-box">
-        <div style="font-family:var(--giaza); font-size:48px; color:var(--oro); margin-bottom:10px; line-height:1;">étoile</div>
+        <div style="font-family:var(--giaza); font-size:48px; color:var(--oro-ink); margin-bottom:10px; line-height:1;">étoile</div>
         <h2 style="font-family:var(--sans); font-size:18px; font-weight:900; text-stretch:condensed; color:var(--text); text-transform:uppercase; margin-bottom:14px; letter-spacing:0.04em;">
           ¡Bienvenido, ${userName}!
         </h2>

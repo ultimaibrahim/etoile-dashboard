@@ -122,7 +122,7 @@ const SelectRegionView = {
           font-family: var(--mono);
           font-size: 11px;
           font-weight: 700;
-          color: var(--oro);
+          color: var(--oro-ink);
           background: rgba(184, 144, 47, 0.12);
           border: 1px solid rgba(184, 144, 47, 0.25);
           padding: 3px 10px;
@@ -257,7 +257,7 @@ const SelectRegionView = {
         }
         .srv-stepper-btn:hover {
           background: var(--surface);
-          color: var(--oro);
+          color: var(--oro-ink);
           box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
         }
         .srv-stepper-btn:active {
@@ -371,7 +371,7 @@ const SelectRegionView = {
           right: -8px;
           width: 72px;
           height: 72px;
-          color: var(--oro);
+          color: var(--oro-ink);
           opacity: 0.05;
           pointer-events: none;
           transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -513,7 +513,7 @@ const SelectRegionView = {
           width: 60px;
           height: 60px;
           opacity: 0.08;
-          color: var(--verde);
+          color: var(--verde-ink);
           pointer-events: none;
           transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
         }
@@ -522,7 +522,7 @@ const SelectRegionView = {
           opacity: 0.15;
         }
         [data-theme="dark"] .srv-card-map-overlay {
-          color: var(--oro);
+          color: var(--oro-ink);
           opacity: 0.06;
         }
         [data-theme="dark"] .srv-card:hover .srv-card-map-overlay {
@@ -644,7 +644,7 @@ const SelectRegionView = {
           padding: 0;
         }
         .rank-shift.new {
-          color: var(--oro);
+          color: var(--oro-ink);
           background: rgba(184, 144, 47, 0.08);
           font-size: 9px;
         }
@@ -713,7 +713,7 @@ const SelectRegionView = {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          color: var(--oro);
+          color: var(--oro-ink);
         }
         .brand-shortcut-title {
           font-family: var(--serif);
@@ -1420,7 +1420,7 @@ const SelectRegionView = {
       console.error('Error al cargar ratings y rankings:', e);
       const tablePlaceholder = document.getElementById('srv-ranking-table-placeholder');
       if (tablePlaceholder) {
-        tablePlaceholder.innerHTML = `<div class="ranking-error" style="text-align:center;padding:40px;color:var(--alerta);background:rgba(178,58,43,0.06);border:1px solid rgba(178,58,43,0.2);border-radius:var(--radius);">Error al cargar datos desde Supabase. Reintente más tarde.</div>`;
+        tablePlaceholder.innerHTML = `<div class="ranking-error" style="text-align:center;padding:40px;color:var(--alerta-ink);background:rgba(178,58,43,0.06);border:1px solid rgba(178,58,43,0.2);border-radius:var(--radius);">Error al cargar datos desde Supabase. Reintente más tarde.</div>`;
       }
     } finally {
       clearTimeout(skeletonTimeout);

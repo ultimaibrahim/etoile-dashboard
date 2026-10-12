@@ -14,11 +14,12 @@ const EC = {
     const d = this.isDark();
     return {
       dark: d,
-      axisMono: d ? '#8A9E94' : '#8A877C',
-      axisSans: d ? '#9DA89F' : '#6B6960',
+      axisMono: d ? '#9AA59D' : '#68625C',
+      axisSans: d ? '#B3BDB5' : '#5A554F',
       grid: d ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
       gridSoft: d ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)',
-      goalText: d ? '#E5B842' : '#B8902F',
+      goalText: d ? '#DFC176' : '#826419',
+      goalLine: d ? '#9AA59D' : '#68625C',   // la meta es referencia, no alerta: gris punteado
       ptBorder: d ? '#1C2220' : '#fff'
     };
   },
@@ -30,6 +31,15 @@ const EC = {
 
   esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); },
   isMobile() { return window.innerWidth < 500; },
+
+  /** Escala ordinal de calificación para el heatmap (claro/oscuro), con texto de celda de contraste ≥ 4.5:1.
+   *  Probada en escala de grises y con simulación de deuteranopía/protanopía: los tramos 2 y 3 son los más cercanos, por eso la celda lleva siempre su número (y ▼ bajo 4.00). */
+  ratingScale(dark = this.isDark()) {
+    return dark
+      ? [{ id: 'meta', fill: '#7FBB93', ink: '#10140F' }, { id: 'cerca', fill: '#4E6B59', ink: '#F2EEE4' }, { id: 'riesgo', fill: '#5E4A14', ink: '#F2EEE4' }, { id: 'critico', fill: '#DF6862', ink: '#10140F' }]
+      : [{ id: 'meta', fill: '#3D5A47', ink: '#FFFFFF' }, { id: 'cerca', fill: '#A8C5B4', ink: '#1E1A15' }, { id: 'riesgo', fill: '#F0D58C', ink: '#1E1A15' }, { id: 'critico', fill: '#E0524A', ink: '#1E1A15' }];
+  },
+  ratingTier(v, meta) { return v >= meta ? 0 : v >= 4.4 ? 1 : v >= 4.0 ? 2 : 3; },
 
   metaRating() { return typeof KpiMeta !== 'undefined' ? KpiMeta.ratingMinimo : 4.60; },
   metaVolumen() { return typeof KpiMeta !== 'undefined' ? KpiMeta.volumenMeta : 15; },
@@ -167,10 +177,10 @@ const EC = {
       // Mejor y peor punto con su valor: el hallazgo queda señalado en la propia gráfica
       markPoint: marks ? {
         symbol: 'pin', symbolSize: 40, animationDelay: 600, silent: true,
-        label: { color: '#fff', fontSize: 10, fontWeight: 700, fontFamily: this.sans, formatter: pt => Number(pt.value).toFixed(2) },
+        label: { color: this.isDark() ? '#10140F' : '#fff', fontSize: 10, fontWeight: 700, fontFamily: this.sans, formatter: pt => Number(pt.value).toFixed(2) },
         data: [
-          { type: 'max', name: 'Mejor', itemStyle: { color: '#3D7A55' } },
-          { type: 'min', name: 'Más bajo', itemStyle: { color: '#c62828' } }
+          { type: 'max', name: 'Mejor', itemStyle: { color: this.isDark() ? '#7FBB93' : '#3D5A47' } },
+          { type: 'min', name: 'Más bajo', itemStyle: { color: this.isDark() ? '#E66E68' : '#BE2425' } }
         ]
       } : undefined
     };
@@ -228,9 +238,9 @@ const EtoileCharts = {
     const p = EC.pal();
     const d = p.dark;
     const defs = [
-      { name: 'Negativas (1-2★)', data: warnData, color: d ? 'rgba(244,144,144,0.85)' : 'rgba(198,40,40,0.85)' },
-      { name: 'Neutrales (3★)', data: neutralData, color: d ? 'rgba(244,201,130,0.85)' : 'rgba(201,125,16,0.85)' },
-      { name: 'Positivas (4-5★)', data: okData, color: d ? 'rgba(122,158,138,0.75)' : 'rgba(61,90,71,0.75)' }
+      { name: 'Negativas (1-2★)', data: warnData, color: d ? '#E66E68' : '#E0524A' },
+      { name: 'Neutrales (3★)', data: neutralData, color: d ? '#67635C' : '#C3BDB5' },
+      { name: 'Positivas (4-5★)', data: okData, color: d ? '#7FBB93' : '#3D5A47' }
     ];
     const api = ChartWrapper.mount(el, {
       state: labels.length ? 'ready' : 'empty',
@@ -376,7 +386,7 @@ const EtoileCharts = {
         }),
         series: [
           { type: 'line', data: [], silent: true, tooltip: { show: false }, markLine: { silent: true, symbol: 'none', animation: false, label: { show: false }, lineStyle: { color: p.grid, width: 1, type: 'solid' }, data: gridLines } },
-          EC.trendSeries({ data, color, border: p.ptBorder, clickable: !!onSelect, marks: data.filter(v => typeof v === 'number').length >= 4, goal: EC.goalLine('yAxis', meta, goalLabel, '#c97d10', 2, [5, 5], p, 'insideEndTop') })
+          EC.trendSeries({ data, color, border: p.ptBorder, clickable: !!onSelect, marks: data.filter(v => typeof v === 'number').length >= 4, goal: EC.goalLine('yAxis', meta, goalLabel, p.goalLine, 2, [5, 5], p, 'insideEndTop') })
         ]
       }
     });
@@ -399,7 +409,7 @@ const EtoileCharts = {
         series: [EC.trendSeries({
           data, color, border: p.dark ? '#151725' : '#fff', clickable: !!onSelect,
           marks: data.filter(v => typeof v === 'number').length >= 4,
-          goal: EC.goalLine('yAxis', meta, 'Meta 4.60', '#c97d10', 1.5, [5, 5], p, 'insideEndBottom')
+          goal: EC.goalLine('yAxis', meta, 'Meta 4.60', p.goalLine, 1.5, [5, 5], p, 'insideEndBottom')
         })]
       }
     });
@@ -572,13 +582,14 @@ const EtoileCharts = {
       if (!cnt) return;
       maxCount = Math.max(maxCount, cnt);
       const faint = metric === 'rating' && cnt < MIN_RELIABLE;
-      data.push({ value: [xi, yi, metric === 'rating' ? r.values[k] : cnt, cnt, r.values[k]], itemStyle: faint ? { opacity: 0.42 } : {} });
+      const tier = metric === 'rating' ? EC.ratingScale()[EC.ratingTier(r.values[k], meta)] : null;
+      data.push({ value: [xi, yi, metric === 'rating' ? r.values[k] : cnt, cnt, r.values[k]], itemStyle: faint ? { opacity: 0.5 } : {}, label: tier ? { color: tier.ink, textBorderWidth: 0 } : {} });
     }));
 
     const visualMap = metric === 'rating'
       ? { type: 'piecewise', show: false, dimension: 2, pieces: [
-          { gte: meta, color: '#3D7A55' }, { gte: 4.4, lt: meta, color: '#6FA27F' },
-          { gte: 4.0, lt: 4.4, color: '#C98A12' }, { lt: 4.0, color: '#C62828' }] }
+          { gte: meta, color: EC.ratingScale()[0].fill }, { gte: 4.4, lt: meta, color: EC.ratingScale()[1].fill },
+          { gte: 4.0, lt: 4.4, color: EC.ratingScale()[2].fill }, { lt: 4.0, color: EC.ratingScale()[3].fill }] }
       : { type: 'continuous', show: false, dimension: 2, min: 0, max: maxCount, inRange: { color: ['#CFE0D5', '#7A9E8A', '#2F4A3A'] } };
 
     const api = ChartWrapper.mount(el, {
@@ -593,7 +604,7 @@ const EtoileCharts = {
           const rowsHtml = [{ color: 'var(--oro)', text: `Calificación: ${Number(avg).toFixed(2)}★` }, { color: 'var(--oro)', text: `Reseñas: ${cnt}${cnt < MIN_RELIABLE ? ' (pocas: ojo con la muestra)' : ''}` }];
           if (k > 0 && r.counts[k - 1] > 0) {
             const d = avg - r.values[k - 1];
-            rowsHtml.push({ color: d >= 0 ? '#3D7A55' : '#C62828', text: `Frente a ${mx.months[k - 1].label}: ${d >= 0 ? '+' : ''}${d.toFixed(2)}★` });
+            rowsHtml.push({ color: d >= 0 ? (p.dark ? '#7FBB93' : '#3D5A47') : (p.dark ? '#DF6862' : '#E0524A'), text: `Frente a ${mx.months[k - 1].label}: ${d >= 0 ? '+' : ''}${d.toFixed(2)}★` });
           }
           return EC.card(`${r.nombre} · ${mx.months[k].full}`, rowsHtml, onSelect ? 'Clic: ver estas reseñas' : '');
         }, 'item'),
@@ -603,8 +614,8 @@ const EtoileCharts = {
         series: [{
           type: 'heatmap', data, cursor: onSelect ? 'pointer' : 'default',
           label: {
-            show: rich, fontSize: 10, fontFamily: EC.mono, color: '#fff', textBorderColor: 'rgba(0,0,0,.35)', textBorderWidth: 2,
-            formatter: e => (metric === 'rating' ? Number(e.value[2]).toFixed(1) : e.value[2])
+            show: true, fontSize: rich ? 10 : 11, fontWeight: 700, fontFamily: EC.mono, color: p.dark ? '#F2EEE4' : '#1E1A15',
+            formatter: e => (metric === 'rating' ? (e.value[2] < 4 ? '▼' : '') + Number(e.value[2]).toFixed(1) : e.value[2])
           },
           itemStyle: { borderColor: p.dark ? '#1C2220' : '#FFFCF7', borderWidth: 2, borderRadius: 5 },
           emphasis: { itemStyle: { borderColor: EC.oro, borderWidth: 2, shadowBlur: 10, shadowColor: 'rgba(0,0,0,.35)' } }
@@ -621,12 +632,13 @@ const EtoileCharts = {
     const meta = EC.metaRating();
     const nums = a.concat(b).filter(v => typeof v === 'number');
     const lo = nums.length ? Math.max(1, Math.floor((Math.min(...nums) - 0.1) * 5) / 5) : 4;
-    const ser = (name, data, color) => ({
-      name, type: 'line', data, smooth: 0.25, connectNulls: false, symbol: 'circle', symbolSize: 7, showSymbol: true,
-      lineStyle: { width: 3, color }, itemStyle: { color, borderColor: p.ptBorder, borderWidth: 2 }, emphasis: { focus: 'series', scale: 1.4 }
+    // A y B se distinguen por color Y por forma (B discontinua con rombos): con daltonismo o en escala de grises el color solo no basta
+    const ser = (name, data, color, isB) => ({
+      name, type: 'line', data, smooth: 0.25, connectNulls: false, symbol: isB ? 'diamond' : 'circle', symbolSize: isB ? 9 : 7, showSymbol: true,
+      lineStyle: { width: 3, color, type: isB ? 'dashed' : 'solid' }, itemStyle: { color, borderColor: p.ptBorder, borderWidth: 2 }, emphasis: { focus: 'series', scale: 1.4 }
     });
     const sa = ser(opts.nameA, a, opts.colorA);
-    sa.markLine = { silent: true, symbol: 'none', animation: false, label: { formatter: 'Meta ' + meta.toFixed(2), color: '#c97d10', fontSize: 10, position: 'insideEndTop' }, lineStyle: { color: '#c97d10', type: 'dashed', width: 1 }, data: [{ yAxis: meta }] };
+    sa.markLine = { silent: true, symbol: 'none', animation: false, label: { formatter: 'Meta ' + meta.toFixed(2), color: p.goalText, fontSize: 10, position: 'insideEndTop' }, lineStyle: { color: p.goalLine, type: 'dashed', width: 1 }, data: [{ yAxis: meta }] };
     const api = ChartWrapper.mount(el, {
       state: nums.length ? 'ready' : 'empty',
       option: {
@@ -635,7 +647,7 @@ const EtoileCharts = {
         tooltip: EC.tooltip(items => EC.card(items[0].axisValueLabel, items.filter(i => typeof i.value === 'number').map(i => ({ color: i.color, text: ` ${EC.esc(i.seriesName)}: ${Number(i.value).toFixed(2)}★` })), onSelect ? 'Clic: ver este mes' : '')),
         xAxis: EC.catAxis(labels, p, { boundaryGap: false, axisLabel: EC.xLabels(el, labels, p, EC.isMobile()) }),
         yAxis: EC.valAxis(p, { min: lo, max: 5, interval: 0.2, axisLabel: { fontSize: 10, fontFamily: EC.mono, color: p.axisMono, formatter: v => v.toFixed(1) } }),
-        series: [sa, ser(opts.nameB, b, opts.colorB)]
+        series: [sa, ser(opts.nameB, b, opts.colorB, true)]
       }
     });
     EC.columnClick(api, labels.length, onSelect, () => true);

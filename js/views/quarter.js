@@ -186,7 +186,7 @@ const QuarterView = {
                 ${bestBlock}
               </div>
               ${worstBlock ? `<div>
-                <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--alerta);font-weight:700;margin-bottom:8px;">Peor reseña de ${MONTH_NAMES[m - 1]}</div>
+                <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--alerta-ink);font-weight:700;margin-bottom:8px;">Peor reseña de ${MONTH_NAMES[m - 1]}</div>
                 ${worstBlock}
               </div>` : ''}
             </div>
@@ -200,7 +200,7 @@ const QuarterView = {
         <div class="hero-inner">
           <div class="hero-left">
             <div class="hero-label-row">
-              <span class="eyebrow" style="color:rgba(245,239,230,.55);">Comparativa Trimestral</span>
+              <span class="eyebrow" style="color:rgba(245,239,230,.8);">Comparativa Trimestral</span>
             </div>
             <h1 class="display" style="font-size:clamp(48px,10vw,96px);color:#FAF5EB;line-height:1;">Q${quarter} ${year}</h1>
             <div style="display:flex;gap:18px;margin-top:18px;flex-wrap:wrap;">

@@ -188,7 +188,7 @@ const BrandView = {
           <div class="brand-kpi-card">
             <span class="brand-kpi-label">Rating Global</span>
             <span class="brand-kpi-val num gold">${avgRating ? avgRating.toFixed(2) : '—'}★</span>
-            <span class="brand-kpi-sub" style="color:${ratingDelta >= 0 ? 'var(--ok)' : 'var(--alerta)'}">${ratingDeltaStr}</span>
+            <span class="brand-kpi-sub" style="color:${ratingDelta >= 0 ? 'var(--ok)' : 'var(--alerta-ink)'}">${ratingDeltaStr}</span>
           </div>
           
           <div class="brand-kpi-card brand-interactive-card" onclick="BrandView.openAllReviewsModal()" title="Hacer clic para explorar opiniones">
@@ -200,7 +200,7 @@ const BrandView = {
           <div class="brand-kpi-card brand-interactive-card alert-card" onclick="BrandView.openAlertsModal(true)" title="Hacer clic para auditar alertas críticas">
             <span class="brand-kpi-label">Alertas Activas</span>
             <span class="brand-kpi-val num ${activeAlerts > 0 ? 'red' : 'green'}">${activeAlerts}</span>
-            <span class="brand-kpi-sub" style="color:${alertsDelta <= 0 ? 'var(--ok)' : 'var(--alerta)'}">${alertsDeltaStr} (clic para auditar)</span>
+            <span class="brand-kpi-sub" style="color:${alertsDelta <= 0 ? 'var(--ok)' : 'var(--alerta-ink)'}">${alertsDeltaStr} (clic para auditar)</span>
           </div>
           
           <div class="brand-kpi-card">
@@ -254,7 +254,7 @@ const BrandView = {
                 const displayScore = scoreVal > 0 ? `${scoreVal.toFixed(2)} pts` : '—';
                 const rawRat = stats.avgRating;
                 const deltaStr = stats.reviewCount > 0 && stats.delta !== 0
-                  ? `<span style="font-size:10px; color:${stats.delta >= 0 ? 'var(--ok)' : 'var(--alerta)'}; margin-left:4px;">(${stats.delta >= 0 ? '+' : ''}${stats.delta.toFixed(2)})</span>`
+                  ? `<span style="font-size:10px; color:${stats.delta >= 0 ? 'var(--ok)' : 'var(--alerta-ink)'}; margin-left:4px;">(${stats.delta >= 0 ? '+' : ''}${stats.delta.toFixed(2)})</span>`
                   : '';
                 return `
                   <tr class="brand-row-interactive" onclick="BrandView.openRegionModal('${id}')" title="Clic para auditar opiniones de esta región">
@@ -313,8 +313,8 @@ const BrandView = {
                   <span class="brand-branch-region">${getRegionName(rf.region)}</span>
                 </div>
                 <div class="brand-branch-stat">
-                  <span class="brand-branch-rating" style="color:var(--alerta);">${rf.avg.toFixed(2)}★</span>
-                  <span class="brand-branch-reviews" style="color:var(--alerta); font-weight:700;">${rf.alerts} quejas</span>
+                  <span class="brand-branch-rating" style="color:var(--alerta-ink);">${rf.avg.toFixed(2)}★</span>
+                  <span class="brand-branch-reviews" style="color:var(--alerta-ink); font-weight:700;">${rf.alerts} quejas</span>
                 </div>
               </div>
             `).join('') : `
@@ -413,17 +413,17 @@ const BrandView = {
           <div class="brand-alert-categories-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
             <div class="brand-kpi-card" style="min-height: 120px;">
               <span class="brand-kpi-label">Servicio y Atención</span>
-              <span class="brand-kpi-val num red" style="color: var(--alerta); font-weight: 700; margin: 8px 0;">${serviceAlerts}</span>
+              <span class="brand-kpi-val num red" style="color: var(--alerta-ink); font-weight: 700; margin: 8px 0;">${serviceAlerts}</span>
               <span class="brand-kpi-sub">quejas detectadas este mes</span>
             </div>
             <div class="brand-kpi-card" style="min-height: 120px;">
               <span class="brand-kpi-label">Producto y Calidad</span>
-              <span class="brand-kpi-val num red" style="color: var(--alerta); font-weight: 700; margin: 8px 0;">${qualityAlerts}</span>
+              <span class="brand-kpi-val num red" style="color: var(--alerta-ink); font-weight: 700; margin: 8px 0;">${qualityAlerts}</span>
               <span class="brand-kpi-sub">quejas detectadas este mes</span>
             </div>
             <div class="brand-kpi-card" style="min-height: 120px;">
               <span class="brand-kpi-label">Precio y Porción</span>
-              <span class="brand-kpi-val num red" style="color: var(--alerta); font-weight: 700; margin: 8px 0;">${valueAlerts}</span>
+              <span class="brand-kpi-val num red" style="color: var(--alerta-ink); font-weight: 700; margin: 8px 0;">${valueAlerts}</span>
               <span class="brand-kpi-sub">quejas detectadas este mes</span>
             </div>
           </div>
@@ -432,7 +432,7 @@ const BrandView = {
           <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: 24px; padding: 24px; box-sizing: border-box; backdrop-filter: blur(16px); box-shadow: var(--sombra-card);">
             <div style="font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
               <span>Quejas Críticas sin Responder (Nacional)</span>
-              <span style="font-size: 12px; background: rgba(235,94,85,0.12); color: var(--alerta); padding: 4px 8px; border-radius: 8px; font-family: var(--mono); font-weight: 700;">${unrepliedList.length} pendientes</span>
+              <span style="font-size: 12px; background: rgba(235,94,85,0.12); color: var(--alerta-ink); padding: 4px 8px; border-radius: 8px; font-family: var(--mono); font-weight: 700;">${unrepliedList.length} pendientes</span>
             </div>
             
             <div class="brand-modal-reviews-list" style="max-height: 500px; overflow-y: auto; padding-right: 8px;">
@@ -706,7 +706,7 @@ const BrandView = {
           <span>${getRegionName(b.region)}</span>
         </div>
         <div class="def-audit-card-stat">
-          <span class="def-stat-rating" style="color:var(--alerta);">${b.count} pendientes</span>
+          <span class="def-stat-rating" style="color:var(--alerta-ink);">${b.count} pendientes</span>
           <span class="def-stat-sub">de ${b.totalAlerts} quejas</span>
         </div>
       </div>
@@ -796,7 +796,7 @@ const BrandView = {
             <div class="def-branch-header-stats" style="display:flex; gap:12px; margin-bottom:20px;">
               <div style="background:var(--surface); border:1px solid var(--border); padding:10px 16px; border-radius:12px; flex:1; text-align:center;">
                 <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Calificación</div>
-                <div style="font-size:20px; font-weight:700; color:${avg < THRESHOLDS.CRITICO ? 'var(--alerta)' : avg < THRESHOLDS.BAJO ? 'var(--oro)' : 'var(--verde)'};">${avg.toFixed(2)}★</div>
+                <div style="font-size:20px; font-weight:700; color:${avg < THRESHOLDS.CRITICO ? 'var(--alerta-ink)' : avg < THRESHOLDS.BAJO ? 'var(--oro)' : 'var(--verde-ink)'};">${avg.toFixed(2)}★</div>
               </div>
               <div style="background:var(--surface); border:1px solid var(--border); padding:10px 16px; border-radius:12px; flex:1; text-align:center;">
                 <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Reseñas</div>
@@ -804,12 +804,12 @@ const BrandView = {
               </div>
               <div style="background:var(--surface); border:1px solid var(--border); padding:10px 16px; border-radius:12px; flex:1; text-align:center;">
                 <div style="font-size:10px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Sin Responder</div>
-                <div style="font-size:20px; font-weight:700; color:var(--alerta); font-family:var(--mono);">${unreplied}</div>
+                <div style="font-size:20px; font-weight:700; color:var(--alerta-ink); font-family:var(--mono);">${unreplied}</div>
               </div>
             </div>
 
             <div class="def-reasons-box" style="background:var(--alerta-bg); border:1px solid rgba(178,58,43,0.18); border-radius:16px; padding:16px; margin-bottom:24px;">
-              <div style="font-weight:700; font-size:12px; text-transform:uppercase; color:var(--alerta); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+              <div style="font-weight:700; font-size:12px; text-transform:uppercase; color:var(--alerta-ink); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                 Motivos de Alerta
               </div>
@@ -865,7 +865,7 @@ const BrandView = {
             
             <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
               <div style="display: flex; gap: 12px; background: var(--surface); border: 1px solid var(--border); padding: 14px; border-radius: 12px;">
-                <div style="font-size: 20px; color: var(--oro); font-weight: 800; line-height:1;">1.</div>
+                <div style="font-size: 20px; color: var(--oro-ink); font-weight: 800; line-height:1;">1.</div>
                 <div>
                   <strong style="color: var(--text); font-size:13.5px;">Factor de Sucursales (Tamaño):</strong>
                   <div style="font-size: 12.5px; color: var(--text-dim); margin-top: 2px;">
@@ -875,7 +875,7 @@ const BrandView = {
               </div>
 
               <div style="display: flex; gap: 12px; background: var(--surface); border: 1px solid var(--border); padding: 14px; border-radius: 12px;">
-                <div style="font-size: 20px; color: var(--oro); font-weight: 800; line-height:1;">2.</div>
+                <div style="font-size: 20px; color: var(--oro-ink); font-weight: 800; line-height:1;">2.</div>
                 <div>
                   <strong style="color: var(--text); font-size:13.5px;">Factor de Exposición (Volumen):</strong>
                   <div style="font-size: 12.5px; color: var(--text-dim); margin-top: 2px;">
@@ -885,7 +885,7 @@ const BrandView = {
               </div>
             </div>
 
-            <div style="background: rgba(212,175,55,0.06); border: 1px solid rgba(212,175,55,0.18); border-radius: 14px; padding: 16px; font-family: var(--mono); font-size: 12px; text-align: center; color: var(--oro);">
+            <div style="background: rgba(212,175,55,0.06); border: 1px solid rgba(212,175,55,0.18); border-radius: 14px; padding: 16px; font-family: var(--mono); font-size: 12px; text-align: center; color: var(--oro-ink);">
               Rendimiento Ajustado = Rating Bruto × (1 + Factor)
             </div>
           </div>
@@ -964,7 +964,7 @@ const BrandView = {
             <div style="display:flex; gap:12px; margin-bottom:20px;">
               <div style="background:var(--surface); border:1px solid var(--border); padding:10px 14px; border-radius:12px; flex:1; text-align:center;">
                 <div style="font-size:9px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Rating del Mes</div>
-                <div style="font-size:18px; font-weight:700; color:${avg < THRESHOLDS.CRITICO ? 'var(--alerta)' : avg < THRESHOLDS.BAJO ? 'var(--oro)' : 'var(--verde)'};">${avg > 0 ? avg.toFixed(2) + '★' : '—'}</div>
+                <div style="font-size:18px; font-weight:700; color:${avg < THRESHOLDS.CRITICO ? 'var(--alerta-ink)' : avg < THRESHOLDS.BAJO ? 'var(--oro)' : 'var(--verde-ink)'};">${avg > 0 ? avg.toFixed(2) + '★' : '—'}</div>
               </div>
               <div style="background:var(--surface); border:1px solid var(--border); padding:10px 14px; border-radius:12px; flex:1; text-align:center;">
                 <div style="font-size:9px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Volumen Total</div>
@@ -972,7 +972,7 @@ const BrandView = {
               </div>
               <div style="background:var(--surface); border:1px solid var(--border); padding:10px 14px; border-radius:12px; flex:1; text-align:center;">
                 <div style="font-size:9px; color:var(--text-dim); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Quejas Activas</div>
-                <div style="font-size:18px; font-weight:700; color:${alertsCount > 0 ? 'var(--alerta)' : 'var(--verde)'}; font-family:var(--mono);">${alertsCount}</div>
+                <div style="font-size:18px; font-weight:700; color:${alertsCount > 0 ? 'var(--alerta-ink)' : 'var(--verde-ink)'}; font-family:var(--mono);">${alertsCount}</div>
               </div>
             </div>
 
@@ -982,15 +982,15 @@ const BrandView = {
               <div style="display:flex; flex-direction:column; gap:8px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface); border:1px solid var(--border); padding:8px 12px; border-radius:10px;">
                   <span style="font-size:12.5px; font-weight:600; color:var(--text);"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--alerta); margin-right:8px;"></span>Servicio y Atención</span>
-                  <span style="font-family:var(--mono); font-size:12px; font-weight:700; color:${serviceCount > 0 ? 'var(--alerta)' : 'var(--text-muted)'}">${serviceCount} menciones</span>
+                  <span style="font-family:var(--mono); font-size:12px; font-weight:700; color:${serviceCount > 0 ? 'var(--alerta-ink)' : 'var(--text-muted)'}">${serviceCount} menciones</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface); border:1px solid var(--border); padding:8px 12px; border-radius:10px;">
                   <span style="font-size:12.5px; font-weight:600; color:var(--text);"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--alerta); margin-right:8px;"></span>Producto y Calidad</span>
-                  <span style="font-family:var(--mono); font-size:12px; font-weight:700; color:${qualityCount > 0 ? 'var(--alerta)' : 'var(--text-muted)'}">${qualityCount} menciones</span>
+                  <span style="font-family:var(--mono); font-size:12px; font-weight:700; color:${qualityCount > 0 ? 'var(--alerta-ink)' : 'var(--text-muted)'}">${qualityCount} menciones</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface); border:1px solid var(--border); padding:8px 12px; border-radius:10px;">
                   <span style="font-size:12.5px; font-weight:600; color:var(--text);"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--alerta); margin-right:8px;"></span>Precio y Porción</span>
-                  <span style="font-family:var(--mono); font-size:12px; font-weight:700; color:${valueCount > 0 ? 'var(--alerta)' : 'var(--text-muted)'}">${valueCount} menciones</span>
+                  <span style="font-family:var(--mono); font-size:12px; font-weight:700; color:${valueCount > 0 ? 'var(--alerta-ink)' : 'var(--text-muted)'}">${valueCount} menciones</span>
                 </div>
               </div>
             </div>
@@ -1099,7 +1099,7 @@ const BrandView = {
       }
 
       .brand-eyebrow {
-        color: var(--oro);
+        color: var(--oro-ink);
         font-weight: 700;
         letter-spacing: 0.1em;
         text-transform: uppercase;
@@ -1166,9 +1166,9 @@ const BrandView = {
       .brand-kpi-val.num {
         font-family: var(--mono);
       }
-      .brand-kpi-val.gold { color: var(--oro); }
-      .brand-kpi-val.red { color: var(--alerta); }
-      .brand-kpi-val.green { color: var(--verde); }
+      .brand-kpi-val.gold { color: var(--oro-ink); }
+      .brand-kpi-val.red { color: var(--alerta-ink); }
+      .brand-kpi-val.green { color: var(--verde-ink); }
       [data-theme="dark"] .brand-kpi-val.green { color: #A7DBB9; }
       .brand-kpi-sub {
         font-size: 11px;
@@ -1197,7 +1197,7 @@ const BrandView = {
         display: flex;
         align-items: center;
         gap: 8px;
-        color: var(--alerta);
+        color: var(--alerta-ink);
         font-weight: 700;
         font-size: 13px;
         text-transform: uppercase;
@@ -1209,7 +1209,7 @@ const BrandView = {
       .brand-audit-btn {
         background: rgba(178, 58, 43, 0.12);
         border: 1px solid rgba(178, 58, 43, 0.25);
-        color: var(--alerta);
+        color: var(--alerta-ink);
         padding: 8px 16px;
         border-radius: 12px;
         font-size: 12px;
@@ -1257,7 +1257,7 @@ const BrandView = {
       }
       .brand-info-badge {
         font-size: 11px;
-        color: var(--oro);
+        color: var(--oro-ink);
         background: rgba(212,175,55,0.08);
         border: 1px solid rgba(212,175,55,0.2);
         padding: 6px 12px;
@@ -1309,7 +1309,7 @@ const BrandView = {
       }
       .num { font-family: var(--mono); }
       .text-center { text-align: center; }
-      .text-green { color: var(--ok); font-weight: 600; }
+      .text-green { color: var(--ok-ink); font-weight: 600; }
       [data-theme="dark"] .text-green { color: #A7DBB9; }
       
       .brand-region-score-num {
@@ -1321,12 +1321,12 @@ const BrandView = {
       }
       .brand-region-score-num.gold-score {
         background: rgba(212,175,55,0.12);
-        color: var(--oro);
+        color: var(--oro-ink);
         border: 1px solid rgba(212,175,55,0.25);
       }
       .brand-region-score-num.green-score {
         background: var(--ok-bg);
-        color: var(--ok);
+        color: var(--ok-ink);
         border: 1px solid rgba(61,138,95,0.25);
       }
       [data-theme="dark"] .brand-region-score-num.green-score {
@@ -1334,7 +1334,7 @@ const BrandView = {
       }
       .brand-region-score-num.red-score {
         background: var(--alerta-bg);
-        color: var(--alerta);
+        color: var(--alerta-ink);
         border: 1px solid rgba(178,58,43,0.25);
       }
       [data-theme="dark"] .brand-region-score-num.red-score {
@@ -1413,7 +1413,7 @@ const BrandView = {
       .brand-branch-rating {
         font-family: var(--mono);
         font-weight: 700;
-        color: var(--ok);
+        color: var(--ok-ink);
         font-size: 14px;
       }
       [data-theme="dark"] .brand-branch-rating {
@@ -1548,7 +1548,7 @@ const BrandView = {
         margin-right: 8px;
       }
       .modal-rev-stars {
-        color: var(--oro);
+        color: var(--oro-ink);
         font-size: 12px;
         letter-spacing: 1px;
       }
@@ -1583,14 +1583,14 @@ const BrandView = {
       }
       .reply-badge.green {
         background: var(--ok-bg);
-        color: var(--ok);
+        color: var(--ok-ink);
       }
       [data-theme="dark"] .reply-badge.green {
         color: #A7DBB9;
       }
       .reply-badge.red {
         background: var(--alerta-bg);
-        color: var(--alerta);
+        color: var(--alerta-ink);
       }
       [data-theme="dark"] .reply-badge.red {
         color: #F4A090;
@@ -1657,8 +1657,8 @@ const BrandView = {
         border-bottom: 1px solid var(--border);
         padding-bottom: 6px;
       }
-      .def-group-title.red { color: var(--alerta); }
-      .def-group-title.gold { color: var(--oro); }
+      .def-group-title.red { color: var(--alerta-ink); }
+      .def-group-title.gold { color: var(--oro-ink); }
       .def-group-grid {
         display: flex;
         flex-direction: column;
@@ -1759,12 +1759,12 @@ const BrandView = {
       }
       .def-reason-badge.red {
         background: var(--alerta-bg);
-        color: var(--alerta);
+        color: var(--alerta-ink);
         border: 1px solid rgba(178,58,43,0.3);
       }
       .def-reason-badge.warning {
         background: rgba(212,175,55,0.15);
-        color: var(--oro);
+        color: var(--oro-ink);
         border: 1px solid rgba(212,175,55,0.3);
       }
 

@@ -20,7 +20,7 @@ const LoginView = {
         
         <div class="login-card">
           <div class="login-header">
-            <span class="eyebrow" style="color: var(--oro);">La Crêpe Parisienne</span>
+            <span class="eyebrow" style="color: var(--oro-ink);">La Crêpe Parisienne</span>
             <h1 class="login-title">
               <span class="accent">étoile</span>
               <span class="sub">Dashboard</span>
@@ -113,7 +113,7 @@ const LoginView = {
           position: absolute;
           width: 320px;
           height: 320px;
-          color: var(--oro);
+          color: var(--oro-ink);
           opacity: 0.03;
           pointer-events: none;
           z-index: 1;
@@ -183,7 +183,7 @@ const LoginView = {
           text-transform: none;
           letter-spacing: 0;
           font-size: 42px;
-          color: var(--verde);
+          color: var(--verde-ink);
           line-height: 1;
         }
         .login-title .sub {
@@ -206,7 +206,7 @@ const LoginView = {
           gap: 10px;
           background: var(--alerta-bg);
           border: 1px solid var(--alerta-soft);
-          color: var(--alerta);
+          color: var(--alerta-ink);
           padding: 12px 16px;
           border-radius: var(--radius-sm);
           font-size: 13px;
@@ -269,11 +269,11 @@ const LoginView = {
           box-shadow: 0 0 0 3px rgba(184, 144, 47, 0.15);
         }
         .input-container input:focus + .input-icon {
-          color: var(--oro);
+          color: var(--oro-ink);
           transform: scale(1.08);
         }
         .input-group:focus-within label {
-          color: var(--oro);
+          color: var(--oro-ink);
         }
         .login-btn {
           margin-top: 10px;

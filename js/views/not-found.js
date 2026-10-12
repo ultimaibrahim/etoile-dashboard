@@ -65,7 +65,7 @@ const NotFoundView = {
       ${topbarHtml}
       <section class="section" style="max-width: 640px; margin: 40px auto; padding: 0 20px;">
         <div class="access-denied-wrapper" style="padding: 44px 32px;">
-          <div class="ad-icon-wrap" style="background: ${isForbidden ? 'rgba(198, 40, 40, 0.12)' : 'rgba(184, 144, 47, 0.12)'}; color: ${isForbidden ? 'var(--rojo-soft)' : 'var(--oro)'};">
+          <div class="ad-icon-wrap" style="background: ${isForbidden ? 'rgba(198, 40, 40, 0.12)' : 'rgba(184, 144, 47, 0.12)'}; color: ${isForbidden ? 'var(--alerta-ink)' : 'var(--oro)'};">
             ${isForbidden ? `
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -79,7 +79,7 @@ const NotFoundView = {
               </svg>
             `}
           </div>
-          <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: ${isForbidden ? 'var(--rojo-soft)' : 'var(--oro)'}; display: block; margin-bottom: 8px;">
+          <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: ${isForbidden ? 'var(--alerta-ink)' : 'var(--oro)'}; display: block; margin-bottom: 8px;">
             ${subtitle}
           </span>
           <h1 style="font-family: var(--serif); font-size: clamp(26px, 5vw, 36px); color: var(--text); margin-bottom: 12px; line-height: 1.2;">

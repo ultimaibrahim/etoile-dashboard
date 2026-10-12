@@ -8,8 +8,8 @@
 const CompareView = {
   branchA: null,
   branchB: null,
-  COLOR_A: () => (document.documentElement.getAttribute('data-theme') === 'dark' ? '#7FB394' : '#3D5A47'),
-  COLOR_B: () => (document.documentElement.getAttribute('data-theme') === 'dark' ? '#E5B842' : '#B8902F'),
+  COLOR_A: () => (document.documentElement.getAttribute('data-theme') === 'dark' ? '#98BBA4' : '#3D5A47'),
+  COLOR_B: () => (document.documentElement.getAttribute('data-theme') === 'dark' ? '#D7B260' : '#9E7A24'),
 
   _branches() {
     return (typeof SUCURSALES_META_ALL !== 'undefined' && Array.isArray(SUCURSALES_META_ALL))

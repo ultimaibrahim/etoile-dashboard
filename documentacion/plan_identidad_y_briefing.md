@@ -24,7 +24,7 @@
 2. **Briefing, fase 1** (Inicio de tienda y de región): titular por reglas, «Por atender», hero con cifras de la sucursal. *(hecho, beta.8)* Sin incidencias persistentes (apagadas).
 3. Briefing zonal y nacional; ordenar regiones por urgencia en `select-region`.
 4. Incidencias (pase de turno persistente) — requiere SQL `supabase_incidents.sql` y decisión de permisos.
-5. **Color**: sistema de tokens (neutros tintados, rampas por color de marca, escalas para gráficos, daltonismo, contraste calculado). Insumo: informe del agente de color.
+5. **Color**: sistema de tokens (tintas legibles, escalas para gráficos, contraste calculado). *(hecho en beta.8; falta revisión visual de Ibrahim y las rampas completas si se quieren más tonos)*
 6. **Movimiento e identidad**: reemplazar animaciones genéricas (fade/slide igual para todo, skeleton con barrido, spinner de región, pulso de alertas) por movimiento con propósito y propio de la marca; loaders; estados vacíos; mascota (bulldog francés). Insumo: informe del agente de motion.
 7. Mi Sucursal / cuenta por sucursal (`profiles.sucursal` ya existe en SQL; falta front y guardas).
 8. Roles v2 en SQL (zonal = región).
