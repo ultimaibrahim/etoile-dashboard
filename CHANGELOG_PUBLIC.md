@@ -6,6 +6,7 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 ---
 
 ## Versión 2.0.0 beta 8 Eltanin — Briefing de turno (Octubre 2026) [PREVIEW]
+* 🧹 **Las calificaciones de 1 o 2 estrellas sin comentario ya no se cuentan en ninguna cifra** (ni quejas, ni promedio, ni total de reseñas): no dicen nada que se pueda atender. Por eso el promedio puede verse un poco más alto que el que Google muestra al público.
 * 📝 **Lo primero que lees ahora es una frase**: qué tan bien va tu sucursal (o tu región) frente a la meta y a quién hay que atender, con la cifra grande al lado. Si tu cuenta es de una tienda, abre directo con **tu sucursal**; las demás de la región siguen más abajo para comparar.
 * ✅ **"Por atender"**: las quejas sin respuesta de los últimos 30 días, las graves primero, cada una con hace cuánto llegó. Un toque abre la reseña.
 * 🕒 **Las gráficas por hora ya no se dividen en Desayuno, Comida y Cena**: los turnos reales se traslapan y cada tienda abre y cierra distinto, así que se lee la hora tal cual.

@@ -288,7 +288,7 @@ const DataLoader = {
           }
         }
 
-        const mappedReviews = allData.map((r, idx) => {
+        const mappedReviews = allData.filter(r => Metrics.rawKeep(r)).map((r, idx) => {
           const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(r.sucursal) : null;
           const canonicalId = meta ? meta.id : (r.sucursal || '').toLowerCase();
           const canonicalRegion = meta ? meta.region : (r.region || '');
@@ -383,7 +383,7 @@ const DataLoader = {
           }
         }
 
-        const mappedReviews = allData.map((r, idx) => {
+        const mappedReviews = allData.filter(r => Metrics.rawKeep(r)).map((r, idx) => {
           const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(r.sucursal) : null;
           const canonicalId = meta ? meta.id : (r.sucursal || '').toLowerCase();
           const canonicalRegion = meta ? meta.region : (r.region || '');
@@ -552,6 +552,7 @@ const DataLoader = {
         const grouped = {};
         allData.forEach((r, idx) => {
           if (!r.published_at_date) return;
+          if (!Metrics.rawKeep(r)) return;   // 1–2★ sin texto: descartadas
           const meta = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(r.sucursal) : null;
           const canonicalId = meta ? meta.id : (r.sucursal || '').toLowerCase();
           const canonicalRegion = meta ? meta.region : (r.region || '');

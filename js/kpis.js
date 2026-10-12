@@ -12,7 +12,7 @@ function computeReviewsHash(reviews) {
 }
 
 const KpiStore = {
-  prefix: 'lcp_kpis_v3_',
+  prefix: 'lcp_kpis_v4_',
 
   _key(year, month) {
     return `${this.prefix}${year}_${String(month).padStart(2, '0')}`;

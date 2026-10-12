@@ -19,5 +19,12 @@ t('sin respuesta: solo quejas sin respuesta', M.unrepliedComplaints(list).length
 t('respuesta vacía no cuenta como respondida', !M.isReplied(r(1, 'a', '  ')) && M.isReplied(r(1, 'a', 'hola')));
 t('promedio ponderado (no promedio de promedios)', Math.abs(M.weightedAvg([{ avg: 5, count: 90 }, { avg: 1, count: 10 }]) - 4.6) < 1e-9);
 t('promedio ponderado ignora sucursales sin reseñas', M.weightedAvg([{ avg: 0, count: 0 }, { avg: 4, count: 2 }]) === 4 && M.weightedAvg([]) === 0);
+// 1–2★ sin texto: descartadas del todo
+t('1–2★ sin texto se descartan', M.isDiscarded(r(1, '')) && M.isDiscarded(r(2, null)) && M.isDiscarded(r(2, '  ')));
+t('1–2★ con texto NO se descartan', !M.isDiscarded(r(1, 'mal')) && !M.isDiscarded(r(2, 'regular')));
+t('3–5★ sin texto NO se descartan (cuentan para volumen y promedio, Regla #11)', !M.isDiscarded(r(3, '')) && !M.isDiscarded(r(5, null)) && !M.isDiscarded(r(4, '')));
+t('rawKeep sobre filas crudas de Supabase', M.rawKeep({ stars: 1, text: 'x' }) && !M.rawKeep({ stars: 1, text: '' }) && M.rawKeep({ stars: 5, text: null }));
+t('keep() filtra la lista', M.keep([r(1, ''), r(1, 'a'), r(5, ''), r(2, null)]).length === 2);
+
 console.log(`\n${fail === 0 ? '✅ TODAS LAS PRUEBAS PASARON' : '❌ HAY FALLAS'} — ${pass} ok, ${fail} fallas`);
 process.exit(fail === 0 ? 0 : 1);

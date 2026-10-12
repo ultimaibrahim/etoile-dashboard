@@ -7,7 +7,7 @@
 const EtoileCache = (function() {
   'use strict';
 
-  const DB_NAME = 'etoile_zenith_db';
+  const DB_NAME = 'etoile_zenith_db_v2';   // v2: las 1–2★ sin texto ya no se guardan (la base v1 las contenía)
   const DB_VERSION = 1;
   const STORES = ['reviews_cache', 'manifest_cache', 'stats_cache'];
 
@@ -18,6 +18,9 @@ const EtoileCache = (function() {
     manifest_cache: new Map(),
     stats_cache: new Map()
   };
+
+  // Limpieza única de la base anterior (guardaba reseñas de 1–2★ sin texto, ya descartadas)
+  try { if (typeof window !== 'undefined' && window.indexedDB) window.indexedDB.deleteDatabase('etoile_zenith_db'); } catch (e) { /* sin IndexedDB */ }
 
   /**
    * Comprueba la disponibilidad de IndexedDB en el entorno actual

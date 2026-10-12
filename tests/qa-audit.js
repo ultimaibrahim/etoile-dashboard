@@ -164,6 +164,11 @@ for (const rel of fs.readdirSync(path.join(rootDir, 'js/views')).map(f => 'js/vi
   assert(raw.length === 0, `${rel}: cuenta quejas con stars <= 2 en vez de Metrics.isComplaint`);
 }
 
+// Las 1–2★ sin texto no entran al sistema: los tres puntos de carga de reseñas las filtran
+const dlSrc = fs.readFileSync(path.join(rootDir, 'js/data-loader.js'), 'utf8');
+assert((dlSrc.match(/Metrics\.rawKeep/g) || []).length >= 3, 'data-loader.js filtra las 1–2★ sin texto en sus tres puntos de carga');
+assert(fs.readFileSync(path.join(rootDir, 'supabase_quarterly_view.sql'), 'utf8').includes("WHERE NOT (stars <= 2 AND coalesce(btrim(text), '') = '')"), 'la vista SQL trimestral excluye las 1–2★ sin texto');
+
 const compareJs = fs.readFileSync(path.join(rootDir, 'js/views/compare.js'), 'utf8');
 assert(compareJs.includes('withText = rv.filter(r => r.text && r.text.trim())') && compareJs.includes('neg = withText.filter'), 'compare.js calcula las quejas solo sobre reseñas con texto (Regla LCP #11)');
 
