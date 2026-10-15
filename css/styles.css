@@ -5505,9 +5505,6 @@ html.login-page-active body {
 .hero-stat.hero-link:hover::after, .hero-stat.hero-link:focus-visible::after { opacity: 1; transform: translate(0, -50%); }
 .hero-score.hero-link:hover .hero-score-num, .hero-score.hero-link:focus-visible .hero-score-num { text-shadow: none; opacity: .92; }
 .hero-score.hero-link:focus-visible { box-shadow: 0 0 0 2px #B8902F; border-radius: 12px; }
-.hero-scrub { display: block; min-height: 18px; margin-top: 8px; font: 600 12px var(--mono); letter-spacing: .04em; color: #D9B65A; opacity: 0; transform: translateY(4px); transition: opacity .2s, transform .25s; }
-.hero-scrub.on { opacity: 1; transform: none; }
-.hero.scrubbing .hero-score-num { font-variant-numeric: tabular-nums; }
 .rd { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
 .rd-row { display: grid; grid-template-columns: 34px 1fr 40px 40px; gap: 10px; align-items: center; font-size: 13px; }
 .rd-star { font-weight: 700; color: var(--text); }
@@ -5538,8 +5535,6 @@ html.login-page-active body {
 
 /* Hero con briefing: titular más contenido y calificación más compacta (la primera pantalla debe dar la lectura sin scroll) */
 .brf-head { font-size: clamp(22px, 2.6vw, 30px); max-width: 44ch; margin-bottom: 14px; }
-.brf-head ~ .hero-score .hero-score-num { font-size: clamp(60px, 8vw, 92px); }
-.brf-head ~ .hero-score { margin-top: 4px; }
 
 /* Controles: borde con 3:1 (WCAG 1.4.11); las tarjetas conservan el borde decorativo suave */
 select, input[type="text"], input[type="search"], input[type="email"], input[type="password"], input[type="date"], textarea,
@@ -5568,3 +5563,10 @@ select, input[type="text"], input[type="search"], input[type="email"], input[typ
 .srv-brf-sub { margin: 0 0 6px; font-size: 13.5px; color: var(--text-muted); }
 .srv-briefing .brf-sec { padding-left: 0; padding-right: 0; max-width: none; }
 .srv-briefing .brf-sec .section-title { font-size: 22px; }
+
+/* Hero: el promedio es el protagonista y el briefing va en una pastilla debajo (el hero no se satura) */
+.hero .brf-pill { display: block; margin: 18px 0 0; padding: 12px 20px 14px; max-width: 560px; border: 1px solid rgba(245,239,230,.3); background: rgba(245,239,230,.08); border-radius: 22px; }
+.hero .brf-pill .brf-kicker { font-size: 11px; margin: 0 0 6px; color: rgba(245,239,230,.78); }
+.hero .brf-pill .brf-head { font-family: var(--sans); font-weight: 500; font-size: clamp(14.5px, 1.35vw, 16.5px); line-height: 1.5; max-width: none; margin: 0; color: #FAF5EB; }
+.hero .brf-pill .brf-n { font-weight: 800; }
+.hero .brf-pill .brf-ev { border-bottom-width: 1.5px; }

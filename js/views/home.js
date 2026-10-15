@@ -310,7 +310,7 @@ const HomeView = {
       briefSegs = Narrative.briefingRegion({ name: getRegionName(activeRegion), avg: currGlobal.avgRating, goal, count: currGlobal.totalReviews, attention: Briefing.attention(branchRows, pendingAll, goal) });
       briefKicker = `${getRegionName(activeRegion)} · ${nowLong}`;
     }
-    const briefingHeadHtml = `<div class="brf-kicker">${escapeHtml(briefKicker)}</div><h1 class="brf-head" id="briefHead">${Briefing.headline(briefSegs)}</h1>`;
+    const briefingHeadHtml = `<div class="brf-pill"><div class="brf-kicker">${escapeHtml(briefKicker)}</div><h1 class="brf-head" id="briefHead">${Briefing.headline(briefSegs)}</h1></div>`;
     const pendingHtml = Briefing.rowsHtml(pending, scopeIds);
 
     const concluded = getConcludedMonthInfo();
@@ -341,16 +341,15 @@ const HomeView = {
               <span class="eyebrow" style="color:rgba(245,239,230,.8);">${userBranch ? 'Promedio de tu sucursal' : 'Promedio Regional'}</span>
               ${dropdownHtml}
             </div>
-            ${briefingHeadHtml}
             <div class="hero-score hero-link" role="button" tabindex="0" aria-label="Ver el desglose de la calificación" onclick="HomeView.openRatingDrawer()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();HomeView.openRatingDrawer();}">
               <span class="hero-score-num num" id="heroNum">${heroAvg.toFixed(2)}</span>
               <div class="hero-score-side">
                 <span class="hero-stars">${starStr(Math.round(heroAvg))}</span>
                 <span class="hero-of">de 5.00</span>
                 ${trendHtml}
-                <span class="hero-scrub" id="heroScrub" aria-live="polite"></span>
               </div>
             </div>
+            ${briefingHeadHtml}
           </div>
           <div class="hero-right">
             ${branchHero ? `
@@ -516,7 +515,6 @@ const HomeView = {
           }
         }
         EtoileCharts.heroTrend(heroChartEl, trendLabels, trendData);
-        if (!userBranch) HomeView._initHeroScrub(trendLabels, trendData, sortedMonths, currYear, currGlobal.avgRating);
       }
 
       // Start Carousel Autoplay
@@ -889,28 +887,6 @@ const HomeView = {
         </div>
       </section>
     `;
-  },
-
-  /** Al pasar el puntero por el hero, la calificación "viaja" por los meses del año; al salir vuelve al mes actual */
-  _initHeroScrub(labels, data, months, year, currentAvg) {
-    const hero = document.querySelector('.hero');
-    const num = document.getElementById('heroNum'), tag = document.getElementById('heroScrub');
-    if (!hero || !num || !tag || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-    const left = hero.querySelector('.hero-left');
-    let last = -1;
-    const reset = () => { last = -1; num.textContent = currentAvg.toFixed(2); tag.textContent = ''; tag.classList.remove('on'); hero.classList.remove('scrubbing'); };
-    hero.addEventListener('mousemove', e => {
-      const r = left.getBoundingClientRect();
-      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) { if (last !== -1) reset(); return; }
-      const i = Math.max(0, Math.min(data.length - 1, Math.round(((e.clientX - r.left) / r.width) * (data.length - 1))));
-      if (i === last || typeof data[i] !== 'number') return;
-      last = i;
-      const d = DataLoader.getMonth(year, months[i]);
-      num.textContent = data[i].toFixed(2);
-      tag.textContent = `${labels[i]} · ${d && d.reviews ? d.reviews.length : 0} reseñas`;
-      tag.classList.add('on'); hero.classList.add('scrubbing');
-    });
-    hero.addEventListener('mouseleave', reset);
   },
 
   /** Desglose de la calificación del mes: cuántas reseñas de cada estrella, contra la meta */
@@ -1423,6 +1399,14 @@ const HomeView = {
     this.isPaused = false;
     this.scrollAnimationActive = true;
 
+    // Rendimiento: el carrusel solo se mueve cuando se ve (antes recalculaba layout en cada fotograma, aunque estuviera
+    // fuera de pantalla) y las lecturas de layout (scrollWidth/scrollLeft) se espacian en vez de hacerse 60 veces por segundo.
+    let visible = true, frame = 0, halfWidth = grid.scrollWidth / 2;
+    if ('IntersectionObserver' in window) {
+      this._carouselIO = new IntersectionObserver(es => { visible = es[0].isIntersecting; }, { threshold: 0.01 });
+      this._carouselIO.observe(grid);
+    }
+
     const animate = () => {
       if (!this.scrollAnimationActive) return;
       const gridEl = document.getElementById('reviewFeedGrid');
@@ -1430,31 +1414,24 @@ const HomeView = {
         this.scrollAnimationActive = false;
         return;
       }
-
-      const halfWidth = gridEl.scrollWidth / 2;
-      
-      // Wrap around check for continuous loop (works for auto-scroll and manual drag)
-      if (gridEl.scrollLeft >= halfWidth) {
-        gridEl.scrollLeft -= halfWidth;
-        this.scrollFraction = gridEl.scrollLeft;
-      } else if (gridEl.scrollLeft < 5 && this.isPaused) {
-        // If they dragged to the very beginning, wrap to the second copy
-        gridEl.scrollLeft += halfWidth;
-        this.scrollFraction = gridEl.scrollLeft;
+      if (!visible || this.isPaused) {                       // fuera de pantalla o en pausa: sin tocar el DOM
+        if (this.isPaused) this.scrollFraction = gridEl.scrollLeft;
+        this.scrollAnimationFrame = requestAnimationFrame(animate);
+        return;
       }
 
-      if (!this.isPaused) {
-        // Sync scroll fraction if external scroll occurred (drag/swipe, arrow click)
-        if (Math.abs(gridEl.scrollLeft - this.scrollFraction) > 1.5) {
-          this.scrollFraction = gridEl.scrollLeft;
-        }
-
-        // Slow continuous scroll speed (0.6px per frame)
-        const speed = 0.6;
-        this.scrollFraction += speed;
-
-        gridEl.scrollLeft = Math.floor(this.scrollFraction);
+      // Cada 20 fotogramas: refrescar el ancho, detectar arrastre manual y dar la vuelta al bucle
+      if (frame++ % 20 === 0) {
+        halfWidth = gridEl.scrollWidth / 2;
+        const cur = gridEl.scrollLeft;
+        if (cur >= halfWidth) { gridEl.scrollLeft = cur - halfWidth; this.scrollFraction = gridEl.scrollLeft; }
+        else if (Math.abs(cur - this.scrollFraction) > 30) this.scrollFraction = cur;   // arrastre o flecha
       }
+
+      // Velocidad lenta y continua (0.6 px por fotograma); el bucle da la vuelta al pasar la mitad (segunda copia)
+      this.scrollFraction += 0.6;
+      if (this.scrollFraction >= halfWidth && halfWidth > 0) this.scrollFraction -= halfWidth;
+      gridEl.scrollLeft = Math.floor(this.scrollFraction);
 
       this.scrollAnimationFrame = requestAnimationFrame(animate);
     };
@@ -1464,6 +1441,7 @@ const HomeView = {
 
   stopContinuousScroll() {
     this.scrollAnimationActive = false;
+    if (this._carouselIO) { this._carouselIO.disconnect(); this._carouselIO = null; }
     if (this.scrollAnimationFrame) {
       cancelAnimationFrame(this.scrollAnimationFrame);
       this.scrollAnimationFrame = null;

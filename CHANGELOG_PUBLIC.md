@@ -6,6 +6,8 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 ---
 
 ## Versión 2.0.0 beta 8 Eltanin — Briefing de turno (Octubre 2026) [PREVIEW]
+* 🏠 **El inicio de cada región se ve más limpio**: el promedio es lo primero y lo más grande, y el resumen del turno va en una pastilla debajo. Dejó de cambiar la fecha al pasar el cursor por la portada.
+* ⚡ **La página se siente más ágil**: el carrusel de actividad reciente se pausa cuando no se ve y el cálculo de horas de las reseñas es más rápido.
 * 🌎 **La pantalla de regiones ahora abre con un resumen nacional**: cómo va la marca frente a la meta, qué regiones necesitan atención primero y las quejas pendientes; las regiones se ordenan por urgencia.
 * ⏱️ **Las reseñas nuevas llegan más rápido**: cada sucursal se actualiza cada 30 minutos (antes podía tardar hasta 3 horas).
 * 🎨 **Colores que se leen mejor**: textos y números con más contraste en claro y oscuro (conservando el verde y el oro de la marca), mapa de calor con números en todas las celdas y una escala que se distingue incluso para personas con daltonismo, y un contorno visible al navegar con teclado.

@@ -15,6 +15,7 @@ const BranchTime = {
   MESES_CAP: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
   _fmt: {},
   _memo: new Map(),
+  _off: new Map(),
   _dow: { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 },
 
   /** Zona horaria de una reseña, sucursal (id) o región (id de región) */
@@ -46,20 +47,44 @@ const BranchTime = {
   /** { year, month (1-12), day, hour (0-23), minute, dow (0 = domingo) } en la zona dada; null si la fecha no es válida */
   parts(iso, tz) {
     tz = tz || this.DEFAULT_TZ;
-    // Memoizado por (zona, instante): formatToParts es lo más caro de recorrer miles de reseñas varias veces por vista
+    // Memoizado por (zona, instante): una vista recorre las mismas reseñas varias veces
     const key = tz + '|' + iso;
     const hit = this._memo.get(key);
     if (hit !== undefined) return hit;
-    const d = new Date(iso);
+    const t = Date.parse(iso);
     let res = null;
-    if (iso && !isNaN(d.getTime())) {
-      const o = {};
-      for (const p of this._formatter(tz).formatToParts(d)) o[p.type] = p.value;
-      res = { year: +o.year, month: +o.month, day: +o.day, hour: +o.hour % 24, minute: +o.minute, dow: this._dow[o.weekday] ?? 0 };
+    if (iso && !isNaN(t)) {
+      const off = this._offsetMin(tz, t);
+      if (off !== null) {
+        // Camino rápido: con el desfase del día conocido, las partes salen por aritmética (sin Intl por cada fecha)
+        const d = new Date(t + off * 60000);
+        res = { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate(), hour: d.getUTCHours(), minute: d.getUTCMinutes(), dow: d.getUTCDay() };
+      } else {
+        res = this._partsExact(tz, t);   // día con cambio de horario: formato exacto
+      }
     }
     if (this._memo.size > 60000) this._memo.clear();
     this._memo.set(key, res);
     return res;
+  },
+
+  /** Partes exactas con Intl (lento: solo para calcular desfases y para los días con cambio de horario) */
+  _partsExact(tz, t) {
+    const o = {};
+    for (const p of this._formatter(tz).formatToParts(new Date(t))) o[p.type] = p.value;
+    return { year: +o.year, month: +o.month, day: +o.day, hour: +o.hour % 24, minute: +o.minute, dow: this._dow[o.weekday] ?? 0 };
+  },
+
+  /** Desfase (minutos) de la zona en el instante t, o null si ese día UTC tiene un cambio de horario (no se puede asumir uno solo) */
+  _offsetMin(tz, t) {
+    const day = Math.floor(t / 86400000), key = tz + '|' + day;
+    let v = this._off.get(key);
+    if (v !== undefined) return v;
+    const at = ms => { const p = this._partsExact(tz, ms); return (Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute) - Math.floor(ms / 60000) * 60000) / 60000; };
+    const o0 = at(day * 86400000), o1 = at((day + 1) * 86400000 - 1);
+    v = o0 === o1 ? o0 : null;
+    this._off.set(key, v);
+    return v;
   },
 
   /**
