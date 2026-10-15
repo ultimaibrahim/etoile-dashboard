@@ -85,3 +85,7 @@ build/
 backups/
 # Generado por scripts/gbp-setup.js --sync-mappings (contiene IDs de cuenta de Google)
 supabase_gbp_mappings.sql
+
+# Pruebas e2e: credenciales y capturas locales
+tests/e2e/.qa_user.json
+tests/e2e/shots/
