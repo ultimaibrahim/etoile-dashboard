@@ -175,6 +175,7 @@ const AppAuth = {
     }
     this.session = null;
     this.profile = null;
+    if (typeof EtoileCache !== 'undefined') await EtoileCache.clearAll();
     
     if (typeof DataLoader !== 'undefined') {
       DataLoader.cache = {};

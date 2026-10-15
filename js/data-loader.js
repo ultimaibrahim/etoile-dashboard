@@ -276,7 +276,7 @@ const DataLoader = {
             query = query.eq('region', activeRegion);
           }
 
-          const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
+          const { data, error } = await query.order('id').range(page * pageSize, (page + 1) * pageSize - 1);
           if (error) throw error;
 
           if (data && data.length > 0) {
@@ -370,6 +370,7 @@ const DataLoader = {
             .select('*')
             .gte('published_at_date', startIso)
             .lt('published_at_date', endIso)
+            .order('id')
             .range(page * pageSize, (page + 1) * pageSize - 1);
 
           if (error) throw error;
@@ -520,7 +521,7 @@ const DataLoader = {
           if (activeRegion && activeRegion !== 'BRAND') {
             query = query.eq('region', activeRegion);
           }
-          return query.range(p * pageSize, (p + 1) * pageSize - 1);
+          return query.order('id').range(p * pageSize, (p + 1) * pageSize - 1);
         };
 
         // Página 0 con el total; el resto de páginas se piden en paralelo (antes: una tras otra, ~400 ms c/u)
