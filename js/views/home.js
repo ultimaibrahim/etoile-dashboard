@@ -391,6 +391,7 @@ const HomeView = {
       </section>
 
       ${pendingHtml}
+      <div class="section sync-sec"><p class="sync-note" id="syncNote" hidden></p></div>
 
       <div class="home-grid-2" style="margin-top: 24px; margin-bottom: 24px;">
         ${alertBannerHtml}
@@ -444,6 +445,7 @@ const HomeView = {
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · La Crêpe Parisienne / Grupo MYT<br>
         Dashboard de Reseñas · Región ${getRegionName(activeRegion)} · Fuente: Google Reviews
       </footer>`;
+    Briefing.fillSyncNote('syncNote', activeRegion, userBranch);
 
     requestAnimationFrame(() => {
       document.getElementById('heroNum')?.classList.add('in');

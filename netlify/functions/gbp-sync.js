@@ -339,6 +339,18 @@ exports.handler = async (event, context) => {
       }
     }
 
+    // Marca de "última sincronización" en las sucursales consultadas sin error (aunque no hubiera cambios),
+    // después del upsert: si este falla, la sucursal no queda como sincronizada.
+    // Si la columna aún no existe (supabase_sync_status.sql sin ejecutar) solo se avisa.
+    const okIds = configuredLocations.map(l => l.id).filter(id => !errors.some(e => e.branch === id));
+    if (okIds.length > 0 && !isDryRun) {
+      const { error: markError } = await supabase
+        .from('locations')
+        .update({ gbp_synced_at: new Date().toISOString() })
+        .in('id', okIds);
+      if (markError) console.warn('[GBP-Sync] No se pudo marcar gbp_synced_at:', markError.message);
+    }
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },

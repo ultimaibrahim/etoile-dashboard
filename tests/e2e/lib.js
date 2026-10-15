@@ -16,9 +16,13 @@ async function open(browser, { w = 1280, h = 900, mobile = false, dark = false, 
   page.on('pageerror', e => page.errors.push(e.message.slice(0, 200)));
   await page.addInitScript(d => { try { localStorage.setItem('lcp_walkthrough_seen', 'true'); localStorage.setItem('lcpDark', d ? '1' : '0'); } catch (e) {} }, dark);
   const c = creds();
-  await page.goto(BASE + '/#/login');
-  await page.fill('#login-email', c.email); await page.fill('#login-password', c.password); await page.click('#login-submit-btn');
-  await page.waitForSelector('#srvContainer, #briefHead', { timeout: 30000 });
+  // El login de Supabase a veces no sale al primer clic (intermitente, también sin cambios en la app): un reintento.
+  for (let attempt = 1; ; attempt++) {
+    await page.goto(BASE + '/#/login');
+    await page.waitForFunction(() => typeof supabaseClient !== 'undefined' && supabaseClient && typeof Router !== 'undefined' && Router.current === '#/login' && !!document.getElementById('login-submit-btn'), null, { timeout: 30000 });
+    await page.fill('#login-email', c.email); await page.fill('#login-password', c.password); await page.click('#login-submit-btn');
+    try { await page.waitForSelector('#srvContainer, #briefHead', { timeout: 25000 }); break; } catch (e) { if (attempt >= 2) throw e; }
+  }
   if (region && await page.$('#srvContainer')) { await page.click(`#srv-card-${region}`); await page.waitForSelector('#briefHead', { timeout: 30000 }); }
   await sleep(2500);   // conteo animado del hero y primeras cargas
   return page;

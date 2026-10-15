@@ -282,6 +282,9 @@ const Router = {
         if (typeof updateSlidingTabPill === 'function') updateSlidingTabPill();
         if (typeof initSegmentedTabs === 'function') initSegmentedTabs();
       }
+      // Lectores de pantalla: anunciar la vista nueva (no en la carga inicial, que ya se lee completa)
+      const announcer = document.getElementById('routeAnnouncer');
+      if (announcer && prevRoute) announcer.textContent = document.title.split(' · ')[0];
       window.dispatchEvent(new CustomEvent('etoile:route-rendered', { detail: { hash } }));
     }, 150);
   },

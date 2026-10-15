@@ -32,6 +32,31 @@ const Briefing = {
     return out.sort((a, b) => b.unreplied - a.unreplied || a.avg - b.avg);
   },
 
+  /**
+   * Nota de "última sincronización con Google" (Narrative.syncNote) en el elemento dado.
+   * Alcance: la marca (sin región), una región o una sucursal. Si la consulta falla (p. ej. la columna
+   * gbp_synced_at aún no existe) o no hay marcas, la nota queda oculta.
+   */
+  async fillSyncNote(elId, region = null, branchId = null) {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    try {
+      let q = supabaseClient.from('locations').select('id, nombre, gbp_synced_at').eq('active', true).not('gbp_location_id', 'is', null);
+      if (region) q = q.eq('region', region);
+      const { data, error } = await q;
+      if (error) throw error;
+      const rows = (data || []).filter(l => !branchId || isSameBranch(l.id, branchId))
+        .map(l => { const m = typeof resolveBranchMeta === 'function' ? resolveBranchMeta(l.id) : null; return { nombre: m ? m.nombre : l.nombre, at: l.gbp_synced_at }; });
+      const note = Narrative.syncNote(rows, Date.now());
+      const el = document.getElementById(elId);   // se busca después de la consulta: la vista pudo cambiar
+      if (!note || !el) return;
+      el.textContent = note.text;
+      el.classList.toggle('stale', note.stale);
+      el.hidden = false;
+    } catch (e) {
+      console.warn('[Briefing] Sin nota de sincronización:', e.message || e);
+    }
+  },
+
   /** Segmentos del titular → HTML (cifras destacadas, sucursales y pendientes clicables) */
   headline(segments, evHandler = id => `Briefing.openFor('${id}')`) {
     return segments.map(s => {

@@ -20,6 +20,9 @@ const { launch, open, reporter, sleep } = require('./lib');
     }
     // 4) Comparar y Dashboards cargan sin errores
     for (const [hash, sel] of [['#/comparar', '.cmp-title'], ['#/dashboards', '#regionHourChart']]) { await page.evaluate(x => { location.hash = x; }, hash); await page.waitForSelector(sel, { timeout: 20000 }); await sleep(1500); rec(`(${cfg.k}) ${hash} carga`, true); }
+    // 5) Lector de pantalla: la vista nueva se anuncia; la nota de Google, si aparece, dice algo válido
+    const a11y = await page.evaluate(() => { const n = document.getElementById('syncNote'); return { ann: (document.getElementById('routeAnnouncer') || {}).textContent || '', live: (document.getElementById('routeAnnouncer') || { getAttribute: () => '' }).getAttribute('aria-live'), sync: n && !n.hidden ? n.textContent : null }; });
+    rec(`(${cfg.k}) anunciador de vista + nota de sincronización`, a11y.live === 'polite' && a11y.ann.length > 3 && (a11y.sync === null || /^(Reseñas de Google al día|Google no se consulta)/.test(a11y.sync)), JSON.stringify(a11y));
     errors.push(...page.errors); await page.context().close();
   }
   process.exitCode = summary(errors); await b.close();

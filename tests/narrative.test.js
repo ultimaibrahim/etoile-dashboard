@@ -93,5 +93,17 @@ b = N.briefingBranch({ nombre: 'Aztlán', avg: 5, count: 25, rank: 1, of: 9, reg
 t('briefing tienda: posición y sin quejas abiertas', /Es la 1\.ª de 9 en CDMX\. No tienes quejas abiertas\.$/.test(txt(b)), txt(b));
 t('briefing tienda: una queja de hoy', /Tienes 1 queja sin respuesta, la más antigua de hoy\./.test(txt(N.briefingBranch({ nombre: 'X', avg: 4, count: 8, rank: 3, of: 9, regionName: 'R', unreplied: 1, oldestDays: 0 }))));
 
+// última sincronización con Google
+const NOW = Date.parse('2026-10-15T18:00:00Z'), at = min => new Date(NOW - min * 60000).toISOString();
+let sn = N.syncNote([{ nombre: 'A', at: at(12) }, { nombre: 'B', at: at(25) }], NOW);
+t('sync: al día cuenta la más atrasada', !sn.stale && sn.text === 'Reseñas de Google al día: última consulta hace 25 min.', JSON.stringify(sn));
+sn = N.syncNote([{ nombre: 'A', at: at(12) }, { nombre: 'Antea', at: at(200) }, { nombre: 'C', at: at(100) }], NOW);
+t('sync: atrasada nombra la peor y cuántas más', sn.stale && sn.text === 'Google no se consulta en Antea y 1 más desde hace 3 h: pueden faltar reseñas recientes.', JSON.stringify(sn));
+sn = N.syncNote([{ nombre: 'A', at: at(3000) }, { nombre: 'B', at: at(2900) }], NOW);
+t('sync: todas atrasadas (token caducado)', sn.stale && /^Google no se consulta en ninguna sucursal desde hace 2 días/.test(sn.text), JSON.stringify(sn));
+sn = N.syncNote([{ nombre: 'A', at: at(120) }], NOW);
+t('sync: una sola sucursal no se nombra a sí misma', sn.text === 'Google no se consulta desde hace 2 h: pueden faltar reseñas recientes.', JSON.stringify(sn));
+t('sync: sin marcas no dice nada', N.syncNote([{ nombre: 'A', at: null }], NOW) === null && N.syncNote([], NOW) === null);
+
 console.log(`\n${fail === 0 ? '✅ TODAS LAS PRUEBAS PASARON' : '❌ HAY FALLAS'} — ${pass} ok, ${fail} fallas`);
 process.exit(fail === 0 ? 0 : 1);

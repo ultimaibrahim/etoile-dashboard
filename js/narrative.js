@@ -169,6 +169,36 @@ const Narrative = {
     return seg;
   },
 
+  SYNC_STALE_MIN: 90,   // el cron revisa cada sucursal cada 30 min: tres vueltas perdidas ya es una falla
+
+  /** Antigüedad legible en minutos/horas/días */
+  ago(min) {
+    if (min < 1) return 'hace menos de un minuto';
+    if (min < 60) return `hace ${min} min`;
+    const h = Math.floor(min / 60);
+    if (h < 48) return `hace ${h} h`;
+    return `hace ${Math.floor(h / 24)} días`;
+  },
+
+  /**
+   * Nota de "última sincronización con Google" para un alcance (sucursal, región o marca).
+   * rows: [{ nombre, at }] (at = ISO o null). Cuenta la más atrasada: es la que puede estar perdiendo reseñas.
+   * Devuelve null si ninguna sucursal tiene marca (columna sin crear o sync aún sin correr).
+   */
+  syncNote(rows, nowMs) {
+    const known = rows.map(r => ({ nombre: r.nombre, min: Math.max(0, Math.floor((nowMs - Date.parse(r.at)) / 60000)) }))
+      .filter(r => !isNaN(r.min));
+    if (!known.length) return null;
+    const stale = known.filter(r => r.min > this.SYNC_STALE_MIN).sort((a, b) => b.min - a.min);
+    if (!stale.length) {
+      const oldest = Math.max(...known.map(r => r.min));
+      return { stale: false, text: `Reseñas de Google al día: última consulta ${this.ago(oldest)}.` };
+    }
+    const who = known.length === 1 ? '' : stale.length === known.length ? ' en ninguna sucursal'
+      : ` en ${stale[0].nombre}${stale.length > 1 ? ` y ${stale.length - 1} más` : ''}`;
+    return { stale: true, text: `Google no se consulta${who} desde ${this.ago(stale[0].min)}: pueden faltar reseñas recientes.` };
+  },
+
   /** Matriz sucursal × mes (volumen) */
   matrixVolume(mx) {
     if (!mx.rows.length) return 'Aún no hay reseñas para comparar sucursales.';

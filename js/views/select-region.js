@@ -1158,7 +1158,9 @@ const SelectRegionView = {
         <h2 class="srv-brf-text">${Briefing.headline(segs, id => `SelectRegionView.handleSelect('${id}')`)}</h2>
         <p class="srv-brf-sub">${count} ${count === 1 ? 'reseña' : 'reseñas'} este mes en ${rows.length} de ${Object.keys(regionStats).length} regiones${noData ? ` (${noData} sin reseñas)` : ''}. Las regiones de abajo van por urgencia.</p>
       </div>
-      ${Briefing.rowsHtml(sorted, null)}`;
+      ${Briefing.rowsHtml(sorted, null)}
+      <p class="sync-note" id="syncNote" hidden></p>`;
+    Briefing.fillSyncNote('syncNote');
   },
 
   onSortOptionClick(sortKey, event) {
