@@ -865,7 +865,7 @@ const SelectRegionView = {
     });
 
     const cardsHtml = regionsList.map(r => `
-      <div class="srv-card" id="srv-card-${r.id}" onclick="SelectRegionView.handleSelect('${r.id}')">
+      <div class="srv-card" id="srv-card-${r.id}" role="button" tabindex="0" aria-label="Abrir región ${r.id}" onclick="SelectRegionView.handleSelect('${r.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();SelectRegionView.handleSelect('${r.id}')}">
         ${SelectRegionView.getRegionMapSVG(r.id)}
         <div class="srv-card-top">
           <span class="srv-card-code">${r.count === 1 ? `${r.id} - UNICA` : `${r.id} - ${r.count} SUC`}</span>

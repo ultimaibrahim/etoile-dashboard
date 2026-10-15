@@ -6,6 +6,7 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 ---
 
 ## Versión 2.0.0 beta 8 Eltanin — Briefing de turno (Octubre 2026) [PREVIEW]
+* ⌨️ **Las regiones se pueden elegir con el teclado**: con Tab llegas a cada tarjeta y con Enter o Espacio la abres.
 * 🔒 **Al cerrar sesión no queda nada guardado de tu cuenta** en el navegador, y la lista de reseñas ya no puede repetir ni saltarse opiniones al cargarse por partes.
 * 🏠 **El inicio de cada región se ve más limpio**: el promedio es lo primero y lo más grande, y el resumen del turno va en una pastilla debajo. Dejó de cambiar la fecha al pasar el cursor por la portada.
 * ⚡ **La página se siente más ágil**: el carrusel de actividad reciente se pausa cuando no se ve y el cálculo de horas de las reseñas es más rápido.
