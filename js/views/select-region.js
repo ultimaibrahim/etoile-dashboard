@@ -495,14 +495,14 @@ const SelectRegionView = {
           color: #E8C878;
           background: rgba(232, 200, 120, 0.15);
         }
+        /* Cargando: la estrella de étoile respira (opacidad, finita) en lugar de un spinner genérico */
         .srv-rating-spinner {
           display: inline-block;
-          width: 12px;
-          height: 12px;
-          border: 2px solid rgba(184, 144, 47, 0.25);
-          border-top-color: var(--oro);
-          border-radius: 50%;
-          animation: srvSpin 0.8s linear infinite;
+          width: 14px;
+          height: 14px;
+          background: var(--oro);
+          clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+          animation: etoileWait 0.9s ease-in-out 8 alternate both;
         }
 
         /* ── SILUETAS GEOGRÁFICAS DE FONDO ── */
@@ -653,13 +653,13 @@ const SelectRegionView = {
           margin: 40px auto;
           width: 24px;
           height: 24px;
-          border: 3px solid rgba(184, 144, 47, 0.15);
-          border-top-color: var(--oro);
-          border-radius: 50%;
-          animation: srvSpin 0.8s linear infinite;
+          background: var(--oro);
+          clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+          animation: etoileWait 0.9s ease-in-out 8 alternate both;
         }
-        @keyframes srvSpin {
-          to { transform: rotate(360deg); }
+        @keyframes etoileWait {
+          from { opacity: .35; transform: scale(.85); }
+          to { opacity: 1; transform: scale(1); }
         }
 
         /* ── BRAND DASHBOARD SHORTCUT BANNER ── */
@@ -700,13 +700,6 @@ const SelectRegionView = {
           height: 8px;
           border-radius: 50%;
           background: var(--oro);
-          box-shadow: 0 0 10px var(--oro);
-          animation: pulseGold 2s infinite;
-        }
-        @keyframes pulseGold {
-          0% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.3); opacity: 0.6; }
-          100% { transform: scale(1); opacity: 1; }
         }
         .brand-shortcut-eyebrow {
           font-size: 11px;
@@ -875,6 +868,7 @@ const SelectRegionView = {
         </div>
         <div class="srv-card-bottom">
           <h3 class="srv-card-name" style="margin:0;">${escapeHtml(r.name)}</h3>
+          ${role === 'zonal' && r.id === AppAuth.getUserRegion() ? '<span class="srv-card-mine">Tu región</span>' : ''}
         </div>
       </div>
     `).join('');

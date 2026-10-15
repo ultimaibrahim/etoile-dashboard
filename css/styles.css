@@ -2275,16 +2275,7 @@ a{color:inherit;text-decoration:none;}
 }
 
 /* ─── SKELETONS ────────────────────────────────────────── */
-@keyframes shimmer {
-  0% { background-position: -300px 0; }
-  100% { background-position: 300px 0; }
-}
-.skeleton {
-  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 37%, var(--surface-2) 63%);
-  background-size: 600px 100%;
-  animation: shimmer 1.4s ease infinite;
-  border-radius: var(--radius-sm);
-}
+/* (el fondo y el movimiento del esqueleto están en la sección SKELETONS de abajo) */
 .skeleton-hero {
   height: 240px;
   border-radius: 0;
@@ -3797,7 +3788,7 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-dim);
-  animation: bounceIndicator 2.5s infinite;
+  animation: bounceIndicator 2.5s 2;   /* dos avisos y se queda quieto: sin animación infinita en indicadores */
   z-index: 2;
   cursor: pointer;
 }
@@ -3999,6 +3990,19 @@ html[data-ui-premium="true"] .ui-premium-toggle {
   transform: translateY(0);
 }
 
+/* La estrella de étoile entra una vez (giro de un brazo, 72°) al cubrir la pantalla */
+.region-transition-star {
+  width: 30px;
+  height: 30px;
+  background: var(--oro);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  opacity: 0;
+  transform: rotate(-72deg) scale(.4);
+  transition: opacity .35s ease, transform .6s cubic-bezier(.2, 1.4, .4, 1);
+}
+.region-transition-loader.active .region-transition-star { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .region-transition-star { transform: none; } }
+
 /* Modo oscuro adaptativo */
 [data-theme="dark"] .region-transition-title {
   color: #FAF5EB;
@@ -4105,20 +4109,10 @@ html.login-page-active body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
-.skeleton::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.04), transparent);
-  animation: skeleton-sweep 1.2s infinite;
-}
-[data-theme="dark"] .skeleton::after {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
-}
-@keyframes skeleton-sweep {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100%); }
-}
+/* Sin barrido de brillo (repinta cada cuadro y es el gesto más genérico): el bloque solo "respira" en opacidad
+   mientras espera, y se detiene si tarda; con movimiento reducido queda quieto. */
+.skeleton { animation: skelBreathe 1.1s ease-in-out 6 alternate both; }
+@keyframes skelBreathe { from { opacity: .55; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .skeleton::after { animation: none !important; }}
 .skeleton-card { height: 96px; margin-bottom: 12px; }
@@ -4571,11 +4565,11 @@ html.login-page-active body {
   height: 8px;
   border-radius: 50%;
   background: var(--amber);
-  animation: offlinePulse 1.8s infinite;
+  animation: offlinePulse 1.8s 3;
 }
 @keyframes offlinePulse {
   0% { transform: scale(0.9); opacity: 0.8; }
-  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 10px var(--amber); }
+  50% { transform: scale(1.3); opacity: 1; }
   100% { transform: scale(0.9); opacity: 0.8; }
 }
 
@@ -5276,7 +5270,7 @@ html.login-page-active body {
 .rv-card.crit { background: color-mix(in srgb, var(--alerta) 7%, var(--surface-2)); border-color: color-mix(in srgb, var(--alerta) 45%, var(--border)); }
 .rv-card.crit:hover { box-shadow: 0 10px 28px color-mix(in srgb, var(--alerta) 22%, transparent); }
 .rv-crit { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #FAF5EB; background: var(--alerta); padding: 3px 9px 3px 7px; border-radius: 999px; }
-.rv-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--surface); animation: rvPulse 1.8s ease-in-out infinite; }
+.rv-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--surface); animation: rvPulse 1.8s ease-in-out 3; }
 .rv-why { display: flex; flex-wrap: wrap; gap: 6px; }
 .rv-why-chip { font-size: 10.5px; font-weight: 700; color: var(--alerta-ink); background: var(--alerta-bg); border-radius: 999px; padding: 2px 8px; cursor: help; }
 @keyframes rvIn { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: none; } }
@@ -5388,6 +5382,12 @@ html.login-page-active body {
 .rv-incident--en_revision { background: rgba(201,125,16,.12); color: #c97d10; border-color: rgba(201,125,16,.4); }
 .rv-incident--respondida { background: rgba(122,158,138,.16); color: var(--verde-ink); border-color: rgba(122,158,138,.5); }
 .rv-incident--resuelta { background: rgba(61,122,85,.14); color: #3D7A55; border-color: rgba(61,122,85,.45); }
+[data-theme="dark"] .rv-incident--resuelta { color: var(--ok-ink); }
+/* Sello de «Atendida»: cae una vez, como un sello de tinta (transform/opacity), y se queda */
+.inc-stamp { align-self: flex-end; margin-bottom: -4px; padding: 4px 14px; border: 2px solid var(--ok-ink); border-radius: 6px; color: var(--ok-ink); font: 800 13px/1.2 var(--sans); letter-spacing: .14em; text-transform: uppercase; transform: rotate(-6deg); animation: stampIn .45s cubic-bezier(.2, 1.3, .4, 1) both; }
+@keyframes stampIn { from { opacity: 0; transform: rotate(-6deg) scale(1.8); } to { opacity: 1; transform: rotate(-6deg) scale(1); } }
+.rv-incident--stamped { animation: stampInFlat .45s cubic-bezier(.2, 1.3, .4, 1) both; }
+@keyframes stampInFlat { from { opacity: 0; transform: scale(1.6); } to { opacity: 1; transform: none; } }
 .inc-form { display: flex; flex-direction: column; gap: 8px; margin: 16px 0 8px; padding: 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .inc-label { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin-top: 6px; }
 .inc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -5404,6 +5404,7 @@ html.login-page-active body {
 .inc-save:disabled { opacity: .55; cursor: progress; }
 .inc-msg { margin: 0; min-height: 18px; font-size: 12px; font-weight: 700; color: var(--text-muted); }
 .inc-msg.ok { color: #3D7A55; } .inc-msg.err { color: var(--alerta-ink); }
+.inc-readonly { margin: 12px 0 16px; padding: 10px 12px; border: 1px solid var(--border-control); border-radius: 10px; font-size: 13px; color: var(--text-muted); }
 .inc-history { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 .inc-event { display: flex; gap: 12px; font-size: 13px; line-height: 1.45; animation: rvIn .45s cubic-bezier(.2,1,.3,1) backwards; }
 .inc-event time { display: block; font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
@@ -5577,3 +5578,14 @@ select, input[type="text"], input[type="search"], input[type="email"], input[typ
 .sync-note.stale { color: var(--alerta-ink); font-weight: 600; }
 .section.sync-sec { padding-top: 0; padding-bottom: 0; }
 .section.sync-sec:has(> .sync-note[hidden]) { display: none; }
+
+/* Región propia del zonal en el selector */
+.srv-card-mine { display: inline-block; margin-top: 6px; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; color: var(--verde-ink); border: 1px solid var(--oro-line); background: color-mix(in srgb, var(--oro) 10%, transparent); }
+
+/* Cuenta de tienda: invitación a recorrer su región (Inicio) */
+.hero .hero-explore-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.hero .hero-explore { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 16px; border-radius: 999px; font: 600 13.5px/1.2 var(--sans); color: #1E1A15; background: #FAF5EB; border: 1px solid #FAF5EB; cursor: pointer; text-decoration: none; transition: transform .15s ease, background-color .15s ease; }
+.hero .hero-explore:hover { transform: translateY(-1px); }
+.hero .hero-explore--ghost { color: #FAF5EB; background: transparent; border-color: rgba(245,239,230,.45); }
+.hero .hero-explore--ghost:hover { background: rgba(245,239,230,.08); }
+@media (prefers-reduced-motion: reduce) { .hero .hero-explore:hover { transform: none; } }

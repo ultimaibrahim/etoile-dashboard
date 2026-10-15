@@ -156,8 +156,8 @@ const AppAuth = {
       DataLoader._regionStore = {};
       DataLoader._brandCache = {};
       // Los roles que aterrizan en select-region solo necesitan el manifiesto: la región se precarga al elegirla.
-      // El gerente entra directo a su región, así que ese sí precarga ahora.
-      if (this.getUserRole() === 'gerente') {
+      // Gerente y zonal entran directo a su región, así que esos sí precargan ahora.
+      if (this.entersOwnRegion()) {
         await Promise.all([DataLoader.init(), DataLoader.computeHistoricalRatings(), Incidents.load(true)]);
       } else {
         await Promise.all([DataLoader.init(), Incidents.load(true)]);
@@ -205,6 +205,15 @@ const AppAuth = {
 
   getUserSucursal() {
     return this.profile ? this.profile.sucursal : null;
+  },
+
+  /**
+   * Gerente (su tienda, dentro de su región) y zonal (su región; puede ir a otras desde "Regiones") entran
+   * directo a Inicio de su región. Corporativo (admin/regional) entra al selector nacional con Étoile Corporativo.
+   */
+  entersOwnRegion() {
+    const r = this.getUserRole();
+    return (r === 'gerente' || r === 'zonal') && typeof REGION_NAME_MAP !== 'undefined' && !!REGION_NAME_MAP[this.getUserRegion()];
   }
 };
 

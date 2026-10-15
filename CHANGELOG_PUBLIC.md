@@ -6,6 +6,9 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 ---
 
 ## Versión 2.0.0 beta 8 Eltanin — Briefing de turno (Octubre 2026) [PREVIEW]
+* 🧭 **Cada quien entra a lo suyo**: el gerente abre directo en su tienda, con un botón para recorrer las demás de su región y «Mi sucursal» siempre a la mano; el zonal entra a su región y puede ir a otras (la suya aparece marcada); corporativo ve el panorama nacional y Étoile Corporativo.
+* 📋 **Seguimiento de quejas**: ahora puedes abrir una incidencia sobre una queja, ponerle responsable y estado, y dejar notas; todo queda en una bitácora. El gerente da seguimiento a las de su tienda; zonal y corporativo, a las de las tiendas que supervisan. Al resolverla aparece el sello de **Atendida**.
+* ✨ **Más étoile, menos relleno**: al cambiar de región aparece la estrella de la marca y la entrada es más rápida; los indicadores de carga ya no giran ni parpadean sin fin.
 * 🔄 **Sabes si las reseñas de Google están al día**: debajo de las quejas por atender verás cuándo se consultó Google por última vez. Si una sucursal lleva más de hora y media sin actualizarse, el aviso se pone en rojo y dice cuál, para que nadie confíe en datos viejos.
 * 🦮 **Mejor con lector de pantalla**: al cambiar de sección, el lector anuncia a qué pantalla llegaste.
 * ⌨️ **Las regiones se pueden elegir con el teclado**: con Tab llegas a cada tarjeta y con Enter o Espacio la abres.

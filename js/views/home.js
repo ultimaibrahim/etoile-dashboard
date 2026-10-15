@@ -312,6 +312,11 @@ const HomeView = {
     }
     const briefingHeadHtml = `<div class="brf-pill"><div class="brf-kicker">${escapeHtml(briefKicker)}</div><h1 class="brf-head" id="briefHead">${Briefing.headline(briefSegs)}</h1></div>`;
     const pendingHtml = Briefing.rowsHtml(pending, scopeIds);
+    // Cuenta de tienda: abre con su sucursal y aquí se le invita a recorrer las demás de su región
+    const others = branchHero ? branches.length - 1 : 0;
+    const exploreHtml = others > 0
+      ? `<div class="hero-explore-row"><button class="hero-explore" onclick="HomeView.scrollToBranches()">Explora ${others === 1 ? 'la otra tienda' : `las otras ${others} tiendas`} de ${escapeHtml(getRegionName(activeRegion))} <span aria-hidden="true">↓</span></button><a class="hero-explore hero-explore--ghost" href="#/sucursal/${encodeURIComponent(resolveBranchMeta(userBranch).id)}">Ficha de mi sucursal</a></div>`
+      : '';
 
     const concluded = getConcludedMonthInfo();
     let concludedBannerHtml = '';
@@ -350,6 +355,7 @@ const HomeView = {
               </div>
             </div>
             ${briefingHeadHtml}
+            ${exploreHtml}
           </div>
           <div class="hero-right">
             ${branchHero ? `
@@ -906,6 +912,13 @@ const HomeView = {
   },
 
   /** Sucursales de la región ordenadas por calificación del mes, con clic a su ficha */
+  scrollToBranches() {
+    const grid = document.getElementById('branchGrid');
+    if (!grid) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    (grid.closest('section') || grid).scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  },
+
   openBranchesDrawer() {
     const y = DataLoader.currentYear, m = DataLoader.currentMonth;
     const rows = SUCURSALES_META.map(s => { const st = DataLoader.computeBranchStats(y, m, s.id); return { s, st }; })

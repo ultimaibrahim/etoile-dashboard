@@ -230,6 +230,8 @@ function svgIcon(name) {
     barChart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>',
     calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
     info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+    chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16"/><path d="M17 4v16"/><path d="M3 9l4-5 4 5"/><path d="M13 15l4 5 4-5"/></svg>',
+    store: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v1.5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v7h14v-7"/><path d="M10 20v-4h4v4"/></svg>',
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
     starFilled: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>',
     star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
@@ -443,6 +445,11 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
     : `<a href="#/" class="topbar-brand"><span class="accent">étoile</span></a>`;
 
   const showDashboards = typeof SUCURSALES_META !== 'undefined' && SUCURSALES_META.length > 1;
+  // Cuenta de tienda: acceso directo a la ficha de su sucursal
+  const myBranch = typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated() && AppAuth.getUserRole() === 'gerente' ? AppAuth.getUserSucursal() : null;
+  const myBranchLink = myBranch && typeof resolveBranchMeta === 'function' && resolveBranchMeta(myBranch)
+    ? `<a href="#/sucursal/${encodeURIComponent(resolveBranchMeta(myBranch).id)}" class="topbar-link ${currentHash === '#/sucursal/' + resolveBranchMeta(myBranch).id ? 'active' : ''}" title="Mi sucursal">${svgIcon('store')} <span>Mi sucursal</span></a>`
+    : '';
 
   let nav = '';
   let desktopNav = '';
@@ -464,6 +471,7 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
   } else {
     nav = `<nav class="topbar-nav" id="mainNav">
       <a href="#/" class="topbar-link ${isHome ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
+      ${myBranchLink}
       ${showDashboards ? `<a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>` : ''}
       <a href="#/comparar" class="topbar-link ${isCompare ? 'active' : ''}" title="Comparar">${svgIcon('chart')} <span>Comparar</span></a>
       <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
@@ -472,6 +480,7 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
     desktopNav = `
       <div class="topbar-nav topbar-nav--desktop" id="mainNavDesktop">
         <a href="#/" class="topbar-link ${isHome ? 'active' : ''}" title="Inicio">${svgIcon('home')} <span>Inicio</span></a>
+        ${myBranchLink}
         ${showDashboards ? `<a href="#/dashboards" class="topbar-link ${isDash ? 'active' : ''}" title="Gráficas">${svgIcon('barChart')} <span>Dashboards</span></a>` : ''}
         <a href="#/comparar" class="topbar-link ${isCompare ? 'active' : ''}" title="Comparar">${svgIcon('chart')} <span>Comparar</span></a>
         <a href="#/acerca" class="topbar-link ${isAbout ? 'active' : ''}" title="Acerca de">${svgIcon('info')} <span>Acerca de</span></a>
@@ -646,6 +655,7 @@ function showRegionTransitionLoader(titleText, subtitleText, callback) {
     loader.className = 'region-transition-loader';
     loader.innerHTML = `
       <div class="region-transition-content">
+        <span class="region-transition-star" aria-hidden="true"></span>
         <h1 class="region-transition-title" id="region-transition-title"></h1>
         <p class="region-transition-subtitle" id="region-transition-subtitle"></p>
       </div>
@@ -670,8 +680,9 @@ function showRegionTransitionLoader(titleText, subtitleText, callback) {
     setTimeout(done, 10000);
   });
 
+  // La carga empieza en cuanto el telón cubre la pantalla (su fundido dura 300 ms); antes esperaba 800 ms fijos.
   const work = (async () => {
-    await sleep(800);
+    await sleep(320);
     try {
       if (callback) {
         await callback();
@@ -682,7 +693,7 @@ function showRegionTransitionLoader(titleText, subtitleText, callback) {
     }
   })();
 
-  Promise.all([sleep(1100), work]).then(() => {
+  Promise.all([sleep(700), work]).then(() => {   // mínimo: que la estrella termine de entrar
     loader.classList.remove('active');
     setTimeout(() => {
       if (loader && loader.parentNode) {

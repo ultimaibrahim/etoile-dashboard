@@ -3,11 +3,12 @@
  * Estados: nueva → en revisión → respondida → resuelta. Cada cambio queda en una bitácora (quién, cuándo, qué).
  * Tabla: supabase_incidents.sql. Si la tabla aún no existe, el módulo se apaga solo y la interfaz no muestra nada.
  *
- * APAGADO POR DEFECTO (`ENABLED = false`): no pide la tabla, no muestra botones y no genera ruido en consola.
- * Para activarlo: ejecutar supabase_incidents.sql en Supabase y poner ENABLED = true.
+ * Activo desde 2.0.0-beta.8 (tabla creada). Con `ENABLED = false` no pide la tabla ni muestra botones.
+ * Permisos (iguales a la RLS de supabase_incidents.sql): todos ven las de su alcance; zonal y corporativo abren/actualizan
+ * cualquiera que ven; el gerente solo las de su tienda (canEdit).
  */
 const Incidents = {
-  ENABLED: false,
+  ENABLED: true,
   TABLE: 'review_incidents',
   STATUS: [
     { id: 'nueva', label: 'Nueva' },
@@ -47,6 +48,13 @@ const Incidents = {
   },
 
   get(reviewId) { return this.byReview.get(reviewId) || null; },
+  /** ¿Puede quien está en sesión abrir/actualizar la incidencia de esta reseña? (espejo de editable_location_ids()) */
+  canEdit(r) {
+    if (typeof AppAuth === 'undefined' || !r) return false;
+    const role = AppAuth.getUserRole();
+    if (role === 'gerente') { const mine = AppAuth.getUserSucursal(); return !!mine && isSameBranch(r.sucursal, mine); }
+    return ['admin', 'director', 'regional', 'zonal'].includes(role);
+  },
   isResolved(r) { const i = r && this.byReview.get(r.id); return !!(i && i.status === 'resuelta'); },
   /** Quita de una lista las reseñas ya resueltas (la "Atención inmediata" no debe insistir en lo que ya se atendió) */
   unresolved(list) { return this.available ? list.filter(r => !this.isResolved(r)) : list; },
@@ -63,7 +71,7 @@ const Incidents = {
     if (rec) {
       return `<button type="button" class="rv-incident rv-incident--${rec.status}" onclick="event.stopPropagation(); Incidents.openDrawer('${id}')">${escapeHtml(this.label(rec.status))}${rec.owner ? ` · ${escapeHtml(rec.owner)}` : ''}</button>`;
     }
-    if (critical || variant === 'full') {
+    if (this.canEdit(r) && (critical || variant === 'full')) {
       return `<button type="button" class="rv-incident rv-incident--none" onclick="event.stopPropagation(); Incidents.openDrawer('${id}')">Dar seguimiento</button>`;
     }
     return '';
@@ -144,8 +152,7 @@ const Incidents = {
     const r = this._reviewIndex().get(reviewId);
     if (!r) return;
     const rec = this.byReview.get(reviewId);
-    const body = `
-      ${ReviewCard.html(r, { variant: 'full', index: 0, noIncident: true })}
+    const form = this.canEdit(r) ? `
       <div class="inc-form" id="incForm" data-rid="${escapeHtml(reviewId)}">
         <div class="inc-label">Estado</div>
         <div class="inc-chips" id="incChips">${this._statusChips(rec ? rec.status : 'nueva')}</div>
@@ -155,7 +162,10 @@ const Incidents = {
         <textarea id="incNote" class="inc-input" rows="3" maxlength="500" placeholder="¿Qué se hizo o qué sigue?"></textarea>
         <button type="button" class="inc-save" id="incSave" onclick="Incidents.submit('${escapeHtml(reviewId)}')">${rec ? 'Guardar seguimiento' : 'Abrir incidencia'}</button>
         <p class="inc-msg" id="incMsg" role="status"></p>
-      </div>
+      </div>` : `<p class="inc-readonly">Solo la tienda, su zonal o corporativo actualizan esta incidencia.${rec ? ` Estado: <strong>${escapeHtml(this.label(rec.status))}</strong>${rec.owner ? ` · ${escapeHtml(rec.owner)}` : ''}.` : ''}</p>`;
+    const body = `
+      ${ReviewCard.html(r, { variant: 'full', index: 0, noIncident: true })}
+      ${form}
       <div class="inc-label">Bitácora</div>
       <ul class="inc-history" id="incHistory">${this._historyHtml(rec)}</ul>`;
     Drawer.show({ id: 'incidentDrawer', title: 'Seguimiento de incidencia', subtitle: rec ? `Abierta ${BranchTime.label(rec.opened_at, null, 'long')}` : 'Aún sin seguimiento', bodyHtml: body });
@@ -170,6 +180,7 @@ const Incidents = {
     const note = document.getElementById('incNote').value.trim();
     const btn = document.getElementById('incSave'); const msg = document.getElementById('incMsg');
     btn.disabled = true; msg.textContent = 'Guardando…'; msg.className = 'inc-msg';
+    const wasResolved = this.isResolved(r);
     try {
       const saved = await this.save(r, { status, owner }, note);
       msg.textContent = 'Guardado ✓'; msg.className = 'inc-msg ok';
@@ -178,10 +189,18 @@ const Incidents = {
       document.getElementById('incNote').value = '';
       btn.textContent = 'Guardar seguimiento';
       this.refreshBadges(reviewId);
+      if (status === 'resuelta' && !wasResolved) this._stamp(reviewId);
     } catch (e) {
       msg.textContent = 'No se pudo guardar. Revisa tu conexión o tus permisos.'; msg.className = 'inc-msg err';
       console.warn('[Incidents] Error al guardar:', e && e.message);
     } finally { btn.disabled = false; }
+  },
+
+  /** Sello de «Atendida» al cerrar una incidencia: entra una vez en el formulario y en las insignias de esa reseña */
+  _stamp(reviewId) {
+    const form = document.getElementById('incForm');
+    if (form && !form.querySelector('.inc-stamp')) form.insertAdjacentHTML('afterbegin', '<div class="inc-stamp" role="status">Atendida</div>');
+    document.querySelectorAll(`.rv-card[data-rid="${CSS.escape(reviewId)}"] .rv-incident--resuelta`).forEach(b => b.classList.add('rv-incident--stamped'));
   },
 
   /** Actualiza en sitio el estado visible en las tarjetas de esa reseña; si quedó resuelta, la saca de "Atención inmediata" */

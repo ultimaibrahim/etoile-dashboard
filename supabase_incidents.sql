@@ -1,13 +1,14 @@
 -- ============================================================================
 -- supabase_incidents.sql — Seguimiento de incidencias por reseña (roadmap pilar F)
--- NO ejecutado. Idempotente: se puede volver a correr. Reversible (ver ROLLBACK al final).
+-- Ejecutado el 2026-10-15 (2.0.0-beta.8). Idempotente: se puede volver a correr. Reversible (ver ROLLBACK al final).
 --
 -- Una incidencia nace de una reseña (normalmente una "Grave") y tiene: estado, responsable y una bitácora
 -- con quién hizo qué y cuándo. El front funciona sin esta tabla (oculta el seguimiento) hasta que se ejecute.
 --
--- Acceso: quien puede VER una sucursal (visible_location_ids(): corporate/admin/regional/zonal → todas,
--- gerente → su región) puede abrir y actualizar incidencias de esa sucursal. No hay borrado desde la app.
--- Si se quiere que los gerentes solo lean, basta cambiar las políticas de INSERT/UPDATE a los demás roles.
+-- Acceso (decisión 2026-10-15, modelo de roles de Ibrahim):
+--   VER: quien ve la sucursal (visible_location_ids(): admin/regional/zonal → todas, gerente → su región).
+--   ABRIR/ACTUALIZAR: admin/regional/zonal en cualquier sucursal que ven; el gerente solo en SU tienda
+--   (profiles.sucursal; si no tiene tienda asignada, en ninguna). No hay borrado desde la app.
 -- ============================================================================
 BEGIN;
 
@@ -39,6 +40,21 @@ DROP TRIGGER IF EXISTS review_incidents_touch ON public.review_incidents;
 CREATE TRIGGER review_incidents_touch BEFORE UPDATE ON public.review_incidents
     FOR EACH ROW EXECUTE FUNCTION public.review_incidents_touch();
 
+-- Sucursales cuyas incidencias puede abrir/actualizar quien consulta
+CREATE OR REPLACE FUNCTION public.editable_location_ids()
+RETURNS SETOF text
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT l.id
+    FROM locations l
+    JOIN profiles p ON p.id = auth.uid()
+    WHERE p.rol IN ('admin', 'director', 'regional', 'zonal')
+       OR (p.rol = 'gerente' AND p.sucursal = l.id)
+$$;
+REVOKE ALL ON FUNCTION public.editable_location_ids() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.editable_location_ids() TO authenticated;
+
 ALTER TABLE public.review_incidents ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS incidents_select ON public.review_incidents;
@@ -47,12 +63,12 @@ CREATE POLICY incidents_select ON public.review_incidents FOR SELECT TO authenti
 
 DROP POLICY IF EXISTS incidents_insert ON public.review_incidents;
 CREATE POLICY incidents_insert ON public.review_incidents FOR INSERT TO authenticated
-    WITH CHECK (location_id IN (SELECT public.visible_location_ids()));
+    WITH CHECK (location_id IN (SELECT public.editable_location_ids()));
 
 DROP POLICY IF EXISTS incidents_update ON public.review_incidents;
 CREATE POLICY incidents_update ON public.review_incidents FOR UPDATE TO authenticated
-    USING (location_id IN (SELECT public.visible_location_ids()))
-    WITH CHECK (location_id IN (SELECT public.visible_location_ids()));
+    USING (location_id IN (SELECT public.editable_location_ids()))
+    WITH CHECK (location_id IN (SELECT public.editable_location_ids()));
 
 REVOKE ALL ON public.review_incidents FROM PUBLIC, anon;
 GRANT SELECT, INSERT, UPDATE ON public.review_incidents TO authenticated;
@@ -63,3 +79,4 @@ COMMIT;
 -- ROLLBACK:
 --   DROP TABLE IF EXISTS public.review_incidents;
 --   DROP FUNCTION IF EXISTS public.review_incidents_touch();
+--   DROP FUNCTION IF EXISTS public.editable_location_ids();

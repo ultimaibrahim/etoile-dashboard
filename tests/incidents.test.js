@@ -28,12 +28,13 @@ function load(client, opts = {}) {
     supabaseClient: client,
     escapeHtml: (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     resolveBranchMeta: (id) => ({ acoxpa: { id: 'acoxpa', region: 'CDMX' } }[id] || null),
-    AppAuth: { profile: { nombre: 'Ana' } },
+    AppAuth: { profile: { nombre: 'Ana', rol: opts.rol || 'zonal', sucursal: opts.sucursal || null }, getUserRole() { return this.profile.rol; }, getUserSucursal() { return this.profile.sucursal; } },
+    isSameBranch: (a, b) => !!a && a === b,
     Severity: { isCritical: (r) => r.stars === 1 && /intoxi/i.test(r.text || '') }
   };
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/incidents.js'), 'utf8') + ';globalThis.I = Incidents;', ctx);
-  if (!opts.off) ctx.I.ENABLED = true;   // el módulo viene apagado por defecto
+  ctx.I.ENABLED = !opts.off;   // interruptor general (activo desde beta.8)
   return ctx.I;
 }
 
@@ -44,11 +45,11 @@ function load(client, opts = {}) {
   const queja = { id: 'R2', stars: 2, text: 'Lento', sucursal: 'acoxpa' };
   const buena = { id: 'R3', stars: 5, text: 'Rico', sucursal: 'acoxpa' };
 
-  // Apagado por defecto: ni siquiera pide la tabla
+  // Con el interruptor apagado ni siquiera pide la tabla
   let touched = false;
   const spy = { from() { touched = true; return { select: async () => ({ data: [], error: null }) }; } };
   let I0 = load(spy, { off: true });
-  t('apagado por defecto: load() no consulta la base y no muestra nada', (await I0.load(true)) === false && I0.available === false && touched === false && I0.badgeHtml({ id: 'X', stars: 1, text: 'x', sucursal: 'acoxpa' }, { critical: true }) === '');
+  t('apagado: load() no consulta la base y no muestra nada', (await I0.load(true)) === false && I0.available === false && touched === false && I0.badgeHtml({ id: 'X', stars: 1, text: 'x', sucursal: 'acoxpa' }, { critical: true }) === '');
 
   // Tabla inexistente: se apaga sola y la interfaz no muestra nada
   let I = load(fakeClient({ missing: true }));
@@ -94,6 +95,13 @@ function load(client, opts = {}) {
   await I.save({ id: 'R"><x', stars: 1, text: 'x', sucursal: 'acoxpa' }, { status: 'nueva', owner: '<b>Hack</b>' }, '');
   const html = I.badgeHtml({ id: 'R"><x', stars: 1, text: 'x', sucursal: 'acoxpa' }, { critical: true });
   t('el responsable y el id se escapan en el HTML', !/<b>Hack/.test(html) && !/R"><x/.test(html), html);
+
+  // Permisos de edición (espejo de editable_location_ids())
+  const g = load(fakeClient(), { rol: 'gerente', sucursal: 'carso' }); await g.load(true);
+  t('gerente: edita su tienda, no otra de su región', g.canEdit({ sucursal: 'carso' }) && !g.canEdit({ sucursal: 'tepeyac' }));
+  t('gerente: en otra tienda no ofrece "Dar seguimiento"', g.badgeHtml({ id: 'x1', stars: 1, sucursal: 'tepeyac' }) === '' && /Dar seguimiento/.test(g.badgeHtml({ id: 'x2', stars: 1, sucursal: 'carso' })));
+  t('gerente sin tienda asignada no edita nada', !load(fakeClient(), { rol: 'gerente' }).canEdit({ sucursal: 'carso' }));
+  t('zonal y regional editan cualquiera que ven', load(fakeClient(), { rol: 'zonal' }).canEdit({ sucursal: 'tepeyac' }) && load(fakeClient(), { rol: 'regional' }).canEdit({ sucursal: 'andares' }));
 
   console.log(`\n${fail === 0 ? '✅ TODAS LAS PRUEBAS PASARON' : '❌ HAY FALLAS'} — ${pass} ok, ${fail} fallas`);
   process.exit(fail === 0 ? 0 : 1);

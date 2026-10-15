@@ -1,4 +1,4 @@
-// Cambia el perfil del usuario QA. Ej.: node tests/e2e/set-profile.js '{"rol":"gerente","sucursal":"carso"}'  (tienda)  |  '{"rol":"zonal","sucursal":null}' (restaurar)
+// Cambia el perfil del usuario QA. Ej.: node tests/e2e/set-profile.js '{"rol":"gerente","sucursal":"carso"}'  (tienda)  |  '{"rol":"regional","sucursal":null}' (restaurar)
 const fs = require('fs'), path = require('path'); const root = path.join(__dirname, '../..');
 fs.readFileSync(path.join(root, '.env'), 'utf8').split('\n').forEach(l => { const m = l.match(/^([A-Z0-9_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, ''); });
 const { createClient } = require(path.join(root, 'node_modules/@supabase/supabase-js'));

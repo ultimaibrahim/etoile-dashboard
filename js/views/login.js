@@ -342,12 +342,7 @@ const LoginView = {
 
     try {
       await AppAuth.login(email, password);
-      const role = AppAuth.getUserRole();
-      if (role !== 'gerente') {
-        Router.navigate('#/select-region');
-      } else {
-        Router.navigate('#/');
-      }
+      Router.navigate(AppAuth.entersOwnRegion() ? '#/' : '#/select-region');
     } catch (e) {
       console.error("Error en login UI:", e);
       if (e.message === 'email_unconfirmed') {
