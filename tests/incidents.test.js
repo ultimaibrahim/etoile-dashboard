@@ -102,6 +102,7 @@ function load(client, opts = {}) {
   t('gerente: en otra tienda no ofrece "Dar seguimiento"', g.badgeHtml({ id: 'x1', stars: 1, sucursal: 'tepeyac' }) === '' && /Dar seguimiento/.test(g.badgeHtml({ id: 'x2', stars: 1, sucursal: 'carso' })));
   t('gerente sin tienda asignada no edita nada', !load(fakeClient(), { rol: 'gerente' }).canEdit({ sucursal: 'carso' }));
   t('zonal y regional editan cualquiera que ven', load(fakeClient(), { rol: 'zonal' }).canEdit({ sucursal: 'tepeyac' }) && load(fakeClient(), { rol: 'regional' }).canEdit({ sucursal: 'andares' }));
+  t('corporate edita cualquiera que ve', load(fakeClient(), { rol: 'corporate' }).canEdit({ sucursal: 'tepeyac' }));
 
   console.log(`\n${fail === 0 ? '✅ TODAS LAS PRUEBAS PASARON' : '❌ HAY FALLAS'} — ${pass} ok, ${fail} fallas`);
   process.exit(fail === 0 ? 0 : 1);

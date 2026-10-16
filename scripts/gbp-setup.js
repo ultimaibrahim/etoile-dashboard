@@ -12,6 +12,7 @@
  *   node scripts/gbp-setup.js --list-locations
  *   node scripts/gbp-setup.js --sync-mappings
  *   node scripts/gbp-setup.js --status
+ *   node scripts/gbp-setup.js --sync-coords [--apply]   # latitud/longitud/dirección desde la ficha de Google (sin --apply solo muestra)
  */
 
 const fs = require('fs');
@@ -173,9 +174,46 @@ async function syncMappings(token, accountName, supabase) {
     .concat(matched.map(([sb, g]) => `UPDATE locations SET gbp_account_id = '${accountName}', gbp_location_id = '${g.name}', updated_at = now() WHERE id = '${sb.id}';`))
     .concat(['COMMIT;', ''])
     .join('\n');
-  const out = path.resolve(__dirname, '../supabase_gbp_mappings.sql');
+  const out = path.resolve(__dirname, '../supabase/supabase_gbp_mappings.sql');
   fs.writeFileSync(out, sql, 'utf8');
   console.log(`\n💾 SQL generado: ${out}`);
+}
+
+/**
+ * Llena locations.latitude/longitude/address con lo que dice la ficha de Google de cada sucursal vinculada
+ * (empata por gbp_location_id). Solo escribe con --apply y solo en sucursales vinculadas.
+ */
+async function syncCoords(token, accountName, supabase, apply) {
+  const readMask = 'name,title,latlng,storefrontAddress';
+  const gbp = new Map();
+  let pageToken = '';
+  do {
+    const url = `https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations?readMask=${readMask}&pageSize=100${pageToken ? '&pageToken=' + pageToken : ''}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) { console.error('❌ No se pudo listar ubicaciones:', await res.text()); process.exit(1); }
+    const data = await res.json();
+    (data.locations || []).forEach(l => gbp.set(l.name, l));
+    pageToken = data.nextPageToken || '';
+  } while (pageToken);
+
+  const { data: locs, error } = await supabase.from('locations').select('id, nombre, gbp_location_id').not('gbp_location_id', 'is', null);
+  if (error) { console.error('❌ Error leyendo locations:', error.message); process.exit(1); }
+  let ok = 0;
+  for (const l of locs) {
+    const key = l.gbp_location_id.startsWith('locations/') ? l.gbp_location_id : `locations/${l.gbp_location_id}`;
+    const g = gbp.get(key);
+    const ll = g && g.latlng;
+    if (!ll || ll.latitude == null) { console.log(`  ⚠️ ${l.nombre}: Google no da coordenadas`); continue; }
+    const a = g.storefrontAddress || {};
+    const address = [...(a.addressLines || []), a.sublocality, a.locality, a.administrativeArea, a.postalCode].filter(Boolean).join(', ') || null;
+    console.log(`  ${apply ? '✅' : '·'} ${l.nombre}: ${ll.latitude.toFixed(4)}, ${ll.longitude.toFixed(4)}`);
+    if (apply) {
+      const { error: e } = await supabase.from('locations').update({ latitude: ll.latitude, longitude: ll.longitude, address }).eq('id', l.id);
+      if (e) { console.error(`  ❌ ${l.nombre}: ${e.message}`); continue; }
+    }
+    ok++;
+  }
+  console.log(`\n${apply ? 'Actualizadas' : 'Con coordenadas (sin --apply no se escribió nada)'}: ${ok} de ${locs.length}`);
 }
 
 async function main() {
@@ -230,6 +268,12 @@ async function main() {
   if (action === '--sync-mappings') {
     if (accounts.length !== 1) { console.error(`❌ Se esperaba 1 cuenta y hay ${accounts.length}. Mapea manualmente.`); process.exit(1); }
     await syncMappings(token, accounts[0].name, supabase);
+    return;
+  }
+
+  if (action === '--sync-coords') {
+    if (accounts.length !== 1) { console.error(`❌ Se esperaba 1 cuenta y hay ${accounts.length}.`); process.exit(1); }
+    await syncCoords(token, accounts[0].name, supabase, args.includes('--apply'));
     return;
   }
 

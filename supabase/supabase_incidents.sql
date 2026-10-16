@@ -49,7 +49,7 @@ AS $$
     SELECT l.id
     FROM locations l
     JOIN profiles p ON p.id = auth.uid()
-    WHERE p.rol IN ('admin', 'director', 'regional', 'zonal')
+    WHERE p.rol IN ('corporate', 'admin', 'regional', 'zonal')
        OR (p.rol = 'gerente' AND p.sucursal = l.id)
 $$;
 REVOKE ALL ON FUNCTION public.editable_location_ids() FROM PUBLIC, anon;

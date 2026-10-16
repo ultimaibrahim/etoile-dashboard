@@ -84,6 +84,7 @@ build/
 .netlify/
 backups/
 # Generado por scripts/gbp-setup.js --sync-mappings (contiene IDs de cuenta de Google)
+supabase/supabase_gbp_mappings.sql
 supabase_gbp_mappings.sql
 
 # Pruebas e2e: credenciales y capturas locales

@@ -1,6 +1,6 @@
 {
   "name": "etoile-dashboard",
-  "version": "2.0.0-beta.8",
+  "version": "2.0.0",
   "codename": "Eltanin",
   "description": "Étoile Dashboard - Hospitality Operations & Customer Sentiment Intelligence Platform",
   "main": "index.html",

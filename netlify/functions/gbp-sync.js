@@ -110,6 +110,22 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
  * maxPages = 1 trae las 50 más recientes por updateTime (sync incremental).
  * maxPages = Infinity trae el historial completo (backfill).
  */
+/** Guarda latitud, longitud y dirección de la ficha de Google. Si falla no detiene el sync: se reintenta en la siguiente vuelta */
+async function fillCoords(supabase, accessToken, locPath, locationId) {
+  try {
+    const res = await fetch(`https://mybusinessbusinessinformation.googleapis.com/v1/${locPath}?readMask=latlng,storefrontAddress`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    if (!res.ok) return console.warn(`[gbp-sync] coordenadas de ${locationId}: HTTP ${res.status}`);
+    const g = await res.json();
+    if (!g.latlng || g.latlng.latitude == null) return;
+    const a = g.storefrontAddress || {};
+    const address = [...(a.addressLines || []), a.sublocality, a.locality, a.administrativeArea, a.postalCode].filter(Boolean).join(', ') || null;
+    const { error } = await supabase.from('locations').update({ latitude: g.latlng.latitude, longitude: g.latlng.longitude, address }).eq('id', locationId);
+    if (error) console.warn(`[gbp-sync] coordenadas de ${locationId}: ${error.message}`);
+  } catch (e) { console.warn(`[gbp-sync] coordenadas de ${locationId}: ${e.message}`); }
+}
+
 async function fetchLocationReviews(accessToken, accPath, locPath, maxPages) {
   const reviews = [];
   let pageToken = '';
@@ -263,6 +279,8 @@ exports.handler = async (event, context) => {
         const locPath = loc.gbp_location_id.startsWith('locations/') ? loc.gbp_location_id : `locations/${loc.gbp_location_id}`;
 
         const reviews = await fetchLocationReviews(accessToken, accPath, locPath, maxPages);
+        // Una sola vez por sucursal: si la base no tiene sus coordenadas, se toman de su ficha de Google (mapa de /info/)
+        if (loc.latitude == null && !isDryRun) await fillCoords(supabase, accessToken, locPath, loc.id);
 
         const mapped = [];
         for (const r of reviews) {

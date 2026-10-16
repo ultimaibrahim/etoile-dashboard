@@ -5,6 +5,12 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 
 ---
 
+## Versión 2.0.0 Eltanin — Étoile 2.0 (Octubre 2026)
+* 🚀 **Étoile 2.0 llega a todos**: todo lo probado en las betas Eltanin (briefing del turno, gráficas nuevas, seguimiento de quejas, entrada por rol, presentación con el mapa de sucursales y la nueva animación de entrada) pasa a ser la versión oficial.
+* 🗺️ **El mapa de la presentación usará la ubicación real de cada sucursal**: se toma de su ficha de Google la primera vez que se actualizan sus reseñas.
+* 📋 **Corporativo también puede dar seguimiento a las quejas** de cualquier sucursal.
+* 🔒 **Los archivos internos del sistema ya no se pueden abrir desde el navegador**: solo queda pública la presentación, las políticas y la app.
+
 ## Versión 2.0.0 beta 8 Eltanin — Briefing de turno (Octubre 2026) [PREVIEW]
 * ⭐ **Al resolver una queja, la estrella de étoile se completa**: cada punta se llena de dorado, luego el centro, y queda «Atendida». Sustituye al sello anterior.
 * 🗺️ **La presentación de étoile muestra el mapa de México con todas las sucursales**: se encienden desde la Ciudad de México y se unen como una constelación.

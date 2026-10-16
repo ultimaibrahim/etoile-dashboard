@@ -53,7 +53,7 @@ const Incidents = {
     if (typeof AppAuth === 'undefined' || !r) return false;
     const role = AppAuth.getUserRole();
     if (role === 'gerente') { const mine = AppAuth.getUserSucursal(); return !!mine && isSameBranch(r.sucursal, mine); }
-    return ['admin', 'director', 'regional', 'zonal'].includes(role);
+    return ['corporate', 'admin', 'regional', 'zonal'].includes(role);
   },
   isResolved(r) { const i = r && this.byReview.get(r.id); return !!(i && i.status === 'resuelta'); },
   /** Quita de una lista las reseñas ya resueltas (la "Atención inmediata" no debe insistir en lo que ya se atendió) */
