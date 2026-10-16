@@ -203,9 +203,14 @@ async function syncCoords(token, accountName, supabase, apply) {
     const key = l.gbp_location_id.startsWith('locations/') ? l.gbp_location_id : `locations/${l.gbp_location_id}`;
     const g = gbp.get(key);
     const ll = g && g.latlng;
-    if (!ll || ll.latitude == null) { console.log(`  ⚠️ ${l.nombre}: Google no da coordenadas`); continue; }
-    const a = g.storefrontAddress || {};
-    const address = [...(a.addressLines || []), a.sublocality, a.locality, a.administrativeArea, a.postalCode].filter(Boolean).join(', ') || null;
+    const a = (g && g.storefrontAddress) || {};
+    const address = [...(a.addressLines || []), a.sublocality, a.locality, a.administrativeArea, a.postalCode].filter(Boolean).join(', ');
+    if (!ll || ll.latitude == null) {
+      // Sin pin en la ficha: se guarda la dirección para que gbp-sync no vuelva a preguntar en cada vuelta
+      console.log(`  ⚠️ ${l.nombre}: Google no da coordenadas`);
+      if (apply && g) await supabase.from('locations').update({ address }).eq('id', l.id);
+      continue;
+    }
     console.log(`  ${apply ? '✅' : '·'} ${l.nombre}: ${ll.latitude.toFixed(4)}, ${ll.longitude.toFixed(4)}`);
     if (apply) {
       const { error: e } = await supabase.from('locations').update({ latitude: ll.latitude, longitude: ll.longitude, address }).eq('id', l.id);

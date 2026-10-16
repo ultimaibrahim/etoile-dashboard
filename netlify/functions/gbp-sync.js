@@ -118,10 +118,10 @@ async function fillCoords(supabase, accessToken, locPath, locationId) {
     });
     if (!res.ok) return console.warn(`[gbp-sync] coordenadas de ${locationId}: HTTP ${res.status}`);
     const g = await res.json();
-    if (!g.latlng || g.latlng.latitude == null) return;
     const a = g.storefrontAddress || {};
-    const address = [...(a.addressLines || []), a.sublocality, a.locality, a.administrativeArea, a.postalCode].filter(Boolean).join(', ') || null;
-    const { error } = await supabase.from('locations').update({ latitude: g.latlng.latitude, longitude: g.latlng.longitude, address }).eq('id', locationId);
+    const address = [...(a.addressLines || []), a.sublocality, a.locality, a.administrativeArea, a.postalCode].filter(Boolean).join(', ');
+    const ll = g.latlng && g.latlng.latitude != null ? { latitude: g.latlng.latitude, longitude: g.latlng.longitude } : {};
+    const { error } = await supabase.from('locations').update({ ...ll, address }).eq('id', locationId);
     if (error) console.warn(`[gbp-sync] coordenadas de ${locationId}: ${error.message}`);
   } catch (e) { console.warn(`[gbp-sync] coordenadas de ${locationId}: ${e.message}`); }
 }
@@ -279,8 +279,9 @@ exports.handler = async (event, context) => {
         const locPath = loc.gbp_location_id.startsWith('locations/') ? loc.gbp_location_id : `locations/${loc.gbp_location_id}`;
 
         const reviews = await fetchLocationReviews(accessToken, accPath, locPath, maxPages);
-        // Una sola vez por sucursal: si la base no tiene sus coordenadas, se toman de su ficha de Google (mapa de /info/)
-        if (loc.latitude == null && !isDryRun) await fillCoords(supabase, accessToken, locPath, loc.id);
+        // Un solo intento por sucursal: coordenadas y dirección de su ficha de Google (mapa de /info/). Si la ficha no trae pin,
+        // se guarda la dirección (o '') para no volver a preguntar; borrar `address` fuerza otro intento
+        if (loc.latitude == null && loc.address == null && !isDryRun) await fillCoords(supabase, accessToken, locPath, loc.id);
 
         const mapped = [];
         for (const r of reviews) {

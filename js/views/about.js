@@ -181,7 +181,7 @@ const AboutView = {
             "name": "¿Con qué frecuencia se sincronizan los datos de Google Reviews?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Las opiniones se ingieren de forma continua vía webhooks serverless hacia Supabase con soporte de reintentos seguros."
+              "text": "Las opiniones llegan de la API oficial de Google Business Profile cada 30 minutos y se guardan en Supabase."
             }
           }
         ]
@@ -206,6 +206,13 @@ const AboutView = {
                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,6 12,13 22,6"/></svg>
               ultima.ibrahim@proton.me
             </a>
+            <a href="${SIGNO_REPORT_URL}" target="_blank" rel="noopener"
+               style="text-decoration:none;background:var(--surface-2);padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;color:var(--text-muted);border:1px solid var(--border);transition:all 0.2s ease;display:flex;align-items:center;gap:6px;"
+               onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--sage)';"
+               onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border)';">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg>
+              Reportar un problema
+            </a>
             <a href="https://wa.me/5213333223998" target="_blank"
                style="text-decoration:none;background:var(--surface-2);padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;color:var(--text-muted);border:1px solid var(--border);transition:all 0.2s ease;display:flex;align-items:center;gap:6px;"
                onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--sage)';"
@@ -219,7 +226,7 @@ const AboutView = {
 
       <footer class="footer">
         <span class="brand" style="text-transform:none; font-family:var(--giaza); font-size:18px;">étoile</span> · Grupo MYT / Corporativo Alancar<br>
-        Dashboard de Reseñas · Región ${getRegionName(activeRegion)} · v3.4.4.altair · 2026
+        Dashboard de Reseñas · Región ${getRegionName(activeRegion)} · v${APP_VERSION.label} · 2026
       </footer>`;
 
     requestAnimationFrame(() => {

@@ -230,6 +230,9 @@ function starFill(avg) {
   return `<span class="star-fill" role="img" aria-label="${v.toFixed(2)} de 5 estrellas">${stars}</span>`;
 }
 
+/** Reportes de étoile: van al espacio de La Crêpe en SIGNO (privado: se abre en su pestaña, con su propio acceso) */
+const SIGNO_REPORT_URL = 'https://signo.ultimaibrahim.dev/e/lcp/reportar?sistema=etoile';
+
 function svgIcon(name) {
   const i = {
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
@@ -247,6 +250,7 @@ function svgIcon(name) {
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
     alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
     clipboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>',
+    flag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg>',
     logout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>',
     cinema: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>',
     fleur: '<svg class="deco-fleur" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2C12 2 14.5 6.5 17 8C19.5 9.5 22 10 22 10C22 10 18 11.5 16 14C14 16.5 12 22 12 22C12 22 10 16.5 8 14C6 11.5 2 10 2 10C2 10 4.5 9.5 7 8C9.5 6.5 12 2 12 2Z" /></svg>'
@@ -575,6 +579,10 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
       </button>
     `;
     logoutBtnMobile = `
+      <a class="topbar-mobile-link" href="${SIGNO_REPORT_URL}" target="_blank" rel="noopener">
+        ${svgIcon('flag')}
+        <span>Reportar un problema</span>
+      </a>
       <button class="topbar-mobile-link" onclick="AppAuth.logout(); window.toggleMobileMenu();" style="border:none; background:none; text-align:left; width:100%; cursor:pointer; color:inherit;">
         ${svgIcon('logout')}
         <span>Cerrar Sesión</span>
@@ -622,6 +630,7 @@ function buildTopbar(showBack = false, branchName = '', isCorporate = false) {
         <div class="topbar-actions">
           ${backToSelectBtn}
           ${regionSelect}
+          ${typeof AppAuth !== 'undefined' && AppAuth.isAuthenticated() ? `<a class="dark-toggle" href="${SIGNO_REPORT_URL}" target="_blank" rel="noopener" title="Reportar un problema o sugerir algo (SIGNO)" aria-label="Reportar un problema (abre SIGNO en otra pestaña)">${svgIcon('flag')}</a>` : ''}
           <button class="dark-toggle" onclick="toggleDark()" aria-label="Cambiar tema">${darkMode ? svgIcon('sun') : svgIcon('moon')}</button>
           ${logoutBtn}
         </div>
