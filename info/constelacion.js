@@ -1,20 +1,20 @@
 /* Constelación de sucursales sobre el mapa de México (solo en la página pública de Étoile).
  * Cada punto es una sucursal; se encienden de la Ciudad de México hacia afuera y las regiones se unen como una constelación.
- * Las coordenadas son aproximadas a nivel plaza (redondeadas a 2 decimales): la base todavía no guarda latitud y longitud.
- * Si la sincronización con Google llega a llenarlas, se pueden tomar de ahí. Corre una vez; sin movimiento si el sistema lo pide. */
+ * Coordenadas redondeadas a 2 decimales. 11 vienen del pin de su ficha de Google (locations.latitude/longitude, 2026-10-16);
+ * las demás fichas no traen pin y quedan aproximadas a nivel plaza. Corre una vez; sin movimiento si el sistema lo pide. */
 (function () {
   const host = document.getElementById('mapa');
   if (!host) return;
 
   // [región, latitud, longitud]
   const SUC = [
-    ['CDMX', 19.39, -99.25], ['CDMX', 19.31, -99.21], ['CDMX', 19.41, -99.19], ['CDMX', 19.36, -99.27], ['CDMX', 19.36, -99.17],
-    ['CDMX', 19.35, -99.18], ['CDMX', 19.45, -99.09], ['CDMX', 19.40, -99.25], ['CDMX', 19.37, -99.26], ['CDMX', 19.30, -99.14],
+    ['CDMX', 19.39, -99.25], ['CDMX', 19.31, -99.21], ['CDMX', 19.41, -99.20], ['CDMX', 19.36, -99.28], ['CDMX', 19.36, -99.17],
+    ['CDMX', 19.35, -99.18], ['CDMX', 19.45, -99.09], ['CDMX', 19.40, -99.24], ['CDMX', 19.36, -99.27], ['CDMX', 19.30, -99.14],
     ['CDMX', 19.44, -99.20], ['CDMX', 19.51, -99.23], ['CDMX', 19.43, -99.19], ['CDMX', 19.49, -99.12],
-    ['GDL', 20.71, -103.41], ['GDL', 20.64, -103.31], ['GDL', 20.68, -103.44], ['GDL', 20.56, -103.45], ['GDL', 20.66, -103.35],
+    ['GDL', 20.71, -103.41], ['GDL', 20.64, -103.31], ['GDL', 20.68, -103.43], ['GDL', 20.56, -103.45], ['GDL', 20.66, -103.35],
     ['GDL', 20.67, -103.39], ['GDL', 20.71, -103.38], ['GDL', 20.65, -103.40],
     ['MTY', 25.65, -100.33], ['MTY', 25.68, -100.35], ['MTY', 25.64, -100.31],
-    ['TOL', 19.26, -99.60], ['TOL', 19.25, -99.61],
+    ['TOL', 19.26, -99.62], ['TOL', 19.27, -99.61],
     ['QRO', 20.67, -100.44], ['SLP', 22.13, -101.03], ['AGS', 21.92, -102.29], ['LEON', 21.15, -101.70],
     ['CUN', 21.16, -86.81], ['TJ', 32.52, -117.02]
   ];
