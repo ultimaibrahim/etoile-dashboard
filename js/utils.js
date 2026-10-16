@@ -146,27 +146,29 @@ function emptyState({ icon = '—', title, hint = '', actionLabel = '', actionAt
   </div>`;
 }
 
-/* ── TOAST MESSAGES ────────────────────────────────────── */
+/* ── AVISOS ─────────────────────────────────────────────
+ * Un solo aviso para toda la app (banco de movimiento: «aviso que cae»): baja desde arriba con un rebote corto,
+ * se queda y se retira hacia arriba. Toast.show(msg, duración) o Toast.show(msg, { type: 'success'|'warn'|'info', duration }).
+ */
 const Toast = {
-  show(message, duration = 2500) {
+  show(message, opts = {}) {
+    const { type = 'info', duration = 2800 } = typeof opts === 'number' ? { duration: opts } : opts;
     let container = document.getElementById('toast-container');
     if (!container) {
       container = document.createElement('div');
       container.id = 'toast-container';
+      container.setAttribute('role', 'status');
+      container.setAttribute('aria-live', 'polite');
       document.body.appendChild(container);
     }
-    
     const toast = document.createElement('div');
-    toast.className = 'lcp-toast';
-    toast.setAttribute('role', 'status');
-    toast.innerText = message;
-    
+    toast.className = `lcp-toast lcp-toast--${type}`;
+    toast.textContent = message;
     container.appendChild(toast);
-    setTimeout(() => toast.classList.add('visible'), 50);
-    
     setTimeout(() => {
-      toast.classList.remove('visible');
-      setTimeout(() => toast.remove(), 400);
+      toast.classList.add('leaving');
+      toast.addEventListener('animationend', () => toast.remove(), { once: true });
+      setTimeout(() => toast.remove(), 600);   // por si no hay animación (movimiento reducido)
     }, duration);
   }
 };
@@ -1640,47 +1642,9 @@ function updateSlidingTabPill() {
   }
 }
 
-/**
- * ToastManager - Administrador de Notificaciones Flotantes en Cristal (Spring Physics)
- */
+/** Compatibilidad: las llamadas viejas a ToastManager usan el mismo aviso */
 const ToastManager = {
-  _getContainer() {
-    let container = document.getElementById('globalToastContainer');
-    if (!container) {
-      container = document.createElement('div');
-      container.id = 'globalToastContainer';
-      container.className = 'toast-container';
-      document.body.appendChild(container);
-    }
-    return container;
-  },
-
-  show({ type = 'info', message = '', icon = '', duration = 3200 }) {
-    const container = this._getContainer();
-    const pill = document.createElement('div');
-    pill.className = `toast-pill ${type}`;
-    
-    const iconSvg = icon || (type === 'success' ? svgIcon('check') : (type === 'warn' ? svgIcon('alert') : svgIcon('search')));
-    
-    pill.innerHTML = `
-      <span class="toast-icon">${iconSvg}</span>
-      <span class="toast-msg">${escapeHtml(message)}</span>
-    `;
-
-    container.appendChild(pill);
-    
-    // Activar animación con spring physics
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        pill.classList.add('active');
-      });
-    });
-
-    setTimeout(() => {
-      pill.classList.remove('active');
-      setTimeout(() => pill.remove(), 350);
-    }, duration);
-  }
+  show({ type = 'info', message = '', duration = 2800 } = {}) { Toast.show(message, { type, duration }); }
 };
 
 /**

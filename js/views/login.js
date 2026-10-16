@@ -1,8 +1,13 @@
 /**
- * views/login.js — Vista de Login con diseño Premium y autenticación Supabase.
+ * views/login.js — Página de login (/login/), independiente de la app.
+ * Crea su propio cliente de Supabase con las mismas opciones que la app (auth-storage.js): la sesión queda en la misma
+ * cookie y la app la encuentra al llegar. Al entrar, cada rol cae en su pantalla (gerente y zonal en su región,
+ * corporativo en el selector nacional). Si ya hay sesión, entra directo.
  */
 
 const LoginView = {
+  FLEUR: '<svg class="deco-fleur" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2C12 2 14.5 6.5 17 8C19.5 9.5 22 10 22 10C22 10 18 11.5 16 14C14 16.5 12 22 12 22C12 22 10 16.5 8 14C6 11.5 2 10 2 10C2 10 4.5 9.5 7 8C9.5 6.5 12 2 12 2Z" /></svg>',
+
   async render(errorMessage = '') {
     const app = document.getElementById('app');
     if (!app) return;
@@ -15,8 +20,8 @@ const LoginView = {
           <video id="login-bg-video-b" muted playsinline preload="none" poster="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%2314181a' viewBox='0 0 1 1'><rect width='1' height='1'/></svg>" class="login-bg-video"></video>
           <div class="login-video-overlay"></div>
         </div>
-        <div class="login-bg-deco left">${svgIcon('fleur')}</div>
-        <div class="login-bg-deco right">${svgIcon('fleur')}</div>
+        <div class="login-bg-deco left">${LoginView.FLEUR}</div>
+        <div class="login-bg-deco right">${LoginView.FLEUR}</div>
         
         <div class="login-card">
           <div class="login-header">
@@ -341,8 +346,8 @@ const LoginView = {
     const password = document.getElementById('login-password').value;
 
     try {
-      await AppAuth.login(email, password);
-      Router.navigate(AppAuth.entersOwnRegion() ? '#/' : '#/select-region');
+      window.location.replace(await LoginPage.signIn(email, password));
+      return;
     } catch (e) {
       console.error("Error en login UI:", e);
       if (e.message === 'email_unconfirmed') {
@@ -368,10 +373,10 @@ const LoginView = {
 
   // ── Playlist de Videos de Fondo ──
   _VIDEO_PLAYLIST: [
-    'videos/crepa_recien_hecha.mp4',
-    'videos/antojo_disfrutar.mp4',
-    'videos/historias_antojo.mp4',
-    'videos/vinculos_simple.mp4'
+    '/videos/crepa_recien_hecha.mp4',
+    '/videos/antojo_disfrutar.mp4',
+    '/videos/historias_antojo.mp4',
+    '/videos/vinculos_simple.mp4'
   ],
   _activeQueue: [],
 
@@ -425,5 +430,56 @@ const LoginView = {
 
     // Precargar el segundo
     preloadNext();
+  }
+};
+
+/* ── Arranque de la página ── */
+const LoginPage = {
+  client: null,
+
+  /** Pantalla de entrada según el rol (mismo criterio que AppAuth.entersOwnRegion en la app) */
+  destination(profile) {
+    return ['gerente', 'zonal'].includes(profile && profile.rol) ? '/#/' : '/#/select-region';
+  },
+
+  async profileOf(userId) {
+    const { data } = await this.client.from('profiles').select('rol, region').eq('id', userId).maybeSingle();
+    return data || null;
+  },
+
+  async signIn(email, password) {
+    if (!this.client) throw new Error('Supabase no configurado.');
+    const { data, error } = await this.client.auth.signInWithPassword({ email, password });
+    if (error) {
+      if (error.message && (error.message.includes('confirm') || error.message.includes('verified'))) throw new Error('email_unconfirmed');
+      throw error;
+    }
+    if (data.user && !data.user.email_confirmed_at) { await this.client.auth.signOut(); throw new Error('email_unconfirmed'); }
+    const profile = await this.profileOf(data.user.id);
+    if (!profile) { await this.client.auth.signOut(); throw new Error('Sin perfil'); }
+    return this.destination(profile);
+  },
+
+  async boot() {
+    try {
+      if (localStorage.getItem('lcpDark') === '1') document.documentElement.setAttribute('data-theme', 'dark');
+    } catch (e) {}
+    try {
+      const res = await fetch('/.netlify/functions/get-config');
+      const config = await res.json();
+      if (config.supabaseUrl && config.supabaseAnonKey) {
+        this.client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, SUPABASE_AUTH_OPTIONS);
+        // Con sesión vigente no hay nada que pedir: directo a la app
+        const { data: { session } } = await this.client.auth.getSession();
+        if (session) {
+          const profile = await this.profileOf(session.user.id);
+          if (profile) { window.location.replace(this.destination(profile)); return; }
+        }
+      }
+    } catch (e) {
+      console.error('[Login] No se pudo preparar el acceso:', e);
+    }
+    await LoginView.render();
+    document.documentElement.classList.add('login-ready');
   }
 };

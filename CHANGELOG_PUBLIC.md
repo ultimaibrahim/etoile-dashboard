@@ -6,6 +6,8 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 ---
 
 ## Versión 2.0.0 beta 8 Eltanin — Briefing de turno (Octubre 2026) [PREVIEW]
+* 🚪 **Nueva entrada a étoile**: al abrir el sitio sin sesión ves primero la presentación de étoile y desde ahí entras al inicio de sesión, que ahora es su propia página. Si ya habías entrado, te lleva directo a tu pantalla; al cerrar sesión regresas al inicio de sesión.
+* ✍️ **Mientras algo carga, el contenido se "escribe"** de izquierda a derecha en lugar de parpadear, y los avisos rápidos (como «Enlace copiado») bajan desde arriba.
 * 📜 **Toca la versión en «Acerca de»** y verás las novedades de cada versión, en el mismo lenguaje de esta lista, agrupadas por época. La versión siempre es la real.
 * 🧹 Se quitó el aviso de «Descargas próximamente», que no llevaba a nada.
 * 🧭 **Cada quien entra a lo suyo**: el gerente abre directo en su tienda, con un botón para recorrer las demás de su región y «Mi sucursal» siempre a la mano; el zonal entra a su región y puede ir a otras (la suya aparece marcada); corporativo ve el panorama nacional y Étoile Corporativo.

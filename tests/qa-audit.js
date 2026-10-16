@@ -75,6 +75,7 @@ const jsFiles = [
   'js/router.js',
   'js/app.js',
   'js/views/login.js',
+  'js/auth-storage.js',
   'js/views/select-region.js',
   'js/views/brand.js',
   'js/views/home.js',

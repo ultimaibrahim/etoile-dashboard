@@ -171,9 +171,16 @@ const Router = {
                           hash === '#/403' || 
                           matchedRoute.handler === this.routes['not-found'];
 
+    // El login es su propia página (/login/); los enlaces viejos a #/login siguen funcionando
+    if (hash === '#/login') {
+      window.location.replace('/login/');
+      return;
+    }
+
     if (!authenticated) {
       if (!isPublicRoute) {
-        window.location.hash = '#/login';
+        // Sin sesión: quien llega a la raíz ve primero la página de inicio pública; un enlace profundo va directo al login
+        window.location.replace(hash === '' || hash === '#/' ? '/info/' : '/login/');
         return;
       }
     } else {

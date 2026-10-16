@@ -2,7 +2,7 @@
 /**
  * scripts/version.js — Una sola fuente de verdad para la versión: package.json ("version" y "codename").
  * Propaga a:
- *   - index.html: el ?v= de cada <script>/<link> (rompe la caché del navegador en cada versión)
+ *   - index.html y login/index.html: el ?v= de cada <script>/<link> (rompe la caché del navegador en cada versión)
  *   - js/version.js: APP_VERSION, que lee la interfaz (Acerca de, easter egg del changelog)
  * Y avisa si algún changelog todavía no tiene la entrada de esa versión.
  *
@@ -21,15 +21,15 @@ const version = pkg.version, codename = pkg.codename || '';
 const label = version.replace(/-([a-z]+)\.?/i, ' $1 ');
 const check = process.argv.includes('--check');
 
-const htmlPath = path.join(root, 'index.html');
-const html = fs.readFileSync(htmlPath, 'utf8');
-const newHtml = html.replace(/(\.(?:js|css)\?v=)[0-9A-Za-z.\-]+/g, `$1${version}`);
+// Páginas que cargan archivos de la app con ?v= (la app y el login, que es su propia página)
+const PAGES = ['index.html', 'login/index.html'];
+const bump = html => html.replace(/(\.(?:js|css)\?v=)[0-9A-Za-z.\-]+/g, `$1${version}`);
 
 const verPath = path.join(root, 'js/version.js');
 const verJs = `/** Generado por scripts/version.js desde package.json — no editar a mano. */\nconst APP_VERSION = Object.freeze(${JSON.stringify({ version, codename, label }, null, 2)});\n`;
 
 const stale = [];
-if (newHtml !== html) stale.push('index.html (?v=)');
+for (const pg of PAGES) { const h = fs.readFileSync(path.join(root, pg), 'utf8'); if (bump(h) !== h) stale.push(pg + ' (?v=)'); }
 if (!fs.existsSync(verPath) || fs.readFileSync(verPath, 'utf8') !== verJs) stale.push('js/version.js');
 
 const missing = ['CHANGELOG.md', 'CHANGELOG_PUBLIC.md'].filter(f => {
@@ -42,7 +42,7 @@ if (check) {
   console.log(`✅ Versión ${version} sincronizada${missing.length ? ` (aviso: falta entrada en ${missing.join(', ')})` : ''}`);
   process.exit(0);
 }
-fs.writeFileSync(htmlPath, newHtml);
+for (const pg of PAGES) { const f = path.join(root, pg); fs.writeFileSync(f, bump(fs.readFileSync(f, 'utf8'))); }
 fs.writeFileSync(verPath, verJs);
-console.log(`Versión ${version}${codename ? ' ' + codename : ''} → index.html, js/version.js`);
+console.log(`Versión ${version}${codename ? ' ' + codename : ''} → ${PAGES.join(', ')}, js/version.js`);
 if (missing.length) console.warn(`⚠️  Falta la entrada "${label}" en: ${missing.join(', ')} (doble changelog en el mismo commit).`);

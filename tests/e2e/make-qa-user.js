@@ -14,7 +14,7 @@ const file = path.join(__dirname, '.qa_user.json');
     await sb.from('profiles').delete().eq('id', u.id); const r = await sb.auth.admin.deleteUser(u.id);
     console.log(r.error ? r.error.message : `usuario QA ${u.id.slice(0, 8)}… borrado`); fs.unlinkSync(file); return;
   }
-  const email = `qa.etoile.${Date.now()}@example.com`, password = crypto.randomBytes(18).toString('base64url');
+  const email = `qa.etoile.${Date.now()}@example.com`, password = crypto.randomBytes(18).toString('base64url') + 'Aa7!';   // la política de Supabase pide minúscula, mayúscula, dígito y símbolo
   const { data, error } = await sb.auth.admin.createUser({ email, password, email_confirm: true });
   if (error) throw error;
   const p = await sb.from('profiles').upsert({ id: data.user.id, nombre: 'QA Temporal', rol: 'regional', region: 'CDMX' });

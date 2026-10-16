@@ -18,8 +18,8 @@ async function open(browser, { w = 1280, h = 900, mobile = false, dark = false, 
   const c = creds();
   // El login de Supabase a veces no sale al primer clic (intermitente, también sin cambios en la app): un reintento.
   for (let attempt = 1; ; attempt++) {
-    await page.goto(BASE + '/#/login');
-    await page.waitForFunction(() => typeof supabaseClient !== 'undefined' && supabaseClient && typeof Router !== 'undefined' && Router.current === '#/login' && !!document.getElementById('login-submit-btn'), null, { timeout: 30000 });
+    await page.goto(BASE + '/login/');   // el login es su propia página
+    await page.waitForFunction(() => document.documentElement.classList.contains('login-ready') && !!document.getElementById('login-submit-btn'), null, { timeout: 30000 });
     await page.fill('#login-email', c.email); await page.fill('#login-password', c.password); await page.click('#login-submit-btn');
     try { await page.waitForSelector('#srvContainer, #briefHead', { timeout: 25000 }); break; } catch (e) { if (attempt >= 2) throw e; }
   }

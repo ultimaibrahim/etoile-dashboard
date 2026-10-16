@@ -495,14 +495,15 @@ const SelectRegionView = {
           color: #E8C878;
           background: rgba(232, 200, 120, 0.15);
         }
-        /* Cargando: la estrella de étoile respira (opacidad, finita) en lugar de un spinner genérico */
+        /* Cargando: una línea que se escribe (banco de movimiento), en lugar de un spinner */
         .srv-rating-spinner {
           display: inline-block;
-          width: 14px;
-          height: 14px;
-          background: var(--oro);
-          clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-          animation: etoileWait 0.9s ease-in-out 8 alternate both;
+          width: 42px;
+          height: 8px;
+          border-radius: 4px;
+          background: rgba(184, 144, 47, 0.45);
+          transform-origin: left center;
+          animation: etoileWrite 1.6s cubic-bezier(.6, 0, .3, 1) 6 both;
         }
 
         /* ── SILUETAS GEOGRÁFICAS DE FONDO ── */
@@ -651,15 +652,17 @@ const SelectRegionView = {
         .srv-table-spinner {
           display: block;
           margin: 40px auto;
-          width: 24px;
-          height: 24px;
-          background: var(--oro);
-          clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-          animation: etoileWait 0.9s ease-in-out 8 alternate both;
+          width: 120px;
+          height: 10px;
+          border-radius: 5px;
+          background: rgba(184, 144, 47, 0.45);
+          transform-origin: left center;
+          animation: etoileWrite 1.6s cubic-bezier(.6, 0, .3, 1) 6 both;
         }
-        @keyframes etoileWait {
-          from { opacity: .35; transform: scale(.85); }
-          to { opacity: 1; transform: scale(1); }
+        @keyframes etoileWrite {
+          0% { transform: scaleX(0); opacity: 1; }
+          55%, 85% { transform: scaleX(1); opacity: 1; }
+          100% { transform: scaleX(1); opacity: .3; }
         }
 
         /* ── BRAND DASHBOARD SHORTCUT BANNER ── */

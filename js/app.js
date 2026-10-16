@@ -5,46 +5,6 @@
 /* ── SUPABASE CONFIG ───────────────────────────────────── */
 // La configuración de Supabase se carga de forma dinámica desde el servidor de Netlify.
 
-/* ── COOKIE STORAGE FOR AUTH ───────────────────────────── */
-const CookieStorage = {
-  getItem(key) {
-    const name = key + "=";
-    const ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-      let c = ca[i].trim();
-      if (c.indexOf(name) === 0) {
-        try {
-          return decodeURIComponent(c.substring(name.length, c.length));
-        } catch (e) {
-          return c.substring(name.length, c.length);
-        }
-      }
-    }
-    return null;
-  },
-  setItem(key, value) {
-    const d = new Date();
-    d.setTime(d.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 días de persistencia
-    const expires = "expires=" + d.toUTCString();
-    document.cookie = `${key}=${encodeURIComponent(value)}; ${expires}; path=/; SameSite=Lax; Secure`;
-  },
-  removeItem(key) {
-    document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure`;
-  }
-};
-
-// Limpiar localStorage de cualquier token anterior de Supabase por seguridad
-try {
-  for (let i = localStorage.length - 1; i >= 0; i--) {
-    const key = localStorage.key(i);
-    if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
-      localStorage.removeItem(key);
-    }
-  }
-} catch (err) {
-  console.warn("No se pudo limpiar localStorage:", err);
-}
-
 var supabaseClient = null;
 
 /* ── STATE ─────────────────────────────────────────────── */
@@ -122,50 +82,6 @@ const AppAuth = {
     }
   },
 
-  async login(email, password) {
-    if (!supabaseClient) {
-      throw new Error("Supabase no configurado.");
-    }
-
-    // 1. Intentar inicio de sesión
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) {
-      // Capturar si Supabase reporta que el correo no está confirmado
-      if (error.message && (error.message.includes('confirm') || error.message.includes('verified'))) {
-        throw new Error("email_unconfirmed");
-      }
-      throw error;
-    }
-
-    // 2. Guard en cliente: bloquear inicio de sesión si el correo no está confirmado
-    if (data.user && !data.user.email_confirmed_at) {
-      await supabaseClient.auth.signOut();
-      throw new Error("email_unconfirmed");
-    }
-
-    this.session = data.session;
-    await this.loadProfile(data.user.id);
-
-    if (!this.profile) {
-      await this.logout();
-      throw new Error("No se encontró un perfil asociado a esta cuenta en la base de datos.");
-    }
-    
-    if (typeof DataLoader !== 'undefined') {
-      DataLoader.cache = {};
-      DataLoader._regionStore = {};
-      DataLoader._brandCache = {};
-      // Los roles que aterrizan en select-region solo necesitan el manifiesto: la región se precarga al elegirla.
-      // Gerente y zonal entran directo a su región, así que esos sí precargan ahora.
-      if (this.entersOwnRegion()) {
-        await Promise.all([DataLoader.init(), DataLoader.computeHistoricalRatings(), Incidents.load(true)]);
-      } else {
-        await Promise.all([DataLoader.init(), Incidents.load(true)]);
-      }
-    }
-    return true;
-  },
-
   async logout() {
     if (typeof ViewState !== 'undefined') {
       ViewState.clear();
@@ -188,7 +104,7 @@ const AppAuth = {
       setRegionActiva('GDL');
     }
     
-    Router.navigate('#/login');
+    window.location.replace('/login/');   // el login es su propia página
   },
 
   isAuthenticated() {
@@ -300,14 +216,7 @@ async function initApp() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const config = await res.json();
     if (config.supabaseUrl && config.supabaseAnonKey) {
-      supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
-        auth: {
-          storage: CookieStorage,
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true
-        }
-      });
+      supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, SUPABASE_AUTH_OPTIONS);
     }
   } catch (e) {
     console.error("No se pudo obtener la configuración de Supabase desde el servidor:", e);
@@ -331,7 +240,6 @@ async function initApp() {
   window.updateLcpLoader(100);
 
   // Registrar vistas en el Router
-  Router.register('login', () => LoginView.render());
   Router.register('select-region', () => SelectRegionView.render());
   Router.register('brand', () => BrandView.render());
   Router.register('home', () => HomeView.render());

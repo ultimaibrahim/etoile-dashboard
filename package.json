@@ -15,6 +15,6 @@
   "scripts": {
     "build:echarts": "node scripts/build-echarts.js",
     "test": "node scripts/version.js --check && node tests/qa-audit.js && node tests/gbp-sync.test.js && node tests/time.test.js && node tests/metrics.test.js && node tests/patterns.test.js && node tests/severity.test.js && node tests/narrative.test.js && node tests/incidents.test.js && node tests/changelog.test.js",
-    "version": "node scripts/version.js && git add index.html js/version.js package-lock.json"
+    "version": "node scripts/version.js && git add index.html login/index.html js/version.js package-lock.json"
   }
 }

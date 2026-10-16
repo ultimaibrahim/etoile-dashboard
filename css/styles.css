@@ -4109,10 +4109,11 @@ html.login-page-active body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
-/* Sin barrido de brillo (repinta cada cuadro y es el gesto más genérico): el bloque solo "respira" en opacidad
-   mientras espera, y se detiene si tarda; con movimiento reducido queda quieto. */
-.skeleton { animation: skelBreathe 1.1s ease-in-out 6 alternate both; }
-@keyframes skelBreathe { from { opacity: .55; } to { opacity: 1; } }
+/* Esqueleto que se escribe (banco de movimiento): cada bloque se traza de izquierda a derecha, como si alguien
+   escribiera el contenido; 4 vueltas y se detiene. Con movimiento reducido queda quieto. */
+.skeleton { transform-origin: left center; animation: skelWrite 2.6s cubic-bezier(.6, 0, .3, 1) 4 both; }
+.skeleton:nth-child(2) { animation-delay: .15s; } .skeleton:nth-child(3) { animation-delay: .3s; } .skeleton:nth-child(4) { animation-delay: .45s; }
+@keyframes skelWrite { 0% { transform: scaleX(0); } 40%, 80% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: .35; } }
 @media (prefers-reduced-motion: reduce) {
   .skeleton::after { animation: none !important; }}
 .skeleton-card { height: 96px; margin-bottom: 12px; }
@@ -4139,39 +4140,36 @@ html.login-page-active body {
 
 #toast-container {
   position: fixed;
-  bottom: 24px;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 11000;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 8px;
   pointer-events: none;
+  width: max-content;
+  max-width: calc(100vw - 32px);
 }
+/* Aviso que cae (banco de movimiento): entra con rebote corto, sale hacia arriba; solo transform/opacity */
 .lcp-toast {
-  background: #1A1A1A;
-  color: #F5EFE6;
-  padding: 12px 24px;
+  background: var(--text);
+  color: var(--bg);
+  padding: 11px 20px;
   border-radius: 12px;
-  font-size: 13.5px;
-  font-weight: 700;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  font: 600 13.5px/1.35 var(--sans);
   text-align: center;
-  white-space: nowrap;
+  box-shadow: 0 10px 30px rgba(30, 26, 21, 0.22);
+  animation: toastDrop .55s cubic-bezier(.2, 1.4, .4, 1) both;
 }
-[data-theme="dark"] .lcp-toast {
-  background: #F5EFE6;
-  color: #1A1A1A;
-  border-color: rgba(0, 0, 0, 0.1);
-}
-.lcp-toast.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
+.lcp-toast--success { background: var(--ok-ink); color: #FAF5EB; }
+.lcp-toast--warn { background: var(--alerta-ink); color: #FAF5EB; }
+[data-theme="dark"] .lcp-toast--success, [data-theme="dark"] .lcp-toast--warn { color: #1E1A15; }
+.lcp-toast.leaving { animation: toastLeave .35s ease-in both; }
+@keyframes toastDrop { from { opacity: 0; transform: translateY(-140%); } to { opacity: 1; transform: none; } }
+@keyframes toastLeave { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-40%); } }
+@media (prefers-reduced-motion: reduce) { .lcp-toast, .lcp-toast.leaving { animation-name: none; } }
 
 /* Evitar auto-zoom en inputs de login en iOS y ajustar touch targets */
 #login-email,
