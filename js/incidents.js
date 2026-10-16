@@ -196,10 +196,18 @@ const Incidents = {
     } finally { btn.disabled = false; }
   },
 
-  /** Sello de «Atendida» al cerrar una incidencia: entra una vez en el formulario y en las insignias de esa reseña */
+  /** Estrella que se completa al cerrar una incidencia: cada punta es un paso del seguimiento; se llenan las cinco,
+   *  luego el centro, y queda «Atendida». Entra una vez en el formulario y en las insignias de esa reseña */
+  STAR_ARMS: ['M50 5 L61 38 L39 38 Z', 'M61 38 L96 38 L68 59 Z', 'M68 59 L79 93 L50 72 Z', 'M50 72 L21 93 L32 59 Z', 'M32 59 L4 38 L39 38 Z'],
+  STAR_CORE: 'M39 38 L61 38 L68 59 L50 72 L32 59 Z',
+  doneHtml() {
+    const arms = this.STAR_ARMS.map((d, i) => `<path class="inc-done-arm" style="--i:${i}" d="${d}"/>`).join('');
+    const base = this.STAR_ARMS.map(d => `<path d="${d}"/>`).join('') + `<path d="${this.STAR_CORE}"/>`;
+    return `<div class="inc-done" role="status"><svg viewBox="0 0 100 100" aria-hidden="true"><g class="inc-done-base">${base}</g>${arms}<path class="inc-done-core" d="${this.STAR_CORE}"/></svg><span>Atendida</span></div>`;
+  },
   _stamp(reviewId) {
     const form = document.getElementById('incForm');
-    if (form && !form.querySelector('.inc-stamp')) form.insertAdjacentHTML('afterbegin', '<div class="inc-stamp" role="status">Atendida</div>');
+    if (form && !form.querySelector('.inc-done')) form.insertAdjacentHTML('afterbegin', this.doneHtml());
     document.querySelectorAll(`.rv-card[data-rid="${CSS.escape(reviewId)}"] .rv-incident--resuelta`).forEach(b => b.classList.add('rv-incident--stamped'));
   },
 

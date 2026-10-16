@@ -6,6 +6,15 @@
 const ChartWrapper = {
   _all: new Set(),
 
+  /** Movimiento común: las barras crecen con resorte (se pasan un poco y se asientan); sin movimiento si el sistema lo pide */
+  motion(option) {
+    if (!option) return option;
+    if (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches) return { ...option, animation: false };
+    const series = Array.isArray(option.series) ? option.series : option.series ? [option.series] : [];
+    series.forEach(sr => { if (sr && sr.type === 'bar' && !sr.animationEasing) sr.animationEasing = 'backOut'; });
+    return option;
+  },
+
   mount(el, { state = 'ready', option = null, height = null, emptyText = 'Sin datos para mostrar', errorText = 'No se pudo cargar la gráfica' } = {}) {
     if (!el || typeof echarts === 'undefined') return null;
     if (height) el.style.height = height;
@@ -33,7 +42,7 @@ const ChartWrapper = {
         host.style.visibility = next === 'ready' ? 'visible' : 'hidden';
       },
       update(nextOption, opts = {}) {
-        chart.setOption(nextOption, opts.notMerge !== false);
+        chart.setOption(ChartWrapper.motion(nextOption), opts.notMerge !== false);
         api.setState('ready');
       },
       dispose() {

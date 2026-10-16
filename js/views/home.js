@@ -349,7 +349,7 @@ const HomeView = {
             <div class="hero-score hero-link" role="button" tabindex="0" aria-label="Ver el desglose de la calificación" onclick="HomeView.openRatingDrawer()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();HomeView.openRatingDrawer();}">
               <span class="hero-score-num num" id="heroNum">${heroAvg.toFixed(2)}</span>
               <div class="hero-score-side">
-                <span class="hero-stars">${starStr(Math.round(heroAvg))}</span>
+                <span class="hero-stars">${starFill(heroAvg)}</span>
                 <span class="hero-of">de 5.00</span>
                 ${trendHtml}
               </div>
@@ -474,14 +474,15 @@ const HomeView = {
       // Counting animation for hero rating
       const heroNumEl = document.getElementById('heroNum');
       if (heroNumEl) {
+        // La cifra sube hasta su valor con frenado suave y se queda (sin movimiento si el sistema lo pide)
         const targetVal = heroAvg;
-        let startVal = 3.0;
-        const duration = 1800;
+        const startVal = Math.max(0, targetVal - 1.2);
+        const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1400;
         let startTimestamp = null;
         const step = (timestamp) => {
           if (!startTimestamp) startTimestamp = timestamp;
-          const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-          const val = progress * (targetVal - startVal) + startVal;
+          const progress = duration ? Math.min((timestamp - startTimestamp) / duration, 1) : 1;
+          const val = (1 - Math.pow(1 - progress, 4)) * (targetVal - startVal) + startVal;
           heroNumEl.textContent = val.toFixed(2);
           if (progress < 1) {
             window.requestAnimationFrame(step);

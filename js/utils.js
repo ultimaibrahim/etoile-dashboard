@@ -223,6 +223,13 @@ function starStr(n) {
   return '★'.repeat(safeN) + '☆'.repeat(5 - safeN);
 }
 
+/** Cinco estrellas que se llenan de izquierda a derecha, una tras otra, hasta el promedio exacto (4.6 → cuatro y 60 % de la quinta) */
+function starFill(avg) {
+  const v = Math.max(0, Math.min(5, Number(avg) || 0));
+  const stars = [0, 1, 2, 3, 4].map(i => `<i style="--f:${Math.max(0, Math.min(1, v - i)).toFixed(2)};--i:${i}"></i>`).join('');
+  return `<span class="star-fill" role="img" aria-label="${v.toFixed(2)} de 5 estrellas">${stars}</span>`;
+}
+
 function svgIcon(name) {
   const i = {
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',

@@ -88,6 +88,9 @@ const SelectRegionView = {
           gap: 20px;
           width: 100%;
         }
+        .srv-brand { align-self: flex-start; text-decoration: none; line-height: 1; margin-bottom: -6px; }
+        .srv-brand .accent { font-family: var(--giaza); font-size: 30px; letter-spacing: .02em; color: var(--verde); }
+        [data-theme="dark"] .srv-brand .accent { color: var(--text); }
         .srv-header-row {
           display: flex;
           justify-content: center;
@@ -879,7 +882,7 @@ const SelectRegionView = {
     app.innerHTML = `
       <div class="srv-wrapper">
         <div class="srv-container" id="srvContainer">
-          
+          <a class="srv-brand" href="#/select-region" aria-label="étoile, inicio"><span class="accent">étoile</span></a>
           <!-- Briefing nacional: lo primero que lee quien ve todas las regiones -->
           <section class="srv-briefing" id="srvBriefing" aria-live="polite"></section>
 

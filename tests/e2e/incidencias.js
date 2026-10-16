@@ -14,11 +14,11 @@ const run = (f, ...a) => execFileSync('node', [path.join(__dirname, f), ...a], {
     await page.click('#incSave'); await page.waitForFunction(() => /Guardado/.test(document.getElementById('incMsg').textContent), null, { timeout: 15000 });
     const hist = await page.evaluate(() => document.getElementById('incHistory').innerText);
     rec('gerente: abre una incidencia de su tienda con estado, responsable y bitácora', /En revisión/.test(hist) && /QA Gerente/.test(hist) && /Prueba automática/.test(hist), hist.replace(/\n+/g, ' ').slice(0, 120));
-    // Cerrarla: aparece el sello de «Atendida» una vez
+    // Cerrarla: aparece la estrella completa de «Atendida» una vez
     await page.click('.inc-chip--resuelta'); await page.click('#incSave');
-    await page.waitForSelector('.inc-stamp', { timeout: 15000 }); await sleep(600);
+    await page.waitForSelector('.inc-done', { timeout: 15000 }); await sleep(600);
     if (process.env.SHOT) await (await page.$('#incForm')).screenshot({ path: process.env.SHOT });
-    rec('al resolverla aparece el sello de «Atendida»', await page.evaluate(() => document.querySelectorAll('.inc-stamp').length === 1 && /Resuelta/.test(document.getElementById('incHistory').innerText)));
+    rec('al resolverla aparece la estrella completa de «Atendida»', await page.evaluate(() => document.querySelectorAll('.inc-done').length === 1 && /Resuelta/.test(document.getElementById('incHistory').innerText)));
     await page.click('.inc-chip--en_revision'); await page.click('#incSave'); await page.waitForFunction(() => /Guardado/.test(document.getElementById('incMsg').textContent), null, { timeout: 15000 }); await sleep(800);
     // Persistencia: tras recargar, la base la devuelve
     await page.reload(); await page.waitForSelector('#briefHead', { timeout: 30000 }); await sleep(2000);

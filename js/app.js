@@ -159,49 +159,84 @@ window.showLcpLoader = function() {
       appEl.classList.add('loading-active');
     }
     loader.style.display = 'flex';
+    delete loader.dataset.leaving;
+    const mark = loader.querySelector('.loader-mark'), svgText = loader.querySelector('.loader-logo-svg-text');
+    if (mark) { mark.removeAttribute('style'); mark.getAnimations().forEach(a => a.cancel()); }
+    loader.querySelector('.loader-dough')?.getAnimations().forEach(a => a.cancel());
+    if (svgText) svgText.style.opacity = '';
   }
 };
 
 window.hideLcpLoader = function() {
   const loader = document.getElementById('lcp-loader');
   const appEl = document.getElementById('app');
-
-  if (!loader) return;
-
-  // 1. Asegurar progreso al 100% de la frase
+  if (!loader || loader.style.display === 'none' || loader.dataset.leaving) return;
+  loader.dataset.leaving = '1';
   window.updateLcpLoader(100);
 
-  // 2. Iniciar desaparición (fade/scale out) de textos
-  setTimeout(() => {
-    loader.classList.add('wrap-active');
-  }, 250);
-
-  // 3. Mostrar hilo de luz dorada en el centro (plancha)
-  setTimeout(() => {
-    loader.classList.add('line-visible');
-  }, 550);
-
-  // 4. Barrido de expansión total en crema y desvanecimiento
-  setTimeout(() => {
-    loader.classList.add('reveal-active');
-    
-    // Parallax inverso del contenedor de la aplicación
-    setTimeout(() => {
-      if (appEl) {
-        appEl.classList.remove('loading-active');
-        appEl.classList.add('entrance-active');
-      }
-    }, 150);
-
-  }, 850);
-
-  // 5. Ocultar del DOM al finalizar por completo la animación
-  setTimeout(() => {
+  const finish = () => {
     loader.style.display = 'none';
-    if (appEl) {
-      appEl.classList.remove('entrance-active');
-    }
-  }, 1750);
+    loader.className = '';
+    delete loader.dataset.leaving;
+    if (appEl) { appEl.classList.remove('loading-active', 'entrance-active', 'entrance-dough'); appEl.style.transform = ''; }
+  };
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce || !Element.prototype.animate) {
+    loader.classList.add('reveal-active');
+    if (appEl) appEl.classList.remove('loading-active');
+    setTimeout(finish, 400);
+    return;
+  }
+
+  // La frase termina de dorarse y se va; luego la masa se extiende desde el centro y el nombre sube a la barra
+  setTimeout(() => {
+    const svgText = loader.querySelector('.loader-logo-svg-text');
+    const mark = loader.querySelector('.loader-mark');
+    const dough = loader.querySelector('.loader-dough');
+    if (appEl) appEl.style.transform = 'none'; // la app ya en su sitio (invisible) para medir a dónde va el nombre
+    const from = svgText.getBoundingClientRect();
+    const svgScale = loader.querySelector('.loader-curve-svg').getBoundingClientRect().width / 300;
+    const fx = from.left + from.width / 2, fy = from.top + from.height / 2;
+    mark.style.cssText = `left:${fx}px;top:${fy}px;font-size:${52 * svgScale}px;opacity:1`;
+    svgText.style.opacity = '0';
+    loader.classList.add('wrap-active');
+
+    const target = appEl && appEl.querySelector('.topbar-brand .accent, .srv-brand .accent');
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const ink = target && target.closest('.srv-brand') ? getComputedStyle(target).color
+      : dark ? getComputedStyle(document.body).color : (getComputedStyle(document.documentElement).getPropertyValue('--verde').trim() || '#3D5A47');
+
+    // Cubre la diagonal completa desde el centro, con un respiro a medio camino, como masa que se vierte y se extiende
+    const cover = Math.hypot(innerWidth, innerHeight) / (dough.offsetWidth || 1) * 1.15;
+    dough.animate([
+      { transform: 'scale(0) rotate(-8deg)', offset: 0 },
+      { transform: 'scale(.9) rotate(-2deg)', offset: .26 },
+      { transform: 'scale(.82) rotate(1deg)', offset: .4 },
+      { transform: 'scale(1.05) rotate(3deg)', offset: .58 },
+      { transform: `scale(${cover}) rotate(8deg)`, offset: 1 }
+    ], { duration: 1150, easing: 'cubic-bezier(.5,0,.2,1)', fill: 'forwards' });
+    mark.animate([{ color: '' }, { color: ink }], { duration: 320, delay: 80, easing: 'ease', fill: 'forwards' });
+    // Se mide el destino justo al despegar (la vista ya terminó su propia entrada) y se escala por tamaño de letra
+    setTimeout(() => {
+      const to = target && target.getBoundingClientRect();
+      const ok = to && to.width;
+      const dx = ok ? (to.left + to.width / 2) - fx : 0;
+      const dy = ok ? (to.top + to.height / 2) - fy : -fy + 28;
+      const s = ok ? parseFloat(getComputedStyle(target).fontSize) / parseFloat(mark.style.fontSize) : 0.45;
+      const ls = ok ? (parseFloat(getComputedStyle(target).letterSpacing) || 0) / parseFloat(getComputedStyle(target).fontSize) : .06;
+      mark.animate([
+        { transform: 'translate(-50%,-50%)', letterSpacing: '.06em' },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(${s})`, letterSpacing: `${ls}em` }
+      ], { duration: 780, easing: 'cubic-bezier(.65,0,.25,1)', fill: 'forwards' });
+    }, 420);
+
+    // La masa ya cubrió todo: la app aparece debajo y el cargador se funde sobre ella, con el nombre ya en la barra
+    setTimeout(() => {
+      if (appEl) { appEl.classList.remove('loading-active'); appEl.classList.add('entrance-dough'); }
+      loader.classList.add('reveal-active');
+    }, 1150);
+    setTimeout(finish, 1650);
+  }, 250);
 };
 
 /* ── INIT ──────────────────────────────────────────────── */

@@ -6,12 +6,16 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 ---
 
 ## Versión 2.0.0 beta 8 Eltanin — Briefing de turno (Octubre 2026) [PREVIEW]
+* ⭐ **Al resolver una queja, la estrella de étoile se completa**: cada punta se llena de dorado, luego el centro, y queda «Atendida». Sustituye al sello anterior.
+* 🗺️ **La presentación de étoile muestra el mapa de México con todas las sucursales**: se encienden desde la Ciudad de México y se unen como una constelación.
+* 🥞 **Nueva entrada a la app**: al terminar de cargar, una gota de masa se extiende desde el centro y el nombre étoile sube a su lugar en la barra mientras aparece tu pantalla.
+* 📈 **El promedio del inicio sube hasta su valor y frena suave**, las estrellas se llenan una tras otra hasta la cifra exacta (4.6 llena tres quintos de la quinta) y las barras de las gráficas crecen con un pequeño rebote.
 * 🚪 **Nueva entrada a étoile**: al abrir el sitio sin sesión ves primero la presentación de étoile y desde ahí entras al inicio de sesión, que ahora es su propia página. Si ya habías entrado, te lleva directo a tu pantalla; al cerrar sesión regresas al inicio de sesión.
 * ✍️ **Mientras algo carga, el contenido se "escribe"** de izquierda a derecha en lugar de parpadear, y los avisos rápidos (como «Enlace copiado») bajan desde arriba.
 * 📜 **Toca la versión en «Acerca de»** y verás las novedades de cada versión, en el mismo lenguaje de esta lista, agrupadas por época. La versión siempre es la real.
 * 🧹 Se quitó el aviso de «Descargas próximamente», que no llevaba a nada.
 * 🧭 **Cada quien entra a lo suyo**: el gerente abre directo en su tienda, con un botón para recorrer las demás de su región y «Mi sucursal» siempre a la mano; el zonal entra a su región y puede ir a otras (la suya aparece marcada); corporativo ve el panorama nacional y Étoile Corporativo.
-* 📋 **Seguimiento de quejas**: ahora puedes abrir una incidencia sobre una queja, ponerle responsable y estado, y dejar notas; todo queda en una bitácora. El gerente da seguimiento a las de su tienda; zonal y corporativo, a las de las tiendas que supervisan. Al resolverla aparece el sello de **Atendida**.
+* 📋 **Seguimiento de quejas**: ahora puedes abrir una incidencia sobre una queja, ponerle responsable y estado, y dejar notas; todo queda en una bitácora. El gerente da seguimiento a las de su tienda; zonal y corporativo, a las de las tiendas que supervisan. Al resolverla, la estrella de étoile se completa y queda **Atendida**.
 * ✨ **Más étoile, menos relleno**: al cambiar de región aparece la estrella de la marca y la entrada es más rápida; los indicadores de carga ya no giran ni parpadean sin fin.
 * 🔄 **Sabes si las reseñas de Google están al día**: debajo de las quejas por atender verás cuándo se consultó Google por última vez. Si una sucursal lleva más de hora y media sin actualizarse, el aviso se pone en rojo y dice cuál, para que nadie confíe en datos viejos.
 * 🦮 **Mejor con lector de pantalla**: al cambiar de sección, el lector anuncia a qué pantalla llegaste.

@@ -87,8 +87,8 @@ const EC = {
     };
   },
 
-  /** Entrada escalonada de barras (cada una llega un instante después de la anterior) */
-  stagger(ms = 35) { return { animationDuration: 750, animationEasing: 'cubicOut', animationDelay: (i) => i * ms }; },
+  /** Entrada escalonada de barras con resorte (cada una llega un instante después y se pasa un poco antes de asentarse) */
+  stagger(ms = 35) { return { animationDuration: 800, animationEasing: 'backOut', animationDelay: (i) => i * ms }; },
 
   /** Estado "atenuado" de lo que no está resaltado (se usa al vincular gráficas o al enfocar una barra) */
   blur() { return { itemStyle: { opacity: 0.32 } }; },
