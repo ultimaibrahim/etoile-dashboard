@@ -2,305 +2,6 @@
  * views/about.js — Acerca de / Identidad del portal / Contacto
  */
 
-const CHANGELOG_EPOCAS = [
-  {
-    name: 'Altair',
-    description: `
-      <p style="margin:0 0 8px 0;line-height:1.6;color:var(--text);">
-        Representa la era de la madurez operativa y refinamiento visual del Dashboard de Reseñas. Se enfoca en consolidar el control regional de incidencias y la unificación estética.
-      </p>
-      <ul style="margin:0 0 16px 0;padding-left:20px;font-size:13px;color:var(--text-muted);line-height:1.6;list-style-type:disc;">
-        <li><strong>Controles Orgánicos:</strong> Búsqueda, filtrado y ordenación mediante dropdowns y chips personalizados fluidos.</li>
-        <li><strong>Evaluación de Desempeño:</strong> Gradiente interactivo y dinámico en hover según cumplimiento del umbral regional de ${THRESHOLDS.BAJO.toFixed(2)}.</li>
-        <li><strong>Vectores SVG:</strong> Migración absoluta de iconografía decorativa a SVG nativo, optimizando la legibilidad en Dark Mode.</li>
-        <li><strong>Consolidado de Alertas:</strong> Reportes integrales con feed de reseñas críticas y copia automatizada al portapapeles para Marketing.</li>
-      </ul>
-    `,
-    versions: [
-      {
-        v: 'v3.4.4.altair', date: 'Agosto 2026',
-        items: [
-          'Resolución de Truncamiento en Supabase: Implementación de consultas paginadas (.range) y filtrado directo por región en DataLoader, garantizando la carga completa de reseñas históricas sin límite de 1,000 filas.',
-          'Normalización de Sucursales: Incorporación de normalizeBranchToken para resolver coincidencia de sucursales insensible a tildes, mayúsculas y caracteres especiales en todas las vistas e ingesta serverless.',
-          'Panel de Control Histórico (Select Region): Adición de barra de exploración histórica por Año (2018–2026), Mes, Estado de Región (<4.50★ / ≥4.50★), Criterios de Ordenamiento y Buscador Instantáneo en #/select-region.',
-          'Algoritmo de Ranking Bayesiano (Standings): Incorporación de Suavizado Bayesiano (k=15, M=4.50★) y escala multitienda en select-region.js para eliminar sesgos por muestra pequeña y balancear equitativamente el ranking regional.',
-          'Ingesta e Indexación Masiva: Sincronización completa de 8,944 reseñas históricas de Apify hacia Supabase para las 33 sucursales del país.'
-        ]
-      },
-      {
-        v: 'v3.4.3.altair', date: 'Junio 2026',
-        items: [
-          'Conexión Exclusiva a Supabase: Eliminación definitiva de fallbacks locales a manifest.json y data/*.json, asegurando que todos los datos provengan únicamente de la base de datos.',
-          'Eliminación de Credenciales Hardcodeadas: Remoción total del modo demo y cuentas/correos @lacrepeparisienne.com hardcodeados en el código de autenticación.',
-          'Seguridad en Endpoints: Protección del endpoint de diagnóstico diag-db.js mediante Bearer token y método POST con cuerpo de confirmación para acciones destructivas.',
-          'Degradación Segura de Privilegios: Corrección del fallo de seguridad que promovía privilegios a administrador ante fallas de conexión con Supabase.'
-        ]
-      },
-      {
-        v: 'v3.4.2.altair', date: 'Junio 2026',
-        items: [
-          'Exclusión de Cinemex y Cumbres: Remoción definitiva del mapa y de las configuraciones del Dashboard de las 8 ubicaciones en complejos Cinemex y de la sucursal Cumbres de Monterrey para evitar ruido visual y tarjetas vacías.',
-          'Unificación Operativa GDL: Fusión formal de las sucursales Andares y Mercado Andares en la sucursal única "andares", compartiendo su única página de Google Reviews.',
-          'Lista de Place IDs Oficiales: Generación de la lista depurada de 33 Place IDs únicos para alimentar el scraper de Apify.',
-          'Ajustes de Sincronización: Actualizado el webhook de Netlify (apify-ingest) para reflejar la unificación de Andares y eliminar los mapeos de Cinemex y Cumbres.'
-        ]
-      },
-      {
-        v: 'v3.4.1.altair', date: 'Junio 2026',
-        items: [
-          'Unificación Regional: Se unificaron las sucursales duplicadas de San Luis y The Park (SLP) en la sucursal única the-park, y de Pocitos y Altaria (AGS) en la sucursal única altaria.',
-          'Consolidación de MTY: Monterrey configurado con 4 sucursales activas (Galerías MTY, Galerías Valle Oriente, Fashion Drive y Galerías Cumbres).',
-          'Soporte Cinemex Completo: Añadido tag visual especial, animación perimetral y fondo con marca de agua SVG traslúcida de cine en las tarjetas y vista de detalle de las sucursales ubicadas dentro de complejos Cinemex (Artz, Plaza Mayor, The Park y Landmark Tijuana).',
-          'Tijuana y Landmark: Se restauró la sucursal Landmark Tijuana en lugar de la genérica y se conserva Plaza Península como las dos ubicaciones oficiales de Tijuana.',
-          'Sincronización Ingesta: Actualizado el webhook de Netlify (apify-ingest) para unificar de forma automática los mapeos de San Luis y Pocitos.',
-          'Alineación con P&L Oficial: Se añadieron las sucursales del P&L oficial, incluyendo Cumbres (MTY), Mercado Andares (GDL, separada de Andares) y las nuevas Cinemex (Artz, Insurgentes, Antara, Reforma 222, Patriotismo y Cinemex The Park), y se removió la sucursal inactiva Aeropuerto.'
-        ]
-      },
-      {
-        v: 'v3.4.0.altair', date: 'Mayo 2026',
-        items: [
-          'Consolidación Tipográfica: Unificado el sistema de fuentes tipográficas para usar Plus Jakarta Sans, Playfair Display y JetBrains Mono por defecto en todos los modos.',
-          'Botones y Safe Areas: Soporte completo para env(safe-area-inset-bottom) en la barra de navegación móvil y adaptaciones de padding para evitar conflictos con la barra de gestos de iOS.',
-          'Bottom Sheet Drawers: Implementado un menú deslizante inferior (Bottom Sheet) premium para selectores en móvil en lugar de los desplegables flotantes tradicionales.',
-          'Compact KPIs: Reorganizada la cuadrícula de scorecards de KPIs regionales a un formato de 2x2 en dispositivos móviles para ahorrar espacio vertical.',
-          'Optimización de Autoplay: El carrusel de opiniones recientes respeta la directiva prefers-reduced-motion y deshabilita el auto-scroll si el usuario lo solicita.',
-          'Responsividad de Ejes en Gráficos: Títulos y leyendas de ejes Chart.js optimizados para pantallas pequeñas (ocultando descripciones repetitivas en móvil) y padding dinámico en gráficos de clasificación.'
-        ]
-      },
-      {
-        v: 'v3.3.1.altair', date: 'Mayo 2026',
-        items: [
-          'Dual Y-Axis en Volumen: Gráfico de volumen de opiniones optimizado para usar doble eje Y agrupado, destacando quejas negativas en el eje derecho y evitando el aplastamiento por escala.',
-          'Etiquetas de Desviación en Ranking: Visualización del puntaje exacto y su desviación con respecto a la meta (ej. +0.20 / -0.40) al final de cada barra en el ranking de sucursales, junto con una línea vertical de meta en 4.60.',
-          'Línea de Meta en Tendencia YTD: Ajustado el rango del eje Y de 4.5 a 5.0 y añadida la línea de meta horizontal en 4.60.',
-          'Distribución de Estrellas Horizontal: Barra horizontal interactiva que reemplaza la dona anterior, mostrando cantidades y porcentajes directamente sin recortes.'
-        ]
-      },
-      {
-        v: 'v3.3.0.altair', date: 'Mayo 2026',
-        items: [
-          'Cuadro de Mando Macro: Rediseño completo de la sección de dashboards con un layout de 4 gráficos interactivos (Volumen Apilado, Ranking de Calificación, Distribución de Estrellas y Tendencia Regional YTD).',
-          'Alertas Proactivas: Nuevo de módulo de visualización ejecutiva en dashboards para identificar de forma proactiva caídas de rating, bajo desempeño, focos de incidencias y quejas desatendidas.',
-          'Eliminación de Respuestas de IA: Remoción definitiva de la funcionalidad de borradores de respuesta asistidos por inteligencia artificial en el modal de detalles.',
-          'Mejora de Contraste Premium: Ajustes de opacidad en superficies glassmorphic y color de fondo en tema oscuro para asegurar legibilidad bajo la interfaz Crystal.'
-        ]
-      },
-      {
-        v: 'v3.2.5.altair', date: 'Mayo 2026',
-        items: [
-          'UI Premium: Estética Crystal & Squircle condicional activada con atributo html[data-ui-premium="true"] (tipografías Plus Jakarta Sans y Playfair Display, radios de 20px, y efectos glassmorphic con blur de 14px).',
-          'Botón flotante premium: Integración de control en la esquina inferior derecha con transición de barrido radial animada (radial clip-path sweep) al cambiar de tema.',
-          'Previsualizador interactivo: Widget comparador Antes vs Después (split card con slider deslizante) en la vista Acerca de para evaluar la nueva propuesta gráfica.',
-          'Interacciones y Modal: Habilitada la apertura de la ficha detallada de reseñas al hacer clic en elementos del feed principal, la barra de búsqueda lateral y la vista mensual por sucursal.'
-        ]
-      },
-      {
-        v: 'v3.2.4.altair', date: 'Mayo 2026',
-        items: [
-          'Alineación estética: Reemplazada la línea divisoria punteada/discontinua en la tarjeta de Alerta Activa por una línea divisoria continua y sutil, idéntica a la empleada en la sección de Destacados.',
-          'Glow perimetral: Corregido el efecto hover en las tarjetas de Alerta Activa y Lo más destacado para que emitan un destello (glow) y color de borde congruentes con su color respectivo (rojo para alerta y amarillo/oro para destacado) en lugar de verde.'
-        ]
-      },
-      {
-        v: 'v3.2.3.altair', date: 'Mayo 2026',
-        items: [
-          'Corrección de transición: Subsanado el error que causaba que la vista de dashboards quedara en blanco al cambiar el mes del selector de periodo al re-inicializar el IntersectionObserver.',
-          'Alineación de márgenes: Ajustada la anchura máxima del selector de periodo a 1196px para que mantenga perfecta sintonía y alineación con los márgenes del resto de los elementos y gráficas de la página.'
-        ]
-      },
-      {
-        v: 'v3.2.2.altair', date: 'Mayo 2026',
-        items: [
-          'Reporte Especial: Correccion del contraste de color y legibilidad en el texto "Resumen Trimestral" (Reporte Especial) dentro del hero de dashboards, independientemente del modo claro o oscuro.',
-          'Agrupamiento visual: Reemplazo del boton del reporte especial por un boton pill estilizado y optimizacion del icono de calendario del fondo para evitar colores distorsionados por fill/stroke conflictivos.',
-          'Selector de periodo: Incorporacion de una nueva barra de controles con selector de mes premium personalizado (custom select organico) para el filtrado de estadisticas y volumen de la seccion de dashboards con cierre dinamico al hacer clic fuera.'
-        ]
-      },
-      {
-        v: 'v3.2.1.altair', date: 'Mayo 2026',
-        items: [
-          'Optimización de Alertas: Rediseño estético y de dimensiones de los botones de copiado de alertas (tanto individual como consolidado) a formato centrado y compacto para evitar bloques masivos en la interfaz.',
-          'Emblema Local Guide: Ajuste sutil del distintivo de Local Guide en la vista de detalle de reseña, limitando el tamaño del icono de estrella SVG para prevenir desbordamientos y saltos de línea indeseados en el texto.'
-        ]
-      },
-      {
-        v: 'v3.2.0.altair', date: 'Mayo 2026',
-        items: [
-          'Evaluación de sucursales: Calificación con estrellas de color oro ubicada ahora al lado del nombre de la sucursal en las tarjetas de la pantalla de inicio y en la cabecera de la vista de sucursal.',
-          'Dropdowns personalizados: Sustitución de todos los selectores HTML nativos restantes por selectores orgánicos y estilizados de diseño premium, incluyendo el selector de mes del Hero, los filtros de sentimiento y sucursal de la barra lateral, y el selector de mes de la vista de sucursal.',
-          'Interacciones y UX: Implementación de cierre automático al hacer clic fuera del dropdown para todos los nuevos selectores orgánicos y resguardo del estado del filtro de la barra lateral en memoria.'
-        ]
-      },
-      {
-        v: 'v3.1.0.altair', date: 'Mayo 2026',
-        items: [
-          'Agrupación e informes: Unificación de alertas regionales con la capacidad de ver el feed completo de reseñas críticas desde un botón general.',
-          'Consolidación de reportes: Botón para copiar al portapapeles el resumen de incidencias estructurado para envío directo a Marketing.',
-          'Dashboard Scorecards: Ajustes de altura fija y alineación interna vertical (margin-top: auto en barra de progreso) para evitar desalineaciones en móviles.',
-          'Ajustes de UI: Centrado vertical y alineación del icono indicador en las tarjetas de sucursal, y transiciones fluidas en hover.',
-          'Estados de alerta: Subsanada la evaluación de hover para marcar en color naranja sucursales que tengan alertas pero promedio igual o superior a la meta de 4.60, y en rojo únicamente si está por debajo.',
-          'Carrusel de Actividad: Movimiento continuo fluido (0.6px/frame) con pausa inteligente en hover, clic y eventos táctiles.',
-          'Responsividad del Carrusel: Ocultamiento completo de flechas en pantallas móviles para desplazamiento táctil nativo sin interferir con el texto, y gutters laterales de 48px en escritorio.',
-          'Detalle de Reseñas: Modal emergente premium con desenfoque de fondo (backdrop-filter) para leer reseñas completas al hacer clic en las tarjetas del carrusel, con congelamiento de scroll del body y reanudación automática del carrusel al cerrar.',
-          'Recorte de texto: Limitación visual estricta a 3 líneas de texto con puntos suspensivos en las tarjetas del carrusel, asegurando una visualización uniforme de las reseñas.'
-        ]
-      },
-      {
-        v: 'v3.0', date: 'Mayo 2026',
-        items: [
-          'Controles de Sucursal: Rediseño completo de búsqueda, filtros y ordenación con dropdown customizado orgánico y chips integrados de forma fluida.',
-          'Evaluación de Sucursales: Gradiente interactivo en hover según desempeño (verde si todo OK, naranja si hay alertas y promedio ≥ regional, rojo si hay alertas y promedio < regional).',
-          'Identidad Visual: Eliminación total de emojis en toda la plataforma, reemplazados por iconos SVG vectoriales responsivos y consistentes.',
-          'Optimización Dark Mode: Ajustes en los contrastes y legibilidad del texto en modo oscuro, con transiciones fluidas en todas las vistas.'
-        ]
-      }
-    ]
-  },
-  {
-    name: 'Sirius',
-    description: `
-      <p style="margin:0 0 8px 0;line-height:1.6;color:var(--text);">
-        Etapa de revolución arquitectónica e infraestructura técnica del Dashboard. Introdujo modularidad y rendimiento optimizado para el uso diario.
-      </p>
-      <ul style="margin:0 0 16px 0;padding-left:20px;font-size:13px;color:var(--text-muted);line-height:1.6;list-style-type:disc;">
-        <li><strong>Navegación SPA:</strong> Transición completa a Single Page Application basada en un Hash Router asíncrono.</li>
-        <li><strong>Carga Eficiente:</strong> Carga perezosa (lazy fetch) de JSONs mensuales y caché local persistente via KpiStore.</li>
-        <li><strong>Feed y Drawer:</strong> Despliegue de tarjetas de actividad reciente y drawer lateral deslizable para filtros avanzados.</li>
-        <li><strong>Adaptabilidad Mobile:</strong> Rediseño de barra de navegación inferior fija para el uso en dispositivos móviles de gerencia.</li>
-      </ul>
-    `,
-    versions: [
-      {
-        v: 'v2.9', date: 'Mayo 2026',
-        items: [
-          'Month Dropdown: Se traslada el selector de meses al Hero con un dropdown de diseño premium integrado.',
-          'Actividad Reciente: Rediseño del feed en formato carrusel con scroll horizontal y efecto de difuminado lateral.',
-          'Alertas sin texto: Se filtran las alertas para mostrar únicamente reseñas negativas con comentarios escritos.',
-          'Modal de Alertas: Cierre al hacer clic fuera del recuadro, bloqueo de scroll en el fondo y simplificación de botones de acción.'
-        ]
-      },
-      {
-        v: 'v2.8', date: 'Mayo 2026',
-        items: [
-          'Sincronización de Meses: El selector de mes ahora se sincroniza globalmente entre la pantalla principal y las vistas de sucursal.',
-          'Lo más destacado: Se restaura la sección de reseñas 5 estrellas destacadas con autoplay aleatorio al lado del banner de alertas.',
-          'Font loading: Se corrige la ruta de carga de la tipografía Giaza.otf y se aplica a todas las marcas étoile en footer.'
-        ]
-      },
-      {
-        v: 'v2.7', date: 'Mayo 2026',
-        items: [
-          'KPIs: Mapeo de métricas accionables (ej. "negativas sin responder" y listado de sucursales faltantes).',
-          'Alertas: Sistema de seguimiento con chips de sucursales y opción de marcar como atendido persistente.',
-          'Actividad Reciente: Nuevo feed de reseñas con 3 cards destacadas (mix positivo/negativo) y análisis de causa raíz.',
-          'Feed Completo: Drawer lateral deslizable con filtros avanzados por sentimiento y sucursal.',
-          'Mes Navegable: Selector de mes en el topbar header con flechas para actualización total reactiva.',
-          'Scorecard Hero: Animación de conteo animado para el promedio regional con gradiente dorado.',
-          'Surfaces: Profundidad visual mejorada en modo oscuro (#0B0C15, #151725, #1E2132).'
-        ]
-      },
-      {
-        v: 'v2.6', date: 'Mayo 2026',
-        items: [
-          'Dashboards: Charts dinámicos y responsive al 100% en pantallas móviles.',
-          'Corrección definitiva del bottom nav móvil (fixed edge-to-edge sin espacios).',
-          'Home: Nuevo botón "Siguiente reseña" en card Destacado con transición suave.',
-          'Refinamiento de grid layout: espaciados consistentes y heights balanceados.',
-          'Changelog: El botón de versión se convierte en easter egg sin estilo de link.',
-          'Fix de inicialización de animaciones .r en primera carga.'
-        ]
-      },
-      {
-        v: 'v2.5', date: 'Mayo 2026',
-        items: [
-          'Filtrado visual de reseñas sin texto (KPI no afectado).',
-          'Sección "Nuestro Propósito" alineada a la derecha con cita completa.',
-          'Tooltip de gráfica se auto-oculta a los 5 segundos en móvil.',
-          'Grid de dashboards responsive (1 col móvil → 2 col desktop).',
-          'Hero sections full-width en resoluciones grandes (fix huecos laterales).',
-          'About: card de Ibrahim al final, versión con changelog interactivo.',
-          'Modal de alertas: animación de entrada + cierre con Escape.',
-          'Texto normal (no italic) en sección de valores y modal.'
-        ]
-      },
-      {
-        v: 'v2.4', date: 'Mayo 2026',
-        items: [
-          'Restauración de identidad "Acerca de": misión, valores, propósito.',
-          'Card de Product Owner con bio, email y WhatsApp actualizados.',
-          'Reseñas sin texto ocultas visualmente (no afectan KPI).',
-          'Botón "Mostrar todas" también filtra solo reseñas con texto.',
-          'Corrección de padding-bottom móvil (botones no recortados).',
-          'Alert-strip con max-width centrado en pantallas anchas.'
-        ]
-      },
-      {
-        v: 'v2.3', date: 'Abril–Mayo 2026',
-        items: [
-          'KPI "Calidad de reseña": fix ReferenceError (positivasConTexto).',
-          'Fix error crítico en styles.css (bloque body no cerrado → página en blanco).',
-          'Overflow-x hidden en html (scroll fantasma móvil eliminado).',
-          'Dashboards: hero con dos columnas, acceso a Reporte Trimestral Q1.',
-          'Watermark de estrellas posicionadas esquina inferior-derecha.',
-          'Auto-hide tooltip en gráfica de barras tras 5s en touch.'
-        ]
-      },
-      {
-        v: 'v2.2', date: 'Abril 2026',
-        items: [
-          'Dark mode: data-theme en <html> (no en body).',
-          'Tarjetas alert-box-sunken y highlight-box con watermark de estrellas.',
-          'Ruta #/trimestre/2026-Q1 accesible desde hero de Dashboards.',
-          'Eliminación de emojis decorativos (reemplazados por SVG).',
-          'Mobile-first: bottom nav 6 tabs, topbar responsive.'
-        ]
-      },
-      {
-        v: 'v2.1', date: 'Marzo 2026',
-        items: [
-          'Sistema de roles: LEADERSHIP_ROLES vs gerente.',
-          'Carga lazy de datos JSON por mes/año.',
-          'KpiStore con caché localStorage.',
-          'Hash router SPA async (#/, #/sucursal/:id, #/trimestre/:id, #/acerca).',
-          'Vista Quarter con acordeón trimestral.'
-        ]
-      },
-      {
-        v: 'v2.0', date: 'Febrero 2026',
-        items: [
-          'Refactor completo: modularización en js/views/.',
-          'DataLoader unificado con manifest.json.',
-          'Sistema de Chart.js 4.4.1 CDN (barVolume + stackedVolume).',
-          'Paleta de color LCP: --verde, --sage, --crema, --oro.'
-        ]
-      }
-    ]
-  },
-  {
-    name: 'v1.0 (Orígenes)',
-    description: `
-      <p style="margin:0 0 8px 0;line-height:1.6;color:var(--text);">
-        Cimientos fundacionales del ecosistema. Se definió la identidad de marca, la paleta semántica inicial y los primeros flujos de datos operativos.
-      </p>
-      <ul style="margin:0 0 16px 0;padding-left:20px;font-size:13px;color:var(--text-muted);line-height:1.6;list-style-type:disc;">
-        <li><strong>Identidad LCP:</strong> Creación del sistema de diseño inicial con colores representativos (verde, crema, sage y oro).</li>
-        <li><strong>Tipografía Base:</strong> Introducción de las familias tipográficas Giaza, DM Sans y DM Serif Display.</li>
-        <li><strong>Integración Sheets:</strong> Conexión inicial con Google Sheets y Google Apps Script para registro de lecturas y login básico.</li>
-      </ul>
-    `,
-    versions: [
-      {
-        v: 'v1.0', date: 'Enero 2026',
-        items: [
-          'Arquitectura Base: Estructura del DOM inicial, maquetación adaptada a gerentes (mobile-first en iPhone).',
-          'Variables CSS: Creación de la paleta semántica base (verde LCP, sage, crema, oro y alertas).',
-          'Lecturas y Datos: Carga inicial de datos desde las hojas de cálculo de Google Sheets para reportes básicos.'
-        ]
-      }
-    ]
-  }
-];
-
 const AboutView = {
   async render() {
     Charts.destroyAll();
@@ -337,7 +38,7 @@ const AboutView = {
             <div style="display:grid;gap:12px;">
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Versión actual</div>
-                <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:pointer;font-family:var(--sans);font-size:20px;font-weight:700;color:#FAF5EB;letter-spacing:.04em;" title="Ver Changelog">étoile - Altair</button>
+                <button id="versionBtn" onclick="AboutView.toggleChangelog()" style="background:none;border:none;padding:0;cursor:pointer;font-family:var(--sans);font-size:20px;font-weight:700;color:#FAF5EB;letter-spacing:.04em;" title="Ver novedades" aria-expanded="false" aria-controls="changelogPanel">étoile ${escapeHtml(APP_VERSION.label)} · ${escapeHtml(APP_VERSION.codename)}</button>
               </div>
               <div style="padding:16px 20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
                 <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,239,230,.45);margin-bottom:6px;">Guía de Introducción</div>
@@ -353,35 +54,14 @@ const AboutView = {
       </section>
 
 
-      <!-- CHANGELOG oculto -->
-      <div id="changelogPanel" style="display:none;overflow:hidden;transition:max-height 0.4s ease;">
+      <!-- CHANGELOG oculto (easter egg): el changelog PÚBLICO, leído en vivo de CHANGELOG_PUBLIC.md -->
+      <div id="changelogPanel" hidden>
         <section class="section">
           <div class="section-head">
-            <div class="section-title">Changelog <span class="accent">de versiones</span></div>
-            <button onclick="AboutView.toggleChangelog()" style="background:none;border:none;font-size:13px;color:var(--text-muted);cursor:pointer;padding:6px 12px;border-radius:8px;border:1px solid var(--border);">Ocultar ×</button>
+            <div class="section-title">Novedades <span class="accent">de étoile</span></div>
+            <button class="clog-close" onclick="AboutView.toggleChangelog()">Ocultar ×</button>
           </div>
-          <div style="display:flex;flex-direction:column;gap:32px;">
-            ${CHANGELOG_EPOCAS.map(group => `
-              <div class="epoch-group">
-                <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:8px;">
-                  <h3 style="font-family:var(--serif);font-size:22px;color:var(--verde-ink);font-weight:700;margin:0;">${group.name}</h3>
-                </div>
-                <div style="font-size:14px;color:var(--text-muted);line-height:1.5;margin-bottom:18px;">${group.description}</div>
-                <div style="display:flex;flex-direction:column;gap:16px;padding-left:8px;">
-                  ${group.versions.map((entry, vIdx) => `
-                    <div class="chart-card spotlight-card" style="border: 1px solid ${(group.name === 'Altair' && vIdx === 0) ? 'rgba(122,158,138,0.4)' : 'var(--border)'};">
-                      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px;">
-                        <span style="font-family:var(--mono);font-weight:700;font-size:14px;color:${(group.name === 'Altair' && vIdx === 0) ? 'var(--verde-ink)' : 'var(--text-muted)'};">${entry.v}</span>
-                        <span style="font-size:11px;color:var(--text-muted);letter-spacing:.06em;">${entry.date}</span>
-                        ${(group.name === 'Altair' && vIdx === 0) ? '<span style="font-size:10px;background:rgba(61,90,71,0.12);color:var(--verde-ink);padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:.08em;">ACTUAL</span>' : ''}
-                      </div>
-                      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;">
-                        ${entry.items.map(item => `<li style="font-size:13px;color:var(--text);padding-left:18px;position:relative;line-height:1.5;"><span style="position:absolute;left:0;color:var(--sage-ink);">›</span>${item}</li>`).join('')}
-                      </ul>
-                    </div>`).join('')}
-                </div>
-              </div>`).join('')}
-          </div>
+          <div id="changelogBody" aria-live="polite"><p class="drawer-empty">Cargando…</p></div>
         </section>
       </div>
 
@@ -508,20 +188,6 @@ const AboutView = {
       }
       </script>
 
-      <!-- DESCARGAS -->
-      <section class="section r">
-        <div class="section-head">
-          <h2 class="section-title" style="margin:0;">Descargas <span class="accent">próximamente</span></h2>
-        </div>
-        <div class="chart-card" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:48px 20px;">
-          <div style="width:52px;height:52px;border-radius:14px;background:rgba(61,90,71,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          </div>
-          <div style="font-family:var(--serif);font-size:20px;color:var(--negro);margin-bottom:8px;">Formatos y Reportes PDF</div>
-          <div style="font-size:14px;color:var(--text-muted);max-width:300px;">El módulo para exportar los reportes de KPIs mensuales en PDF está en desarrollo.</div>
-        </div>
-      </section>
-
       <!-- PRODUCT OWNER — sutil, al final -->
       <section class="section r">
         <div style="border-top:1px solid var(--border);padding-top:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
@@ -561,14 +227,21 @@ const AboutView = {
     });
   },
 
-  toggleChangelog() {
+  async toggleChangelog() {
     const panel = document.getElementById('changelogPanel');
     if (!panel) return;
-    const isHidden = panel.style.display === 'none';
-    panel.style.display = isHidden ? 'block' : 'none';
-    if (isHidden) {
-      // scroll suave hasta el panel
-      setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+    const open = panel.hidden;
+    panel.hidden = !open;
+    const btn = document.getElementById('versionBtn');
+    if (btn) btn.setAttribute('aria-expanded', String(open));
+    if (!open) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(() => panel.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }), 60);
+    const body = document.getElementById('changelogBody');
+    try {
+      body.innerHTML = PublicChangelog.html(await PublicChangelog.load(), APP_VERSION.label);
+    } catch (e) {
+      body.innerHTML = '<p class="drawer-empty">No se pudieron cargar las novedades.</p>';
     }
   }
 };
