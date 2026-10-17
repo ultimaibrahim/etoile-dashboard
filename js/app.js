@@ -87,8 +87,11 @@ const AppAuth = {
       ViewState.clear();
     }
     if (supabaseClient) {
-      await supabaseClient.auth.signOut();
+      try { await supabaseClient.auth.signOut(); } catch (e) { console.warn('[Auth] signOut:', e && e.message); }
     }
+    // Aunque el cliente no exista todavía (app a medio cargar) o signOut falle, la cookie de sesión se borra:
+    // si quedara, /login/ vería una sesión vigente y regresaría a la app
+    document.cookie.split(';').map(c => c.trim().split('=')[0]).filter(k => k.startsWith('sb-')).forEach(k => CookieStorage.removeItem(k));
     this.session = null;
     this.profile = null;
     if (typeof EtoileCache !== 'undefined') await EtoileCache.clearAll();

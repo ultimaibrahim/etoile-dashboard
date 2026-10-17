@@ -15,6 +15,7 @@ const { launch, open, BASE, reporter, sleep } = require('./lib');
   rec('al entrar, corporativo cae en el selector nacional', /#\/select-region$/.test(pg.url()), pg.url());
   await pg.goto(BASE + '/login/'); await pg.waitForURL(/#\//, { timeout: 30000 }).catch(() => {});
   rec('con sesión vigente, /login/ entra directo', /#\/select-region$/.test(pg.url()), pg.url());
+  await pg.waitForSelector('#srvContainer', { timeout: 30000 }).catch(() => {});   // como una persona: sale cuando la app ya cargó
   await pg.evaluate(() => AppAuth.logout()); await pg.waitForURL(/\/login\/$/, { timeout: 30000 }).catch(() => {}); await sleep(1200);
   rec('cerrar sesión regresa al login y pide datos', /\/login\/$/.test(pg.url()) && !!(await pg.$('#login-email')), pg.url());
   errors.push(...pg.errors); await pg.context().close();
