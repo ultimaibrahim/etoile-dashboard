@@ -182,7 +182,7 @@ function buildBranchSummary(branchMeta, stats) {
     `⭐ Promedio: ${stats.avg.toFixed(2)} (${stats.totalReviews} reseñas)`,
     `🔴 Quejas 1-2★: ${stats.negatives}${stats.unreplied ? ` (${stats.unreplied} sin responder)` : ''}`,
     stats.topTheme ? `⚠️ Tema principal: ${truncatedTheme}` : null,
-    `— generado desde etoile-lcp.netlify.app`
+    `— generado desde etoile.ultimaibrahim.dev`
   ].filter(Boolean).join('\n');
 }
 

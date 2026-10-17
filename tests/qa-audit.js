@@ -27,7 +27,7 @@ requiredFiles.forEach(f => {
 if (fs.existsSync(path.join(rootDir, 'robots.txt'))) {
   const robots = fs.readFileSync(path.join(rootDir, 'robots.txt'), 'utf8');
   assert(robots.includes('Disallow: /page/'), 'robots.txt desindexa subcarpeta /page/');
-  assert(robots.includes('Sitemap: https://etoile-lcp.netlify.app/sitemap.xml'), 'robots.txt contiene sitemap');
+  assert(robots.includes('Sitemap: https://etoile.ultimaibrahim.dev/sitemap.xml'), 'robots.txt contiene sitemap');
   assert(robots.includes('User-agent: GPTBot') && robots.includes('User-agent: ClaudeBot'), 'robots.txt declara directivas para crawlers LLM');
 }
 
@@ -35,7 +35,7 @@ if (fs.existsSync(path.join(rootDir, 'robots.txt'))) {
 if (fs.existsSync(path.join(rootDir, 'sitemap.xml'))) {
   const sitemap = fs.readFileSync(path.join(rootDir, 'sitemap.xml'), 'utf8');
   assert(sitemap.startsWith('<?xml') && sitemap.includes('<urlset'), 'sitemap.xml tiene formato XML válido');
-  assert(sitemap.includes('https://etoile-lcp.netlify.app/'), 'sitemap.xml contiene URL canónica');
+  assert(sitemap.includes('https://etoile.ultimaibrahim.dev/'), 'sitemap.xml contiene URL canónica');
 }
 
 // 4. Verificación de LLMS.txt

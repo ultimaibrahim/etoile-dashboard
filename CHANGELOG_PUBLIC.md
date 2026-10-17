@@ -10,6 +10,7 @@ Este documento contiene el historial de actualizaciones de Étoile Dashboard red
 * 🗺️ **El mapa de la presentación usará la ubicación real de cada sucursal**: se toma de su ficha de Google la primera vez que se actualizan sus reseñas.
 * 📋 **Corporativo también puede dar seguimiento a las quejas** de cualquier sucursal.
 * 🚩 **Reporta un problema o sugiere algo desde étoile**: el botón con la bandera, en la barra superior (o en el menú en celular) y en «Acerca de», abre SIGNO, el sistema de reportes de La Crêpe, con étoile ya elegido.
+* 🌐 **Nueva dirección: etoile.ultimaibrahim.dev**. La anterior sigue funcionando y te lleva a la nueva.
 * 🔒 **Los archivos internos del sistema ya no se pueden abrir desde el navegador**: solo queda pública la presentación, las políticas y la app.
 
 ## Versión 2.0.0 beta 8 Eltanin — Briefing de turno (Octubre 2026) [PREVIEW]

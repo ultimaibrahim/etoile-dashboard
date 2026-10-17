@@ -43,4 +43,4 @@ Disallow: /page/
 Disallow: /api/
 Disallow: /data/
 
-Sitemap: https://etoile-lcp.netlify.app/sitemap.xml
+Sitemap: https://etoile.ultimaibrahim.dev/sitemap.xml

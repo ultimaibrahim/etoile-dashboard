@@ -22,6 +22,6 @@
 - **Control de Acceso (RBAC)**: Roles de Director, Gerente Regional, Gerente Zonal y Gerente de Tienda.
 
 ## Enlaces Canónicos
-- Aplicación Web: https://etoile-lcp.netlify.app/
-- Metodología y Changelog: https://etoile-lcp.netlify.app/#/acerca
-- Aviso de Privacidad: https://etoile-lcp.netlify.app/#/privacidad
+- Aplicación Web: https://etoile.ultimaibrahim.dev/
+- Metodología y Changelog: https://etoile.ultimaibrahim.dev/#/acerca
+- Aviso de Privacidad: https://etoile.ultimaibrahim.dev/#/privacidad
