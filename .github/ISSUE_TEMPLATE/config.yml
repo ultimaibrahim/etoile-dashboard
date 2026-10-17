@@ -1,0 +1,6 @@
+# Los reportes de fallas y mejoras entran por SIGNO (folio, seguimiento y métricas); SIGNO crea aquí el issue por la API.
+blank_issues_enabled: false
+contact_links:
+  - name: Reportar una falla o proponer una mejora en étoile (SIGNO)
+    url: https://signo.ultimaibrahim.dev/e/lcp/reportar?sistema=etoile
+    about: Se reporta en SIGNO, con el código o el correo de tu empresa. Te damos un folio para seguirlo hasta que quede resuelto.
